@@ -1,0 +1,13 @@
+{
+  "projects": {
+    "default": "huntertest-c1924"
+  },
+  "targets": {},
+  "etags": {
+    "huntertest-c1924": {
+      "extensionInstances": {
+        "firestore-stripe-payments": "64c4e8da80a5625166ce742a7c478f68900fe5f2e67f4ab5b7e3830148a15bb5"
+      }
+    }
+  }
+}
