@@ -1,6 +1,15 @@
 <!DOCTYPE html>
 <html lang="lt">
 <head>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-CNXX464ZS9"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-CNXX464ZS9');
+    </script>
+    
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     
@@ -13,7 +22,7 @@
     <meta name="author" content="HunterTest.lt">
     <link rel="canonical" href="https://huntertest.lt/">
 
-    <!-- 3. OPEN GRAPH (SOCIALINIŲ TINKLŲ IR KORTELES KODAS) -->
+    <!-- 3. OPEN GRAPH (SOCIALINIŲ TINKLŲ IR KORTELĖS KODAS) -->
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://huntertest.lt/">
     <meta property="og:title" content="Medžiotojų testai ir medžioklės egzaminai internetu | HunterTest.lt">
@@ -70,13 +79,24 @@
 </head>
 <body class="bg-forestBackground text-forestSecondary font-sans antialiased h-[100dvh] w-screen overflow-hidden">
 
-    <!-- A. NEPRISIJUNGUSIO (Logged Out) EKRANO TURINYS SU TURTINGU SEO TEKSTU -->
+    <!-- A. NEPRISIJUNGUSIO (Logged Out) EKRANO TURINYS SU VIRŠUTINĖMIS NUORODOMIS -->
     <div id="logged-out-state" class="flex flex-col h-full justify-between overflow-y-auto hidden">
-        <nav class="bg-forestSurface border-b border-forestBorder py-2.5 px-6 flex justify-between items-center shrink-0">
-            <span class="font-oswald text-xl font-bold tracking-wider text-forestPrimary">HUNTERTEST</span>
-            <button id="nav-guest-btn" class="text-xs font-bold text-forestSecondary hover:text-forestPrimary transition">
-                Tęsti kaip svečias →
-            </button>
+        
+        <!-- Viršutinė juosta su nuorodomis į Žodyną ir Renginius -->
+        <nav class="bg-forestSurface border-b border-forestBorder py-2.5 px-4 md:px-6 flex justify-between items-center shrink-0">
+            <a href="/" class="font-oswald text-xl md:text-2xl font-bold tracking-wider text-forestPrimary">HUNTERTEST</a>
+            
+            <div class="flex items-center gap-3 md:gap-5">
+                <a href="/zodynas.html" class="text-xs font-bold text-forestSecondary hover:text-white transition flex items-center gap-1.5 bg-forestBackground/60 border border-forestBorder/60 px-3 py-1.5 rounded-xl hover:border-forestPrimary">
+                    <span>📖</span> <span>Žodynas</span>
+                </a>
+                <a href="/renginiai.html" class="text-xs font-bold text-forestSecondary hover:text-white transition flex items-center gap-1.5 bg-forestBackground/60 border border-forestBorder/60 px-3 py-1.5 rounded-xl hover:border-forestPrimary">
+                    <span>📅</span> <span>Renginiai</span>
+                </a>
+                <button id="nav-guest-btn" class="text-xs font-bold text-forestPrimary hover:underline transition hidden sm:inline">
+                    Tęsti kaip svečias →
+                </button>
+            </div>
         </nav>
 
         <main class="max-w-md w-full mx-auto px-4 py-6 space-y-6 my-auto">
@@ -162,22 +182,18 @@
 
             </div>
 
-            <!-- SEO BLOKAS: APIE MEDŽIOKLĖS TESTUS IR DUK -->
-            <article class="bg-forestSurface/60 border border-forestBorder/70 p-5 rounded-2xl space-y-4 text-left">
+            <!-- SEO BLOKAS -->
+            <article class="bg-forestSurface/60 border border-forestBorder/70 p-5 rounded-2xl space-y-3 text-left">
                 <h2 class="text-sm font-bold text-white uppercase font-oswald tracking-wider border-b border-forestBorder/60 pb-2">
                     Apie bandomuosius medžiotojų egzaminus
                 </h2>
                 <p class="text-[11px] text-forestSecondary leading-relaxed">
                     <strong>HunterTest.lt</strong> – tai specializuota internetinė platforma, skirta efektyviai ruoštis teoriniam medžiotojų egzaminui Lietuvoje. Mūsų <strong>medžioklės testai</strong> apima teisės aktus, saugų elgesį su ginklais, žvėrių biologiją, medžioklės technologijas bei tradicijas.
                 </p>
-
-                <div class="space-y-2 pt-1 text-[11px]">
-                    <h3 class="font-bold text-forestPrimary">🎯 Kodėl verta spręsti testus čia?</h3>
-                    <ul class="list-disc pl-4 text-forestSecondary space-y-1">
-                        <li>Aktualūs klausimai pagal galiojančius teisės aktus.</li>
-                        <li>Procento ir klaidų analizė po kiekvieno testo.</li>
-                        <li>Interaktyvus medžiotojų žodynas ir žvėrių garsai.</li>
-                    </ul>
+                <div class="flex flex-wrap gap-2 pt-1 text-[11px]">
+                    <a href="/zodynas.html" class="text-forestPrimary font-bold hover:underline">Medžiotojų žodynas →</a>
+                    <span class="text-slate-600">•</span>
+                    <a href="/renginiai.html" class="text-forestPrimary font-bold hover:underline">Egzaminų kalendorius →</a>
                 </div>
             </article>
 
@@ -229,7 +245,7 @@
             </div>
         </aside>
 
-        <!-- 3. PAGRINDINIS KONTEINERIS SU DIDELIU APATINIU TARPU -->
+        <!-- 3. PAGRINDINIS KONTEINERIS -->
         <main class="flex-1 h-full overflow-y-auto px-4 md:px-6 pt-3 md:pt-4 pb-36 md:pb-12">
             <section id="view-tab-home" class="tab-view space-y-8 hidden"></section>
             <section id="view-tab-practice" class="tab-view space-y-8 hidden"></section>
