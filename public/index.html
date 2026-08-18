@@ -2,7 +2,7 @@
 <html lang="lt">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>HunterTest | Pasiruošimas Medžioklės Egzaminui</title>
     <link rel="icon" type="image/png" href="logo.png">
     <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;600;700&family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
@@ -34,7 +34,7 @@
         .scrollbar-none { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
 </head>
-<body class="bg-forestBackground text-forestSecondary font-sans antialiased h-screen w-screen overflow-hidden">
+<body class="bg-forestBackground text-forestSecondary font-sans antialiased h-[100dvh] w-screen overflow-hidden">
 
     <!-- A. NEPRISIJUNGUSIO (Logged Out) EKRANO TURINYS -->
     <div id="logged-out-state" class="flex flex-col h-full justify-between overflow-y-auto hidden">
@@ -135,17 +135,19 @@
     </div>
 
 
-    <!-- B. PILNAVERTIS RESPONSITYVUS MAKETAS PRISIJUNGUS / SVEČIO REŽIMU -->
+    <!-- B. PILNAVERTIS RESPONSITYVUS MAKETAS PRISIJUNGUS -->
     <div id="logged-in-state" class="flex flex-col md:flex-row h-full w-full hidden">
         
-        <!-- 1. MOBILI VIRŠUTINĖ JUOSTA -->
-        <div class="md:hidden bg-forestSurface border-b border-forestBorder w-full px-6 py-3 flex justify-between items-center z-10">
+        <!-- 1. MOBILI VIRŠUTINĖ JUOSTA (SU KOMPAKTIŠKU MYGTUKU DEŠINĖJE) -->
+        <div class="md:hidden bg-forestSurface border-b border-forestBorder w-full px-4 py-2.5 flex justify-between items-center z-10 shrink-0">
             <span class="font-oswald text-xl font-bold tracking-wider text-forestPrimary">HUNTERTEST</span>
-            <button class="logout-action-btn text-xs text-red-400 font-bold">Atsijungti</button>
+            <button class="logout-action-btn px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5">
+                <span>🚪</span> <span>Atsijungti</span>
+            </button>
         </div>
 
         <!-- 2. ŠONINIS MENIU / SIDEBAR -->
-        <aside class="hidden md:flex flex-col justify-between w-64 bg-forestSurface border-r border-forestBorder p-6 h-full">
+        <aside class="hidden md:flex flex-col justify-between w-64 bg-forestSurface border-r border-forestBorder p-6 h-full shrink-0">
             <div class="space-y-8">
                 <span class="font-oswald text-2xl font-bold tracking-wider text-forestPrimary block border-b border-forestBorder pb-4">HUNTERTEST</span>
                 
@@ -167,22 +169,22 @@
 
             <div class="border-t border-forestBorder pt-4 space-y-3">
                 <div class="text-xs text-forestSecondary truncate font-medium" id="user-email-sidebar">Kraunasi...</div>
-                <button class="logout-action-btn w-full h-11 bg-red-950/40 hover:bg-red-900/40 text-red-400 border border-red-900/50 rounded-xl font-bold text-xs transition">
-                    Atsijungti
+                <button class="logout-action-btn w-full h-11 bg-forestBackground hover:bg-red-950/30 text-slate-400 hover:text-red-400 border border-forestBorder hover:border-red-900/40 rounded-xl font-bold text-xs transition flex items-center justify-center gap-2">
+                    <span>🚪</span> <span>Atsijungti</span>
                 </button>
             </div>
         </aside>
 
-        <!-- 3. TUŠTI SEKCIJŲ KONTEINERIAI -->
-        <main class="flex-1 h-full overflow-y-auto px-4 md:px-6 pt-2 md:pt-4 pb-24 md:pb-6">
+        <!-- 3. PAGRINDINIS KONTEINERIS SU DIDELIU APATINIU TARPU (pb-36 TELEFONUOSE) -->
+        <main class="flex-1 h-full overflow-y-auto px-4 md:px-6 pt-3 md:pt-4 pb-36 md:pb-12">
             <section id="view-tab-home" class="tab-view space-y-8 hidden"></section>
             <section id="view-tab-practice" class="tab-view space-y-8 hidden"></section>
             <section id="view-tab-results" class="tab-view space-y-8 hidden"></section>
             <section id="view-tab-settings" class="tab-view space-y-8 hidden"></section>
         </main>
 
-        <!-- 4. MOBILI APATINĖ JUOSTA -->
-        <nav class="md:hidden fixed bottom-0 left-0 right-0 bg-forestSurface border-t border-forestBorder h-16 flex justify-around items-center z-50">
+        <!-- 4. MOBILI APATINĖ JUOSTA (NEPERMATOMA, SU ŠEŠĖLIU) -->
+        <nav class="md:hidden fixed bottom-0 left-0 right-0 bg-[#2C2520] border-t border-forestBorder h-16 flex justify-around items-center z-50 shadow-[0_-4px_25px_rgba(0,0,0,0.7)]">
             <button class="nav-tab-btn flex flex-col items-center justify-center w-20 h-full text-xs" data-tab="0">
                 <span class="text-lg">🏠</span>
                 <span class="mt-1 font-bold">Pradžia</span>

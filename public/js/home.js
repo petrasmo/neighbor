@@ -28,35 +28,38 @@ export async function renderHomeScreen() {
         });
 
         container.innerHTML = `
-            <div class="space-y-4 max-w-4xl mx-auto">
+            <div class="space-y-4 max-w-4xl mx-auto pb-16">
                 
-                <div class="flex justify-between items-center border-b border-forestBorder pb-3 w-full">
-                    <div class="space-y-0.5">
+                <!-- ŠVARUS RESPONSYVUS ANTRAŠTĖS BLOKAS -->
+                <div class="border-b border-forestBorder pb-3 space-y-1.5">
+                    <div class="flex justify-between items-center gap-2">
                         <h2 class="text-lg md:text-2xl font-bold font-oswald text-white uppercase tracking-wider">Teorijos Egzaminas</h2>
-                        <p class="text-forestSecondary text-[10px] md:text-xs">Pasirinkite temas, klausimų skaičių ir pradėkite testą.</p>
+                        <div class="bg-forestSurface border border-forestBorder px-3 py-1.5 rounded-xl flex items-center gap-1.5 shrink-0 shadow-inner">
+                            <span class="text-[9px] text-forestSecondary uppercase font-bold tracking-wider hidden sm:inline">Balansas:</span>
+                            <span id="home-credits-val" class="text-xs md:text-sm font-extrabold text-forestPrimary font-oswald">${currentCredits}</span>
+                        </div>
                     </div>
-                    <div class="bg-forestSurface border border-forestBorder px-3 py-1.5 md:px-4 md:py-2.5 rounded-xl flex items-center gap-1.5 shrink-0 shadow-inner">
-                        <span class="text-[9px] md:text-[10px] text-forestSecondary uppercase font-bold tracking-wider hidden sm:inline">Balansas:</span>
-                        <span id="home-credits-val" class="text-xs md:text-sm font-extrabold text-forestPrimary font-oswald">${currentCredits}</span>
-                    </div>
+                    <p class="text-forestSecondary text-xs leading-normal">Pasirinkite temas, klausimų skaičių ir pradėkite testą.</p>
                 </div>
 
-                <div class="bg-forestSurface border border-forestBorder p-5 md:p-6 space-y-4">
+                <!-- Egzamino temos -->
+                <div class="bg-forestSurface border border-forestBorder p-4 md:p-6 rounded-2xl space-y-4">
                     <div class="flex justify-between items-center border-b border-forestBorder pb-3">
-                        <h3 class="text-md font-bold font-oswald text-white uppercase tracking-wider">Egzamino Temos</h3>
-                        <label class="flex items-center gap-2 cursor-pointer text-[11px] text-forestPrimary font-bold">
+                        <h3 class="text-sm md:text-base font-bold font-oswald text-white uppercase tracking-wider">Egzamino Temos</h3>
+                        <label class="flex items-center gap-2 cursor-pointer text-xs text-forestPrimary font-bold">
                             <input type="checkbox" id="select-all-topics" class="w-4 h-4 accent-forestPrimary" checked>
                             Pažymėti visas
                         </label>
                     </div>
-                    <div class="grid md:grid-cols-2 gap-3">
+                    <div class="grid md:grid-cols-2 gap-2.5 md:gap-3">
                         ${topicsHtml}
                     </div>
                 </div>
 
-                <div class="bg-forestSurface border border-forestBorder p-5 md:p-6 space-y-3">
-                    <h3 class="text-md font-bold font-oswald text-white uppercase tracking-wider">Klausimų Skaičius</h3>
-                    <div class="flex gap-4">
+                <!-- Klausimų skaičius -->
+                <div class="bg-forestSurface border border-forestBorder p-4 md:p-6 rounded-2xl space-y-3">
+                    <h3 class="text-sm md:text-base font-bold font-oswald text-white uppercase tracking-wider">Klausimų Skaičius</h3>
+                    <div class="flex gap-3 md:gap-4">
                         ${[20, 50, 100].map(count => `
                             <button class="question-count-btn flex-1 h-11 rounded-xl font-bold text-xs transition border ${count === 50 ? 'bg-forestPrimary text-white border-forestPrimary' : 'bg-forestBackground text-forestSecondary border-forestBorder hover:border-forestPrimary'}" data-count="${count}">
                                 ${count}
@@ -65,9 +68,13 @@ export async function renderHomeScreen() {
                     </div>
                 </div>
 
-                <button id="start-exam-btn" class="w-full h-12 bg-buttonBrown hover:bg-buttonBrownHover text-white font-bold rounded-xl transition duration-300 uppercase tracking-wider text-xs shadow-lg">
-                    ${isGuest ? 'Pradėti egzaminą (Reikalingas prisijungimas)' : 'Pradėti egzaminą (Sunaudos kreditus)'}
-                </button>
+                <!-- Pradėti mygtukas su saugiu atstumu apačioje -->
+                <div class="pt-2 pb-8">
+                    <button id="start-exam-btn" class="w-full h-12 bg-buttonBrown hover:bg-buttonBrownHover text-white font-bold rounded-xl transition duration-300 uppercase tracking-wider text-xs shadow-lg flex items-center justify-center">
+                        ${isGuest ? 'Pradėti egzaminą (Reikalingas prisijungimas)' : 'Pradėti egzaminą (Sunaudos kreditus)'}
+                    </button>
+                </div>
+
             </div>
         `;
 
@@ -110,16 +117,15 @@ function setupHomeEvents(topics) {
     });
 
     document.getElementById('start-exam-btn')?.addEventListener('click', () => {
-        // SVEČIO PATIKRA
         if (isGuestMode()) {
             showDialog(
                 "Reikalingas prisijungimas", 
                 "Norėdami spręsti bandomuosius egzaminus ir kaupti rezultatus debesyje, prašome prisijungti prie savo paskyros.", 
                 "👤", 
                 () => {
-                    logoutUser(); // Grąžina į prisijungimo langą
+                    logoutUser();
                 },
-                () => {} // Atšaukti
+                () => {}
             );
             return;
         }
