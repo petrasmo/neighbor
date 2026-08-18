@@ -3,7 +3,41 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>HunterTest | Pasiruošimas Medžioklės Egzaminui</title>
+    
+    <!-- 1. TIKSLUS SEO PAVADINIMAS SU RAKTAŽODŽIAIS -->
+    <title>Medžiotojų testai ir medžioklės egzaminai internetu | HunterTest.lt</title>
+    
+    <!-- 2. META APRAŠYMAI GOOGLE ROBOTUI -->
+    <meta name="description" content="Pasiruoškite medžioklės egzaminui patogiai. Aktualūs medžiotojų testai, bandomieji egzaminai, medžiotojų žodynas ir žvėrių balsų atpažinimas internetu.">
+    <meta name="keywords" content="medžiotojų testai, medžioklės testai, medžiotojų egzaminai, bandomasis medžioklės egzaminas, medžiotojo bilietas, medžioklės teisė, saugus elgesys medžioklėje">
+    <meta name="author" content="HunterTest.lt">
+    <link rel="canonical" href="https://huntertest.lt/">
+
+    <!-- 3. OPEN GRAPH (SOCIALINIŲ TINKLŲ IR KORTELES KODAS) -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://huntertest.lt/">
+    <meta property="og:title" content="Medžiotojų testai ir medžioklės egzaminai internetu | HunterTest.lt">
+    <meta property="og:description" content="Aktualūs bandomieji medžiotojų testai, egzaminų klausimai, praktinis žodynas ir gyvūnų balsų atpažinimas.">
+    <meta property="og:image" content="https://huntertest.lt/logo.png">
+
+    <!-- 4. SCHEMA.ORG STRUKTŪRIZUOTI DUOMENYS GOOGLEI -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "HunterTest - Medžiotojų testai",
+      "url": "https://huntertest.lt",
+      "description": "Bandomasis medžioklės egzaminas ir pasiruošimo testai būsimiems medžiotojams internetu.",
+      "applicationCategory": "EducationalApplication",
+      "operatingSystem": "Web",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "EUR"
+      }
+    }
+    </script>
+
     <link rel="icon" type="image/png" href="logo.png">
     <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;600;700&family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
@@ -36,36 +70,36 @@
 </head>
 <body class="bg-forestBackground text-forestSecondary font-sans antialiased h-[100dvh] w-screen overflow-hidden">
 
-    <!-- A. NEPRISIJUNGUSIO (Logged Out) EKRANO TURINYS -->
+    <!-- A. NEPRISIJUNGUSIO (Logged Out) EKRANO TURINYS SU TURTINGU SEO TEKSTU -->
     <div id="logged-out-state" class="flex flex-col h-full justify-between overflow-y-auto hidden">
-        <nav class="bg-forestSurface border-b border-forestBorder py-2.5 px-6 flex justify-between items-center">
+        <nav class="bg-forestSurface border-b border-forestBorder py-2.5 px-6 flex justify-between items-center shrink-0">
             <span class="font-oswald text-xl font-bold tracking-wider text-forestPrimary">HUNTERTEST</span>
             <button id="nav-guest-btn" class="text-xs font-bold text-forestSecondary hover:text-forestPrimary transition">
                 Tęsti kaip svečias →
             </button>
         </nav>
 
-        <main class="max-w-sm w-full mx-auto px-4 py-2 my-auto space-y-3">
+        <main class="max-w-md w-full mx-auto px-4 py-6 space-y-6 my-auto">
             
-            <div class="text-center space-y-1.5">
+            <header class="text-center space-y-2">
                 <span class="bg-forestPrimary/10 text-forestPrimary border border-forestPrimary/25 text-[9px] px-2.5 py-0.5 rounded-full font-bold uppercase tracking-widest inline-block">
-                    Bandomasis medžioklės egzaminas
+                    Bandomasis medžioklės egzaminas internetu
                 </span>
                 <h1 class="text-2xl md:text-3xl font-extrabold text-white leading-tight font-oswald uppercase tracking-wider">
-                    Pasiruoškite medžioklės <br>
-                    <span class="text-forestPrimary">egzaminui patogiai</span>
+                    Medžiotojų testai ir <br>
+                    <span class="text-forestPrimary">egzaminai patogiai</span>
                 </h1>
-                <p class="text-forestSecondary text-[11px] leading-relaxed max-w-xs mx-auto">
-                    Teoriniai bandomieji testai, praktinis žodynas, gyvūnų garsai ir renginiai.
+                <p class="text-forestSecondary text-xs leading-relaxed max-w-xs mx-auto">
+                    Pasiruoškite teoriniam medžiotojo bilieto egzaminui. Spręskite testus, naudokitės žodynu ir klausykitės žvėrių garsų.
                 </p>
-            </div>
+            </header>
 
             <!-- PRISIJUNGIMO / REGISTRACIJOS KORTELĖ -->
-            <div class="bg-forestSurface border border-forestBorder p-4 md:p-5 rounded-2xl space-y-3 shadow-2xl">
+            <div class="bg-forestSurface border border-forestBorder p-5 rounded-2xl space-y-3.5 shadow-2xl">
                 
                 <!-- 1. Google mygtukas -->
-                <button id="login-google-btn" class="w-full bg-buttonBrown hover:bg-buttonBrownHover text-white font-bold h-10 rounded-xl transition duration-200 uppercase tracking-wider text-xs shadow flex items-center justify-center gap-2.5">
-                    <svg class="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24">
+                <button id="login-google-btn" class="w-full bg-buttonBrown hover:bg-buttonBrownHover text-white font-bold h-11 rounded-xl transition duration-200 uppercase tracking-wider text-xs shadow flex items-center justify-center gap-2.5">
+                    <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24">
                         <path d="M12.24 10.285V13.4h6.887c-.275 1.565-1.88 4.604-6.887 4.604-4.33 0-7.866-3.577-7.866-8s3.536-8 7.866-8c2.46 0 3.855 1.01 4.797 1.91l2.427-2.334C17.955 2.192 15.34 1 12.24 1 5.48 1 0 6.48 0 13.2s5.48 12.2 12.24 12.2c7.055 0 11.75-4.91 11.75-11.9 0-.8-.085-1.41-.195-2.215H12.24z"/>
                     </svg>
                     Prisijungti su Google
@@ -121,16 +155,36 @@
                 <!-- Svečio režimo mygtukas -->
                 <div class="pt-1.5 border-t border-forestBorder text-center">
                     <button id="guest-enter-btn" class="text-[11px] font-bold text-forestSecondary hover:text-forestPrimary transition py-0.5 flex items-center justify-center gap-1 mx-auto">
-                        <span>Išbandyti kaip svečias</span>
+                        <span>Išbandyti nemokamai kaip svečias</span>
                         <span>→</span>
                     </button>
                 </div>
 
             </div>
+
+            <!-- SEO BLOKAS: APIE MEDŽIOKLĖS TESTUS IR DUK -->
+            <article class="bg-forestSurface/60 border border-forestBorder/70 p-5 rounded-2xl space-y-4 text-left">
+                <h2 class="text-sm font-bold text-white uppercase font-oswald tracking-wider border-b border-forestBorder/60 pb-2">
+                    Apie bandomuosius medžiotojų egzaminus
+                </h2>
+                <p class="text-[11px] text-forestSecondary leading-relaxed">
+                    <strong>HunterTest.lt</strong> – tai specializuota internetinė platforma, skirta efektyviai ruoštis teoriniam medžiotojų egzaminui Lietuvoje. Mūsų <strong>medžioklės testai</strong> apima teisės aktus, saugų elgesį su ginklais, žvėrių biologiją, medžioklės technologijas bei tradicijas.
+                </p>
+
+                <div class="space-y-2 pt-1 text-[11px]">
+                    <h3 class="font-bold text-forestPrimary">🎯 Kodėl verta spręsti testus čia?</h3>
+                    <ul class="list-disc pl-4 text-forestSecondary space-y-1">
+                        <li>Aktualūs klausimai pagal galiojančius teisės aktus.</li>
+                        <li>Procento ir klaidų analizė po kiekvieno testo.</li>
+                        <li>Interaktyvus medžiotojų žodynas ir žvėrių garsai.</li>
+                    </ul>
+                </div>
+            </article>
+
         </main>
 
-        <footer class="border-t border-forestBorder py-2.5 text-center text-[10px] text-slate-600">
-            <p>&copy; 2026 HunterTest. Visos teisės saugomos.</p>
+        <footer class="border-t border-forestBorder py-3 text-center text-[10px] text-slate-500 shrink-0">
+            <p>&copy; 2026 HunterTest.lt. Visos teisės saugomos. Medžiotojų testai ir egzaminai internetu.</p>
         </footer>
     </div>
 
@@ -138,7 +192,7 @@
     <!-- B. PILNAVERTIS RESPONSITYVUS MAKETAS PRISIJUNGUS -->
     <div id="logged-in-state" class="flex flex-col md:flex-row h-full w-full hidden">
         
-        <!-- 1. MOBILI VIRŠUTINĖ JUOSTA (SU KOMPAKTIŠKU MYGTUKU DEŠINĖJE) -->
+        <!-- 1. MOBILI VIRŠUTINĖ JUOSTA -->
         <div class="md:hidden bg-forestSurface border-b border-forestBorder w-full px-4 py-2.5 flex justify-between items-center z-10 shrink-0">
             <span class="font-oswald text-xl font-bold tracking-wider text-forestPrimary">HUNTERTEST</span>
             <button class="logout-action-btn px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5">
@@ -175,7 +229,7 @@
             </div>
         </aside>
 
-        <!-- 3. PAGRINDINIS KONTEINERIS SU DIDELIU APATINIU TARPU (pb-36 TELEFONUOSE) -->
+        <!-- 3. PAGRINDINIS KONTEINERIS SU DIDELIU APATINIU TARPU -->
         <main class="flex-1 h-full overflow-y-auto px-4 md:px-6 pt-3 md:pt-4 pb-36 md:pb-12">
             <section id="view-tab-home" class="tab-view space-y-8 hidden"></section>
             <section id="view-tab-practice" class="tab-view space-y-8 hidden"></section>
@@ -183,7 +237,7 @@
             <section id="view-tab-settings" class="tab-view space-y-8 hidden"></section>
         </main>
 
-        <!-- 4. MOBILI APATINĖ JUOSTA (NEPERMATOMA, SU ŠEŠĖLIU) -->
+        <!-- 4. MOBILI APATINĖ JUOSTA -->
         <nav class="md:hidden fixed bottom-0 left-0 right-0 bg-[#2C2520] border-t border-forestBorder h-16 flex justify-around items-center z-50 shadow-[0_-4px_25px_rgba(0,0,0,0.7)]">
             <button class="nav-tab-btn flex flex-col items-center justify-center w-20 h-full text-xs" data-tab="0">
                 <span class="text-lg">🏠</span>
