@@ -20,16 +20,29 @@ export function showLoggedInUI(emailOrTitle, isGuest = false) {
         userEmailSidebar.innerText = emailOrTitle;
     }
 
-    // Pritaikome atsijungimo / prisijungimo mygtukus svečiui
-    document.querySelectorAll('.logout-action-btn').forEach(btn => {
+    // 1. Sidebar atsijungimo mygtukas (kompiuteriuose)
+    const sidebarLogoutBtn = document.querySelector('aside .logout-action-btn');
+    if (sidebarLogoutBtn) {
         if (isGuest) {
-            btn.innerText = "Prisijungti 🔑";
-            btn.className = "logout-action-btn w-full h-11 bg-forestPrimary/20 hover:bg-forestPrimary/30 text-forestPrimary border border-forestPrimary/40 rounded-xl font-bold text-xs transition";
+            sidebarLogoutBtn.innerHTML = `<span>🔑</span> <span>Prisijungti</span>`;
+            sidebarLogoutBtn.className = "logout-action-btn w-full h-11 bg-forestPrimary/15 hover:bg-forestPrimary/25 text-forestPrimary border border-forestPrimary/40 rounded-xl font-bold text-xs transition flex items-center justify-center gap-2";
         } else {
-            btn.innerText = "Atsijungti";
-            btn.className = "logout-action-btn w-full h-11 bg-red-950/40 hover:bg-red-900/40 text-red-400 border border-red-900/50 rounded-xl font-bold text-xs transition";
+            sidebarLogoutBtn.innerHTML = `<span>🚪</span> <span>Atsijungti</span>`;
+            sidebarLogoutBtn.className = "logout-action-btn w-full h-11 bg-forestBackground hover:bg-red-950/30 text-slate-400 hover:text-red-400 border border-forestBorder hover:border-red-900/40 rounded-xl font-bold text-xs transition flex items-center justify-center gap-2";
         }
-    });
+    }
+
+    // 2. Mobilus viršutinės juostos mygtukas (elegantiškas telefone)
+    const mobileLogoutBtn = document.querySelector('.md\\:hidden .logout-action-btn');
+    if (mobileLogoutBtn) {
+        if (isGuest) {
+            mobileLogoutBtn.innerHTML = `<span>🔑</span> <span>Prisijungti</span>`;
+            mobileLogoutBtn.className = "logout-action-btn px-3 py-1.5 rounded-xl text-xs font-bold bg-forestPrimary/15 text-forestPrimary border border-forestPrimary/40 flex items-center gap-1.5 transition";
+        } else {
+            mobileLogoutBtn.innerHTML = `<span>🚪</span> <span>Atsijungti</span>`;
+            mobileLogoutBtn.className = "logout-action-btn px-3 py-1.5 rounded-xl text-xs font-bold bg-forestBackground hover:bg-slate-800 text-slate-300 hover:text-red-400 border border-forestBorder flex items-center gap-1.5 transition";
+        }
+    }
 }
 
 export function showLoggedOutUI() {
