@@ -5,8 +5,10 @@ import { renderCalendarScreen } from './calendar.js';
 import { renderSoundQuizScreen } from './soundQuiz.js';
 import { renderSeasonsScreen } from './seasons.js';
 import { renderTrophyScreen } from './trophy.js';
+import { renderHuntingGroundsScreen } from './huntingGrounds.js';
+import { renderWeatherScreen } from './weather.js';
 
-let activeSubScreen = null; // null, 'zodynas', 'garsai', 'kalendorius', 'terminai', 'trofejai'
+let activeSubScreen = null; // null, 'zodynas', 'garsai', 'kalendorius', 'terminai', 'trofejai', 'plotai', 'orai'
 
 export function renderPracticeScreen() {
     const container = document.getElementById('view-tab-practice');
@@ -22,6 +24,10 @@ export function renderPracticeScreen() {
         renderSeasonsScreen(container, () => { activeSubScreen = null; renderPracticeScreen(); });
     } else if (activeSubScreen === 'trofejai') {
         renderTrophyScreen(container, () => { activeSubScreen = null; renderPracticeScreen(); });
+    } else if (activeSubScreen === 'plotai') {
+        renderHuntingGroundsScreen(container, () => { activeSubScreen = null; renderPracticeScreen(); });
+    } else if (activeSubScreen === 'orai') {
+        renderWeatherScreen(container, () => { activeSubScreen = null; renderPracticeScreen(); });
     } else {
         renderPracticeHub(container, (screen) => {
             activeSubScreen = screen;

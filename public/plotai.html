@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="lt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Renginių kalendorius 2026 | HunterTest.lt</title>
+    <meta name="description" content="Medžioklės renginiai, teorijos ir šaudymo egzaminai, trofėjų parodos bei šunų lauko bandymai 2026 m.">
+    <link rel="canonical" href="https://huntertest.lt/renginiai.html">
+
+    <!-- Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-CNXX464ZS9"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-CNXX464ZS9');
+    </script>
+
+    <link rel="icon" type="image/png" href="logo.png">
+    <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;600;700&family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        forestBackground: '#0E110E',
+                        forestPrimary: '#4CAF50',
+                        forestSurface: '#2C2520',
+                        forestSecondary: '#CBD5E1',
+                        forestBorder: '#475569',
+                        buttonBrown: '#6D4C41',
+                        buttonBrownHover: '#8D6E63'
+                    },
+                    fontFamily: {
+                        oswald: ['Oswald', 'sans-serif'],
+                        sans: ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .scrollbar-none::-webkit-scrollbar { display: none; }
+        .scrollbar-none { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body class="bg-forestBackground text-forestSecondary font-sans antialiased min-h-screen flex flex-col justify-between">
+
+    <!-- 1. BENDRA VIRŠUTINĖ NAVIGACIJOS JUOSTA -->
+    <div id="global-navbar"></div>
+	<script src="/js/navbar.js"></script>
+
+    <!-- 2. RENGINIŲ TURINYS -->
+    <main class="max-w-4xl w-full mx-auto p-4 md:p-6 space-y-4 flex-1">
+        
+        <!-- Kalendoriaus antraštė su atgal mygtuku -->
+        <div class="flex items-center gap-3 border-b border-forestBorder pb-3">
+            <a href="/" class="w-9 h-9 rounded-xl bg-forestSurface border border-forestBorder hover:border-forestPrimary flex items-center justify-center text-white text-sm transition" title="Grįžti į pradžią">
+                ←
+            </a>
+            <div>
+                <h1 class="text-xl md:text-2xl font-bold font-oswald text-white uppercase tracking-wider">Renginių kalendorius</h1>
+                <p id="events-count" class="text-[11px] text-forestSecondary">Būsimi renginiai ir egzaminai</p>
+            </div>
+        </div>
+
+        <!-- Paieškos laukas -->
+        <div class="relative">
+            <input id="events-search-input" type="text" placeholder="Ieškoti renginio, vietos..." 
+                class="w-full h-11 bg-forestSurface border border-forestBorder focus:border-forestPrimary rounded-xl px-4 pl-10 pr-10 text-xs text-white placeholder-slate-500 focus:outline-none transition">
+            <span class="absolute left-3.5 top-3.5 text-xs text-slate-500">🔍</span>
+            <button id="clear-events-search" class="absolute right-3.5 top-3 text-xs text-slate-400 hover:text-white hidden">✕</button>
+        </div>
+
+        <!-- Kategorijų filtrai -->
+        <div id="event-categories" class="flex flex-wrap gap-2 pt-1"></div>
+
+        <!-- Sąrašas -->
+        <div id="events-list" class="space-y-3 pt-1">
+            <div class="text-center py-10 text-slate-500 text-xs">Kraunamas kalendorius...</div>
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="border-t border-forestBorder/50 py-4 text-center text-[10px] text-slate-600 max-w-4xl mx-auto w-full px-4">
+        <p>&copy; 2026 HunterTest.lt • <a href="/" class="hover:text-forestPrimary">Bandomasis medžioklės egzaminas</a></p>
+    </footer>
+
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyAZVU_0JeYxOZ99hLz9bsj8fD8wK05hC4c",
+            authDomain: "huntertest-c1924.firebaseapp.com",
+            projectId: "huntertest-c1924",
+            storageBucket: "huntertest-c1924.firebasestorage.app",
+            messagingSenderId: "302105416363",
+            appId: "1:382105416363:web:77783e569d7b8a6ff11dee"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        let allEvents = [];
+        let activeEventCategory = "Visi";
+        let eventSearchQuery = "";
+        let expandedEventIds = new Set();
+
+        function formatGoogleDate(d) {
+            return d.toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "");
+        }
+
+        async function loadEvents() {
+            const nowSec = Math.floor(Date.now() / 1000);
+            try {
+                const snapshot = await db.collection("events").orderBy("dateTimestamp", "asc").get();
+                let events = [];
+                snapshot.forEach(doc => events.push({ id: doc.id, ...doc.data() }));
+                
+                allEvents = events.filter(e => (e.dateTimestamp || 0) >= nowSec);
+                renderEventCategories();
+                filterAndRenderEvents();
+            } catch (e) {
+                console.error("Klaida:", e);
+            }
+        }
+
+        function renderEventCategories() {
+            const categories = ["Visi", ...Array.from(new Set(allEvents.map(e => e.category).filter(Boolean)))];
+            const container = document.getElementById('event-categories');
+            
+            container.innerHTML = categories.map(cat => {
+                const isSelected = activeEventCategory === cat;
+                const btnClass = isSelected 
+                    ? 'bg-forestPrimary text-white border-forestPrimary shadow-md' 
+                    : 'bg-forestSurface text-forestSecondary border-forestBorder hover:border-forestPrimary';
+                return `<button class="ev-cat-btn px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition border ${btnClass}" data-cat="${cat}">${cat}</button>`;
+            }).join('');
+
+            document.querySelectorAll('.ev-cat-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    activeEventCategory = btn.getAttribute('data-cat');
+                    renderEventCategories();
+                    filterAndRenderEvents();
+                });
+            });
+        }
+
+        function filterAndRenderEvents() {
+            const filtered = allEvents.filter(ev => {
+                const matchesCat = activeEventCategory === "Visi" || ev.category === activeEventCategory;
+                const matchesSearch = eventSearchQuery === "" ||
+                    (ev.title && ev.title.toLowerCase().includes(eventSearchQuery)) ||
+                    (ev.location && ev.location.toLowerCase().includes(eventSearchQuery)) ||
+                    (ev.description && ev.description.toLowerCase().includes(eventSearchQuery));
+                return matchesCat && matchesSearch;
+            });
+
+            const container = document.getElementById('events-list');
+            if (filtered.length === 0) {
+                container.innerHTML = `<div class="bg-forestSurface border border-forestBorder p-8 rounded-2xl text-center text-xs text-forestSecondary">Būsimų renginių pagal užklausą nerasta.</div>`;
+                return;
+            }
+
+            container.innerHTML = filtered.map(event => {
+                const isExpanded = expandedEventIds.has(event.id);
+                const dateParts = (event.dateReadable || "").split(" ");
+                const yearText = dateParts[0] || "";
+                const monthText = (dateParts[2] || "").substring(0, 3).toUpperCase();
+                const dayText = dateParts[3] || "";
+
+                let expandedSection = "";
+                if (isExpanded) {
+                    const navBtn = (event.latitude && event.longitude) 
+                        ? `<button class="nav-maps-btn flex-1 h-10 bg-forestBackground hover:bg-slate-800 border border-forestPrimary text-forestPrimary rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition" data-lat="${event.latitude}" data-lon="${event.longitude}"><span>🧭</span> <span>Naviguoti</span></button>` 
+                        : "";
+
+                    expandedSection = `
+                        <div class="mt-4 pt-3 border-t border-forestBorder space-y-4 text-xs leading-relaxed">
+                            <p class="text-forestSecondary">${event.description || 'Išsamesnio aprašymo nėra.'}</p>
+                            <div class="flex flex-col sm:flex-row gap-2 pt-1">
+                                ${navBtn}
+                                <button class="add-cal-btn flex-1 h-10 bg-buttonBrown hover:bg-buttonBrownHover text-white rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition"
+                                    data-title="${encodeURIComponent(event.title || '')}" 
+                                    data-desc="${encodeURIComponent(event.description || '')}" 
+                                    data-loc="${encodeURIComponent(event.location || '')}"
+                                    data-time="${event.dateTimestamp || 0}">
+                                    <span>📅</span> <span>Įrašyti į kalendorių</span>
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                }
+
+                return `
+                    <div class="event-card bg-forestSurface border border-forestBorder hover:border-forestPrimary/60 rounded-2xl p-4 transition duration-200 cursor-pointer" data-id="${event.id}">
+                        <div class="flex items-center gap-4">
+                            <div class="w-14 h-16 bg-forestBackground border border-forestBorder rounded-xl flex flex-col items-center justify-center shrink-0">
+                                <span class="text-lg font-black text-forestPrimary leading-tight font-oswald">${dayText || "—"}</span>
+                                <span class="text-[10px] font-bold text-forestSecondary uppercase">${monthText}</span>
+                                <span class="text-[9px] font-bold text-forestPrimary/80">${yearText}</span>
+                            </div>
+                            <div class="flex-1 space-y-1">
+                                <h2 class="text-sm md:text-base font-bold text-white font-oswald uppercase tracking-tight">
+                                    ${event.title || 'Medžioklės renginys'}
+                                </h2>
+                                <p class="text-xs text-forestSecondary flex items-center gap-1">
+                                    <span>📍</span> <span>${event.location || 'Lietuva'}</span>
+                                </p>
+                            </div>
+                        </div>
+                        ${expandedSection}
+                    </div>
+                `;
+            }).join('');
+
+            document.querySelectorAll('.event-card').forEach(card => {
+                card.addEventListener('click', (e) => {
+                    if (e.target.closest('button')) return;
+                    const id = card.getAttribute('data-id');
+                    if (expandedEventIds.has(id)) {
+                        expandedEventIds.delete(id);
+                    } else {
+                        expandedEventIds.add(id);
+                    }
+                    filterAndRenderEvents();
+                });
+            });
+
+            document.querySelectorAll('.nav-maps-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const lat = btn.getAttribute('data-lat');
+                    const lon = btn.getAttribute('data-lon');
+                    window.open(`https://www.google.com/maps/search/?api=1&query=${lat},${lon}`, '_blank');
+                });
+            });
+
+            document.querySelectorAll('.add-cal-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const title = btn.getAttribute('data-title');
+                    const desc = btn.getAttribute('data-desc');
+                    const loc = btn.getAttribute('data-loc');
+                    const timeSeconds = parseInt(btn.getAttribute('data-time') || "0");
+
+                    const startDate = new Date(timeSeconds * 1000);
+                    const endDate = new Date((timeSeconds + 7200) * 1000);
+
+                    const gCalUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&details=${desc}&location=${loc}&dates=${formatGoogleDate(startDate)}/${formatGoogleDate(endDate)}`;
+                    window.open(gCalUrl, '_blank');
+                });
+            });
+        }
+
+        const evSearch = document.getElementById('events-search-input');
+        const evClear = document.getElementById('clear-events-search');
+
+        evSearch.addEventListener('input', (e) => {
+            eventSearchQuery = e.target.value.toLowerCase().trim();
+            evClear.classList.toggle('hidden', eventSearchQuery === "");
+            filterAndRenderEvents();
+        });
+
+        evClear.addEventListener('click', () => {
+            evSearch.value = "";
+            eventSearchQuery = "";
+            evClear.classList.add('hidden');
+            filterAndRenderEvents();
+        });
+
+        loadEvents();
+    </script>
+</body>
+</html>

@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="lt">
+<head>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-VL3LERY03T"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-VL3LERY03T');
+    </script>
+    
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Medžiotojo orai ir vėjas bokšteliui | HunterTest.lt</title>
+    <meta name="description" content="Tiksli vėjo kryptis, kvapo sklidimo analizė, Mėnulio fazės ir šviesos laikas medžioklei.">
+    <link rel="canonical" href="https://huntertest.lt/orai.html">
+
+    <link rel="icon" type="image/png" href="logo.png">
+    <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;600;700&family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        forestBackground: '#0E110E',
+                        forestPrimary: '#4CAF50',
+                        forestSurface: '#2C2520',
+                        forestSecondary: '#CBD5E1',
+                        forestBorder: '#475569',
+                        buttonBrown: '#6D4C41',
+                        buttonBrownHover: '#8D6E63'
+                    },
+                    fontFamily: {
+                        oswald: ['Oswald', 'sans-serif'],
+                        sans: ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-forestBackground text-forestSecondary font-sans antialiased min-h-screen flex flex-col justify-between">
+
+    <!-- 1. BENDRAS MENIU -->
+    <div id="global-navbar"></div>
+    <script src="/js/navbar.js"></script>
+
+    <!-- 2. ORŲ KONTEINERIS -->
+    <main class="max-w-5xl w-full mx-auto p-3 sm:p-6 space-y-4 flex-1" id="weather-page-container">
+        <div class="text-center py-12 text-slate-500 text-xs">Kraunami medžiotojo orai...</div>
+    </main>
+
+    <footer class="border-t border-forestBorder/50 py-4 text-center text-[10px] text-slate-600 max-w-5xl mx-auto w-full px-4">
+        <p>&copy; 2026 HunterTest.lt • <a href="/" class="hover:text-forestPrimary">Bandomasis medžioklės egzaminas</a></p>
+    </footer>
+
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+
+    <script type="module">
+        import { renderWeatherScreen } from '/js/weather.js';
+        import { auth, db } from '/js/firebase.js';
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const spotId = urlParams.get('spot');
+
+        auth.onAuthStateChanged(async (user) => {
+            let initialSpot = null;
+            if (user && spotId) {
+                try {
+                    const doc = await db.collection("users").doc(user.uid).collection("hunting_spots").doc(spotId).get();
+                    if (doc.exists) {
+                        initialSpot = { id: doc.id, ...doc.data() };
+                    }
+                } catch (e) {}
+            }
+
+            const container = document.getElementById('weather-page-container');
+            renderWeatherScreen(container, () => {
+                window.location.href = '/';
+            }, initialSpot);
+        });
+    </script>
+</body>
+</html>

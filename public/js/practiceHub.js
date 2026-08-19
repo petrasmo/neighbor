@@ -6,12 +6,56 @@ export function renderPracticeHub(container, onNavigate) {
             
             <div class="space-y-1 border-b border-forestBorder pb-4">
                 <h2 class="text-2xl font-bold font-oswald text-white uppercase tracking-wider">Praktiniai Įrankiai</h2>
-                <p class="text-forestSecondary text-xs">Priemonės žinioms gilinti, egzaminams ir laimikių vertinimui.</p>
+                <p class="text-forestSecondary text-xs">Priemonės medžioklei, plotų valdymui, egzaminams ir laimikių vertinimui.</p>
             </div>
 
             <div class="grid md:grid-cols-2 gap-4 pt-2">
                 
-                <!-- 1 KORTELĖ: Trofėjų skaičiuoklė -->
+                <!-- 1 KORTELĖ: Mano medžioklės plotai -->
+                <div id="btn-hub-plotai" class="bg-forestSurface border-2 border-forestPrimary/50 hover:border-forestPrimary p-5 rounded-2xl cursor-pointer transition duration-300 group shadow-lg flex flex-col justify-between md:col-span-2">
+                    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                        <div class="flex items-center gap-4">
+                            <div class="w-14 h-14 rounded-2xl bg-forestBackground border border-forestBorder flex items-center justify-center text-3xl group-hover:scale-105 transition shrink-0">
+                                🗺️
+                            </div>
+                            <div class="space-y-1">
+                                <span class="bg-forestPrimary/20 text-forestPrimary text-[10px] px-2.5 py-0.5 rounded-full font-bold uppercase tracking-wider">Privatu & Saugoma</span>
+                                <h3 class="text-lg font-bold font-oswald text-white uppercase tracking-wide group-hover:text-forestPrimary transition">
+                                    Mano medžioklės plotai ir bokšteliai
+                                </h3>
+                                <p class="text-xs text-forestSecondary leading-relaxed">
+                                    Palydovinis žemėlapis: žymėkite savo bokštelius, šėryklas bei miško kameras su GPS koordinatėmis.
+                                </p>
+                            </div>
+                        </div>
+                        <button class="h-10 px-5 bg-forestPrimary hover:bg-green-600 text-white font-bold rounded-xl text-xs uppercase tracking-wider transition shrink-0 flex items-center gap-1.5 shadow">
+                            <span>Atidaryti žemėlapį</span> <span>→</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 2 KORTELĖ: Medžiotojo orai ir vėjas bokšteliui -->
+                <div id="btn-hub-orai" class="bg-forestSurface border border-forestBorder hover:border-forestPrimary p-5 rounded-2xl cursor-pointer transition duration-300 group shadow-lg flex flex-col justify-between">
+                    <div class="space-y-3">
+                        <div class="w-12 h-12 rounded-xl bg-forestBackground border border-forestBorder flex items-center justify-center text-2xl group-hover:scale-105 transition shrink-0">
+                            💨
+                        </div>
+                        <div class="space-y-1">
+                            <h3 class="text-base font-bold font-oswald text-white uppercase tracking-wide group-hover:text-forestPrimary transition">
+                                Orai ir vėjas bokšteliui
+                            </h3>
+                            <p class="text-[11px] text-forestSecondary leading-relaxed">
+                                Vėjo kompasas, kvapo sklidimo kryptis, Mėnulio fazės bei saulėlydžio laikai prie jūsų bokštelio.
+                            </p>
+                        </div>
+                    </div>
+                    <div class="pt-4 flex justify-between items-center text-[11px] font-bold text-forestPrimary">
+                        <span>Tikrinti vėją</span>
+                        <span class="text-base group-hover:translate-x-1 transition">→</span>
+                    </div>
+                </div>
+
+                <!-- 3 KORTELĖ: Trofėjų skaičiuoklė -->
                 <div id="btn-hub-trofejai" class="bg-forestSurface border border-forestBorder hover:border-forestPrimary p-5 rounded-2xl cursor-pointer transition duration-300 group shadow-lg flex flex-col justify-between">
                     <div class="space-y-3">
                         <div class="w-12 h-12 rounded-xl bg-forestBackground border border-forestBorder flex items-center justify-center text-2xl group-hover:scale-105 transition shrink-0">
@@ -32,7 +76,7 @@ export function renderPracticeHub(container, onNavigate) {
                     </div>
                 </div>
 
-                <!-- 2 KORTELĖ: Medžioklės terminai -->
+                <!-- 4 KORTELĖ: Medžioklės terminai -->
                 <div id="btn-hub-terminai" class="bg-forestSurface border border-forestBorder hover:border-forestPrimary p-5 rounded-2xl cursor-pointer transition duration-300 group shadow-lg flex flex-col justify-between">
                     <div class="space-y-3">
                         <div class="w-12 h-12 rounded-xl bg-forestBackground border border-forestBorder flex items-center justify-center text-2xl group-hover:scale-105 transition shrink-0">
@@ -43,7 +87,7 @@ export function renderPracticeHub(container, onNavigate) {
                                 Ką dabar galima medžioti?
                             </h3>
                             <p class="text-[11px] text-forestSecondary leading-relaxed">
-                                Interaktyvus medžioklės ir žūklės terminų kalendorius, leistini būdai ir dienų skaitiklis.
+                                Interaktyvus medžioklės ir žūklės terminų kalendorius bei dienų skaitiklis.
                             </p>
                         </div>
                     </div>
@@ -53,7 +97,7 @@ export function renderPracticeHub(container, onNavigate) {
                     </div>
                 </div>
 
-                <!-- 3 KORTELĖ: Medžiotojų žodynas -->
+                <!-- 5 KORTELĖ: Medžiotojų žodynas -->
                 <div id="btn-hub-zodynas" class="bg-forestSurface border border-forestBorder hover:border-forestPrimary p-5 rounded-2xl cursor-pointer transition duration-300 group shadow-lg flex flex-col justify-between">
                     <div class="space-y-3">
                         <div class="w-12 h-12 rounded-xl bg-forestBackground border border-forestBorder flex items-center justify-center text-2xl group-hover:scale-105 transition shrink-0">
@@ -74,7 +118,7 @@ export function renderPracticeHub(container, onNavigate) {
                     </div>
                 </div>
 
-                <!-- 4 KORTELĖ: Gyvūnų garsai -->
+                <!-- 6 KORTELĖ: Gyvūnų garsai -->
                 <div id="btn-hub-garsai" class="bg-forestSurface border border-forestBorder hover:border-forestPrimary p-5 rounded-2xl cursor-pointer transition duration-300 group shadow-lg flex flex-col justify-between">
                     <div class="space-y-3">
                         <div class="w-12 h-12 rounded-xl bg-forestBackground border border-forestBorder flex items-center justify-center text-2xl group-hover:scale-105 transition shrink-0">
@@ -100,6 +144,8 @@ export function renderPracticeHub(container, onNavigate) {
         </div>
     `;
 
+    document.getElementById('btn-hub-plotai')?.addEventListener('click', () => onNavigate('plotai'));
+    document.getElementById('btn-hub-orai')?.addEventListener('click', () => onNavigate('orai'));
     document.getElementById('btn-hub-trofejai')?.addEventListener('click', () => onNavigate('trofejai'));
     document.getElementById('btn-hub-terminai')?.addEventListener('click', () => onNavigate('terminai'));
     document.getElementById('btn-hub-zodynas')?.addEventListener('click', () => onNavigate('zodynas'));
