@@ -1,0 +1,407 @@
+[
+  {
+    "id": "stirninas",
+    "name": "Stirnino ragai",
+    "icon": "🦌",
+    "category": "Kanopiniai žvėrys",
+    "description": "Vertinama pagal stiebų ilgį, sausų ragų masę, skleistuvą ir kokybės balus.",
+    "medals": {
+      "bronze": 105.0,
+      "silver": 115.0,
+      "gold": 130.0
+    },
+    "fields": [
+      {
+        "id": "length_left",
+        "label": "Kairiojo rago stiebo ilgis (cm)",
+        "hint": "Matuojama išorine kreive nuo rožės apatinio krašto iki aukščiausios viršūnės.",
+        "type": "number",
+        "step": 0.1,
+        "default": 24.5
+      },
+      {
+        "id": "length_right",
+        "label": "Dešiniojo rago stiebo ilgis (cm)",
+        "hint": "Matuojama išorine kreive nuo rožės apatinio krašto iki viršūnės.",
+        "type": "number",
+        "step": 0.1,
+        "default": 24.5
+      },
+      {
+        "id": "weight_raw",
+        "label": "Sausų ragų masė (g)",
+        "hint": "Sveriama praėjus bent 3 mėn. po paruošimo.",
+        "type": "number",
+        "step": 1,
+        "default": 450
+      },
+      {
+        "id": "skull_type",
+        "label": "Kaukolės tipas (svorio atskaitai)",
+        "type": "select",
+        "options": [
+          { "value": "full", "label": "Visa kaukolė su viršutiniu žandikauliu (-90g)", "deduct": 90 },
+          { "value": "cut", "label": "Nukirsta kaukolė per akiduobes (-65g)", "deduct": 65 },
+          { "value": "none", "label": "Tik ragai be kaukolės (0g)", "deduct": 0 }
+        ],
+        "default": "full"
+      },
+      {
+        "id": "span",
+        "label": "Vidinė ragų skleistuva (cm)",
+        "hint": "Didžiausias atstumas tarp pagrindinių stiebų vidinių pusių.",
+        "type": "number",
+        "step": 0.1,
+        "default": 11.5
+      },
+      {
+        "id": "beauty_color",
+        "label": "Spalva (0–4 balai)",
+        "hint": "0 - balti/šviesūs, 2 - vidutiniškai rudi, 4 - tamsiai rudi/juodi.",
+        "type": "range",
+        "min": 0,
+        "max": 4,
+        "step": 0.5,
+        "default": 3
+      },
+      {
+        "id": "beauty_pearls",
+        "label": "Perliškumas (0–4 balai)",
+        "hint": "0 - lygūs, 2 - vidutiniškai perlėti, 4 - gausūs, aštrūs perlai.",
+        "type": "range",
+        "min": 0,
+        "max": 4,
+        "step": 0.5,
+        "default": 3
+      },
+      {
+        "id": "beauty_coronets",
+        "label": "Rožės (0–4 balai)",
+        "hint": "0 - siauros/lygios, 2 - vidutinės, 4 - plačios, aukštos ir dantytos.",
+        "type": "range",
+        "min": 0,
+        "max": 4,
+        "step": 0.5,
+        "default": 3
+      },
+      {
+        "id": "beauty_tips",
+        "label": "Atšakų viršūnės (0–2 balai)",
+        "hint": "0 - bukos/tamsios, 2 - aštrios, šviesios/balintos viršūnėlės.",
+        "type": "range",
+        "min": 0,
+        "max": 2,
+        "step": 0.5,
+        "default": 1.5
+      },
+      {
+        "id": "penalties",
+        "label": "Baudos taškai (defektai, asimetrija)",
+        "hint": "Skiriama už rago deformacijas ar neproporcingumą (0 iki -5).",
+        "type": "range",
+        "min": 0,
+        "max": 5,
+        "step": 0.5,
+        "default": 0
+      }
+    ]
+  },
+  {
+    "id": "elnias",
+    "name": "Tauriojo elnio ragai",
+    "icon": "👑",
+    "category": "Kanopiniai žvėrys",
+    "description": "Vertinami stiebai, atšakos, rožės, apimtys, masė ir karūnos.",
+    "medals": {
+      "bronze": 170.0,
+      "silver": 190.0,
+      "gold": 210.0
+    },
+    "fields": [
+      {
+        "id": "avg_length",
+        "label": "Vidutinis stiebų ilgis (cm)",
+        "hint": "Abiejų stiebų ilgių vidurkis išorine kreive.",
+        "type": "number",
+        "step": 0.5,
+        "default": 95
+      },
+      {
+        "id": "avg_brow",
+        "label": "Akių atšakų vidutinis ilgis (cm)",
+        "hint": "Pirmųjų (apatinių) atšakų ilgis.",
+        "type": "number",
+        "step": 0.5,
+        "default": 34
+      },
+      {
+        "id": "avg_trez",
+        "label": "Vidurinių atšakų vidutinis ilgis (cm)",
+        "hint": "Vidurinių (trečiųjų) atšakų ilgis.",
+        "type": "number",
+        "step": 0.5,
+        "default": 30
+      },
+      {
+        "id": "avg_coronets",
+        "label": "Rožių vidutinė apimtis (cm)",
+        "hint": "Išmatuojama rožės apimtis centimetrais.",
+        "type": "number",
+        "step": 0.5,
+        "default": 24
+      },
+      {
+        "id": "avg_circ_lower",
+        "label": "Stiebų apimtis tarp akių ir vidurinių (cm)",
+        "hint": "Mažiausia apimtis žemiau vidurinės atšakos.",
+        "type": "number",
+        "step": 0.5,
+        "default": 15
+      },
+      {
+        "id": "avg_circ_upper",
+        "label": "Stiebų apimtis virš vidurinių atšakų (cm)",
+        "hint": "Mažiausia apimtis virš vidurinės atšakos.",
+        "type": "number",
+        "step": 0.5,
+        "default": 14
+      },
+      {
+        "id": "weight_kg",
+        "label": "Sausų ragų masė (kg)",
+        "hint": "Ragų su kaukole masė kilogramais (atskaitoma 0.7kg).",
+        "type": "number",
+        "step": 0.1,
+        "default": 6.8
+      },
+      {
+        "id": "tine_count",
+        "label": "Visų atšakų skaičius (vnt.)",
+        "hint": "Visos atšakos, ilgesnės nei 2 cm.",
+        "type": "number",
+        "step": 1,
+        "default": 14
+      },
+      {
+        "id": "span_cm",
+        "label": "Vidinė skleistuva (cm)",
+        "hint": "Didžiausias vidinis atstumas tarp stiebų.",
+        "type": "number",
+        "step": 0.5,
+        "default": 75
+      },
+      {
+        "id": "beauty_points",
+        "label": "Karūnos ir grožio balai (0–15)",
+        "hint": "Spalva, perlai, karūnos išsivystymas.",
+        "type": "range",
+        "min": 0,
+        "max": 15,
+        "step": 0.5,
+        "default": 9
+      },
+      {
+        "id": "penalties",
+        "label": "Baudos taškai (asimetrija)",
+        "type": "range",
+        "min": 0,
+        "max": 3,
+        "step": 0.5,
+        "default": 0
+      }
+    ]
+  },
+  {
+    "id": "sernas",
+    "name": "Šerno iltys",
+    "icon": "🐗",
+    "category": "Plėšrūnai ir kiti",
+    "description": "Vertinamas apatinių ilčių ilgis ir plotis bei viršutinių ilčių apimtis.",
+    "medals": {
+      "bronze": 110.0,
+      "silver": 115.0,
+      "gold": 120.0
+    },
+    "fields": [
+      {
+        "id": "lower_len_left",
+        "label": "Kairiosios apatinės ilties ilgis (cm)",
+        "hint": "Išorine kreive nuo šaknies iki viršūnės.",
+        "type": "number",
+        "step": 0.1,
+        "default": 21.0
+      },
+      {
+        "id": "lower_len_right",
+        "label": "Dešiniosios apatinės ilties ilgis (cm)",
+        "hint": "Išorine kreive nuo šaknies iki viršūnės.",
+        "type": "number",
+        "step": 0.1,
+        "default": 21.0
+      },
+      {
+        "id": "lower_width_left",
+        "label": "Kairiosios apatinės ilties plotis (mm)",
+        "hint": "Plačiausioje vietoje slankmačiu (milimetrais).",
+        "type": "number",
+        "step": 0.1,
+        "default": 24.5
+      },
+      {
+        "id": "lower_width_right",
+        "label": "Dešiniosios apatinės ilties plotis (mm)",
+        "hint": "Plačiausioje vietoje slankmačiu (milimetrais).",
+        "type": "number",
+        "step": 0.1,
+        "default": 24.5
+      },
+      {
+        "id": "upper_circ_left",
+        "label": "Kairiosios viršutinės ilties apimtis (cm)",
+        "hint": "Didžiausia viršutinės ilties apimtis.",
+        "type": "number",
+        "step": 0.1,
+        "default": 7.2
+      },
+      {
+        "id": "upper_circ_right",
+        "label": "Dešiniosios viršutinės ilties apimtis (cm)",
+        "hint": "Didžiausia viršutinės ilties apimtis.",
+        "type": "number",
+        "step": 0.1,
+        "default": 7.2
+      },
+      {
+        "id": "beauty_points",
+        "label": "Grožio balai (0–5 balai)",
+        "hint": "Tamsus emalis, taisyklingas užlenkimas, lygus nusidėvėjimas.",
+        "type": "range",
+        "min": 0,
+        "max": 5,
+        "step": 0.5,
+        "default": 3.0
+      },
+      {
+        "id": "penalties",
+        "label": "Baudos taškai (įskilimai, asimetrija)",
+        "type": "range",
+        "min": 0,
+        "max": 5,
+        "step": 0.5,
+        "default": 0
+      }
+    ]
+  },
+  {
+    "id": "briedis",
+    "name": "Briedžio ragai",
+    "icon": "🫎",
+    "category": "Kanopiniai žvėrys",
+    "description": "Vertinami mentiniai arba šakiniai briedžio ragai pagal CIC standartą.",
+    "medals": {
+      "bronze": 250.0,
+      "silver": 275.0,
+      "gold": 300.0
+    },
+    "fields": [
+      {
+        "id": "antler_type",
+        "label": "Ragų tipas",
+        "type": "select",
+        "options": [
+          { "value": "palmated", "label": "Mentiniai ragai" },
+          { "value": "cervine", "label": "Šakiniai ragai" }
+        ],
+        "default": "palmated"
+      },
+      {
+        "id": "avg_length",
+        "label": "Stiebų vidutinis ilgis (cm)",
+        "hint": "Išilgai mentės arba stiebo.",
+        "type": "number",
+        "step": 0.5,
+        "default": 90
+      },
+      {
+        "id": "palm_width",
+        "label": "Menčių vidutinis plotis (cm)",
+        "hint": "Mentinio rago plačiausioje vietoje (šakiniams įrašyti 0).",
+        "type": "number",
+        "step": 0.5,
+        "default": 28
+      },
+      {
+        "id": "span_cm",
+        "label": "Didžiausia ragų skleistuva (cm)",
+        "hint": "Didžiausias atstumas tarp išorinių ragų taškų.",
+        "type": "number",
+        "step": 0.5,
+        "default": 105
+      },
+      {
+        "id": "tine_count",
+        "label": "Atšakų skaičius (iš viso)",
+        "hint": "Abiejų ragų atšakos, ilgesnės nei 2 cm.",
+        "type": "number",
+        "step": 1,
+        "default": 14
+      },
+      {
+        "id": "weight_kg",
+        "label": "Sausų ragų masė (kg)",
+        "type": "number",
+        "step": 0.1,
+        "default": 9.5
+      },
+      {
+        "id": "beauty_points",
+        "label": "Grožio balai (0–10)",
+        "type": "range",
+        "min": 0,
+        "max": 10,
+        "step": 0.5,
+        "default": 5
+      }
+    ]
+  },
+  {
+    "id": "kaukole",
+    "name": "Plėšrūnų kaukolė (Vilkas / Barsukas)",
+    "icon": "🐺",
+    "category": "Plėšrūnai ir kiti",
+    "description": "Vertinamas kaukolės ilgis ir plotis milimetrais pagal CIC standartą.",
+    "medals": {
+      "bronze": 41.0,
+      "silver": 42.0,
+      "gold": 43.0
+    },
+    "fields": [
+      {
+        "id": "animal_type",
+        "label": "Žvėries rūšis",
+        "type": "select",
+        "options": [
+          { "value": "wolf", "label": "Vilko kaukolė (Auksas: 43.0+)" },
+          { "value": "badger", "label": "Barsuko kaukolė (Auksas: 23.0+)" }
+        ],
+        "default": "wolf"
+      },
+      {
+        "id": "skull_length",
+        "label": "Kaukolės ilgis (cm)",
+        "hint": "Matuojama slankmačiu tarp labiausiai atsikišusių taškų išilgai.",
+        "type": "number",
+        "step": 0.05,
+        "default": 26.8
+      },
+      {
+        "id": "skull_width",
+        "label": "Kaukolės plotis (cm)",
+        "hint": "Matuojama slankmačiu plačiausioje vietoje (skruostikaulių lankuose).",
+        "type": "number",
+        "step": 0.05,
+        "default": 15.6
+      }
+    ]
+  }
+]

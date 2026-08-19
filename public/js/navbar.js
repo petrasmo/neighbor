@@ -8,6 +8,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const navItems = [
         { name: "Terminai", icon: "🦌", url: "/kalendorius.html" },
+        { name: "Trofėjai", icon: "🏆", url: "/trofejai.html" },
         { name: "Žodynas", icon: "📖", url: "/zodynas.html" },
         { name: "Renginiai", icon: "📅", url: "/renginiai.html" }
     ];
@@ -19,7 +20,7 @@ document.addEventListener("DOMContentLoaded", () => {
             : "bg-forestBackground/90 text-forestSecondary hover:text-white border-forestBorder/70 hover:border-forestPrimary";
 
         return `
-            <a href="${item.url}" class="text-xs font-bold ${activeClass} border py-1.5 px-2.5 sm:px-3.5 rounded-xl transition flex items-center justify-center gap-1.5 flex-1 sm:flex-initial text-center whitespace-nowrap">
+            <a href="${item.url}" class="text-xs font-bold ${activeClass} border py-1.5 px-2.5 sm:px-3 rounded-xl transition flex items-center justify-center gap-1.5 flex-1 sm:flex-initial text-center whitespace-nowrap">
                 <span>${item.icon}</span> <span>${item.name}</span>
             </a>
         `;
@@ -29,21 +30,17 @@ document.addEventListener("DOMContentLoaded", () => {
         <nav class="bg-forestSurface border-b border-forestBorder py-2.5 px-4 md:px-6 sticky top-0 z-50 shadow-md">
             <div class="max-w-4xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-2.5">
                 
-                <!-- Viršutinė eilutė telefone: Logo ir Testų mygtukas -->
                 <div class="flex justify-between items-center w-full sm:w-auto">
                     <a href="/" class="font-oswald text-xl sm:text-2xl font-bold tracking-wider text-forestPrimary hover:opacity-90 transition">
                         HUNTERTEST
                     </a>
-                    <!-- Telefono mygtukas -->
                     <button class="nav-start-tests-btn sm:hidden bg-forestPrimary hover:bg-green-600 text-white font-bold px-3 py-1.5 rounded-xl text-xs uppercase tracking-wider transition shadow flex items-center gap-1 cursor-pointer">
                         <span>Testai</span> <span>→</span>
                     </button>
                 </div>
                 
-                <!-- Navigacijos mygtukai -->
-                <div class="flex items-center gap-2 w-full sm:w-auto justify-between sm:justify-end">
+                <div class="flex items-center gap-1.5 sm:gap-2 w-full sm:w-auto justify-between sm:justify-end overflow-x-auto scrollbar-none py-0.5">
                     ${linksHtml}
-                    <!-- Kompiuterio mygtukas -->
                     <button class="nav-start-tests-btn hidden sm:flex bg-forestPrimary hover:bg-green-600 text-white font-bold px-3.5 py-1.5 rounded-xl text-xs uppercase tracking-wider transition shadow items-center gap-1 shrink-0 ml-2 cursor-pointer">
                         <span>Spręsti testus</span> <span>→</span>
                     </button>
@@ -53,7 +50,6 @@ document.addEventListener("DOMContentLoaded", () => {
         </nav>
     `;
 
-    // Paspaudus „Spręsti testus“ – automatiškai įjungiame svečio režimą ir nukreipiame į testų langą
     document.querySelectorAll('.nav-start-tests-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {
             e.preventDefault();

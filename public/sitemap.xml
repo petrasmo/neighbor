@@ -1,27 +1,44 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  
+  <!-- 1. Pagrindinis puslapis (Bandomieji testai ir egzaminai) -->
   <url>
     <loc>https://huntertest.lt/</loc>
     <lastmod>2026-08-18</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>
+
+  <!-- 2. Trofėjų skaičiuoklė (CIC) -->
+  <url>
+    <loc>https://huntertest.lt/trofejai.html</loc>
+    <lastmod>2026-08-18</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+
+  <!-- 3. Medžioklės ir žvejybos terminų kalendorius -->
   <url>
     <loc>https://huntertest.lt/kalendorius.html</loc>
     <lastmod>2026-08-18</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.9</priority>
   </url>
+
+  <!-- 4. Medžiotojų žodynas -->
   <url>
     <loc>https://huntertest.lt/zodynas.html</loc>
     <lastmod>2026-08-18</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
+
+  <!-- 5. Renginių ir egzaminų kalendorius -->
   <url>
     <loc>https://huntertest.lt/renginiai.html</loc>
     <lastmod>2026-08-18</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.9</priority>
   </url>
+
 </urlset>
