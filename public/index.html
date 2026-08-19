@@ -2,13 +2,14 @@
 <html lang="lt">
 <head>
     <!-- Google tag (gtag.js) -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-CNXX464ZS9"></script>
-    <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag(){dataLayer.push(arguments);}
-      gtag('js', new Date());
-      gtag('config', 'G-CNXX464ZS9');
-    </script>
+	<script async src="https://www.googletagmanager.com/gtag/js?id=G-VL3LERY03T"></script>
+	<script>
+	  window.dataLayer = window.dataLayer || [];
+	  function gtag(){dataLayer.push(arguments);}
+	  gtag('js', new Date());
+
+	  gtag('config', 'G-VL3LERY03T');
+	</script>
     
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -82,22 +83,9 @@
     <!-- A. NEPRISIJUNGUSIO (Logged Out) EKRANO TURINYS SU VIRŠUTINĖMIS NUORODOMIS -->
     <div id="logged-out-state" class="flex flex-col h-full justify-between overflow-y-auto hidden">
         
-        <!-- Viršutinė juosta su nuorodomis į Žodyną ir Renginius -->
-        <nav class="bg-forestSurface border-b border-forestBorder py-2.5 px-4 md:px-6 flex justify-between items-center shrink-0">
-            <a href="/" class="font-oswald text-xl md:text-2xl font-bold tracking-wider text-forestPrimary">HUNTERTEST</a>
-            
-            <div class="flex items-center gap-3 md:gap-5">
-                <a href="/zodynas.html" class="text-xs font-bold text-forestSecondary hover:text-white transition flex items-center gap-1.5 bg-forestBackground/60 border border-forestBorder/60 px-3 py-1.5 rounded-xl hover:border-forestPrimary">
-                    <span>📖</span> <span>Žodynas</span>
-                </a>
-                <a href="/renginiai.html" class="text-xs font-bold text-forestSecondary hover:text-white transition flex items-center gap-1.5 bg-forestBackground/60 border border-forestBorder/60 px-3 py-1.5 rounded-xl hover:border-forestPrimary">
-                    <span>📅</span> <span>Renginiai</span>
-                </a>
-                <button id="nav-guest-btn" class="text-xs font-bold text-forestPrimary hover:underline transition hidden sm:inline">
-                    Tęsti kaip svečias →
-                </button>
-            </div>
-        </nav>
+			<!-- Viršutinė juosta su nuorodomis į Žodyną ir Renginius -->
+			<div id="global-navbar"></div>
+			<script src="/js/navbar.js"></script>
 
         <main class="max-w-md w-full mx-auto px-4 py-6 space-y-6 my-auto">
             

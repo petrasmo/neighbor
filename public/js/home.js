@@ -15,7 +15,7 @@ export async function renderHomeScreen() {
         const filteredTopics = topics.filter(t => t.id.toString() !== "400");
 
         const isGuest = isGuestMode();
-        const currentCredits = isGuest ? "Svečias 👤" : (window.userCreditsAmount !== undefined ? window.userCreditsAmount + " 🪙" : "... 🪙");
+        const currentCredits = isGuest ? "0 🪙" : (window.userCreditsAmount !== undefined ? window.userCreditsAmount + " 🪙" : "... 🪙");
 
         let topicsHtml = "";
         filteredTopics.forEach(topic => {

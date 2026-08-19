@@ -96,7 +96,7 @@ document.addEventListener('DOMContentLoaded', () => {
 // Paleidžia ekranus Svečio režimu
 async function initDashboardAsGuest() {
     stopCreditsListeners();
-    window.userCreditsAmount = "Svečias";
+    window.userCreditsAmount = 0; // Nustatome 0
     
     await renderHomeScreen();
     renderPracticeScreen();
@@ -104,7 +104,7 @@ async function initDashboardAsGuest() {
     renderSettingsScreen();
 
     showLoggedInUI("Svečias 👤", true);
-    updateCreditsUI("Svečias 👤");
+    updateCreditsUI(0); // Rodome 0 🪙
     switchTab(0);
 }
 

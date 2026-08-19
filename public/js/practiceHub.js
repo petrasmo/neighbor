@@ -9,8 +9,29 @@ export function renderPracticeHub(container, onNavigate) {
                 <p class="text-forestSecondary text-xs">Pasirinkite priemonę, kuri padės gilinti žinias ir ruoštis medžioklei.</p>
             </div>
 
-            <div class="grid md:grid-cols-3 gap-4 pt-2">
-                <!-- 1 KORTELĖ: Medžiotojų žodynas -->
+            <div class="grid md:grid-cols-2 gap-4 pt-2">
+                <!-- 1 KORTELĖ: Medžioklės terminai (KĄ GALIMA MEDŽIOTI) -->
+                <div id="btn-hub-terminai" class="bg-forestSurface border border-forestBorder hover:border-forestPrimary p-5 rounded-2xl cursor-pointer transition duration-300 group shadow-lg flex flex-col justify-between">
+                    <div class="space-y-3">
+                        <div class="w-12 h-12 rounded-xl bg-forestBackground border border-forestBorder flex items-center justify-center text-2xl group-hover:scale-105 transition shrink-0">
+                            🦌
+                        </div>
+                        <div class="space-y-1">
+                            <h3 class="text-base font-bold font-oswald text-white uppercase tracking-wide group-hover:text-forestPrimary transition">
+                                Ką dabar galima medžioti?
+                            </h3>
+                            <p class="text-[11px] text-forestSecondary leading-relaxed">
+                                Interaktyvus medžioklės terminų kalendorius, leistini būdai ir dienų skaitiklis.
+                            </p>
+                        </div>
+                    </div>
+                    <div class="pt-4 flex justify-between items-center text-[11px] font-bold text-forestPrimary">
+                        <span>Tikrinti terminus</span>
+                        <span class="text-base group-hover:translate-x-1 transition">→</span>
+                    </div>
+                </div>
+
+                <!-- 2 KORTELĖ: Medžiotojų žodynas -->
                 <div id="btn-hub-zodynas" class="bg-forestSurface border border-forestBorder hover:border-forestPrimary p-5 rounded-2xl cursor-pointer transition duration-300 group shadow-lg flex flex-col justify-between">
                     <div class="space-y-3">
                         <div class="w-12 h-12 rounded-xl bg-forestBackground border border-forestBorder flex items-center justify-center text-2xl group-hover:scale-105 transition shrink-0">
@@ -31,7 +52,7 @@ export function renderPracticeHub(container, onNavigate) {
                     </div>
                 </div>
 
-                <!-- 2 KORTELĖ: Gyvūnų garsai -->
+                <!-- 3 KORTELĖ: Gyvūnų garsai -->
                 <div id="btn-hub-garsai" class="bg-forestSurface border border-forestBorder hover:border-forestPrimary p-5 rounded-2xl cursor-pointer transition duration-300 group shadow-lg flex flex-col justify-between">
                     <div class="space-y-3">
                         <div class="w-12 h-12 rounded-xl bg-forestBackground border border-forestBorder flex items-center justify-center text-2xl group-hover:scale-105 transition shrink-0">
@@ -52,7 +73,7 @@ export function renderPracticeHub(container, onNavigate) {
                     </div>
                 </div>
 
-                <!-- 3 KORTELĖ: Renginių kalendorius -->
+                <!-- 4 KORTELĖ: Renginių kalendorius -->
                 <div id="btn-hub-kalendorius" class="bg-forestSurface border border-forestBorder hover:border-forestPrimary p-5 rounded-2xl cursor-pointer transition duration-300 group shadow-lg flex flex-col justify-between">
                     <div class="space-y-3">
                         <div class="w-12 h-12 rounded-xl bg-forestBackground border border-forestBorder flex items-center justify-center text-2xl group-hover:scale-105 transition shrink-0">
@@ -77,6 +98,7 @@ export function renderPracticeHub(container, onNavigate) {
         </div>
     `;
 
+    document.getElementById('btn-hub-terminai')?.addEventListener('click', () => onNavigate('terminai'));
     document.getElementById('btn-hub-zodynas')?.addEventListener('click', () => onNavigate('zodynas'));
     document.getElementById('btn-hub-garsai')?.addEventListener('click', () => onNavigate('garsai'));
     document.getElementById('btn-hub-kalendorius')?.addEventListener('click', () => onNavigate('kalendorius'));

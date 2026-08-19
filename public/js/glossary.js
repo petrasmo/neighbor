@@ -1,3 +1,6 @@
+// js/glossary.js
+import { createSearchFilter } from './components/searchFilter.js';
+
 const PAGE_SIZE = 20;
 
 let allTerms = [];
@@ -18,7 +21,7 @@ export async function renderGlossaryScreen(container, onBack) {
     }
 
     visibleCount = PAGE_SIZE;
-    renderGlossaryBase(container, onBack);
+    renderGlossaryLayout(container, onBack);
 }
 
 function getFilteredTerms() {
@@ -31,17 +34,8 @@ function getFilteredTerms() {
     });
 }
 
-function renderGlossaryBase(container, onBack) {
+function renderGlossaryLayout(container, onBack) {
     const categories = ["Visi", ...Array.from(new Set(allTerms.map(t => t.category)))];
-    const filtered = getFilteredTerms();
-
-    const categoryChipsHtml = categories.map(cat => {
-        const isSelected = selectedCategory === cat;
-        const btnClass = isSelected 
-            ? 'bg-forestPrimary text-white border-forestPrimary shadow-md' 
-            : 'bg-forestSurface text-forestSecondary border-forestBorder hover:border-forestPrimary';
-        return `<button class="glossary-cat-btn px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition border ${btnClass}" data-cat="${cat}">${cat}</button>`;
-    }).join('');
 
     container.innerHTML = `
         <div class="space-y-4 max-w-4xl mx-auto py-2">
@@ -53,52 +47,35 @@ function renderGlossaryBase(container, onBack) {
                 </button>
                 <div>
                     <h2 class="text-lg md:text-xl font-bold font-oswald text-white uppercase tracking-wider">Medžiotojų žodynas</h2>
-                    <p id="glossary-count-info" class="text-[11px] text-forestSecondary">Rasta terminų: ${filtered.length}</p>
+                    <p id="glossary-count-info" class="text-[11px] text-forestSecondary">Kraunama...</p>
                 </div>
             </div>
 
-            <!-- Paieškos laukas -->
-            <div class="relative">
-                <input id="glossary-search-input" type="text" value="${searchQuery}" placeholder="Ieškoti termino arba reikšmės..." 
-                    class="w-full h-11 bg-forestSurface border border-forestBorder focus:border-forestPrimary rounded-xl px-4 pl-10 pr-10 text-xs text-white placeholder-slate-500 focus:outline-none transition">
-                <span class="absolute left-3.5 top-3.5 text-xs text-slate-500">🔍</span>
-                ${searchQuery ? `<button id="glossary-clear-search" class="absolute right-3.5 top-3 text-xs text-slate-400 hover:text-white">✕</button>` : ''}
-            </div>
+            <!-- BENDRAS PAIEŠKOS IR FILTRŲ KOMPONENTAS -->
+            <div id="glossary-filter-component"></div>
 
-            <!-- Kategorijų filtrai -->
-            <div class="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
-                ${categoryChipsHtml}
-            </div>
-
-            <!-- Sąrašas -->
+            <!-- Žodyno terminų sąrašas -->
             <div id="glossary-list-container" class="space-y-2.5 pt-1"></div>
 
-            <!-- Slinkimo stebėtojo elementas (Sentinel) -->
+            <!-- Begalinio slinkimo žymeklis (Sentinel) -->
             <div id="glossary-sentinel" class="h-10 flex items-center justify-center py-4"></div>
         </div>
     `;
 
     document.getElementById('glossary-back-btn')?.addEventListener('click', onBack);
 
-    const searchInput = document.getElementById('glossary-search-input');
-    searchInput?.addEventListener('input', (e) => {
-        searchQuery = e.target.value;
-        visibleCount = PAGE_SIZE;
-        updateGlossaryList();
-    });
-
-    document.getElementById('glossary-clear-search')?.addEventListener('click', () => {
-        searchQuery = "";
-        visibleCount = PAGE_SIZE;
-        renderGlossaryBase(container, onBack);
-    });
-
-    document.querySelectorAll('.glossary-cat-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-            selectedCategory = btn.getAttribute('data-cat');
+    // INICIALIZUOJAME BENDRĄ KOMPONENTĄ
+    createSearchFilter({
+        container: document.getElementById('glossary-filter-component'),
+        placeholder: "Ieškoti termino arba reikšmės (pvz., ožys, šūvis, laika)...",
+        categories: categories,
+        initialCategory: selectedCategory,
+        onFilterChange: ({ query, category }) => {
+            searchQuery = query;
+            selectedCategory = category;
             visibleCount = PAGE_SIZE;
-            renderGlossaryBase(container, onBack);
-        });
+            updateGlossaryList();
+        }
     });
 
     updateGlossaryList();
@@ -147,7 +124,7 @@ function createTermCardHtml(item) {
     }
 
     return `
-        <div class="glossary-term-card bg-forestSurface border border-forestBorder hover:border-forestPrimary/60 rounded-xl p-4 transition duration-200 cursor-pointer" data-id="${item.id}">
+        <div class="glossary-term-card bg-forestSurface border border-forestBorder hover:border-forestPrimary/60 rounded-xl p-4 transition duration-200 cursor-pointer select-none" data-id="${item.id}">
             <div class="flex justify-between items-center gap-3">
                 <h4 class="text-sm md:text-base font-bold ${titleColor} transition">
                     ${item.term}

@@ -3,8 +3,9 @@ import { renderPracticeHub } from './practiceHub.js';
 import { renderGlossaryScreen } from './glossary.js';
 import { renderCalendarScreen } from './calendar.js';
 import { renderSoundQuizScreen } from './soundQuiz.js';
+import { renderSeasonsScreen } from './seasons.js';
 
-let activeSubScreen = null; // null, 'zodynas', 'garsai', 'kalendorius'
+let activeSubScreen = null; // null, 'zodynas', 'garsai', 'kalendorius', 'terminai'
 
 export function renderPracticeScreen() {
     const container = document.getElementById('view-tab-practice');
@@ -22,6 +23,11 @@ export function renderPracticeScreen() {
         });
     } else if (activeSubScreen === 'kalendorius') {
         renderCalendarScreen(container, () => {
+            activeSubScreen = null;
+            renderPracticeScreen();
+        });
+    } else if (activeSubScreen === 'terminai') {
+        renderSeasonsScreen(container, () => {
             activeSubScreen = null;
             renderPracticeScreen();
         });

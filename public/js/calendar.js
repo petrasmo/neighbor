@@ -1,4 +1,6 @@
+// js/calendar.js
 import { db } from './firebase.js';
+import { createSearchFilter } from './components/searchFilter.js';
 
 let calendarEvents = [];
 let searchQuery = "";
@@ -13,7 +15,7 @@ function formatGoogleCalDate(d) {
 export async function renderCalendarScreen(container, onBack) {
     if (calendarEvents.length === 0) {
         isCalendarLoading = true;
-        renderCalendarBase(container, onBack);
+        renderCalendarLayout(container, onBack);
         
         try {
             const snapshot = await db.collection("events").orderBy("dateTimestamp", "asc").get();
@@ -28,51 +30,11 @@ export async function renderCalendarScreen(container, onBack) {
         }
     }
 
-    renderCalendarBase(container, onBack);
+    renderCalendarLayout(container, onBack);
 }
 
-function renderCalendarBase(container, onBack) {
-    const currentTimestampSeconds = Math.floor(Date.now() / 1000);
+function renderCalendarLayout(container, onBack) {
     const categories = ["Visi", ...Array.from(new Set(calendarEvents.map(e => e.category).filter(Boolean)))];
-
-    const filtered = calendarEvents.filter(ev => {
-        const matchesCategory = selectedCategory === "Visi" || ev.category === selectedCategory;
-        const matchesSearch = searchQuery === "" ||
-            (ev.title && ev.title.toLowerCase().includes(searchQuery.toLowerCase())) ||
-            (ev.location && ev.location.toLowerCase().includes(searchQuery.toLowerCase())) ||
-            (ev.description && ev.description.toLowerCase().includes(searchQuery.toLowerCase()));
-        
-        const isUpcoming = (ev.dateTimestamp || 0) >= currentTimestampSeconds;
-        return matchesCategory && matchesSearch && isUpcoming;
-    });
-
-    const categoryChipsHtml = categories.map(cat => {
-        const isSelected = selectedCategory === cat;
-        const btnClass = isSelected 
-            ? 'bg-forestPrimary text-white border-forestPrimary shadow-md' 
-            : 'bg-forestSurface text-forestSecondary border-forestBorder hover:border-forestPrimary';
-        return `<button class="cal-cat-btn px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition border ${btnClass}" data-cat="${cat}">${cat}</button>`;
-    }).join('');
-
-    let contentHtml = "";
-    if (isCalendarLoading) {
-        contentHtml = `
-            <div class="flex flex-col items-center justify-center py-16 space-y-3">
-                <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-forestPrimary"></div>
-                <p class="text-forestSecondary text-xs">Kraunami medžioklės renginiai iš debesies...</p>
-            </div>
-        `;
-    } else if (filtered.length === 0) {
-        contentHtml = `
-            <div class="bg-forestSurface border border-forestBorder p-8 rounded-2xl text-center space-y-2">
-                <span class="text-3xl block">📅</span>
-                <p class="text-sm font-bold text-white">Būsimų renginių šiuo metu nerasta</p>
-                <p class="text-xs text-forestSecondary">Patikrinkite vėliau arba pakeiskite filtrus.</p>
-            </div>
-        `;
-    } else {
-        contentHtml = filtered.map(createEventCardHtml).join('');
-    }
 
     container.innerHTML = `
         <div class="space-y-4 max-w-4xl mx-auto py-2">
@@ -82,88 +44,78 @@ function renderCalendarBase(container, onBack) {
                 </button>
                 <div>
                     <h2 class="text-lg md:text-xl font-bold font-oswald text-white uppercase tracking-wider">Renginių kalendorius</h2>
-                    <p class="text-[11px] text-forestSecondary">Būsimi renginiai ir egzaminai</p>
+                    <p id="calendar-count-info" class="text-[11px] text-forestSecondary">Būsimi renginiai ir egzaminai</p>
                 </div>
             </div>
 
-            <div class="relative">
-                <input id="calendar-search-input" type="text" value="${searchQuery}" placeholder="Ieškoti renginio, vietos..." 
-                    class="w-full h-11 bg-forestSurface border border-forestBorder focus:border-forestPrimary rounded-xl px-4 pl-10 pr-10 text-xs text-white placeholder-slate-500 focus:outline-none transition">
-                <span class="absolute left-3.5 top-3.5 text-xs text-slate-500">🔍</span>
-                ${searchQuery ? `<button id="calendar-clear-search" class="absolute right-3.5 top-3 text-xs text-slate-400 hover:text-white">✕</button>` : ''}
-            </div>
+            <!-- Bendras paieškos ir filtrų komponentas -->
+            <div id="calendar-filter-component"></div>
 
-            <div class="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
-                ${categoryChipsHtml}
-            </div>
-
-            <div class="space-y-3 pt-1">
-                ${contentHtml}
-            </div>
+            <!-- Sąrašas -->
+            <div id="calendar-events-list" class="space-y-3 pt-1"></div>
         </div>
     `;
 
     document.getElementById('calendar-back-btn')?.addEventListener('click', onBack);
 
-    const searchInput = document.getElementById('calendar-search-input');
-    searchInput?.addEventListener('input', (e) => {
-        searchQuery = e.target.value;
-        renderCalendarBase(container, onBack);
-        document.getElementById('calendar-search-input')?.focus();
+    // INICIALIZUOJAME KOMPONENTĄ
+    createSearchFilter({
+        container: document.getElementById('calendar-filter-component'),
+        placeholder: "Ieškoti renginio, vietos, datos...",
+        categories: categories,
+        initialCategory: selectedCategory,
+        onFilterChange: ({ query, category }) => {
+            searchQuery = query;
+            selectedCategory = category;
+            updateEventsList();
+        }
     });
 
-    document.getElementById('calendar-clear-search')?.addEventListener('click', () => {
-        searchQuery = "";
-        renderCalendarBase(container, onBack);
+    updateEventsList();
+}
+
+function updateEventsList() {
+    const container = document.getElementById('calendar-events-list');
+    const countInfo = document.getElementById('calendar-count-info');
+    if (!container) return;
+
+    if (isCalendarLoading) {
+        container.innerHTML = `
+            <div class="flex flex-col items-center justify-center py-16 space-y-3">
+                <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-forestPrimary"></div>
+                <p class="text-forestSecondary text-xs">Kraunami medžioklės renginiai iš debesies...</p>
+            </div>
+        `;
+        return;
+    }
+
+    const currentTimestampSeconds = Math.floor(Date.now() / 1000);
+    const filtered = calendarEvents.filter(ev => {
+        const matchesCategory = selectedCategory === "Visi" || ev.category === selectedCategory;
+        const matchesSearch = searchQuery === "" ||
+            (ev.title && ev.title.toLowerCase().includes(searchQuery)) ||
+            (ev.location && ev.location.toLowerCase().includes(searchQuery)) ||
+            (ev.description && ev.description.toLowerCase().includes(searchQuery));
+        
+        const isUpcoming = (ev.dateTimestamp || 0) >= currentTimestampSeconds;
+        return matchesCategory && matchesSearch && isUpcoming;
     });
 
-    document.querySelectorAll('.cal-cat-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-            selectedCategory = btn.getAttribute('data-cat');
-            renderCalendarBase(container, onBack);
-        });
-    });
+    if (countInfo) countInfo.innerText = `Rasta būsimų renginių: ${filtered.length}`;
 
-    document.querySelectorAll('.calendar-event-card').forEach(card => {
-        card.addEventListener('click', (e) => {
-            if (e.target.closest('button')) return;
-            const id = card.getAttribute('data-id');
-            if (expandedEventIds.has(id)) {
-                expandedEventIds.delete(id);
-            } else {
-                expandedEventIds.add(id);
-            }
-            renderCalendarBase(container, onBack);
-        });
-    });
+    if (filtered.length === 0) {
+        container.innerHTML = `
+            <div class="bg-forestSurface border border-forestBorder p-8 rounded-2xl text-center space-y-2">
+                <span class="text-3xl block">📅</span>
+                <p class="text-sm font-bold text-white">Būsimų renginių šiuo metu nerasta</p>
+                <p class="text-xs text-forestSecondary">Pakeiskite paieškos žodį arba kategoriją.</p>
+            </div>
+        `;
+        return;
+    }
 
-    document.querySelectorAll('.nav-maps-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            const lat = btn.getAttribute('data-lat');
-            const lon = btn.getAttribute('data-lon');
-            window.open(`https://www.google.com/maps/search/?api=1&query=${lat},${lon}`, '_blank');
-        });
-    });
-
-    document.querySelectorAll('.add-cal-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            const title = btn.getAttribute('data-title');
-            const desc = btn.getAttribute('data-desc');
-            const loc = btn.getAttribute('data-loc');
-            const timeSeconds = parseInt(btn.getAttribute('data-time') || "0");
-
-            const startDate = new Date(timeSeconds * 1000);
-            const endDate = new Date((timeSeconds + 7200) * 1000);
-
-            const startFormatted = formatGoogleCalDate(startDate);
-            const endFormatted = formatGoogleCalDate(endDate);
-
-            const gCalUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&details=${desc}&location=${loc}&dates=${startFormatted}/${endFormatted}`;
-            window.open(gCalUrl, '_blank');
-        });
-    });
+    container.innerHTML = filtered.map(createEventCardHtml).join('');
+    attachEventCardListeners();
 }
 
 function createEventCardHtml(event) {
@@ -217,4 +169,44 @@ function createEventCardHtml(event) {
             ${expandedHtml}
         </div>
     `;
+}
+
+function attachEventCardListeners() {
+    document.querySelectorAll('.calendar-event-card').forEach(card => {
+        card.addEventListener('click', (e) => {
+            if (e.target.closest('button')) return;
+            const id = card.getAttribute('data-id');
+            if (expandedEventIds.has(id)) {
+                expandedEventIds.delete(id);
+            } else {
+                expandedEventIds.add(id);
+            }
+            updateEventsList();
+        });
+    });
+
+    document.querySelectorAll('.nav-maps-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const lat = btn.getAttribute('data-lat');
+            const lon = btn.getAttribute('data-lon');
+            window.open(`https://www.google.com/maps/search/?api=1&query=${lat},${lon}`, '_blank');
+        });
+    });
+
+    document.querySelectorAll('.add-cal-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const title = btn.getAttribute('data-title');
+            const desc = btn.getAttribute('data-desc');
+            const loc = btn.getAttribute('data-loc');
+            const timeSeconds = parseInt(btn.getAttribute('data-time') || "0");
+
+            const startDate = new Date(timeSeconds * 1000);
+            const endDate = new Date((timeSeconds + 7200) * 1000);
+
+            const gCalUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&details=${desc}&location=${loc}&dates=${formatGoogleCalDate(startDate)}/${formatGoogleCalDate(endDate)}`;
+            window.open(gCalUrl, '_blank');
+        });
+    });
 }

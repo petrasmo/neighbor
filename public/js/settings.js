@@ -110,7 +110,7 @@ export function renderSettingsScreen() {
     const name = isGuest ? "Svečias" : (user?.displayName || "Medžiotojas");
     const email = isGuest ? "" : (user?.email || "");
     const isVerified = user?.emailVerified || false;
-    const currentCredits = isGuest ? "Svečias 👤" : (window.userCreditsAmount !== undefined ? window.userCreditsAmount + " 🪙" : "... 🪙");
+    const currentCredits = isGuest ? "0 🪙" : (window.userCreditsAmount !== undefined ? window.userCreditsAmount + " 🪙" : "... 🪙");
 
     container.innerHTML = `
         <div class="space-y-6 max-w-4xl mx-auto">

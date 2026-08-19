@@ -48,21 +48,8 @@
 <body class="bg-forestBackground text-forestSecondary font-sans antialiased min-h-screen flex flex-col justify-between">
 
     <!-- 1. BENDRA VIRŠUTINĖ NAVIGACIJOS JUOSTA -->
-    <nav class="bg-forestSurface border-b border-forestBorder py-2.5 px-4 md:px-6 flex justify-between items-center sticky top-0 z-50 shrink-0 shadow-md">
-        <a href="/" class="font-oswald text-xl md:text-2xl font-bold tracking-wider text-forestPrimary">HUNTERTEST</a>
-        
-        <div class="flex items-center gap-2 md:gap-4">
-            <a href="/zodynas.html" class="text-xs font-bold text-forestSecondary hover:text-white bg-forestBackground/60 border border-forestBorder/60 hover:border-forestPrimary px-3 py-1.5 rounded-xl transition flex items-center gap-1.5">
-                <span>📖</span> <span>Žodynas</span>
-            </a>
-            <a href="/renginiai.html" class="text-xs font-bold bg-forestPrimary/20 text-forestPrimary border border-forestPrimary/50 px-3 py-1.5 rounded-xl transition flex items-center gap-1.5">
-                <span>📅</span> <span>Renginiai</span>
-            </a>
-            <a href="/" class="bg-forestPrimary hover:bg-green-600 text-white font-bold px-3.5 py-1.5 rounded-xl text-xs uppercase tracking-wider transition shadow flex items-center gap-1">
-                <span>Spręsti testus</span> <span>→</span>
-            </a>
-        </div>
-    </nav>
+    <div id="global-navbar"></div>
+	<script src="/js/navbar.js"></script>
 
     <!-- 2. RENGINIŲ TURINYS -->
     <main class="max-w-4xl w-full mx-auto p-4 md:p-6 space-y-4 flex-1">
@@ -87,7 +74,7 @@
         </div>
 
         <!-- Kategorijų filtrai -->
-        <div id="event-categories" class="flex gap-2 overflow-x-auto pb-1 scrollbar-none"></div>
+        <div id="event-categories" class="flex flex-wrap gap-2 pt-1"></div>
 
         <!-- Sąrašas -->
         <div id="events-list" class="space-y-3 pt-1">
