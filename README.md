@@ -9,6 +9,7 @@ Oficiali svetainė: **[https://huntertest.lt](https://huntertest.lt)**
 ### 🌐 Pagrindinės funkcijos ir įrankiai:
 
 * 🎯 **[Bandomasis medžioklės egzaminas](https://huntertest.lt)** – aktualūs teorijos testai pagal LR Medžioklės taisykles.
+* 🩸 **[Kraujo pėdsako analizatorius](https://huntertest.lt/pedsakai.html)** – šūvio vietos (Anschuss) diagnostika, ramybės laiko skaičiuoklė ir paieškos taktika.
 * 🦌 **[Medžioklės ir žvejybos terminai](https://huntertest.lt/kalendorius.html)** – interaktyvus kalendorius: ką galima medžioti ir žvejoti šiandien.
 * 🏆 **[Trofėjų skaičiuoklė (CIC)](https://huntertest.lt/trofejai.html)** – stirnino, elnio, briedžio ragų, šerno ilčių ir kaukolių medalių skaičiavimas realiu laiku.
 * 🗺️ **[Mano medžioklės plotai](https://huntertest.lt/plotai.html)** – privatus palydovinis žemėlapis bokštelių, šėryklų ir kamerų žymėjimui.

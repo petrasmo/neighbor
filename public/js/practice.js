@@ -7,14 +7,17 @@ import { renderSeasonsScreen } from './seasons.js';
 import { renderTrophyScreen } from './trophy.js';
 import { renderHuntingGroundsScreen } from './huntingGrounds.js';
 import { renderWeatherScreen } from './weather.js';
+import { renderBloodTrailScreen } from './bloodTrail.js';
 
-let activeSubScreen = null; // null, 'zodynas', 'garsai', 'kalendorius', 'terminai', 'trofejai', 'plotai', 'orai'
+let activeSubScreen = null; // null, 'pedsakai', 'zodynas', 'garsai', 'kalendorius', 'terminai', 'trofejai', 'plotai', 'orai'
 
 export function renderPracticeScreen() {
     const container = document.getElementById('view-tab-practice');
     if (!container) return;
 
-    if (activeSubScreen === 'zodynas') {
+    if (activeSubScreen === 'pedsakai') {
+        renderBloodTrailScreen(container, () => { activeSubScreen = null; renderPracticeScreen(); });
+    } else if (activeSubScreen === 'zodynas') {
         renderGlossaryScreen(container, () => { activeSubScreen = null; renderPracticeScreen(); });
     } else if (activeSubScreen === 'garsai') {
         renderSoundQuizScreen(container, () => { activeSubScreen = null; renderPracticeScreen(); });

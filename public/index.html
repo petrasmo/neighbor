@@ -83,6 +83,18 @@
 </head>
 <body class="bg-forestBackground text-forestSecondary font-sans antialiased h-[100dvh] w-screen overflow-hidden">
 
+    <!-- 0. PIRMINIS GREITAS UŽKROVIMO EKRANAS (PRELOADER) -->
+    <div id="app-preloader" class="fixed inset-0 bg-forestBackground z-[200] flex flex-col items-center justify-center space-y-4 transition-opacity duration-300">
+        <div class="relative flex items-center justify-center">
+            <div class="w-20 h-20 rounded-full border-4 border-forestSurface border-t-forestPrimary animate-spin"></div>
+            <span class="text-3xl absolute">🦌</span>
+        </div>
+        <div class="text-center space-y-1">
+            <h2 class="font-oswald text-2xl font-bold tracking-widest text-forestPrimary uppercase">HUNTERTEST</h2>
+            <p class="text-xs text-forestSecondary font-medium animate-pulse">Kraunama sistema ir testai...</p>
+        </div>
+    </div>
+
     <!-- A. NEPRISIJUNGUSIO (Logged Out) EKRANO TURINYS SU VIRŠUTINĖMIS NUORODOMIS -->
     <div id="logged-out-state" class="flex flex-col h-full justify-between overflow-y-auto hidden">
         
@@ -214,10 +226,10 @@
                 
                 <nav class="space-y-2">
                     <button class="nav-tab-btn w-full text-left px-4 py-3.5 rounded-xl font-bold text-sm transition flex items-center gap-3" data-tab="0">
-                        <span>🏠</span> <span>Pradžia</span>
+                        <span>🏠</span> <span>Testai</span>
                     </button>
                     <button class="nav-tab-btn w-full text-left px-4 py-3.5 rounded-xl font-bold text-sm transition flex items-center gap-3" data-tab="1">
-                        <span>🛠️</span> <span>Praktika</span>
+                        <span>🛠️</span> <span>Medžiotojams</span>
                     </button>
                     <button class="nav-tab-btn w-full text-left px-4 py-3.5 rounded-xl font-bold text-sm transition flex items-center gap-3" data-tab="2">
                         <span>📊</span> <span>Rezultatai</span>

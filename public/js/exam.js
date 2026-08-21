@@ -191,6 +191,11 @@ function renderActiveTest() {
     const oldScrollContainer = document.getElementById('progress-scroll-container');
     const savedScrollLeft = oldScrollContainer ? oldScrollContainer.scrollLeft : 0;
 
+    const answeredCount = Object.keys(userAnswers).length;
+    const totalCount = examQuestions.length;
+    const allAnswered = answeredCount === totalCount && totalCount > 0;
+    const isLastQuestion = currentQuestionIndex === totalCount - 1;
+
     const progressBadgesHtml = examQuestions.map((q, idx) => {
         const isCurrent = idx === currentQuestionIndex;
         const isAnswered = userAnswers[q.id] !== undefined;
@@ -243,6 +248,58 @@ function renderActiveTest() {
             </div>
         `;
     }).join('');
+
+    // Dinamiškai paruošiame apatinius mygtukus
+    let bottomButtonsHtml = "";
+
+    if (isReviewMode) {
+        bottomButtonsHtml = `
+            <button id="prev-question-btn" class="flex-1 h-11 bg-forestSurface border border-slate-800 text-white rounded-xl font-bold text-xs hover:bg-slate-800 transition ${currentQuestionIndex === 0 ? 'opacity-50 pointer-events-none' : ''}">
+                Atgal
+            </button>
+            ${isLastQuestion ? `
+                <button id="close-review-btn" class="flex-1 h-11 bg-forestPrimary hover:bg-green-600 text-white rounded-xl font-bold text-xs transition">
+                    Uždaryti peržiūrą
+                </button>
+            ` : `
+                <button id="next-question-btn" class="flex-1 h-11 bg-forestPrimary hover:bg-green-600 text-white rounded-xl font-bold text-xs transition">
+                    Kitas klausimas
+                </button>
+            `}
+        `;
+    } else {
+        if (allAnswered && !isLastQuestion) {
+            bottomButtonsHtml = `
+                <button id="prev-question-btn" class="h-11 px-4 bg-forestSurface border border-slate-800 text-white rounded-xl font-bold text-xs hover:bg-slate-800 transition ${currentQuestionIndex === 0 ? 'opacity-50 pointer-events-none' : ''}">
+                    Atgal
+                </button>
+                <button id="next-question-btn" class="h-11 px-4 bg-forestSurface border border-slate-800 text-white rounded-xl font-bold text-xs hover:bg-slate-800 transition">
+                    Kitas
+                </button>
+                <button id="finish-exam-btn" class="flex-1 h-11 bg-red-800 hover:bg-red-700 text-white rounded-xl font-bold text-xs transition shadow-lg">
+                    Baigti egzaminą (${answeredCount}/${totalCount}) ✓
+                </button>
+            `;
+        } else if (isLastQuestion) {
+            bottomButtonsHtml = `
+                <button id="prev-question-btn" class="flex-1 h-11 bg-forestSurface border border-slate-800 text-white rounded-xl font-bold text-xs hover:bg-slate-800 transition ${currentQuestionIndex === 0 ? 'opacity-50 pointer-events-none' : ''}">
+                    Atgal
+                </button>
+                <button id="finish-exam-btn" class="flex-1 h-11 bg-red-800 hover:bg-red-700 text-white rounded-xl font-bold text-xs transition">
+                    Baigti egzaminą
+                </button>
+            `;
+        } else {
+            bottomButtonsHtml = `
+                <button id="prev-question-btn" class="flex-1 h-11 bg-forestSurface border border-slate-800 text-white rounded-xl font-bold text-xs hover:bg-slate-800 transition ${currentQuestionIndex === 0 ? 'opacity-50 pointer-events-none' : ''}">
+                    Atgal
+                </button>
+                <button id="next-question-btn" class="flex-1 h-11 bg-forestPrimary hover:bg-green-600 text-white rounded-xl font-bold text-xs transition">
+                    Kitas klausimas
+                </button>
+            `;
+        }
+    }
 
     container.innerHTML = `
         <div class="space-y-4 max-w-4xl mx-auto">
@@ -298,24 +355,8 @@ function renderActiveTest() {
                 </div>
             ` : ''}
 
-            <div class="flex justify-between gap-4 pt-2">
-                <button id="prev-question-btn" class="flex-1 h-11 bg-forestSurface border border-slate-800 text-white rounded-xl font-bold text-xs hover:bg-slate-800 transition ${currentQuestionIndex === 0 ? 'opacity-50 pointer-events-none' : ''}">
-                    Atgal
-                </button>
-                
-                ${!isReviewMode && currentQuestionIndex === examQuestions.length - 1 ? `
-                    <button id="finish-exam-btn" class="flex-1 h-11 bg-red-800 hover:bg-red-700 text-white rounded-xl font-bold text-xs transition">
-                        Baigti egzaminą
-                    </button>
-                ` : isReviewMode && currentQuestionIndex === examQuestions.length - 1 ? `
-                    <button id="close-review-btn" class="flex-1 h-11 bg-forestPrimary hover:bg-green-600 text-white rounded-xl font-bold text-xs transition">
-                        Uždaryti peržiūrą
-                    </button>
-                ` : `
-                    <button id="next-question-btn" class="flex-1 h-11 bg-forestPrimary hover:bg-green-600 text-white rounded-xl font-bold text-xs transition">
-                        Kitas klausimas
-                    </button>
-                `}
+            <div class="flex justify-between gap-3 pt-2">
+                ${bottomButtonsHtml}
             </div>
         </div>
     `;

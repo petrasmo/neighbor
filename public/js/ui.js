@@ -12,7 +12,18 @@ export const tabViews = [
     document.getElementById('view-tab-settings')
 ];
 
+function hidePreloader() {
+    const preloader = document.getElementById('app-preloader');
+    if (preloader) {
+        preloader.classList.add('opacity-0', 'pointer-events-none');
+        setTimeout(() => {
+            preloader.classList.add('hidden');
+        }, 300);
+    }
+}
+
 export function showLoggedInUI(emailOrTitle, isGuest = false) {
+    hidePreloader();
     loggedOutState.classList.add('hidden');
     loggedInState.classList.remove('hidden');
     
@@ -46,6 +57,7 @@ export function showLoggedInUI(emailOrTitle, isGuest = false) {
 }
 
 export function showLoggedOutUI() {
+    hidePreloader();
     loggedOutState.classList.remove('hidden');
     loggedInState.classList.add('hidden');
 }
