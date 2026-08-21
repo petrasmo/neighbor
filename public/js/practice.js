@@ -14,6 +14,12 @@ import { showDialog, switchTab } from './ui.js';
 
 let activeSubScreen = null; 
 
+// FUNKCIJA, KURI VISADA ATSTATO ÁRANKIØ MENIU Á PRADÞIÀ
+export function resetPracticeScreen() {
+    activeSubScreen = null;
+    renderPracticeScreen();
+}
+
 export function renderPracticeScreen() {
     const container = document.getElementById('view-tab-practice');
     if (!container) return;
@@ -47,7 +53,7 @@ export function renderPracticeScreen() {
                     );
                     return;
                 }
-                switchTab(0); // Perjungiame á pagrindiná egzamino langà
+                switchTab(0);
                 startSafetyExam();
             } else {
                 activeSubScreen = screen;

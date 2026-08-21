@@ -11,7 +11,7 @@ import {
 } from './auth.js';
 import { startCreditsListener, stopCreditsListeners } from './credits.js';
 import { renderHomeScreen } from './home.js';
-import { renderPracticeScreen } from './practice.js';
+import { renderPracticeScreen, resetPracticeScreen } from './practice.js';
 import { renderResultsScreen } from './results.js';
 import { renderSettingsScreen } from './settings.js';
 import { loginGoogleBtn, showLoggedInUI, showLoggedOutUI, tabButtons, switchTab, updateCreditsUI } from './ui.js';
@@ -28,10 +28,13 @@ document.addEventListener('DOMContentLoaded', () => {
         btn.addEventListener('click', logoutUser);
     });
 
-    // 3. Navigacijos skirtukai
+    // 3. Navigacijos skirtukai (Kaskart paspaudus „Medžiotojams“ – atveria švarų įrankių centrą!)
     tabButtons.forEach(btn => {
         btn.addEventListener('click', () => {
             const tabIndex = parseInt(btn.getAttribute('data-tab'));
+            if (tabIndex === 1) {
+                resetPracticeScreen(); // VISADA ATSTATO ĮRANKIŲ MENIU
+            }
             switchTab(tabIndex);
         });
     });
@@ -40,24 +43,21 @@ document.addEventListener('DOMContentLoaded', () => {
     const tabLogin = document.getElementById('tab-auth-login');
     const tabRegister = document.getElementById('tab-auth-register');
     const nameField = document.getElementById('auth-name-field');
-    const forgotContainer = document.getElementById('auth-forgot-container');
     const submitBtn = document.getElementById('auth-submit-btn');
 
     tabLogin?.addEventListener('click', () => {
         isRegisterMode = false;
-        tabLogin.className = "flex-1 py-1.5 text-xs font-bold rounded-md transition bg-forestPrimary text-white shadow";
-        tabRegister.className = "flex-1 py-1.5 text-xs font-bold rounded-lg transition text-forestSecondary hover:text-white";
+        tabLogin.className = "flex-1 py-1.5 text-xs font-bold rounded-md transition bg-forestPrimary text-white shadow cursor-pointer";
+        tabRegister.className = "flex-1 py-1.5 text-xs font-bold rounded-lg transition text-forestSecondary hover:text-white cursor-pointer";
         nameField?.classList.add('hidden');
-        forgotContainer?.classList.remove('hidden');
         if (submitBtn) submitBtn.innerText = "Prisijungti";
     });
 
     tabRegister?.addEventListener('click', () => {
         isRegisterMode = true;
-        tabRegister.className = "flex-1 py-1.5 text-xs font-bold rounded-md transition bg-forestPrimary text-white shadow";
-        tabLogin.className = "flex-1 py-1.5 text-xs font-bold rounded-lg transition text-forestSecondary hover:text-white";
+        tabRegister.className = "flex-1 py-1.5 text-xs font-bold rounded-md transition bg-forestPrimary text-white shadow cursor-pointer";
+        tabLogin.className = "flex-1 py-1.5 text-xs font-bold rounded-lg transition text-forestSecondary hover:text-white cursor-pointer";
         nameField?.classList.remove('hidden');
-        forgotContainer?.classList.add('hidden');
         if (submitBtn) submitBtn.innerText = "Sukurti paskyrą";
     });
 
@@ -81,13 +81,8 @@ document.addEventListener('DOMContentLoaded', () => {
         resetPassword(email);
     });
 
-    // 7. Svečio režimo mygtukai
+    // 7. Svečio režimo mygtukas
     document.getElementById('guest-enter-btn')?.addEventListener('click', () => {
-        enableGuestMode();
-        initDashboardAsGuest();
-    });
-
-    document.getElementById('nav-guest-btn')?.addEventListener('click', () => {
         enableGuestMode();
         initDashboardAsGuest();
     });
@@ -96,7 +91,7 @@ document.addEventListener('DOMContentLoaded', () => {
 // Paleidžia ekranus Svečio režimu
 async function initDashboardAsGuest() {
     stopCreditsListeners();
-    window.userCreditsAmount = 0; // Nustatome 0
+    window.userCreditsAmount = 0;
     
     await renderHomeScreen();
     renderPracticeScreen();
@@ -104,7 +99,7 @@ async function initDashboardAsGuest() {
     renderSettingsScreen();
 
     showLoggedInUI("Svečias 👤", true);
-    updateCreditsUI(0); // Rodome 0 🪙
+    updateCreditsUI(0);
     switchTab(0);
 }
 
