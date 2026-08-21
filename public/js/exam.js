@@ -1,6 +1,7 @@
 // js/exam.js
 import { db } from './firebase.js';
 import { showDialog, switchTab } from './ui.js';
+import { getStoredMistakeIds, updateMistakesAfterExam } from './mistakes.js';
 
 let examQuestions = [];
 let userAnswers = {}; 
@@ -9,6 +10,7 @@ let examStartTime = 0;
 let timerInterval = null;
 let isReviewMode = false;
 let isSafetyExam = false; 
+let isMistakesExam = false; // Žyma klaidų kartojimo režimui
 let examDurationString = ""; 
 const SAFETY_EXAM_TIME_LIMIT_SECONDS = 600; // 10 minučių
 
@@ -29,6 +31,7 @@ function saveActiveTestState() {
     localStorage.setItem('active_exam_user_answers', JSON.stringify(userAnswers));
     localStorage.setItem('active_exam_current_index', currentQuestionIndex.toString());
     localStorage.setItem('active_exam_is_safety', isSafetyExam ? "true" : "false");
+    localStorage.setItem('active_exam_is_mistakes', isMistakesExam ? "true" : "false");
 }
 
 export function clearActiveTestState() {
@@ -37,6 +40,7 @@ export function clearActiveTestState() {
     localStorage.removeItem('active_exam_user_answers');
     localStorage.removeItem('active_exam_current_index');
     localStorage.removeItem('active_exam_is_safety');
+    localStorage.removeItem('active_exam_is_mistakes');
 }
 
 export function checkAndRestoreActiveTest() {
@@ -48,6 +52,7 @@ export function checkAndRestoreActiveTest() {
             userAnswers = JSON.parse(localStorage.getItem('active_exam_user_answers') || "{}");
             currentQuestionIndex = parseInt(localStorage.getItem('active_exam_current_index') || "0");
             isSafetyExam = localStorage.getItem('active_exam_is_safety') === "true";
+            isMistakesExam = localStorage.getItem('active_exam_is_mistakes') === "true";
             isReviewMode = false;
             
             startTimer();
@@ -71,6 +76,7 @@ export function loadPastTestForReview(pastTest) {
     userAnswers = pastTest.userAnswers;
     examDurationString = pastTest.durationString;
     isSafetyExam = pastTest.isSafetyExam || false;
+    isMistakesExam = pastTest.isMistakesExam || false;
     currentQuestionIndex = 0;
     isReviewMode = true;
     
@@ -78,19 +84,45 @@ export function loadPastTestForReview(pastTest) {
     renderActiveTest();
 }
 
-// 1. STANDARTINIS TEORIJOS EGZAMINAS (Sunaudoja 20, 50 ar 100 kreditų)
+// 1. STANDARTINIS TEORIJOS EGZAMINAS
 export async function startExam(selectedTopicIds, selectedCount) {
     await initExamSession(selectedCount, (allQuestions) => {
         isSafetyExam = false;
+        isMistakesExam = false;
         return generateExamQuestions(allQuestions, selectedTopicIds, selectedCount);
     });
 }
 
-// 2. OFICIALUS 3 METŲ PERIODINIS SAUGUMO PATIKRINIMAS (NEMOKAMAI - 0 KREDITŲ!)
+// 2. 3 METŲ PERIODINIS SAUGUMO PATIKRINIMAS (NEMOKAMAI - 0 KREDITŲ)
 export async function startSafetyExam() {
     await initExamSession(0, (allQuestions) => {
         isSafetyExam = true;
+        isMistakesExam = false;
         return generateSafetyExamQuestions(allQuestions);
+    });
+}
+
+// 3. 🎯 KLAIDŲ BANKO KARTOJIMO TESTAS (NEMOKAMAI - 0 KREDITŲ)
+export async function startMistakesExam() {
+    const mistakeIds = await getStoredMistakeIds();
+    
+    if (!mistakeIds || mistakeIds.length === 0) {
+        showDialog("Klaidų bankas tuščias! 🏆", "Jūs šiuo metu neturite padarytų klaidų. Spręskite bandomuosius testus, o jei suklysite – klausimai atsiras čia.", "✅");
+        return;
+    }
+
+    await initExamSession(0, (allQuestions) => {
+        isSafetyExam = false;
+        isMistakesExam = true;
+        
+        const mistakeQuestions = allQuestions.filter(q => mistakeIds.includes(q.id));
+        
+        mistakeQuestions.forEach(q => {
+            const optionsWithIndex = q.options.map((text, idx) => ({ originalIndex: idx, text: text }));
+            q.shuffledOptions = optionsWithIndex.sort(() => 0.5 - Math.random());
+        });
+
+        return mistakeQuestions.sort(() => 0.5 - Math.random());
     });
 }
 
@@ -113,7 +145,6 @@ async function initExamSession(requiredCredits, generatorFn) {
     try {
         examDurationString = ""; 
 
-        // KREDITAI NUSKAIČIUOJAMI TIK JEI TESTAS MOKAMAS (requiredCredits > 0)
         if (requiredCredits > 0) {
             const creditDoc = await db.collection("user_credits").doc(deviceId).get();
             if (!creditDoc.exists) {
@@ -158,15 +189,11 @@ async function initExamSession(requiredCredits, generatorFn) {
     }
 }
 
-// 3 METŲ SAUGUMO KLAUSIMŲ GENERAVIMO ALGORITMAS (9 TEORIJA + 1 SCHEMA)
 function generateSafetyExamQuestions(allQuestions) {
     const safetyQuestions = allQuestions.filter(q => 
         q.topicIds && q.topicIds.map(id => id.toString().replace(".0", "")).includes("410")
     );
-
-    // Schemų klausimai su paveikslėliais (ID 417581-417588)
     const schemaQuestions = safetyQuestions.filter(q => q.imageName && q.imageName.trim() !== "");
-    // Grynieji teoriniai saugumo klausimai be paveikslėlio
     const theoryQuestions = safetyQuestions.filter(q => !q.imageName || q.imageName.trim() === "");
 
     const pickedSchema = schemaQuestions.sort(() => 0.5 - Math.random()).slice(0, 1);
@@ -218,13 +245,11 @@ function getFormattedElapsedTime() {
     const elapsedSeconds = Math.floor((Date.now() - examStartTime) / 1000);
 
     if (isSafetyExam) {
-        // Atgalinis laikmatis 10:00 -> 00:00
         const remainingSeconds = Math.max(0, SAFETY_EXAM_TIME_LIMIT_SECONDS - elapsedSeconds);
         const minutes = Math.floor(remainingSeconds / 60);
         const seconds = remainingSeconds % 60;
         return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
     } else {
-        // Įprastas laikmatis 00:00 -> ...
         const minutes = Math.floor(elapsedSeconds / 60);
         const seconds = elapsedSeconds % 60;
         return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
@@ -347,9 +372,12 @@ function renderActiveTest() {
         }
     }
 
-    const testTitleBadge = isSafetyExam 
-        ? `<span class="text-xs font-bold text-green-400 uppercase tracking-wider bg-green-950/50 border border-green-500/50 px-2.5 py-0.5 rounded-lg">🛡️ Saugumo Patikrinimas (NEMOKAMAS)</span>`
-        : `<span class="text-xs text-forestSecondary uppercase font-bold tracking-wider">Bandomasis egzaminas</span>`;
+    let testTitleBadge = `<span class="text-xs text-forestSecondary uppercase font-bold tracking-wider">Bandomasis egzaminas</span>`;
+    if (isSafetyExam) {
+        testTitleBadge = `<span class="text-xs font-bold text-green-400 uppercase tracking-wider bg-green-950/50 border border-green-500/50 px-2.5 py-0.5 rounded-lg">🛡️ Saugumo Patikrinimas</span>`;
+    } else if (isMistakesExam) {
+        testTitleBadge = `<span class="text-xs font-bold text-yellow-400 uppercase tracking-wider bg-yellow-950/50 border border-yellow-500/50 px-2.5 py-0.5 rounded-lg">🎯 Klaidų Banko Kartojimas</span>`;
+    }
 
     container.innerHTML = `
         <div class="space-y-4 max-w-4xl mx-auto">
@@ -462,7 +490,7 @@ function setupActiveTestEvents() {
         } else {
             showDialog(
                 "Nutraukti testą?", 
-                "Ar tikrai norite nutraukti šį patikrinimą?", 
+                "Ar tikrai norite nutraukti šį testą?", 
                 "⚠️", 
                 () => {
                     clearInterval(timerInterval);
@@ -558,6 +586,9 @@ function renderResults() {
     const seconds = durationSeconds % 60;
     const timeString = String(minutes).padStart(2, '0') + ":" + String(seconds).padStart(2, '0');
 
+    // 🌟 AUTOMATIŠKAI ATNAUJINAME KLAIDŲ BANKĄ (KLAIDAS PRIDEDAME, IŠTAISYTAS IŠTRINAME!)
+    updateMistakesAfterExam(examQuestions, userAnswers);
+
     const user = firebase.auth().currentUser;
     if (user) {
         const resultObject = {
@@ -568,6 +599,7 @@ function renderResults() {
             percentage: percent,
             isPassed: isPassed,
             isSafetyExam: isSafetyExam,
+            isMistakesExam: isMistakesExam,
             durationString: timeString,
             userAnswers: userAnswers,
             questions: examQuestions 
@@ -576,17 +608,20 @@ function renderResults() {
         db.collection("users").doc(user.uid).collection("results").add(resultObject).catch(() => {});
     }
 
-    const titleText = isSafetyExam 
-        ? (isPassed ? "Saugumo patikrinimas išlaikytas! 🛡️" : "Saugumo patikrinimas neišlaikytas ❌")
-        : (isPassed ? "Egzaminas išlaikytas! 🏆" : "Egzaminas neišlaikytas ❌");
+    let titleText = isPassed ? "Egzaminas išlaikytas! 🏆" : "Egzaminas neišlaikytas ❌";
+    if (isSafetyExam) {
+        titleText = isPassed ? "Saugumo patikrinimas išlaikytas! 🛡️" : "Saugumo patikrinimas neišlaikytas ❌";
+    } else if (isMistakesExam) {
+        titleText = isPassed ? "Klaidos sėkmingai ištaisytos! 🎯" : "Dar liko klaidų pasikartojimui 🔄";
+    }
 
-    const requirementText = isSafetyExam
-        ? "Oficialus komisijos reikalavimas: bent 90% (bent 9 iš 10 teisingų)"
+    let requirementText = isSafetyExam
+        ? "Oficialus reikalavimas: bent 90% (bent 9 iš 10 teisingų)"
         : "Reikalaujama surinkti bent 80% teisingų atsakymų";
 
     container.innerHTML = `
         <div class="max-w-md mx-auto bg-forestSurface border border-slate-800 p-8 rounded-2xl text-center space-y-6 shadow-xl animate-fadeIn">
-            <span class="text-5xl">${isPassed ? (isSafetyExam ? '🛡️' : '🏆') : '❌'}</span>
+            <span class="text-5xl">${isPassed ? (isSafetyExam ? '🛡️' : isMistakesExam ? '🎯' : '🏆') : '❌'}</span>
             
             <div class="space-y-2">
                 <h2 class="text-2xl font-bold font-oswald uppercase tracking-wider ${isPassed ? 'text-green-500' : 'text-red-500'}">

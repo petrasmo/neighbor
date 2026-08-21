@@ -1,7 +1,8 @@
 // js/home.js
-import { startExam, startSafetyExam } from './exam.js';
+import { startExam, startSafetyExam, startMistakesExam } from './exam.js';
 import { showDialog } from './ui.js';
 import { isGuestMode, logoutUser } from './auth.js';
+import { getStoredMistakeIds } from './mistakes.js';
 
 export async function renderHomeScreen() {
     const container = document.getElementById('view-tab-home');
@@ -16,6 +17,10 @@ export async function renderHomeScreen() {
 
         const isGuest = isGuestMode();
         const currentCredits = isGuest ? "0 🪙" : (window.userCreditsAmount !== undefined ? window.userCreditsAmount + " 🪙" : "... 🪙");
+        
+        // Gauname klaidų skaičių
+        const mistakeIds = await getStoredMistakeIds();
+        const mistakeCount = mistakeIds.length;
 
         let topicsHtml = "";
         filteredTopics.forEach(topic => {
@@ -27,14 +32,39 @@ export async function renderHomeScreen() {
             `;
         });
 
+        const mistakesCardHtml = mistakeCount > 0 ? `
+            <div class="bg-gradient-to-r from-[#2A1818] to-forestSurface border-2 border-red-800/80 p-4 sm:p-5 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3.5 shadow-lg animate-fadeIn">
+                <div class="flex items-center gap-3.5">
+                    <div class="w-12 h-12 rounded-xl bg-red-950/80 border border-red-700/60 flex items-center justify-center text-2xl shrink-0">
+                        🎯
+                    </div>
+                    <div class="space-y-0.5">
+                        <span class="text-[10px] font-bold text-red-400 uppercase tracking-wider">Klaidų kartojimas</span>
+                        <h4 class="text-sm sm:text-base font-bold text-white font-oswald uppercase">Mano Klaidų Bankas (${mistakeCount} kl.)</h4>
+                        <p class="text-[11px] text-forestSecondary">Klausimai, kuriuose anksčiau suklydote. Kartokite ir taisykite klaidas nemokamai!</p>
+                    </div>
+                </div>
+                <button id="start-mistakes-btn" class="w-full sm:w-auto h-10 px-5 bg-red-800 hover:bg-red-700 text-white font-bold rounded-xl text-xs uppercase tracking-wider transition shrink-0 shadow flex items-center justify-center gap-1.5 cursor-pointer">
+                    <span>Spręsti klaidas (${mistakeCount})</span> <span>➔</span>
+                </button>
+            </div>
+        ` : `
+            <div class="bg-forestSurface/60 border border-forestBorder p-3.5 rounded-xl flex items-center justify-between gap-3 text-xs">
+                <span class="text-forestSecondary flex items-center gap-2">
+                    <span>🎯</span> <span>Klaidų bankas: <strong>0 klaidų</strong> (Viskas išspręsta be klaidų!)</span>
+                </span>
+                <span class="text-forestPrimary font-bold text-[11px]">🏆 100% Švaru</span>
+            </div>
+        `;
+
         container.innerHTML = `
-            <div class="space-y-6 max-w-4xl mx-auto pb-16">
+            <div class="space-y-5 max-w-4xl mx-auto pb-16">
                 
                 <!-- VIRŠUTINIS BLOKAS: BALANSAS -->
                 <div class="border-b border-forestBorder pb-3 flex justify-between items-center gap-2">
                     <div>
                         <h2 class="text-lg md:text-2xl font-bold font-oswald text-white uppercase tracking-wider">Teorijos Egzaminas</h2>
-                        <p class="text-forestSecondary text-xs">Ruoškitės bilietui arba laikykite nemokamą 3 metų saugumo patikrinimą.</p>
+                        <p class="text-forestSecondary text-xs">Ruoškitės bilietui, taisykite klaidas arba laikykite 3 metų saugumo patikrinimą.</p>
                     </div>
                     <div class="bg-forestSurface border border-forestBorder px-3 py-1.5 rounded-xl flex items-center gap-1.5 shrink-0 shadow-inner">
                         <span class="text-[9px] text-forestSecondary uppercase font-bold tracking-wider hidden sm:inline">Balansas:</span>
@@ -42,7 +72,10 @@ export async function renderHomeScreen() {
                     </div>
                 </div>
 
-                <!-- 🌟 1. SPECIALUSIS REŽIMAS: 3 METŲ PERIODINIS SAUGUMO PATIKRINIMAS (NEMOKAMAS!) -->
+                <!-- 🌟 1. MANO KLAIDŲ BANKAS (DINAMIŠKAS BLOKAS) -->
+                ${mistakesCardHtml}
+
+                <!-- 🌟 2. 3 METŲ PERIODINIS SAUGUMO PATIKRINIMAS (NEMOKAMAS!) -->
                 <div class="bg-gradient-to-r from-[#1B2B1E] to-forestSurface border-2 border-green-500/70 p-5 rounded-2xl space-y-4 shadow-xl relative overflow-hidden">
                     <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                         <div class="flex items-center gap-4">
@@ -71,7 +104,7 @@ export async function renderHomeScreen() {
                     </div>
                 </div>
 
-                <!-- 2. STANDARTINIS TESTŲ GENERATORIUS PAGAL TEMAS -->
+                <!-- 3. STANDARTINIS TESTŲ GENERATORIUS PAGAL TEMAS -->
                 <div class="space-y-4">
                     
                     <div class="flex items-center gap-2">
@@ -152,7 +185,12 @@ function setupHomeEvents(topics) {
         });
     });
 
-    // Paleidžia 3 metų saugumo patikrinimą NEMOKAMAI
+    // Paleidžia KLAIDŲ BANKO testą (NEMOKAMAI)
+    document.getElementById('start-mistakes-btn')?.addEventListener('click', () => {
+        startMistakesExam();
+    });
+
+    // Paleidžia 3 metų saugumo patikrinimą (NEMOKAMAI)
     document.getElementById('start-safety-hero-btn')?.addEventListener('click', () => {
         if (isGuestMode()) {
             showDialog(
