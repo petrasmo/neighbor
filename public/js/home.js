@@ -1,5 +1,5 @@
 // js/home.js
-import { startExam } from './exam.js';
+import { startExam, startSafetyExam } from './exam.js';
 import { showDialog } from './ui.js';
 import { isGuestMode, logoutUser } from './auth.js';
 
@@ -28,51 +28,91 @@ export async function renderHomeScreen() {
         });
 
         container.innerHTML = `
-            <div class="space-y-4 max-w-4xl mx-auto pb-16">
+            <div class="space-y-6 max-w-4xl mx-auto pb-16">
                 
-                <!-- ŠVARUS RESPONSYVUS ANTRAŠTĖS BLOKAS -->
-                <div class="border-b border-forestBorder pb-3 space-y-1.5">
-                    <div class="flex justify-between items-center gap-2">
+                <!-- VIRŠUTINIS BLOKAS: BALANSAS -->
+                <div class="border-b border-forestBorder pb-3 flex justify-between items-center gap-2">
+                    <div>
                         <h2 class="text-lg md:text-2xl font-bold font-oswald text-white uppercase tracking-wider">Teorijos Egzaminas</h2>
-                        <div class="bg-forestSurface border border-forestBorder px-3 py-1.5 rounded-xl flex items-center gap-1.5 shrink-0 shadow-inner">
-                            <span class="text-[9px] text-forestSecondary uppercase font-bold tracking-wider hidden sm:inline">Balansas:</span>
-                            <span id="home-credits-val" class="text-xs md:text-sm font-extrabold text-forestPrimary font-oswald">${currentCredits}</span>
+                        <p class="text-forestSecondary text-xs">Ruoškitės bilietui arba laikykite nemokamą 3 metų saugumo patikrinimą.</p>
+                    </div>
+                    <div class="bg-forestSurface border border-forestBorder px-3 py-1.5 rounded-xl flex items-center gap-1.5 shrink-0 shadow-inner">
+                        <span class="text-[9px] text-forestSecondary uppercase font-bold tracking-wider hidden sm:inline">Balansas:</span>
+                        <span id="home-credits-val" class="text-xs md:text-sm font-extrabold text-forestPrimary font-oswald">${currentCredits}</span>
+                    </div>
+                </div>
+
+                <!-- 🌟 1. SPECIALUSIS REŽIMAS: 3 METŲ PERIODINIS SAUGUMO PATIKRINIMAS (NEMOKAMAS!) -->
+                <div class="bg-gradient-to-r from-[#1B2B1E] to-forestSurface border-2 border-green-500/70 p-5 rounded-2xl space-y-4 shadow-xl relative overflow-hidden">
+                    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                        <div class="flex items-center gap-4">
+                            <div class="w-14 h-14 rounded-2xl bg-green-950/80 border border-green-500/50 flex items-center justify-center text-3xl shrink-0 shadow-md">
+                                🛡️
+                            </div>
+                            <div class="space-y-1">
+                                <div class="flex items-center gap-2">
+                                    <span class="bg-green-950 text-green-400 border border-green-500/50 text-[10px] px-2.5 py-0.5 rounded-full font-bold uppercase tracking-wider inline-block">
+                                        NEMOKAMAI • 0 🪙
+                                    </span>
+                                    <span class="text-[10px] text-forestSecondary">Privaloma kas 3 metus</span>
+                                </div>
+                                <h3 class="text-base sm:text-lg font-bold font-oswald text-white uppercase tracking-wide">
+                                    3 Metų Saugumo Patikrinimo Simuliatorius
+                                </h3>
+                                <p class="text-xs text-forestSecondary leading-relaxed">
+                                    Oficialus formatas: <strong>9 saugumo klausimai + 1 šaudymo schema</strong> • Laikas: <strong>10 min.</strong> • Reikalavimas: <strong>90% (9/10)</strong>.
+                                </p>
+                            </div>
+                        </div>
+
+                        <button id="start-safety-hero-btn" class="w-full sm:w-auto h-11 px-6 bg-forestPrimary hover:bg-green-600 text-white font-bold rounded-xl text-xs uppercase tracking-wider transition shrink-0 flex items-center justify-center gap-2 shadow-lg cursor-pointer">
+                            <span>Laikyti testą (Nemokamai)</span> <span>➔</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 2. STANDARTINIS TESTŲ GENERATORIUS PAGAL TEMAS -->
+                <div class="space-y-4">
+                    
+                    <div class="flex items-center gap-2">
+                        <div class="h-px bg-forestBorder flex-1"></div>
+                        <span class="text-xs uppercase font-bold text-forestSecondary tracking-wider">Arba spręskite teorijos testus</span>
+                        <div class="h-px bg-forestBorder flex-1"></div>
+                    </div>
+
+                    <!-- Egzamino temos -->
+                    <div class="bg-forestSurface border border-forestBorder p-4 md:p-6 rounded-2xl space-y-4 shadow-lg">
+                        <div class="flex justify-between items-center border-b border-forestBorder pb-3">
+                            <h3 class="text-sm md:text-base font-bold font-oswald text-white uppercase tracking-wider">Pasirinkite temas</h3>
+                            <label class="flex items-center gap-2 cursor-pointer text-xs text-forestPrimary font-bold">
+                                <input type="checkbox" id="select-all-topics" class="w-4 h-4 accent-forestPrimary" checked>
+                                Pažymėti visas
+                            </label>
+                        </div>
+                        <div class="grid md:grid-cols-2 gap-2.5 md:gap-3">
+                            ${topicsHtml}
                         </div>
                     </div>
-                    <p class="text-forestSecondary text-xs leading-normal">Pasirinkite temas, klausimų skaičių ir pradėkite testą.</p>
-                </div>
 
-                <!-- Egzamino temos -->
-                <div class="bg-forestSurface border border-forestBorder p-4 md:p-6 rounded-2xl space-y-4">
-                    <div class="flex justify-between items-center border-b border-forestBorder pb-3">
-                        <h3 class="text-sm md:text-base font-bold font-oswald text-white uppercase tracking-wider">Egzamino Temos</h3>
-                        <label class="flex items-center gap-2 cursor-pointer text-xs text-forestPrimary font-bold">
-                            <input type="checkbox" id="select-all-topics" class="w-4 h-4 accent-forestPrimary" checked>
-                            Pažymėti visas
-                        </label>
+                    <!-- Klausimų skaičius -->
+                    <div class="bg-forestSurface border border-forestBorder p-4 md:p-6 rounded-2xl space-y-3 shadow-lg">
+                        <h3 class="text-sm md:text-base font-bold font-oswald text-white uppercase tracking-wider">Klausimų Skaičius</h3>
+                        <div class="flex gap-3 md:gap-4">
+                            ${[20, 50, 100].map(count => `
+                                <button class="question-count-btn flex-1 h-11 rounded-xl font-bold text-xs transition border cursor-pointer ${count === 50 ? 'bg-forestPrimary text-white border-forestPrimary' : 'bg-forestBackground text-forestSecondary border-forestBorder hover:border-forestPrimary'}" data-count="${count}">
+                                    ${count}
+                                </button>
+                            `).join('')}
+                        </div>
                     </div>
-                    <div class="grid md:grid-cols-2 gap-2.5 md:gap-3">
-                        ${topicsHtml}
-                    </div>
-                </div>
 
-                <!-- Klausimų skaičius -->
-                <div class="bg-forestSurface border border-forestBorder p-4 md:p-6 rounded-2xl space-y-3">
-                    <h3 class="text-sm md:text-base font-bold font-oswald text-white uppercase tracking-wider">Klausimų Skaičius</h3>
-                    <div class="flex gap-3 md:gap-4">
-                        ${[20, 50, 100].map(count => `
-                            <button class="question-count-btn flex-1 h-11 rounded-xl font-bold text-xs transition border ${count === 50 ? 'bg-forestPrimary text-white border-forestPrimary' : 'bg-forestBackground text-forestSecondary border-forestBorder hover:border-forestPrimary'}" data-count="${count}">
-                                ${count}
-                            </button>
-                        `).join('')}
+                    <!-- Pradėti standartinį egzaminą mygtukas -->
+                    <div class="pt-2">
+                        <button id="start-exam-btn" class="w-full h-12 bg-buttonBrown hover:bg-buttonBrownHover text-white font-bold rounded-xl transition duration-300 uppercase tracking-wider text-xs shadow-lg flex items-center justify-center cursor-pointer">
+                            ${isGuest ? 'Pradėti egzaminą (Reikalingas prisijungimas)' : 'Pradėti teorijos egzaminą (Sunaudos kreditus)'}
+                        </button>
                     </div>
-                </div>
 
-                <!-- Pradėti mygtukas su saugiu atstumu apačioje -->
-                <div class="pt-2 pb-8">
-                    <button id="start-exam-btn" class="w-full h-12 bg-buttonBrown hover:bg-buttonBrownHover text-white font-bold rounded-xl transition duration-300 uppercase tracking-wider text-xs shadow-lg flex items-center justify-center">
-                        ${isGuest ? 'Pradėti egzaminą (Reikalingas prisijungimas)' : 'Pradėti egzaminą (Sunaudos kreditus)'}
-                    </button>
                 </div>
 
             </div>
@@ -96,13 +136,9 @@ function setupHomeEvents(topics) {
     const countButtons = document.querySelectorAll('.question-count-btn');
     let selectedCount = 50;
 
-    if (selectAllCheckbox) {
-        selectAllCheckbox.addEventListener('change', (e) => {
-            checkboxes.forEach(cb => {
-                cb.checked = e.target.checked;
-            });
-        });
-    }
+    selectAllCheckbox?.addEventListener('change', (e) => {
+        checkboxes.forEach(cb => cb.checked = e.target.checked);
+    });
 
     countButtons.forEach(btn => {
         btn.addEventListener('click', () => {
@@ -116,15 +152,30 @@ function setupHomeEvents(topics) {
         });
     });
 
+    // Paleidžia 3 metų saugumo patikrinimą NEMOKAMAI
+    document.getElementById('start-safety-hero-btn')?.addEventListener('click', () => {
+        if (isGuestMode()) {
+            showDialog(
+                "Reikalingas prisijungimas 🛡️", 
+                "Norėdami laikyti nemokamą 3 metų saugumo patikrinimo testą, prašome prisijungti prie savo paskyros.", 
+                "👤", 
+                () => logoutUser(),
+                () => {}
+            );
+            return;
+        }
+
+        startSafetyExam();
+    });
+
+    // Paleidžia standartinį teorijos egzaminą
     document.getElementById('start-exam-btn')?.addEventListener('click', () => {
         if (isGuestMode()) {
             showDialog(
                 "Reikalingas prisijungimas", 
                 "Norėdami spręsti bandomuosius egzaminus ir kaupti rezultatus debesyje, prašome prisijungti prie savo paskyros.", 
                 "👤", 
-                () => {
-                    logoutUser();
-                },
+                () => logoutUser(),
                 () => {}
             );
             return;

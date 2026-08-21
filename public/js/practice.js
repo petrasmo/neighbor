@@ -8,8 +8,11 @@ import { renderTrophyScreen } from './trophy.js';
 import { renderHuntingGroundsScreen } from './huntingGrounds.js';
 import { renderWeatherScreen } from './weather.js';
 import { renderBloodTrailScreen } from './bloodTrail.js';
+import { startSafetyExam } from './exam.js';
+import { isGuestMode, logoutUser } from './auth.js';
+import { showDialog, switchTab } from './ui.js';
 
-let activeSubScreen = null; // null, 'pedsakai', 'zodynas', 'garsai', 'kalendorius', 'terminai', 'trofejai', 'plotai', 'orai'
+let activeSubScreen = null; 
 
 export function renderPracticeScreen() {
     const container = document.getElementById('view-tab-practice');
@@ -33,8 +36,23 @@ export function renderPracticeScreen() {
         renderWeatherScreen(container, () => { activeSubScreen = null; renderPracticeScreen(); });
     } else {
         renderPracticeHub(container, (screen) => {
-            activeSubScreen = screen;
-            renderPracticeScreen();
+            if (screen === 'safety') {
+                if (isGuestMode()) {
+                    showDialog(
+                        "Reikalingas prisijungimas ???", 
+                        "Norëdami laikyti 3 metø saugumo patikrinimo simuliacijà, praðome prisijungti prie savo paskyros.", 
+                        "??", 
+                        () => logoutUser(),
+                        () => {}
+                    );
+                    return;
+                }
+                switchTab(0); // Perjungiame á pagrindiná egzamino langà
+                startSafetyExam();
+            } else {
+                activeSubScreen = screen;
+                renderPracticeScreen();
+            }
         });
     }
 }

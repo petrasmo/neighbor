@@ -5,13 +5,41 @@ export function renderPracticeHub(container, onNavigate) {
         <div class="space-y-6 max-w-4xl mx-auto py-4">
             
             <div class="space-y-1 border-b border-forestBorder pb-4">
-                <h2 class="text-2xl font-bold font-oswald text-white uppercase tracking-wider">Praktiniai Įrankiai</h2>
-                <p class="text-forestSecondary text-xs">Priemonės medžioklei, plotų valdymui, šūvio analizei ir laimikių vertinimui.</p>
+                <h2 class="text-2xl font-bold font-oswald text-white uppercase tracking-wider">Medžiotojo Įrankiai</h2>
+                <p class="text-forestSecondary text-xs">Priemonės medžioklei, plotų valdymui, šūvio analizei ir saugumo patikrinimui.</p>
             </div>
 
             <div class="grid md:grid-cols-2 gap-4 pt-2">
                 
-                <!-- 1 KORTELĖ: Kraujo pėdsako analizatorius (NAUJA!) -->
+                <!-- 1 KORTELĖ: 3 METŲ PERIODINIS SAUGUMO PATIKRINIMAS (NEMOKAMAS) -->
+                <div id="btn-hub-safety" class="bg-gradient-to-r from-[#1B2B1E] to-forestSurface border-2 border-green-500/70 hover:border-green-400 p-5 rounded-2xl cursor-pointer transition duration-300 group shadow-lg flex flex-col justify-between md:col-span-2">
+                    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                        <div class="flex items-center gap-4">
+                            <div class="w-14 h-14 rounded-2xl bg-green-950/80 border border-green-500/50 flex items-center justify-center text-3xl group-hover:scale-105 transition shrink-0 shadow-md">
+                                🛡️
+                            </div>
+                            <div class="space-y-1">
+                                <div class="flex items-center gap-2">
+                                    <span class="bg-green-950 text-green-400 border border-green-500/50 text-[10px] px-2.5 py-0.5 rounded-full font-bold uppercase tracking-wider inline-block">
+                                        NEMOKAMAI • 0 🪙
+                                    </span>
+                                    <span class="text-[10px] text-forestSecondary">Privaloma kas 3 metus</span>
+                                </div>
+                                <h3 class="text-lg font-bold font-oswald text-white uppercase tracking-wide group-hover:text-green-400 transition">
+                                    3 Metų Saugumo Patikrinimo Simuliatorius
+                                </h3>
+                                <p class="text-xs text-forestSecondary leading-relaxed">
+                                    9 saugumo klausimai + 1 šaudymo schema • 10 min. laiko limitas • 90% išlaikymo kartelė.
+                                </p>
+                            </div>
+                        </div>
+                        <button class="h-10 px-5 bg-forestPrimary hover:bg-green-600 text-white font-bold rounded-xl text-xs uppercase tracking-wider transition shrink-0 flex items-center gap-1.5 shadow">
+                            <span>Laikyti testą</span> <span>→</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 2 KORTELĖ: Kraujo pėdsako analizatorius -->
                 <div id="btn-hub-pedsakai" class="bg-forestSurface border-2 border-red-800/60 hover:border-red-600 p-5 rounded-2xl cursor-pointer transition duration-300 group shadow-lg flex flex-col justify-between md:col-span-2">
                     <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                         <div class="flex items-center gap-4">
@@ -34,7 +62,7 @@ export function renderPracticeHub(container, onNavigate) {
                     </div>
                 </div>
 
-                <!-- 2 KORTELĖ: Mano medžioklės plotai -->
+                <!-- 3 KORTELĖ: Mano medžioklės plotai -->
                 <div id="btn-hub-plotai" class="bg-forestSurface border border-forestBorder hover:border-forestPrimary p-5 rounded-2xl cursor-pointer transition duration-300 group shadow-lg flex flex-col justify-between">
                     <div class="space-y-3">
                         <div class="w-12 h-12 rounded-xl bg-forestBackground border border-forestBorder flex items-center justify-center text-2xl group-hover:scale-105 transition shrink-0">
@@ -55,7 +83,7 @@ export function renderPracticeHub(container, onNavigate) {
                     </div>
                 </div>
 
-                <!-- 3 KORTELĖ: Medžiotojo orai ir vėjas bokšteliui -->
+                <!-- 4 KORTELĖ: Medžiotojo orai ir vėjas bokšteliui -->
                 <div id="btn-hub-orai" class="bg-forestSurface border border-forestBorder hover:border-forestPrimary p-5 rounded-2xl cursor-pointer transition duration-300 group shadow-lg flex flex-col justify-between">
                     <div class="space-y-3">
                         <div class="w-12 h-12 rounded-xl bg-forestBackground border border-forestBorder flex items-center justify-center text-2xl group-hover:scale-105 transition shrink-0">
@@ -76,7 +104,7 @@ export function renderPracticeHub(container, onNavigate) {
                     </div>
                 </div>
 
-                <!-- 4 KORTELĖ: Trofėjų skaičiuoklė -->
+                <!-- 5 KORTELĖ: Trofėjų skaičiuoklė -->
                 <div id="btn-hub-trofejai" class="bg-forestSurface border border-forestBorder hover:border-forestPrimary p-5 rounded-2xl cursor-pointer transition duration-300 group shadow-lg flex flex-col justify-between">
                     <div class="space-y-3">
                         <div class="w-12 h-12 rounded-xl bg-forestBackground border border-forestBorder flex items-center justify-center text-2xl group-hover:scale-105 transition shrink-0">
@@ -97,7 +125,7 @@ export function renderPracticeHub(container, onNavigate) {
                     </div>
                 </div>
 
-                <!-- 5 KORTELĖ: Medžioklės terminai -->
+                <!-- 6 KORTELĖ: Medžioklės terminai -->
                 <div id="btn-hub-terminai" class="bg-forestSurface border border-forestBorder hover:border-forestPrimary p-5 rounded-2xl cursor-pointer transition duration-300 group shadow-lg flex flex-col justify-between">
                     <div class="space-y-3">
                         <div class="w-12 h-12 rounded-xl bg-forestBackground border border-forestBorder flex items-center justify-center text-2xl group-hover:scale-105 transition shrink-0">
@@ -118,7 +146,7 @@ export function renderPracticeHub(container, onNavigate) {
                     </div>
                 </div>
 
-                <!-- 6 KORTELĖ: Medžiotojų žodynas -->
+                <!-- 7 KORTELĖ: Medžiotojų žodynas -->
                 <div id="btn-hub-zodynas" class="bg-forestSurface border border-forestBorder hover:border-forestPrimary p-5 rounded-2xl cursor-pointer transition duration-300 group shadow-lg flex flex-col justify-between">
                     <div class="space-y-3">
                         <div class="w-12 h-12 rounded-xl bg-forestBackground border border-forestBorder flex items-center justify-center text-2xl group-hover:scale-105 transition shrink-0">
@@ -139,7 +167,7 @@ export function renderPracticeHub(container, onNavigate) {
                     </div>
                 </div>
 
-                <!-- 7 KORTELĖ: Gyvūnų garsai -->
+                <!-- 8 KORTELĖ: Gyvūnų garsai -->
                 <div id="btn-hub-garsai" class="bg-forestSurface border border-forestBorder hover:border-forestPrimary p-5 rounded-2xl cursor-pointer transition duration-300 group shadow-lg flex flex-col justify-between">
                     <div class="space-y-3">
                         <div class="w-12 h-12 rounded-xl bg-forestBackground border border-forestBorder flex items-center justify-center text-2xl group-hover:scale-105 transition shrink-0">
@@ -165,6 +193,7 @@ export function renderPracticeHub(container, onNavigate) {
         </div>
     `;
 
+    document.getElementById('btn-hub-safety')?.addEventListener('click', () => onNavigate('safety'));
     document.getElementById('btn-hub-pedsakai')?.addEventListener('click', () => onNavigate('pedsakai'));
     document.getElementById('btn-hub-plotai')?.addEventListener('click', () => onNavigate('plotai'));
     document.getElementById('btn-hub-orai')?.addEventListener('click', () => onNavigate('orai'));

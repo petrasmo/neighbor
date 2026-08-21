@@ -1,4 +1,7 @@
 // js/bloodTrail.js
+import { db, auth } from './firebase.js';
+import { isGuestMode, logoutUser } from './auth.js';
+import { showDialog } from './ui.js';
 
 let selectedReaction = null;
 let selectedBlood = null;
@@ -47,8 +50,8 @@ export function renderBloodTrailScreen(container, onBack) {
                         <p class="text-[11px] text-forestPrimary font-bold">Šūvio vietos diagnostika ir paieškos taktika</p>
                     </div>
                 </div>
-                <button id="save-gps-hit-btn" class="h-9 px-3 bg-forestBackground border border-forestBorder hover:border-forestPrimary rounded-xl text-xs font-bold text-white flex items-center gap-1.5 transition cursor-pointer">
-                    <span>📍</span> <span class="hidden sm:inline">Žymėti vietą (GPS)</span>
+                <button id="save-gps-hit-btn" class="h-9 px-3 bg-forestPrimary hover:bg-green-600 rounded-xl text-xs font-bold text-white flex items-center gap-1.5 transition shadow cursor-pointer">
+                    <span>📍</span> <span>Išsaugoti vietą (GPS)</span>
                 </button>
             </div>
 
@@ -182,9 +185,9 @@ function calculateDiagnosis() {
             summary: "Kraujas su oro pūslelėmis rodo plaučių arba trachėjos pažeidimą. Žvėris patiria greitą deguonies trūkumą ir vidinį nukraujavimą.",
             rules: [
                 "Palaukite 15 minučių bokštelyje, kad žvėris ramiai užgestų be streso.",
-                "Šūvio vietą aiškiai pažymėkite (nulaužta šakele ar GPS žyma).",
+                "Šūvio vietą aiškiai pažymėkite.",
                 "Eikite pėdsaku su prožektoriumi – kraujavimas turėtų būti gausus iš abiejų pusių.",
-                "Prieikite prie gulinčio žvėries iš nugaros pusės su paruoštu ginklu (žiūrėkite į ausis ir akis)."
+                "Prieikite prie gulinčio žvėries iš nugaros pusės su paruoštu ginklu."
             ]
         };
     }
@@ -434,17 +437,57 @@ function startWaitTimer(totalSeconds) {
     }, 1000);
 }
 
-function saveHitGPS() {
-    if ("geolocation" in navigator) {
-        navigator.geolocation.getCurrentPosition((pos) => {
-            const lat = pos.coords.latitude;
-            const lng = pos.coords.longitude;
-            const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
-            window.open(mapsUrl, '_blank');
-        }, () => {
-            alert("Nepavyko nustatyti GPS buvimo vietos. Įsitikinkite, kad įjungtas vietos nustatymas.");
-        }, { enableHighAccuracy: true });
-    } else {
-        alert("GPS nepalaikomas jūsų naršyklėje.");
+// ŠŪVIO VIETOS IŠSAUGOJIMAS Į FIRESTORE (TIK PRISIJUNGUSIEMS)
+async function saveHitGPS() {
+    const user = auth.currentUser;
+    const isGuest = isGuestMode() || !user;
+
+    // Jei svečias – prašome prisijungti
+    if (isGuest) {
+        showDialog(
+            "Reikalingas prisijungimas 📍",
+            "Norėdami išsaugoti šūvio vietą ir pėdsako koordinates savo privačiame medžioklės žemėlapyje, prašome prisijungti prie savo paskyros.",
+            "👤",
+            () => logoutUser(),
+            () => {}
+        );
+        return;
     }
+
+    if (!("geolocation" in navigator)) {
+        showDialog("GPS klaida", "Jūsų įrenginys nepalaiko GPS vietos nustatymo.", "⚠️");
+        return;
+    }
+
+    showDialog("Ieškoma GPS...", "Nustatomos tikslios jūsų buvimo vietos koordinatės miške...", "⏳");
+
+    navigator.geolocation.getCurrentPosition(async (pos) => {
+        const lat = pos.coords.latitude;
+        const lng = pos.coords.longitude;
+        const diag = calculateDiagnosis();
+        const timeStr = new Date().toLocaleTimeString('lt-LT', { hour: '2-digit', minute: '2-digit' });
+
+        const spotData = {
+            type: "sighting",
+            title: `🩸 Šūvio vieta (${timeStr})`,
+            notes: diag ? `Diagnozė: ${diag.target}. ${diag.summary}` : "Pažymėta šūvio vieta kraujo pėdsako paieškai.",
+            latitude: lat,
+            longitude: lng,
+            createdAt: Date.now()
+        };
+
+        try {
+            await db.collection("users").doc(user.uid).collection("hunting_spots").add(spotData);
+            showDialog(
+                "Šūvio vieta išsaugota! 📍",
+                `Koordinatės (${lat.toFixed(5)}, ${lng.toFixed(5)}) sėkmingai įrašytos į jūsų privatų žemėlapį „Mano medžioklės plotai“.`,
+                "✅"
+            );
+        } catch (e) {
+            console.error("Klaida saugant tašką:", e);
+            showDialog("Klaida", "Nepavyko išsaugoti taško duomenų bazėje.", "🛑");
+        }
+    }, (err) => {
+        showDialog("GPS klaida", "Nepavyko nustatyti GPS vietos. Įsitikinkite, kad telefone įjungta vietos nustatymo funkcija.", "🛑");
+    }, { enableHighAccuracy: true });
 }
