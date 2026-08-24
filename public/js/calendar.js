@@ -19,10 +19,14 @@ export async function renderCalendarScreen(container, onBack) {
         
         try {
             const snapshot = await db.collection("events").orderBy("dateTimestamp", "asc").get();
-            calendarEvents = [];
+            let events = [];
             snapshot.forEach(doc => {
-                calendarEvents.push({ id: doc.id, ...doc.data() });
+                events.push({ id: doc.id, ...doc.data() });
             });
+
+            // Filtruojame TIK BŪSIMUS renginius (nuo šiandienos pradžios)
+            const nowSec = Math.floor(Date.now() / 1000) - (24 * 3600);
+            calendarEvents = events.filter(e => (e.dateTimestamp || 0) >= nowSec);
         } catch (e) {
             console.error("Klaida nuskaitant renginius:", e);
         } finally {
@@ -34,12 +38,20 @@ export async function renderCalendarScreen(container, onBack) {
 }
 
 function renderCalendarLayout(container, onBack) {
-    const categories = ["Visi", ...Array.from(new Set(calendarEvents.map(e => e.category).filter(Boolean)))];
+    // 🌟 KATEGORIJAS RENKAME TIK IŠ TŲ RENGINIŲ, KURIE REALIAI TURI BŪSIMŲ ĮRAŠŲ!
+    const activeCategories = Array.from(new Set(calendarEvents.map(e => e.category).filter(Boolean)));
+    
+    // Jei anksčiau pasirinktoje kategorijoje nebėra būsimų renginių – atstatome į "Visi"
+    if (selectedCategory !== "Visi" && !activeCategories.includes(selectedCategory)) {
+        selectedCategory = "Visi";
+    }
+
+    const categories = activeCategories.length > 0 ? ["Visi", ...activeCategories] : [];
 
     container.innerHTML = `
         <div class="space-y-4 max-w-4xl mx-auto py-2">
             <div class="flex items-center gap-3 border-b border-forestBorder pb-3">
-                <button id="calendar-back-btn" class="w-9 h-9 rounded-xl bg-forestSurface border border-forestBorder hover:border-forestPrimary flex items-center justify-center text-white text-sm transition focus:outline-none">
+                <button id="calendar-back-btn" class="w-9 h-9 rounded-xl bg-forestSurface border border-forestBorder hover:border-forestPrimary flex items-center justify-center text-white text-sm transition focus:outline-none cursor-pointer">
                     ←
                 </button>
                 <div>
@@ -48,8 +60,8 @@ function renderCalendarLayout(container, onBack) {
                 </div>
             </div>
 
-            <!-- Bendras paieškos ir filtrų komponentas -->
-            <div id="calendar-filter-component"></div>
+            <!-- Paieškos ir filtrų komponentas -->
+            <div id="calendar-filter-component" class="${categories.length <= 1 ? 'hidden' : ''}"></div>
 
             <!-- Sąrašas -->
             <div id="calendar-events-list" class="space-y-3 pt-1"></div>
@@ -58,18 +70,20 @@ function renderCalendarLayout(container, onBack) {
 
     document.getElementById('calendar-back-btn')?.addEventListener('click', onBack);
 
-    // INICIALIZUOJAME KOMPONENTĄ
-    createSearchFilter({
-        container: document.getElementById('calendar-filter-component'),
-        placeholder: "Ieškoti renginio, vietos, datos...",
-        categories: categories,
-        initialCategory: selectedCategory,
-        onFilterChange: ({ query, category }) => {
-            searchQuery = query;
-            selectedCategory = category;
-            updateEventsList();
-        }
-    });
+    // Rodome filtrus tik tada, jei yra bent viena reali būsimų renginių kategorija
+    if (categories.length > 1) {
+        createSearchFilter({
+            container: document.getElementById('calendar-filter-component'),
+            placeholder: "Ieškoti renginio, vietos, datos...",
+            categories: categories,
+            initialCategory: selectedCategory,
+            onFilterChange: ({ query, category }) => {
+                searchQuery = query;
+                selectedCategory = category;
+                updateEventsList();
+            }
+        });
+    }
 
     updateEventsList();
 }
@@ -83,13 +97,12 @@ function updateEventsList() {
         container.innerHTML = `
             <div class="flex flex-col items-center justify-center py-16 space-y-3">
                 <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-forestPrimary"></div>
-                <p class="text-forestSecondary text-xs">Kraunami medžioklės renginiai iš debesies...</p>
+                <p class="text-forestSecondary text-xs">Kraunami medžioklės renginiai...</p>
             </div>
         `;
         return;
     }
 
-    const currentTimestampSeconds = Math.floor(Date.now() / 1000);
     const filtered = calendarEvents.filter(ev => {
         const matchesCategory = selectedCategory === "Visi" || ev.category === selectedCategory;
         const matchesSearch = searchQuery === "" ||
@@ -97,8 +110,7 @@ function updateEventsList() {
             (ev.location && ev.location.toLowerCase().includes(searchQuery)) ||
             (ev.description && ev.description.toLowerCase().includes(searchQuery));
         
-        const isUpcoming = (ev.dateTimestamp || 0) >= currentTimestampSeconds;
-        return matchesCategory && matchesSearch && isUpcoming;
+        return matchesCategory && matchesSearch;
     });
 
     if (countInfo) countInfo.innerText = `Rasta būsimų renginių: ${filtered.length}`;
@@ -107,8 +119,8 @@ function updateEventsList() {
         container.innerHTML = `
             <div class="bg-forestSurface border border-forestBorder p-8 rounded-2xl text-center space-y-2">
                 <span class="text-3xl block">📅</span>
-                <p class="text-sm font-bold text-white">Būsimų renginių šiuo metu nerasta</p>
-                <p class="text-xs text-forestSecondary">Pakeiskite paieškos žodį arba kategoriją.</p>
+                <p class="text-sm font-bold text-white">Būsimų renginių šiuo metu nėra</p>
+                <p class="text-xs text-forestSecondary">Šiuo metu naujų renginių ar egzaminų nepaskelbta. Užsukite vėliau!</p>
             </div>
         `;
         return;
@@ -128,7 +140,7 @@ function createEventCardHtml(event) {
     let expandedHtml = "";
     if (isExpanded) {
         const navBtn = (event.latitude && event.longitude) 
-            ? `<button class="nav-maps-btn flex-1 h-10 bg-forestBackground hover:bg-slate-800 border border-forestPrimary text-forestPrimary rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition" data-lat="${event.latitude}" data-lon="${event.longitude}"><span>🧭</span> <span>Naviguoti</span></button>` 
+            ? `<button class="nav-maps-btn flex-1 h-10 bg-forestBackground hover:bg-slate-800 border border-forestPrimary text-forestPrimary rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition cursor-pointer" data-lat="${event.latitude}" data-lon="${event.longitude}"><span>🧭</span> <span>Naviguoti</span></button>` 
             : "";
 
         expandedHtml = `
@@ -136,7 +148,7 @@ function createEventCardHtml(event) {
                 <p class="text-forestSecondary">${event.description || 'Išsamesnio aprašymo nėra.'}</p>
                 <div class="flex flex-col sm:flex-row gap-2 pt-1">
                     ${navBtn}
-                    <button class="add-cal-btn flex-1 h-10 bg-buttonBrown hover:bg-buttonBrownHover text-white rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition"
+                    <button class="add-cal-btn flex-1 h-10 bg-buttonBrown hover:bg-buttonBrownHover text-white rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition cursor-pointer"
                         data-title="${encodeURIComponent(event.title || '')}" 
                         data-desc="${encodeURIComponent(event.description || '')}" 
                         data-loc="${encodeURIComponent(event.location || '')}"
