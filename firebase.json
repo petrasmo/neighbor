@@ -15,5 +15,19 @@
   },
   "extensions": {
     "firestore-stripe-payments": "stripe/firestore-stripe-payments@0.3.4"
-  }
+  },
+  "functions": [
+    {
+      "source": "functions",
+      "codebase": "default",
+      "disallowLegacyRuntimeConfig": true,
+      "ignore": [
+        "node_modules",
+        ".git",
+        "firebase-debug.log",
+        "firebase-debug.*.log",
+        "*.local"
+      ]
+    }
+  ]
 }

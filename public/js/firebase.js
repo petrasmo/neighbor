@@ -1,14 +1,17 @@
+// js/firebase.js
 const firebaseConfig = {
-  apiKey: "AIzaSyAZVU_0JeYxOZ99hLz9bsj8fD8wK05hC4c",
-  authDomain: "huntertest-c1924.firebaseapp.com",
-  projectId: "huntertest-c1924",
-  storageBucket: "huntertest-c1924.firebasestorage.app",
-  messagingSenderId: "302105416363",
-  appId: "1:382105416363:web:77783e569d7b8a6ff11dee",
-  measurementId: "G-7493016MD9"
+  apiKey: "AIzaSyCQXoe-2gARzsK6Pk12cmYaJyggpYL_Ysg",
+  authDomain: "neighborpm-b9968.firebaseapp.com",
+  projectId: "neighborpm-b9968",
+  storageBucket: "neighborpm-b9968.firebasestorage.app",
+  messagingSenderId: "227564351965",
+  appId: "1:227564351965:web:01757613c977ea76ee8634"
 };
 
-firebase.initializeApp(firebaseConfig);
+// Inicializuojame compat SDK
+if (!firebase.apps.length) {
+    firebase.initializeApp(firebaseConfig);
+}
 
 export const auth = firebase.auth();
 export const db = firebase.firestore();

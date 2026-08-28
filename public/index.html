@@ -1,72 +1,32 @@
 <!DOCTYPE html>
 <html lang="lt">
 <head>
-    <!-- Google tag (gtag.js) -->
-	<script async src="https://www.googletagmanager.com/gtag/js?id=G-VL3LERY03T"></script>
-	<script>
-	  window.dataLayer = window.dataLayer || [];
-	  function gtag(){dataLayer.push(arguments);}
-	  gtag('js', new Date());
-
-	  gtag('config', 'G-VL3LERY03T');
-	</script>
-    
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     
-    <!-- 1. TIKSLUS SEO PAVADINIMAS IR PORTALO TIKSLAS -->
-    <title>HunterTest.lt – Medžiotojų portalas, testai ir praktiniai įrankiai</title>
-    
-    <!-- 2. META APRAŠYMAI GOOGLE ROBOTUI -->
-    <meta name="description" content="Modernus medžiotojų portalas: aktualūs medžiotojų testai ir egzaminai, privatus medžioklės plotų žemėlapis, vėjo analizatorius bokšteliui, kraujo pėdsako gidas bei trofėjų skaičiuoklė.">
-    <meta name="keywords" content="medžiotojų portalas, medžiotojų testai, medžioklės testai, medžioklės egzaminai, medžiotojo bilietas, medžioklės plotai, trofėjų skaičiuoklė, medžioklės orai, kraujo pėdsakas, saugus elgesys medžioklėje">
-    <meta name="author" content="HunterTest.lt">
-    <link rel="canonical" href="https://huntertest.lt/">
-
-    <!-- 3. OPEN GRAPH (RODOMA DALINANTIS FEISBUKE / VIBER / SMS) -->
-    <meta property="og:type" content="website">
-    <meta property="og:url" content="https://huntertest.lt/">
-    <meta property="og:title" content="HunterTest.lt – Medžiotojų portalas ir praktiniai įrankiai">
-    <meta property="og:description" content="Bandomieji medžioklės testai, privatus plotų žemėlapis, vėjo analizatorius bokšteliui, kraujo pėdsako gidas ir trofėjų skaičiuoklė.">
-    <meta property="og:image" content="https://huntertest.lt/logo.png">
-
-    <!-- 4. SCHEMA.ORG STRUKTŪRIZUOTI DUOMENYS GOOGLEI -->
-    <script type="application/ld+json">
-    {
-      "@context": "https://schema.org",
-      "@type": "WebApplication",
-      "name": "HunterTest.lt - Medžiotojų portalas",
-      "url": "https://huntertest.lt",
-      "description": "Lietuvos medžiotojų portalas: bandomieji egzaminai, medžioklės plotų žemėlapis, orų analizė ir trofėjų skaičiuoklė.",
-      "applicationCategory": "EducationalApplication",
-      "operatingSystem": "Web",
-      "offers": {
-        "@type": "Offer",
-        "price": "0",
-        "priceCurrency": "EUR"
-      }
-    }
-    </script>
-
+    <title>Neighbor P.M. 🚜 – Tavo technika kaimynų pagalbai</title>
+    <meta name="description" content="Žemės ūkio technikos dalijimosi ir SOS pagalbos platforma Lietuvos ūkininkams.">
     <link rel="icon" type="image/png" href="logo.png">
-    <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;600;700&family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
-	<!-- Leaflet Žemėlapis -->
+
+    <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
             theme: {
                 extend: {
                     colors: {
-                        forestBackground: '#0E110E',
-                        forestPrimary: '#4CAF50',
-                        forestSurface: '#2C2520',
-                        forestSecondary: '#CBD5E1',
-                        forestBorder: '#475569',
-                        buttonBrown: '#6D4C41',
-                        buttonBrownHover: '#8D6E63',
-                        borderGray: '#3E3E3E'
+                        tractorBg: '#0F120F',
+                        tractorPrimary: '#2E7D32',
+                        tractorPrimaryLight: '#4CAF50',
+                        tractorPrimaryHover: '#1B5E20',
+                        tractorSurface: '#181C18',
+                        tractorCard: '#212621',
+                        tractorSecondary: '#94A3B8',
+                        tractorBorder: '#2E382E',
+                        myPostBg: '#182C1A'
                     },
                     fontFamily: {
                         oswald: ['Oswald', 'sans-serif'],
@@ -77,233 +37,138 @@
         }
     </script>
     <style>
-        .scrollbar-none::-webkit-scrollbar { display: none; }
-        .scrollbar-none { -ms-overflow-style: none; scrollbar-width: none; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #0F120F; }
+        ::-webkit-scrollbar-thumb { background: #2E382E; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #2E7D32; }
     </style>
 </head>
-<body class="bg-forestBackground text-forestSecondary font-sans antialiased h-[100dvh] w-screen overflow-hidden">
+<body class="bg-tractorBg text-slate-200 font-sans antialiased h-[100dvh] w-screen overflow-hidden flex flex-col">
 
-    <!-- 0. PIRMINIS GREITAS UŽKROVIMO EKRANAS (PRELOADER) -->
-    <div id="app-preloader" class="fixed inset-0 bg-forestBackground z-[200] flex flex-col items-center justify-center space-y-4 transition-opacity duration-300">
+    <!-- 0. PRELOADERIS -->
+    <div id="app-preloader" class="fixed inset-0 bg-tractorBg z-[200] flex flex-col items-center justify-center space-y-4 transition-opacity duration-300">
         <div class="relative flex items-center justify-center">
-            <div class="w-20 h-20 rounded-full border-4 border-forestSurface border-t-forestPrimary animate-spin"></div>
-            <span class="text-3xl absolute">🦌</span>
+            <div class="w-16 h-16 rounded-full border-4 border-tractorBorder border-t-tractorPrimaryLight animate-spin"></div>
+            <span class="text-3xl absolute">🚜</span>
         </div>
         <div class="text-center space-y-1">
-            <h2 class="font-oswald text-2xl font-bold tracking-widest text-forestPrimary uppercase">HUNTERTEST</h2>
-            <p class="text-xs text-forestSecondary font-medium animate-pulse">Kraunamas medžiotojų portalas...</p>
+            <h2 class="font-oswald text-2xl font-bold tracking-widest text-tractorPrimaryLight uppercase">NEIGHBOR P.M.</h2>
+            <p class="text-xs text-slate-400 font-medium animate-pulse">Kraunamas ūkininkų portalas...</p>
         </div>
     </div>
 
-    <!-- A. NEPRISIJUNGUSIO (Logged Out) EKRANO TURINYS SU VIRŠUTINĖMIS NUORODOMIS -->
-    <div id="logged-out-state" class="flex flex-col h-full justify-between overflow-y-auto hidden">
+    <!-- PAGRINDINIS PORTALAS (ATVIRAS VISIEMS) -->
+    <div class="flex flex-col md:flex-row h-full w-full overflow-hidden">
         
-			<!-- Viršutinė juosta su nuorodomis į Žodyną ir Renginius -->
-			<div id="global-navbar"></div>
-			<script src="/js/navbar.js"></script>
-
-        <main class="max-w-md w-full mx-auto px-4 py-6 space-y-6 my-auto">
-            
-            <header class="text-center space-y-2">
-                <span class="bg-forestPrimary/10 text-forestPrimary border border-forestPrimary/25 text-[9px] px-2.5 py-0.5 rounded-full font-bold uppercase tracking-widest inline-block">
-                    Medžiotojų portalas ir testai internetu
-                </span>
-                <h1 class="text-2xl md:text-3xl font-extrabold text-white leading-tight font-oswald uppercase tracking-wider">
-                    Medžiotojų portalas ir <br>
-                    <span class="text-forestPrimary">išmanieji įrankiai</span>
-                </h1>
-                <p class="text-forestSecondary text-xs leading-relaxed max-w-xs mx-auto">
-                    Pasiruoškite medžiotojo bilieto egzaminui, žymėkite savo plotus žemėlapyje, analizuokite vėją bokšteliui ir naudokitės kraujo pėdsakų gidu.
-                </p>
-            </header>
-
-            <!-- PRISIJUNGIMO / REGISTRACIJOS KORTELĖ -->
-            <div class="bg-forestSurface border border-forestBorder p-5 rounded-2xl space-y-3.5 shadow-2xl">
-                
-                <!-- 1. Google mygtukas -->
-                <button id="login-google-btn" class="w-full bg-buttonBrown hover:bg-buttonBrownHover text-white font-bold h-11 rounded-xl transition duration-200 uppercase tracking-wider text-xs shadow flex items-center justify-center gap-2.5 cursor-pointer">
-                    <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24">
-                        <path d="M12.24 10.285V13.4h6.887c-.275 1.565-1.88 4.604-6.887 4.604-4.33 0-7.866-3.577-7.866-8s3.536-8 7.866-8c2.46 0 3.855 1.01 4.797 1.91l2.427-2.334C17.955 2.192 15.34 1 12.24 1 5.48 1 0 6.48 0 13.2s5.48 12.2 12.24 12.2c7.055 0 11.75-4.91 11.75-11.9 0-.8-.085-1.41-.195-2.215H12.24z"/>
-                    </svg>
-                    Prisijungti su Google
-                </button>
-
-                <!-- Skiriamoji linija -->
-                <div class="flex items-center gap-2 my-1">
-                    <div class="h-px bg-forestBorder flex-1"></div>
-                    <span class="text-[10px] text-forestSecondary uppercase font-bold tracking-wider">arba el. paštu</span>
-                    <div class="h-px bg-forestBorder flex-1"></div>
-                </div>
-
-                <!-- Skirtukai: Prisijungti / Registruotis -->
-                <div class="flex bg-forestBackground p-0.5 rounded-lg border border-forestBorder">
-                    <button id="tab-auth-login" class="flex-1 py-1.5 text-xs font-bold rounded-md transition bg-forestPrimary text-white shadow cursor-pointer">
-                        Prisijungti
-                    </button>
-                    <button id="tab-auth-register" class="flex-1 py-1.5 text-xs font-bold rounded-lg transition text-forestSecondary hover:text-white cursor-pointer">
-                        Registruotis
-                    </button>
-                </div>
-
-                <!-- El. pašto forma -->
-                <form id="email-auth-form" class="space-y-2.5">
-                    <div id="auth-name-field" class="space-y-0.5 hidden">
-                        <label class="text-[10px] font-bold text-forestSecondary uppercase tracking-wider">Jūsų Vardas</label>
-                        <input id="auth-name-input" type="text" placeholder="Vardas" 
-                            class="w-full h-9 bg-forestBackground border border-forestBorder focus:border-forestPrimary rounded-xl px-3 text-xs text-white placeholder-slate-500 focus:outline-none transition">
-                    </div>
-
-                    <div class="space-y-0.5">
-                        <label class="text-[10px] font-bold text-forestSecondary uppercase tracking-wider">El. paštas</label>
-                        <input id="auth-email-input" type="email" required placeholder="vardas@pavyzdys.lt" 
-                            class="w-full h-9 bg-forestBackground border border-forestBorder focus:border-forestPrimary rounded-xl px-3 text-xs text-white placeholder-slate-500 focus:outline-none transition">
-                    </div>
-
-                    <div class="space-y-0.5">
-                        <div class="flex justify-between items-center">
-                            <label class="text-[10px] font-bold text-forestSecondary uppercase tracking-wider">Slaptažodis</label>
-                            <button type="button" id="auth-forgot-btn" class="text-[10px] text-forestPrimary hover:underline font-bold cursor-pointer">
-                                Pamiršote?
-                            </button>
-                        </div>
-                        <input id="auth-password-input" type="password" required placeholder="••••••••" 
-                            class="w-full h-9 bg-forestBackground border border-forestBorder focus:border-forestPrimary rounded-xl px-3 text-xs text-white placeholder-slate-500 focus:outline-none transition">
-                    </div>
-
-                    <button type="submit" id="auth-submit-btn" class="w-full h-10 bg-forestPrimary hover:bg-green-600 text-white font-bold rounded-xl transition duration-200 text-xs uppercase tracking-wider shadow mt-1 cursor-pointer">
-                        Prisijungti
-                    </button>
-                </form>
-
-                <!-- Svečio režimo mygtukas -->
-                <div class="pt-1.5 border-t border-forestBorder text-center">
-                    <button id="guest-enter-btn" class="text-[11px] font-bold text-forestSecondary hover:text-forestPrimary transition py-0.5 flex items-center justify-center gap-1 mx-auto cursor-pointer">
-                        <span>Išbandyti nemokamai kaip svečias</span>
-                        <span>→</span>
-                    </button>
-                </div>
-
+        <!-- 1. Mobili viršutinė juosta -->
+        <div class="md:hidden bg-tractorSurface border-b border-tractorBorder w-full px-4 py-3 flex justify-between items-center z-10 shrink-0">
+            <div class="flex items-center gap-2">
+                <span class="text-xl">🚜</span>
+                <span class="font-oswald text-lg font-bold tracking-wider text-tractorPrimaryLight">NEIGHBOR P.M.</span>
             </div>
-
-            <!-- SEO BLOKAS -->
-            <article class="bg-forestSurface/60 border border-forestBorder/70 p-5 rounded-2xl space-y-3 text-left">
-                <h2 class="text-sm font-bold text-white uppercase font-oswald tracking-wider border-b border-forestBorder/60 pb-2">
-                    Apie HunterTest medžiotojų portalą
-                </h2>
-                <p class="text-[11px] text-forestSecondary leading-relaxed">
-                    <strong>HunterTest.lt</strong> – tai moderni medžiotojų platforma, skirta efektyviai ruoštis teoriniam medžiotojo bilieto egzaminui bei naudotis praktiniais medžioklės įrankiais: privačiu plotų žemėlapiu, vėjo analizatoriumi, kraujo pėdsakų gidu ir trofėjų skaičiuokle.
-                </p>
-                <div class="flex flex-wrap gap-2 pt-1 text-[11px]">
-                    <a href="/pedsakai.html" class="text-red-400 font-bold hover:underline">Kraujo pėdsakas →</a>
-                    <span class="text-slate-600">•</span>
-                    <a href="/zodynas.html" class="text-forestPrimary font-bold hover:underline">Žodynas →</a>
-                    <span class="text-slate-600">•</span>
-                    <a href="/renginiai.html" class="text-forestPrimary font-bold hover:underline">Egzaminų kalendorius →</a>
-                </div>
-            </article>
-
-        </main>
-
-        <footer class="border-t border-forestBorder py-3 text-center text-[10px] text-slate-500 shrink-0">
-            <p>&copy; 2026 HunterTest.lt. Visos teisės saugomos. Medžiotojų portalas ir testai internetu.</p>
-        </footer>
-    </div>
-
-
-    <!-- B. PILNAVERTIS RESPONSITYVUS MAKETAS PRISIJUNGUS -->
-    <div id="logged-in-state" class="flex flex-col md:flex-row h-full w-full hidden">
-        
-        <!-- 1. MOBILI VIRŠUTINĖ JUOSTA -->
-        <div class="md:hidden bg-forestSurface border-b border-forestBorder w-full px-4 py-2.5 flex justify-between items-center z-10 shrink-0">
-            <span class="font-oswald text-xl font-bold tracking-wider text-forestPrimary">HUNTERTEST</span>
-            <button class="logout-action-btn px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer">
-                <span>🚪</span> <span>Atsijungti</span>
-            </button>
+            <div id="auth-status-mobile">
+                <button class="login-trigger-btn px-3 py-1 bg-tractorPrimary text-white rounded-lg text-xs font-bold">
+                    Prisijungti
+                </button>
+            </div>
         </div>
 
-        <!-- 2. ŠONINIS MENIU / SIDEBAR -->
-        <aside class="hidden md:flex flex-col justify-between w-64 bg-forestSurface border-r border-forestBorder p-6 h-full shrink-0">
-            <div class="space-y-8">
-                <span class="font-oswald text-2xl font-bold tracking-wider text-forestPrimary block border-b border-forestBorder pb-4">HUNTERTEST</span>
+        <!-- 2. Šoninis meniu (Desktop) -->
+        <aside class="hidden md:flex flex-col justify-between w-72 bg-tractorSurface border-r border-tractorBorder p-6 h-full shrink-0">
+            <div class="space-y-6">
+                <div class="flex items-center gap-3 border-b border-tractorBorder/70 pb-5">
+                    <div class="w-10 h-10 rounded-xl bg-tractorPrimary/20 border border-tractorPrimary/40 flex items-center justify-center text-xl">
+                        🚜
+                    </div>
+                    <div>
+                        <span class="font-oswald text-xl font-bold tracking-wider text-white block">NEIGHBOR P.M.</span>
+                        <span class="text-[10px] text-tractorPrimaryLight font-semibold uppercase tracking-widest">Ūkininkų portalas</span>
+                    </div>
+                </div>
                 
                 <nav class="space-y-2">
-                    <button class="nav-tab-btn w-full text-left px-4 py-3.5 rounded-xl font-bold text-sm transition flex items-center gap-3 cursor-pointer" data-tab="0">
-                        <span>🏠</span> <span>Testai</span>
+                    <button class="nav-tab-btn w-full text-left px-4 py-3.5 rounded-xl font-semibold text-sm transition flex items-center gap-3.5 cursor-pointer bg-tractorPrimary text-white shadow" data-tab="0">
+                        <span class="text-lg">🚨</span> <span>SOS Skelbimai</span>
                     </button>
-                    <button class="nav-tab-btn w-full text-left px-4 py-3.5 rounded-xl font-bold text-sm transition flex items-center gap-3 cursor-pointer" data-tab="1">
-                        <span>🦌</span> <span>Medžiotojams</span>
+                    <a href="grudai.html" class="w-full text-left px-4 py-3.5 rounded-xl font-semibold text-sm transition flex items-center gap-3.5 text-green-400 bg-tractorPrimary/10 border border-tractorPrimary/30 hover:bg-tractorPrimary/20">
+                        <span class="text-lg">🌾</span> <span>Grūdų skaičiuoklė</span>
+                    </a>
+                    <button class="nav-tab-btn w-full text-left px-4 py-3.5 rounded-xl font-semibold text-sm transition flex items-center gap-3.5 cursor-pointer text-slate-400 hover:text-white" data-tab="2">
+                        <span class="text-lg">🔧</span> <span>Mano technika</span>
                     </button>
-                    <button class="nav-tab-btn w-full text-left px-4 py-3.5 rounded-xl font-bold text-sm transition flex items-center gap-3 cursor-pointer" data-tab="2">
-                        <span>📊</span> <span>Rezultatai</span>
-                    </button>
-                    <button class="nav-tab-btn w-full text-left px-4 py-3.5 rounded-xl font-bold text-sm transition flex items-center gap-3 cursor-pointer" data-tab="3">
-                        <span>⚙️</span> <span>Nustatymai</span>
+                    <button class="nav-tab-btn w-full text-left px-4 py-3.5 rounded-xl font-semibold text-sm transition flex items-center gap-3.5 cursor-pointer text-slate-400 hover:text-white" data-tab="3">
+                        <span class="text-lg">⚙️</span> <span>Nustatymai</span>
                     </button>
                 </nav>
             </div>
 
-            <div class="border-t border-forestBorder pt-4 space-y-3">
-                <div class="text-xs text-forestSecondary truncate font-medium" id="user-email-sidebar">Kraunasi...</div>
-                <button class="logout-action-btn w-full h-11 bg-forestBackground hover:bg-red-950/30 text-slate-400 hover:text-red-400 border border-forestBorder hover:border-red-900/40 rounded-xl font-bold text-xs transition flex items-center justify-center gap-2 cursor-pointer">
-                    <span>🚪</span> <span>Atsijungti</span>
+            <div class="border-t border-tractorBorder/70 pt-4 space-y-3">
+                <button id="help-btn-desktop" class="w-full py-2.5 bg-tractorBg hover:bg-tractorCard border border-tractorBorder rounded-xl text-xs font-semibold text-slate-300 flex items-center justify-center gap-2 transition">
+                    <span>📖</span> <span>Naudojimosi gidas</span>
                 </button>
+                <div id="auth-sidebar-box" class="bg-tractorBg border border-tractorBorder/60 p-3.5 rounded-xl text-center space-y-2">
+                    <p class="text-[11px] text-slate-400">Esate neprisijungęs</p>
+                    <button class="login-trigger-btn w-full py-2 bg-tractorPrimary hover:bg-tractorPrimaryHover text-white text-xs font-bold rounded-lg shadow transition">
+                        Prisijungti su Google
+                    </button>
+                </div>
             </div>
         </aside>
 
-        <!-- 3. PAGRINDINIS KONTEINERIS -->
-        <main class="flex-1 h-full overflow-y-auto px-4 md:px-6 pt-3 md:pt-4 pb-36 md:pb-12">
-            <section id="view-tab-home" class="tab-view space-y-8 hidden"></section>
-            <section id="view-tab-practice" class="tab-view space-y-8 hidden"></section>
-            <section id="view-tab-results" class="tab-view space-y-8 hidden"></section>
-            <section id="view-tab-settings" class="tab-view space-y-8 hidden"></section>
+        <!-- 3. Pagrindinis turinys -->
+        <main class="flex-1 h-full overflow-y-auto px-6 md:px-12 py-8 w-full">
+            <div class="max-w-6xl mx-auto w-full space-y-6">
+                <!-- TAB 0: SOS Skelbimai (MATO VISI!) -->
+                <section id="view-tab-feed" class="tab-view space-y-6"></section>
+                
+                <!-- TAB 2: Mano technika (Apsaugota) -->
+                <section id="view-tab-garage" class="tab-view space-y-6 hidden"></section>
+                
+                <!-- TAB 3: Nustatymai (Apsaugota) -->
+                <section id="view-tab-settings" class="tab-view space-y-6 hidden"></section>
+            </div>
         </main>
 
-        <!-- 4. MOBILI APATINĖ JUOSTA -->
-        <nav class="md:hidden fixed bottom-0 left-0 right-0 bg-[#2C2520] border-t border-forestBorder h-16 flex justify-around items-center z-50 shadow-[0_-4px_25px_rgba(0,0,0,0.7)]">
-            <button class="nav-tab-btn flex flex-col items-center justify-center w-20 h-full text-xs cursor-pointer" data-tab="0">
-                <span class="text-lg">🏠</span>
-                <span class="mt-1 font-bold">Pradžia</span>
+        <!-- 4. Mobili navigacija -->
+        <nav class="md:hidden fixed bottom-0 left-0 right-0 bg-tractorSurface border-t border-tractorBorder h-16 flex justify-around items-center z-50">
+            <button class="nav-tab-btn flex flex-col items-center justify-center w-20 h-full text-xs text-white bg-tractorPrimary" data-tab="0">
+                <span class="text-lg">🚨</span>
+                <span class="mt-1 font-bold">Skelbimai</span>
             </button>
-            <button class="nav-tab-btn flex flex-col items-center justify-center w-20 h-full text-xs cursor-pointer" data-tab="1">
-                <span class="text-lg">🦌</span>
-                <span class="mt-1 font-bold">Medžiotojams</span>
+            <a href="grudai.html" class="flex flex-col items-center justify-center w-20 h-full text-xs text-green-400">
+                <span class="text-lg">🌾</span>
+                <span class="mt-1 font-bold">Grūdai</span>
+            </a>
+            <button class="nav-tab-btn flex flex-col items-center justify-center w-20 h-full text-xs text-slate-400" data-tab="2">
+                <span class="text-lg">🔧</span>
+                <span class="mt-1 font-bold">Technika</span>
             </button>
-            <button class="nav-tab-btn flex flex-col items-center justify-center w-20 h-full text-xs cursor-pointer" data-tab="2">
-                <span class="text-lg">📊</span>
-                <span class="mt-1 font-bold">Rezultatai</span>
-            </button>
-            <button class="nav-tab-btn flex flex-col items-center justify-center w-20 h-full text-xs cursor-pointer" data-tab="3">
+            <button class="nav-tab-btn flex flex-col items-center justify-center w-20 h-full text-xs text-slate-400" data-tab="3">
                 <span class="text-lg">⚙️</span>
-                <span class="mt-1 font-bold">Nustatymai</span>
+                <span class="mt-1 font-bold">Profilis</span>
             </button>
         </nav>
 
     </div>
 
-    <!-- 5. UNIVERSALUS CUSTOM DIALOGAS -->
-    <div id="custom-dialog" class="fixed inset-0 bg-black/80 flex items-center justify-center z-[100] hidden">
-        <div class="bg-forestSurface border border-forestBorder p-8 rounded-2xl max-w-sm w-full mx-4 text-center space-y-6 shadow-2xl">
-            <span id="dialog-icon" class="text-5xl block">⚠️</span>
+    <!-- 5. UNIVERSALUS DIALOGAS / AUTH MODALAS -->
+    <div id="custom-dialog" class="fixed inset-0 bg-black/80 flex items-center justify-center z-[100] hidden p-4 backdrop-blur-sm">
+        <div class="bg-tractorSurface border border-tractorBorder p-6 rounded-2xl max-w-sm w-full text-center space-y-4 shadow-2xl">
+            <span id="dialog-icon" class="text-4xl block">⚠️</span>
             <h3 id="dialog-title" class="font-oswald text-xl font-bold text-white uppercase tracking-wider">Dėmesio</h3>
-            <p id="dialog-message" class="text-sm text-forestSecondary leading-relaxed"></p>
-            
-            <div class="flex gap-4 pt-2">
-                <button id="dialog-cancel-btn" class="flex-1 h-11 bg-forestBackground border border-forestBorder text-white rounded-xl font-bold text-xs hover:bg-slate-800 transition hidden cursor-pointer">
-                    Atšaukti
-                </button>
-                <button id="dialog-confirm-btn" class="flex-1 h-11 bg-forestPrimary hover:bg-green-600 text-white font-bold rounded-xl text-xs transition cursor-pointer">
-                    Gerai
-                </button>
+            <p id="dialog-message" class="text-xs text-slate-300 leading-relaxed"></p>
+            <div class="flex gap-3 pt-2">
+                <button id="dialog-cancel-btn" class="flex-1 h-10 bg-tractorBg border border-tractorBorder text-white rounded-xl font-bold text-xs hover:bg-zinc-800 transition hidden">Atšaukti</button>
+                <button id="dialog-confirm-btn" class="flex-1 h-10 bg-tractorPrimary hover:bg-tractorPrimaryHover text-white font-bold rounded-xl text-xs transition">Gerai</button>
             </div>
         </div>
     </div>
 
-    <!-- Firebase SDKs -->
+    <!-- Firebase Compat SDKs -->
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
 
-    <!-- Įėjimo taško modulis -->
     <script type="module" src="js/main.js"></script>
 </body>
 </html>

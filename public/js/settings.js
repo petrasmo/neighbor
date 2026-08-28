@@ -1,308 +1,156 @@
 // js/settings.js
 import { db, auth } from './firebase.js';
 import { showDialog } from './ui.js';
-import { isGuestMode, logoutUser, resendVerificationEmail } from './auth.js';
-import { stopCreditsListeners } from './credits.js';
 
-// === TIKRIEJI STRIPE PRODUKTŲ ID KODAI ===
-/*const STRIPE_PRICES = {
-    pkg100: "price_1U4IrNJQKOyEEeYoQns5aqh1",  
-    pkg500: "price_1U4FhSJQKOyEEeYoXMc3l96j",
-    weeklyPass: "price_1U4G3NJQKOyEEeYoQn98iJkq"
-};*/
+let mapInstance = null;
+let markerInstance = null;
+let currentCoords = { lat: 54.8985, lon: 23.9036 };
 
-const STRIPE_PRICES = {
-    pkg100: "price_1U5OAgJA9HINMz4WdUqK4alO",  
-    pkg500: "price_1U5OAhJA9HINMz4WAyDj9OA1",
-    weeklyPass: "price_1U5OAlJA9HINMz4WTCjjcr8k"
-};
+export function initSettingsTab(currentUser, userData) {
+    currentCoords.lat = userData?.garageLat || 54.8985;
+    currentCoords.lon = userData?.garageLon || 23.9036;
 
-
-// Formspree kontaktų formos ID iš petrasmo.com
-const FORMSPREE_URL = "https://formspree.io/f/mkodaqjq";
-
-// Realusis pirkimas naudojant Stripe Checkout
-async function buyProductReal(priceId, title, mode = 'payment') {
-    const user = auth.currentUser;
-    if (!user || isGuestMode()) {
-        showDialog("Reikalingas prisijungimas", "Norėdami įsigyti kreditų paketą, prašome prisijungti prie savo paskyros.", "👤", () => {
-            logoutUser();
-        });
-        return;
-    }
-
-    showDialog(
-        "Apmokėti užsakymą?",
-        `Ar norite įsigyti paslaugą „${title}“? Būsite saugiai nukreipti į Stripe mokėjimų langą atsiskaityti kortele arba banku.`,
-        "🪙",
-        async () => {
-            showDialog("Ruošiama...", "Generuojama saugi apmokėjimo sesija...", "⏳");
-
-            try {
-                const sessionRef = await db.collection("users").doc(user.uid)
-                    .collection("checkout_sessions").add({
-                        price: priceId,
-                        mode: mode, 
-                        success_url: window.location.origin + "?payment=success",
-                        cancel_url: window.location.origin + "?payment=cancel"
-                    });
-
-                sessionRef.onSnapshot((doc) => {
-                    const data = doc.data();
-                    if (data && data.url) {
-                        window.location.assign(data.url);
-                    } else if (data && data.error) {
-                        console.error("Stripe klaida:", data.error.message);
-                        showDialog("Klaida", "Nepavyko sukurti apmokėjimo sesijos. Bandykite dar kartą.", "🛑");
-                    }
-                });
-            } catch (e) {
-                console.error("Klaida inicijuojant Stripe pirkimą:", e);
-                showDialog("Klaida", "Nepavyko prisijungti prie mokėjimo vartų.", "🛑");
-            }
-        },
-        () => {}
-    );
-}
-
-// Paskyros ištrynimo logika
-function deleteAccountAction() {
-    const user = auth.currentUser;
-    if (!user) return;
-
-    showDialog(
-        "Ištrinti paskyrą?",
-        "DĖMESIO! Šis veiksmas visiškai ištrins jūsų paskyrą, kreditus ir visą egzaminų istoriją iš sistemos. Ar tikrai norite tęsti?",
-        "⚠️",
-        async () => {
-            try {
-                const uid = user.uid;
-                const deviceId = window.activeDeviceId || ("web_" + uid);
-
-                stopCreditsListeners();
-
-                await db.collection("users").doc(uid).delete().catch(() => {});
-                await db.collection("user_credits").doc(deviceId).delete().catch(() => {});
-
-                await user.delete();
-
-                showDialog("Paskyra ištrinta", "Jūsų paskyra ir visi duomenys sėkmingai pašalinti.", "ℹ️", () => {
-                    location.reload();
-                });
-            } catch (e) {
-                console.error("Klaida šalinant paskyrą:", e);
-                showDialog("Reikalingas prisijungimas", "Saugumo sumetimais, norint ištrinti paskyrą, turite atsijungti ir prisijungti iš naujo, kad atnaujintumėte sesiją.", "🛑");
-            }
-        },
-        () => {}
-    );
-}
-
-// PAGRINDINĖ VAIZDO GENERAVIMO FUNKCIJA
-export function renderSettingsScreen() {
     const container = document.getElementById('view-tab-settings');
-    if (!container) return;
-
-    const isGuest = isGuestMode();
-    const user = auth.currentUser;
-
-    const photoUrl = user?.photoURL || "";
-    const name = isGuest ? "Svečias" : (user?.displayName || "Medžiotojas");
-    const email = isGuest ? "" : (user?.email || "");
-    const isVerified = user?.emailVerified || false;
-    const currentCredits = isGuest ? "0 🪙" : (window.userCreditsAmount !== undefined ? window.userCreditsAmount + " 🪙" : "... 🪙");
-
     container.innerHTML = `
-        <div class="space-y-6 max-w-4xl mx-auto">
+        <div class="bg-tractorSurface border border-tractorBorder p-6 md:p-8 rounded-2xl space-y-6 shadow-xl">
+            <div class="border-b border-tractorBorder/70 pb-4">
+                <h2 class="font-oswald text-2xl font-bold uppercase tracking-wider text-white">Paskyros nustatymai</h2>
+                <p class="text-xs text-slate-400 mt-1">Nurodykite savo ūkio kontaktus ir tikslią bazės vietą žemėlapyje.</p>
+            </div>
             
-            <!-- 1. Profilio ir Balanso kortelė -->
-            <div class="bg-forestSurface border border-forestBorder p-6 rounded-2xl flex flex-col md:flex-row justify-between items-center gap-6 shadow-lg">
-                <div class="flex items-center gap-4">
-                    ${photoUrl ? `
-                        <img src="${photoUrl}" class="w-16 h-16 rounded-full border-2 border-forestPrimary object-cover shadow-md" alt="Profilio nuotrauka">
-                    ` : `
-                        <div class="w-16 h-16 rounded-full border-2 border-slate-700 bg-forestBackground flex items-center justify-center text-2xl shadow-md">👤</div>
-                    `}
-                    <div class="text-left space-y-1">
-                        <h3 class="text-lg font-bold font-oswald text-white uppercase tracking-wider">${name}</h3>
-                        
-                        ${!isGuest ? `
-                            <div class="flex flex-wrap items-center gap-2">
-                                <span class="text-xs text-forestSecondary normal-case">${email}</span>
-                                ${isVerified ? `
-                                    <span class="text-[10px] font-bold text-green-400 bg-green-950/40 border border-green-500/40 px-2 py-0.5 rounded-full">
-                                        ✓ Patvirtintas
-                                    </span>
-                                ` : `
-                                    <button id="resend-verify-btn" class="text-[10px] font-bold text-yellow-400 hover:text-yellow-300 bg-yellow-950/40 border border-yellow-500/40 px-2 py-0.5 rounded-full flex items-center gap-1 hover:bg-yellow-900/40 transition" title="Paspauskite, kad gautumėte naują nuorodą">
-                                        <span>⚠️ Nepatvirtintas</span>
-                                        <span class="underline ml-0.5">(Atsiųsti laišką)</span>
-                                    </button>
-                                `}
-                            </div>
-                        ` : `
-                            <span class="text-xs text-forestSecondary normal-case">Neprisijungęs svečio režimas</span>
-                        `}
-                    </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <div class="space-y-1.5">
+                    <label class="text-[11px] font-bold text-slate-300 uppercase tracking-wider">Vardas / Ūkio pavadinimas</label>
+                    <input id="set-name-input" type="text" value="${userData?.name || ''}" 
+                        class="w-full h-11 bg-tractorBg border border-tractorBorder focus:border-tractorPrimary rounded-xl px-4 text-xs text-white outline-none transition">
                 </div>
 
-                <div class="bg-forestBackground border border-forestBorder px-6 py-3.5 rounded-xl flex items-center gap-3 shrink-0 shadow-inner">
-                    <div class="text-right">
-                        <span class="text-[10px] text-forestSecondary uppercase font-bold tracking-wider block">Mano Balansas</span>
-                        <span class="text-xl font-extrabold text-forestPrimary font-oswald pt-1">
-                            <span id="user-credits-val">${currentCredits}</span>
-                        </span>
-                    </div>
+                <div class="space-y-1.5">
+                    <label class="text-[11px] font-bold text-slate-300 uppercase tracking-wider">Telefono numeris</label>
+                    <input id="set-phone-input" type="text" value="${userData?.phone || '+370'}" 
+                        class="w-full h-11 bg-tractorBg border border-tractorBorder focus:border-tractorPrimary rounded-xl px-4 text-xs text-white outline-none transition">
                 </div>
             </div>
 
-            <!-- Svečio pranešimas -->
-            ${isGuest ? `
-                <div class="bg-forestSurface border border-forestPrimary/40 p-6 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-4 shadow-lg">
-                    <div class="space-y-1 text-center sm:text-left">
-                        <h4 class="text-sm font-bold text-white font-oswald uppercase">Norite spręsti testus ir kaupti taškus?</h4>
-                        <p class="text-xs text-forestSecondary">Prisijunkite prie savo paskyros, kad galėtumėte pildytis kreditus ir matyti egzaminų istoriją.</p>
-                    </div>
-                    <button id="guest-login-cta-btn" class="px-6 h-11 bg-forestPrimary hover:bg-green-600 text-white font-bold rounded-xl text-xs uppercase tracking-wider transition shrink-0 shadow">
-                        Prisijungti 🔑
-                    </button>
+            <div class="space-y-2 bg-tractorBg/60 p-4 rounded-xl border border-tractorBorder/60">
+                <div class="flex justify-between items-center text-xs">
+                    <span class="text-[11px] font-bold text-slate-300 uppercase tracking-wider">Pranešimų gavimo spindulys</span>
+                    <span id="set-dist-label" class="font-bold text-tractorPrimaryLight bg-tractorPrimary/20 px-3 py-1 rounded-lg border border-tractorPrimary/40">
+                        ${userData?.notificationDistance || 20} km
+                    </span>
                 </div>
-            ` : ''}
+                <input id="set-dist-input" type="range" min="5" max="100" value="${userData?.notificationDistance || 20}" 
+                    class="w-full accent-tractorPrimary cursor-pointer">
+                <p class="text-[11px] text-slate-500">Gausite SOS pranešimus iš kaimynų, kurie yra šiuo atstumu nuo jūsų garažo.</p>
+            </div>
 
-            <!-- 2. Parduotuvė -->
-            <div class="bg-forestSurface border border-forestBorder p-6 rounded-2xl space-y-5 shadow-lg">
-                <div class="border-b border-forestBorder pb-3">
-                    <h3 class="text-md font-bold font-oswald text-white uppercase tracking-wider">Kreditų Parduotuvė</h3>
-                    <p class="text-xs text-forestSecondary leading-relaxed mt-1">Saugiai pasipildykite savo sąskaitą. Apmokėjimą administruoja ir 100% bankinį saugumą užtikrina Stripe sistema.</p>
+            <div class="space-y-2">
+                <div class="flex justify-between items-center">
+                    <label class="text-[11px] font-bold text-slate-300 uppercase tracking-wider">Garažo / Ūkio vieta žemėlapyje</label>
+                    <span id="coords-text" class="text-[10px] text-slate-400 font-mono">
+                        ${currentCoords.lat.toFixed(4)}, ${currentCoords.lon.toFixed(4)}
+                    </span>
                 </div>
+                <div id="settings-map" class="h-64 w-full rounded-xl border border-tractorBorder z-0 relative shadow-inner overflow-hidden"></div>
+                <p class="text-[11px] text-slate-500">Spauskite bet kur ant žemėlapio arba vilkite mėlyną žymeklį į savo technikos vietą.</p>
+            </div>
 
-                <div class="grid md:grid-cols-2 gap-4 pt-1">
-                    <button class="buy-pkg-btn h-12 bg-forestBackground hover:bg-slate-800 border border-slate-800 hover:border-forestPrimary rounded-xl px-4 flex justify-between items-center transition focus:outline-none" data-price-id="${STRIPE_PRICES.pkg100}" data-title="100 kreditų paketas">
-                        <span class="text-xs font-bold text-white">100 klausimų (kreditų) paketas</span>
-                        <span class="text-xs font-extrabold text-forestPrimary font-oswald">1,19 EUR</span>
-                    </button>
+            <button id="save-settings-btn" class="w-full h-12 bg-tractorPrimary hover:bg-tractorPrimaryHover text-white font-bold rounded-xl text-xs uppercase tracking-wider shadow-lg shadow-tractorPrimary/20 flex items-center justify-center gap-2 cursor-pointer transition">
+                <span>💾</span> Išsaugoti nustatymus
+            </button>
 
-                    <button class="buy-pkg-btn h-12 bg-forestBackground hover:bg-slate-800 border border-slate-800 hover:border-forestPrimary rounded-xl px-4 flex justify-between items-center transition focus:outline-none" data-price-id="${STRIPE_PRICES.pkg500}" data-title="500 kreditų paketas">
-                        <span class="text-xs font-bold text-white">500 klausimų (kreditų) paketas</span>
-                        <span class="text-xs font-extrabold text-forestPrimary font-oswald">4,79 EUR</span>
-                    </button>
-                </div>
-
-                <button id="buy-weekly-pass-btn" class="w-full h-14 bg-forestBackground hover:bg-slate-800 border-2 border-forestPrimary/40 hover:border-forestPrimary rounded-xl px-4 flex justify-between items-center transition focus:outline-none">
-                    <div class="text-left">
-                        <span class="text-xs font-bold text-white block font-sans">Savaitinė narystė be limitų 🎉</span>
-                        <span class="text-[10px] text-forestSecondary font-sans">Neriboti testai 7 dienas kelyje</span>
-                    </div>
-                    <span class="text-xs font-extrabold text-forestPrimary font-oswald">11,99 EUR</span>
+            <div class="border-t border-tractorBorder/70 pt-4 mt-6">
+                <button id="delete-account-btn" class="w-full h-10 border border-red-900/50 hover:bg-red-950/40 text-red-400 font-bold rounded-xl text-xs transition flex items-center justify-center gap-2">
+                    <span>⚠️</span> Ištrinti paskyrą ir visus duomenis
                 </button>
             </div>
-
-            <!-- 3. PAPRASTA KONTAKTŲ FORMA (BE TEMŲ SKIRSTYMO) -->
-            <div class="bg-forestSurface border border-forestBorder p-6 rounded-2xl space-y-4 shadow-lg">
-                <div class="border-b border-forestBorder pb-3">
-                    <h3 class="text-md font-bold font-oswald text-white uppercase tracking-wider">Susisiekite su mumis</h3>
-                    <p class="text-xs text-forestSecondary leading-relaxed mt-1">Turite klausimų, pastebėjote klaidą klausime ar kilo nesklandumų su apmokėjimu? Parašykite žinutę.</p>
-                </div>
-
-                <form id="support-contact-form" class="space-y-3">
-                    <div class="space-y-1">
-                        <label class="text-[10px] font-bold text-forestSecondary uppercase tracking-wider">Jūsų el. pašto adresas</label>
-                        <input type="email" name="email" id="support-email" required value="${email}" placeholder="vardas@epastas.lt" 
-                            class="w-full h-10 bg-forestBackground border border-forestBorder focus:border-forestPrimary rounded-xl px-3 text-xs text-white placeholder-slate-500 focus:outline-none transition">
-                    </div>
-
-                    <div class="space-y-1">
-                        <label class="text-[10px] font-bold text-forestSecondary uppercase tracking-wider">Jūsų žinutė</label>
-                        <textarea name="message" id="support-message" rows="3" required placeholder="Aprašykite savo klausimą ar pastebėtą klaidą..." 
-                            class="w-full bg-forestBackground border border-forestBorder focus:border-forestPrimary rounded-xl p-3 text-xs text-white placeholder-slate-500 focus:outline-none transition resize-none"></textarea>
-                    </div>
-
-                    <div class="flex flex-col sm:flex-row items-center justify-between gap-3 pt-1">
-                        <button type="submit" id="support-submit-btn" class="w-full sm:w-auto px-8 h-11 bg-buttonBrown hover:bg-buttonBrownHover text-white font-bold rounded-xl text-xs uppercase tracking-wider transition shadow flex items-center justify-center gap-2">
-                            <span>Siųsti žinutę</span>
-                            <span>✉️</span>
-                        </button>
-                        <span class="text-[11px] text-slate-500">Tiesioginis el. paštas: petrasmo@gmail.com</span>
-                    </div>
-                </form>
-            </div>
-
-            <!-- 4. Trynimo mygtukas -->
-            ${!isGuest ? `
-                <div class="flex justify-center pt-2">
-                    <button id="delete-account-btn" class="text-[11px] font-bold text-red-400/60 hover:text-red-400 hover:underline transition focus:outline-none">
-                        Ištrinti mano paskyrą negrįžtamai
-                    </button>
-                </div>
-            ` : ''}
-
         </div>
     `;
 
-    setupSettingsEvents();
+    document.getElementById('set-dist-input').oninput = (e) => {
+        document.getElementById('set-dist-label').textContent = `${e.target.value} km`;
+    };
+
+    document.getElementById('save-settings-btn').onclick = async () => {
+        const name = document.getElementById('set-name-input').value.trim();
+        const phone = document.getElementById('set-phone-input').value.trim();
+        const dist = parseInt(document.getElementById('set-dist-input').value);
+
+        await db.collection("users").doc(currentUser.uid).update({
+            name: name,
+            phone: phone,
+            notificationDistance: dist,
+            garageLat: currentCoords.lat,
+            garageLon: currentCoords.lon,
+            isSetupComplete: true
+        });
+
+        if (userData) {
+            userData.name = name;
+            userData.phone = phone;
+            userData.notificationDistance = dist;
+            userData.garageLat = currentCoords.lat;
+            userData.garageLon = currentCoords.lon;
+        }
+
+        showDialog("Pavyko! ✅", "Nustatymai sėkmingai išsaugoti.", "🌾");
+    };
+
+    document.getElementById('delete-account-btn').onclick = () => {
+        showDialog("Dėmesio", "Ar tikrai norite pašalinti paskyrą ir visus savo duomenis negrįžtamai?", "⚠️", async () => {
+            await db.collection("users").doc(currentUser.uid).delete();
+            await auth.currentUser.delete();
+            location.reload();
+        }, true);
+    };
 }
 
-function setupSettingsEvents() {
-    document.getElementById('resend-verify-btn')?.addEventListener('click', () => {
-        resendVerificationEmail();
-    });
+// Funkcija, kurią iškviečiame persijungus į nustatymų tabą
+export function refreshSettingsMap() {
+    const mapEl = document.getElementById('settings-map');
+    if (!mapEl) return;
 
-    document.getElementById('guest-login-cta-btn')?.addEventListener('click', () => {
-        logoutUser();
-    });
+    if (!mapInstance) {
+        mapInstance = L.map('settings-map', {
+            zoomControl: true
+        }).setView([currentCoords.lat, currentCoords.lon], 12);
 
-    document.getElementById('delete-account-btn')?.addEventListener('click', deleteAccountAction);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '© OpenStreetMap'
+        }).addTo(mapInstance);
 
-    document.querySelectorAll('.buy-pkg-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-            const priceId = btn.getAttribute('data-price-id');
-            const title = btn.getAttribute('data-title');
-            buyProductReal(priceId, title, 'payment');
+        markerInstance = L.marker([currentCoords.lat, currentCoords.lon], { 
+            draggable: true 
+        }).addTo(mapInstance);
+
+        markerInstance.on('dragend', (e) => {
+            const pos = e.target.getLatLng();
+            currentCoords.lat = pos.lat;
+            currentCoords.lon = pos.lng;
+            updateCoordsDisplay();
         });
-    });
 
-    document.getElementById('buy-weekly-pass-btn')?.addEventListener('click', () => {
-        buyProductReal(STRIPE_PRICES.weeklyPass, "Savaitinė narystė be limitų", 'payment');
-    });
+        mapInstance.on('click', (e) => {
+            markerInstance.setLatLng(e.latlng);
+            currentCoords.lat = e.latlng.lat;
+            currentCoords.lon = e.latlng.lng;
+            updateCoordsDisplay();
+        });
+    }
 
-    // Formspree kontaktų formos pateikimas (AJAX)
-    const contactForm = document.getElementById('support-contact-form');
-    const submitBtn = document.getElementById('support-submit-btn');
-
-    contactForm?.addEventListener('submit', async (e) => {
-        e.preventDefault();
-
-        if (submitBtn) {
-            submitBtn.disabled = true;
-            submitBtn.innerHTML = "<span>Siunčiama...</span> <span>⏳</span>";
+    // Priverstinis perskaičiavimas, kad pilkai nerodytų
+    setTimeout(() => {
+        if (mapInstance) {
+            mapInstance.invalidateSize();
+            mapInstance.setView([currentCoords.lat, currentCoords.lon]);
         }
+    }, 150);
+}
 
-        const formData = new FormData(contactForm);
-
-        try {
-            const response = await fetch(FORMSPREE_URL, {
-                method: "POST",
-                body: formData,
-                headers: {
-                    "Accept": "application/json"
-                }
-            });
-
-            if (response.ok) {
-                showDialog("Žinutė išsiųsta! ✉️", "Ačiū už jūsų pranešimą. Gavome jūsų užklausą ir atsakysime el. paštu.", "✅");
-                const msgInput = document.getElementById('support-message');
-                if (msgInput) msgInput.value = "";
-            } else {
-                showDialog("Klaida", "Nepavyko išsiųsti pranešimo. Pabandykite vėliau arba rašykite tiesiogiai petrasmo@gmail.com.", "🛑");
-            }
-        } catch (error) {
-            console.error("Formspree klaida:", error);
-            showDialog("Klaida", "Ryšio klaida siunčiant pranešimą.", "🛑");
-        } finally {
-            if (submitBtn) {
-                submitBtn.disabled = false;
-                submitBtn.innerHTML = "<span>Siųsti žinutę</span> <span>✉️</span>";
-            }
-        }
-    });
+function updateCoordsDisplay() {
+    const el = document.getElementById('coords-text');
+    if (el) {
+        el.textContent = `${currentCoords.lat.toFixed(4)}, ${currentCoords.lon.toFixed(4)}`;
+    }
 }

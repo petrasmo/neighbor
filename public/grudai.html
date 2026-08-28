@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="lt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    
+    <title>Grūdų Supirkimo Kainos ir Elevatorių Skaičiuoklė 🌾 – Neighbor P.M.</title>
+    <meta name="description" content="Sužinokite, kur labiausiai apsimoka vežti grūdus Lietuvoje. Gyvos supirkimo kainos, džiovinimo nuoskaitų skaičiuoklė ir atstumai iki elevatorių.">
+    <link rel="icon" type="image/png" href="logo.png">
+
+    <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        tractorBg: '#0F120F',
+                        tractorPrimary: '#2E7D32',
+                        tractorPrimaryLight: '#4CAF50',
+                        tractorPrimaryHover: '#1B5E20',
+                        tractorSurface: '#181C18',
+                        tractorCard: '#212621',
+                        tractorSecondary: '#94A3B8',
+                        tractorBorder: '#2E382E',
+                        myPostBg: '#182C1A'
+                    },
+                    fontFamily: {
+                        oswald: ['Oswald', 'sans-serif'],
+                        sans: ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #0F120F; }
+        ::-webkit-scrollbar-thumb { background: #2E382E; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #2E7D32; }
+    </style>
+</head>
+<body class="bg-tractorBg text-slate-200 font-sans antialiased min-h-screen flex flex-col">
+
+    <!-- VIRŠUTINĖ NAVIGACIJA -->
+    <header class="bg-tractorSurface border-b border-tractorBorder sticky top-0 z-50">
+        <div class="max-w-6xl mx-auto px-4 md:px-8 h-16 flex items-center justify-between">
+            <a href="index.html" class="flex items-center gap-2.5">
+                <span class="text-2xl">🚜</span>
+                <span class="font-oswald text-xl font-bold tracking-wider text-white">NEIGHBOR P.M.</span>
+            </a>
+
+            <div class="flex items-center gap-3">
+                <a href="index.html" class="px-4 py-2 bg-tractorBg hover:bg-tractorCard border border-tractorBorder rounded-xl text-xs font-bold text-slate-200 transition">
+                    🚨 SOS Skelbimai
+                </a>
+                <div id="auth-btn-slot">
+                    <button id="header-login-btn" class="px-4 py-2 bg-tractorPrimary hover:bg-tractorPrimaryHover text-white text-xs font-bold rounded-xl shadow transition">
+                        Prisijungti
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- PAGRINDINIS TURINYS -->
+    <main class="flex-1 max-w-6xl mx-auto w-full px-4 md:px-8 py-8">
+        <div id="view-tab-grain"></div>
+    </main>
+
+    <!-- DIALOGAS -->
+    <div id="custom-dialog" class="fixed inset-0 bg-black/80 flex items-center justify-center z-[100] hidden p-4 backdrop-blur-sm">
+        <div class="bg-tractorSurface border border-tractorBorder p-6 rounded-2xl max-w-sm w-full text-center space-y-4 shadow-2xl">
+            <span id="dialog-icon" class="text-4xl block">⚠️</span>
+            <h3 id="dialog-title" class="font-oswald text-xl font-bold text-white uppercase tracking-wider">Dėmesio</h3>
+            <p id="dialog-message" class="text-xs text-slate-300 leading-relaxed"></p>
+            <div class="flex gap-3 pt-2">
+                <button id="dialog-cancel-btn" class="flex-1 h-10 bg-tractorBg border border-tractorBorder text-white rounded-xl font-bold text-xs hover:bg-zinc-800 transition hidden">Atšaukti</button>
+                <button id="dialog-confirm-btn" class="flex-1 h-10 bg-tractorPrimary hover:bg-tractorPrimaryHover text-white font-bold rounded-xl text-xs transition">Gerai</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase Compat SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+
+    <script type="module" src="js/grainPage.js"></script>
+</body>
+</html>
