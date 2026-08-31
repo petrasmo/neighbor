@@ -6,16 +6,19 @@ import {
     startDrawing, stopDrawing, getDrawingPoints, calculatePolygonAreaHa 
 } from './fieldsMap.js';
 import { getTodayDateString, openFieldDetail, renderOperationsList } from './fieldsJournal.js';
-import { generateOfficialReport, exportReportToExcel } from './fieldsReport.js'; // 👈 PRIDĖTA
+import { generateOfficialReport, exportReportToExcel } from './fieldsReport.js';
 
 let userFieldsList = [];
 let unsubscribeFields = null;
 let selectedFieldId = null;
 let currentMapCoords = { lat: 56.0593, lng: 24.4036 };
+let cachedUserData = null; // 👈 IŠSAUGOME VARTOTOJO DUOMENIS GARAŽUI
 
 export function initFieldsTab(currentUser, userData) {
     const container = document.getElementById('view-tab-fields');
     if (!container) return;
+
+    cachedUserData = userData;
 
     if (userData?.garageLat && userData?.garageLon) {
         currentMapCoords = { lat: userData.garageLat, lng: userData.garageLon };
@@ -24,7 +27,7 @@ export function initFieldsTab(currentUser, userData) {
     container.innerHTML = `
         <div class="space-y-6 max-w-6xl mx-auto w-full">
             
-            <!-- HEADERIS IR ATASKAITŲ MYGTUKAI -->
+            <!-- HEADERIS -->
             <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-tractorBorder pb-4">
                 <div>
                     <h2 class="font-oswald text-2xl md:text-3xl font-bold uppercase tracking-wider text-white flex items-center gap-2">
@@ -60,12 +63,12 @@ export function initFieldsTab(currentUser, userData) {
             <div class="bg-tractorSurface border border-tractorBorder rounded-2xl p-4 md:p-5 shadow-xl space-y-3 w-full">
                 <div id="fields-map" class="h-[520px] w-full rounded-xl z-0 relative overflow-hidden border border-tractorBorder/80 bg-zinc-900"></div>
                 <div class="flex justify-between items-center text-xs md:text-sm text-slate-300 px-1 pt-1">
-                    <span>🛰️ Palydovinis vaizdas (ESRI World Imagery)</span>
+                    <span id="map-layer-indicator-label">🛰️ Palydovinis vaizdas (ESRI World Imagery)</span>
                     <span>Viso ūkio plotas: <strong id="total-area-counter" class="text-green-400 font-bold text-base">0.00 ha</strong></span>
                 </div>
             </div>
 
-            <!-- 2. DETALUS LAUKO PASAS (RODOMAS KAI PASIRENKAMAS LAUKAS) -->
+            <!-- 2. DETALUS LAUKO PASAS -->
             <div id="field-detail-section" class="hidden bg-tractorSurface border-2 border-tractorPrimary rounded-2xl p-6 md:p-8 shadow-2xl space-y-6">
                 <div class="flex flex-col md:flex-row md:items-start justify-between gap-4 border-b border-tractorBorder/80 pb-5">
                     <div>
@@ -225,7 +228,7 @@ export function initFieldsTab(currentUser, userData) {
                 </div>
             </div>
 
-            <!-- MODALAS: NMA ATASKAITŲ PASIRINKIMAS (PDF IR EXCEL PASIRINKIMAS!) -->
+            <!-- MODALAS: NMA ATASKAITOS -->
             <div id="reports-choice-modal" class="fixed inset-0 bg-black/80 flex items-center justify-center z-[110] hidden p-4 backdrop-blur-sm">
                 <div class="bg-tractorSurface border border-tractorBorder p-6 md:p-8 rounded-2xl max-w-xl w-full space-y-5 shadow-2xl">
                     <div class="flex justify-between items-center border-b border-tractorBorder pb-3">
@@ -240,55 +243,38 @@ export function initFieldsTab(currentUser, userData) {
                     </p>
 
                     <div class="space-y-3.5">
-                        
-                        <!-- 1. PURŠKIMAI -->
                         <div class="p-4 bg-tractorBg border border-tractorBorder rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                             <div>
                                 <div class="font-bold text-white text-sm">💦 Augalų apsaugos (Purškimo) žurnalas</div>
                                 <div class="text-[11px] text-slate-400">Oficiali forma pagal LR ŽŪM reikalavimus.</div>
                             </div>
                             <div class="flex items-center gap-2 shrink-0">
-                                <button id="btn-pdf-spray" class="px-3 py-1.5 bg-red-950/40 hover:bg-red-900 border border-red-800/60 text-red-300 text-xs font-bold rounded-lg transition cursor-pointer">
-                                    📄 PDF
-                                </button>
-                                <button id="btn-xls-spray" class="px-3 py-1.5 bg-green-950/40 hover:bg-green-900 border border-green-800/60 text-green-300 text-xs font-bold rounded-lg transition cursor-pointer">
-                                    📊 Excel (.CSV)
-                                </button>
+                                <button id="btn-pdf-spray" class="px-3 py-1.5 bg-red-950/40 hover:bg-red-900 border border-red-800/60 text-red-300 text-xs font-bold rounded-lg transition cursor-pointer">📄 PDF</button>
+                                <button id="btn-xls-spray" class="px-3 py-1.5 bg-green-950/40 hover:bg-green-900 border border-green-800/60 text-green-300 text-xs font-bold rounded-lg transition cursor-pointer">📊 Excel (.CSV)</button>
                             </div>
                         </div>
 
-                        <!-- 2. TRĘŠIMAS -->
                         <div class="p-4 bg-tractorBg border border-tractorBorder rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                             <div>
                                 <div class="font-bold text-white text-sm">🧪 Trąšų naudojimo apskaitos žurnalas</div>
                                 <div class="text-[11px] text-slate-400">Tręšimo normos, NPK ir kalkinimo operacijos.</div>
                             </div>
                             <div class="flex items-center gap-2 shrink-0">
-                                <button id="btn-pdf-fert" class="px-3 py-1.5 bg-red-950/40 hover:bg-red-900 border border-red-800/60 text-red-300 text-xs font-bold rounded-lg transition cursor-pointer">
-                                    📄 PDF
-                                </button>
-                                <button id="btn-xls-fert" class="px-3 py-1.5 bg-green-950/40 hover:bg-green-900 border border-green-800/60 text-green-300 text-xs font-bold rounded-lg transition cursor-pointer">
-                                    📊 Excel (.CSV)
-                                </button>
+                                <button id="btn-pdf-fert" class="px-3 py-1.5 bg-red-950/40 hover:bg-red-900 border border-red-800/60 text-red-300 text-xs font-bold rounded-lg transition cursor-pointer">📄 PDF</button>
+                                <button id="btn-xls-fert" class="px-3 py-1.5 bg-green-950/40 hover:bg-green-900 border border-green-800/60 text-green-300 text-xs font-bold rounded-lg transition cursor-pointer">📊 Excel (.CSV)</button>
                             </div>
                         </div>
 
-                        <!-- 3. SĖJOMAINA -->
                         <div class="p-4 bg-tractorBg border border-tractorBorder rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                             <div>
                                 <div class="font-bold text-white text-sm">🌾 Sėjomainos ir derliaus suvestinė</div>
                                 <div class="text-[11px] text-slate-400">Visi laukai, plotai, pasėliai, nukultas derlius ir savikaina.</div>
                             </div>
                             <div class="flex items-center gap-2 shrink-0">
-                                <button id="btn-pdf-rot" class="px-3 py-1.5 bg-red-950/40 hover:bg-red-900 border border-red-800/60 text-red-300 text-xs font-bold rounded-lg transition cursor-pointer">
-                                    📄 PDF
-                                </button>
-                                <button id="btn-xls-rot" class="px-3 py-1.5 bg-green-950/40 hover:bg-green-900 border border-green-800/60 text-green-300 text-xs font-bold rounded-lg transition cursor-pointer">
-                                    📊 Excel (.CSV)
-                                </button>
+                                <button id="btn-pdf-rot" class="px-3 py-1.5 bg-red-950/40 hover:bg-red-900 border border-red-800/60 text-red-300 text-xs font-bold rounded-lg transition cursor-pointer">📄 PDF</button>
+                                <button id="btn-xls-rot" class="px-3 py-1.5 bg-green-950/40 hover:bg-green-900 border border-green-800/60 text-green-300 text-xs font-bold rounded-lg transition cursor-pointer">📊 Excel (.CSV)</button>
                             </div>
                         </div>
-
                     </div>
                 </div>
             </div>
@@ -296,13 +282,14 @@ export function initFieldsTab(currentUser, userData) {
         </div>
     `;
 
-    initOrRefreshMap(currentMapCoords);
+    // 👈 PERDUODAME userData SU GARAŽO KOORDINATĖMIS
+    initOrRefreshMap(currentMapCoords, userData);
     setupFieldEvents(currentUser, userData);
     listenToUserFields(currentUser);
 }
 
 export function refreshFieldsMap() {
-    initOrRefreshMap(currentMapCoords);
+    initOrRefreshMap(currentMapCoords, cachedUserData);
 }
 
 function setupFieldEvents(currentUser, userData) {
@@ -320,33 +307,13 @@ function setupFieldEvents(currentUser, userData) {
     openReportsBtn.onclick = () => reportsModal.classList.remove('hidden');
     closeReportsBtn.onclick = () => reportsModal.classList.add('hidden');
 
-    // PDF mygtukai
-    document.getElementById('btn-pdf-spray').onclick = () => {
-        reportsModal.classList.add('hidden');
-        generateOfficialReport('spray', userFieldsList, userData);
-    };
-    document.getElementById('btn-pdf-fert').onclick = () => {
-        reportsModal.classList.add('hidden');
-        generateOfficialReport('fertilizer', userFieldsList, userData);
-    };
-    document.getElementById('btn-pdf-rot').onclick = () => {
-        reportsModal.classList.add('hidden');
-        generateOfficialReport('rotation', userFieldsList, userData);
-    };
+    document.getElementById('btn-pdf-spray').onclick = () => { reportsModal.classList.add('hidden'); generateOfficialReport('spray', userFieldsList, userData); };
+    document.getElementById('btn-pdf-fert').onclick = () => { reportsModal.classList.add('hidden'); generateOfficialReport('fertilizer', userFieldsList, userData); };
+    document.getElementById('btn-pdf-rot').onclick = () => { reportsModal.classList.add('hidden'); generateOfficialReport('rotation', userFieldsList, userData); };
 
-    // Excel mygtukai
-    document.getElementById('btn-xls-spray').onclick = () => {
-        reportsModal.classList.add('hidden');
-        exportReportToExcel('spray', userFieldsList, userData);
-    };
-    document.getElementById('btn-xls-fert').onclick = () => {
-        reportsModal.classList.add('hidden');
-        exportReportToExcel('fertilizer', userFieldsList, userData);
-    };
-    document.getElementById('btn-xls-rot').onclick = () => {
-        reportsModal.classList.add('hidden');
-        exportReportToExcel('rotation', userFieldsList, userData);
-    };
+    document.getElementById('btn-xls-spray').onclick = () => { reportsModal.classList.add('hidden'); exportReportToExcel('spray', userFieldsList, userData); };
+    document.getElementById('btn-xls-fert').onclick = () => { reportsModal.classList.add('hidden'); exportReportToExcel('fertilizer', userFieldsList, userData); };
+    document.getElementById('btn-xls-rot').onclick = () => { reportsModal.classList.add('hidden'); exportReportToExcel('rotation', userFieldsList, userData); };
 
     drawBtn.onclick = () => {
         if (!currentUser) {

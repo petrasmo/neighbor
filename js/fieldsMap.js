@@ -12,7 +12,6 @@ let cachedSelectedId = null;
 let cachedCallback = null;
 let cachedUserData = null;
 
-// Sluoksniai
 let satelliteLayer = null;
 let streetLayer = null;
 let currentBaseLayer = 'satellite';
@@ -32,26 +31,23 @@ export function calculatePolygonAreaHa(latLngs) {
 }
 
 export function initOrRefreshMap(coords, userData) {
-    cachedUserData = userData;
+    if (userData) cachedUserData = userData;
     const mapEl = document.getElementById('fields-map');
     if (!mapEl) return;
 
     if (!fieldsMap) {
         fieldsMap = L.map('fields-map', { zoomControl: true }).setView([coords.lat, coords.lng], 13);
 
-        // 1. Palydovinis sluoksnis
         satelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
             attribution: 'Tiles &copy; Esri World Imagery',
             maxZoom: 18
         });
 
-        // 2. Scheminis kelių / miestų sluoksnis (OpenStreetMap)
         streetLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: 'Map &copy; OpenStreetMap contributors',
             maxZoom: 19
         });
 
-        // Pagal nutylėjimą uždedame palydovą
         satelliteLayer.addTo(fieldsMap);
 
         drawnItems = new L.FeatureGroup();
@@ -60,7 +56,6 @@ export function initOrRefreshMap(coords, userData) {
         garageMarkerLayer = new L.FeatureGroup();
         fieldsMap.addLayer(garageMarkerLayer);
 
-        // Sukuriame gražų sluoksnių perjungimo mygtuką žemėlapio viršuje
         addLayerSwitchControl();
     }
 
@@ -75,7 +70,6 @@ export function initOrRefreshMap(coords, userData) {
     }, 200);
 }
 
-// 🎛️ SLUOKSNIŲ PERJUNGIKLIS (PALYDOVAS / SCHEMINIS)
 function addLayerSwitchControl() {
     const customControl = L.Control.extend({
         options: { position: 'topright' },
@@ -132,28 +126,30 @@ function addLayerSwitchControl() {
     fieldsMap.addControl(new customControl());
 }
 
-// 🏠 NUKRAUNA GARAŽO / ŪKIO ŽYMEKLĮ
-function renderGarageMarker() {
-    if (!garageMarkerLayer || !cachedUserData) return;
+// 🏠 TIKRASIS GARAŽO / ŪKIO ŽYMEKLIS
+export function renderGarageMarker() {
+    if (!garageMarkerLayer || !fieldsMap) return;
     garageMarkerLayer.clearLayers();
 
-    if (cachedUserData.garageLat && cachedUserData.garageLon) {
+    if (cachedUserData?.garageLat && cachedUserData?.garageLon) {
+        const lat = parseFloat(cachedUserData.garageLat);
+        const lng = parseFloat(cachedUserData.garageLon);
+
         const garageIcon = L.divIcon({
             className: 'custom-garage-icon',
             html: `
-                <div style="background: #1A1A1A; border: 2px solid #FFD700; border-radius: 50%; width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; font-size: 18px; box-shadow: 0 4px 12px rgba(0,0,0,0.6);">
+                <div style="background: #121412; border: 2.5px solid #FFD700; border-radius: 50%; width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; font-size: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.8);">
                     🏠
                 </div>
             `,
-            iconSize: [34, 34],
-            iconAnchor: [17, 17]
+            iconSize: [38, 38],
+            iconAnchor: [19, 19]
         });
 
-        const marker = L.marker([cachedUserData.garageLat, cachedUserData.garageLon], { icon: garageIcon })
-            .addTo(garageMarkerLayer);
+        const marker = L.marker([lat, lng], { icon: garageIcon }).addTo(garageMarkerLayer);
 
         marker.bindTooltip(`
-            <div style="background: rgba(0,0,0,0.9); color: #FFD700; padding: 4px 8px; border-radius: 6px; border: 1px solid #FFD700; font-weight: bold; font-size: 11px; text-align: center;">
+            <div style="background: rgba(0,0,0,0.9); color: #FFD700; padding: 5px 10px; border-radius: 8px; border: 1.5px solid #FFD700; font-weight: bold; font-size: 12px; text-align: center; box-shadow: 0 4px 12px rgba(0,0,0,0.6);">
                 🚜 Mano ūkio bazė / Garažas
             </div>
         `, { permanent: true, direction: 'top', offset: [0, -15] });
@@ -230,12 +226,18 @@ export function highlightFieldPolygon(fieldId) {
 }
 
 function fitAllBounds() {
-    if (drawnItems && drawnItems.getLayers().length > 0 && fieldsMap) {
-        fieldsMap.fitBounds(drawnItems.getBounds(), { padding: [50, 50] });
+    if (!fieldsMap) return;
+    const allLayers = [];
+    if (drawnItems && drawnItems.getLayers().length > 0) allLayers.push(drawnItems.getBounds());
+    if (garageMarkerLayer && garageMarkerLayer.getLayers().length > 0) allLayers.push(garageMarkerLayer.getBounds());
+
+    if (allLayers.length > 0) {
+        let combinedBounds = allLayers[0];
+        allLayers.forEach(b => { combinedBounds = combinedBounds.extend(b); });
+        fieldsMap.fitBounds(combinedBounds, { padding: [50, 50] });
     }
 }
 
-// Braižymas
 export function startDrawing() {
     drawingPoints = [];
     tempMarkers.forEach(m => fieldsMap.removeLayer(m));
