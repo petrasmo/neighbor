@@ -74,9 +74,25 @@
             color: #0F172A !important;
         }
 
+        html.light-theme .text-slate-200,
         html.light-theme .text-slate-300,
         html.light-theme .text-slate-400 {
             color: #334155 !important;
+        }
+
+        /* ☀️ Pataisyti visi mygtukai šviesioje temoje */
+        html.light-theme .bg-tractorBg,
+        html.light-theme button.bg-tractorBg,
+        html.light-theme a.bg-tractorBg {
+            background-color: #F1F5F9 !important;
+            color: #0F172A !important;
+            border-color: #CBD5E1 !important;
+        }
+
+        html.light-theme button.bg-tractorBg:hover,
+        html.light-theme a.bg-tractorBg:hover {
+            background-color: #E2E8F0 !important;
+            color: #000000 !important;
         }
 
         html.light-theme .bg-tractorSurface {
@@ -92,11 +108,6 @@
             color: #0F172A !important;
         }
 
-        html.light-theme .bg-tractorBg {
-            background-color: #F8FAF8 !important;
-            border-color: #CBD5E1 !important;
-        }
-
         html.light-theme input,
         html.light-theme select,
         html.light-theme textarea {
@@ -105,7 +116,30 @@
             border-color: #CBD5E1 !important;
         }
 
-        /* Aktyvaus mygtuko tekstas visada baltas */
+        html.light-theme .cs-dropdown {
+            background-color: #FFFFFF !important;
+            border-color: #CBD5E1 !important;
+        }
+
+        html.light-theme .cs-item {
+            color: #0F172A !important;
+        }
+
+        html.light-theme .cs-item:hover {
+            background-color: #E8F5E9 !important;
+        }
+
+        /* Raudonas perspėjimas šviesioje temoje */
+        html.light-theme .bg-red-950\/30 {
+            background-color: #FEE2E2 !important;
+            border-color: #EF4444 !important;
+        }
+
+        html.light-theme .bg-red-950\/30 h3 {
+            color: #991B1B !important;
+        }
+
+        /* Aktyvaus žalio mygtuko tekstas visada baltas */
         .bg-tractorPrimary,
         .bg-tractorPrimary * {
             color: #FFFFFF !important;
@@ -185,7 +219,7 @@
                     <button class="nav-tab-btn w-full text-left px-4 py-3 rounded-xl font-semibold text-sm transition flex items-center gap-3.5 cursor-pointer text-slate-400 hover:text-white" data-tab="4">
                         <span class="text-lg">📄</span> <span>Ataskaitos</span>
                     </button>
-                    <a href="grudai.html" class="w-full text-left px-4 py-3.5 rounded-xl font-semibold text-sm transition flex items-center gap-3.5 text-green-400 bg-tractorPrimary/10 border border-tractorPrimary/30 hover:bg-tractorPrimary/20">
+                    <a href="grudai.html" class="w-full text-left px-4 py-3 rounded-xl font-semibold text-sm transition flex items-center gap-3.5 text-green-400 bg-tractorPrimary/10 border border-tractorPrimary/30 hover:bg-tractorPrimary/20">
                         <span class="text-lg">🧮</span> <span>Skaičiuoklės</span>
                     </a>
                     <button class="nav-tab-btn w-full text-left px-4 py-3 rounded-xl font-semibold text-sm transition flex items-center gap-3.5 cursor-pointer text-slate-400 hover:text-white" data-tab="2">

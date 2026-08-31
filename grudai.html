@@ -71,18 +71,28 @@
             color: #0F172A !important;
         }
 
+        html.light-theme .text-slate-200,
         html.light-theme .text-slate-300,
         html.light-theme .text-slate-400 {
             color: #334155 !important;
         }
 
-        html.light-theme .bg-tractorSurface {
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+        html.light-theme .bg-tractorBg,
+        html.light-theme button.bg-tractorBg,
+        html.light-theme a.bg-tractorBg {
+            background-color: #F1F5F9 !important;
+            color: #0F172A !important;
+            border-color: #CBD5E1 !important;
         }
 
-        html.light-theme .bg-tractorBg {
-            background-color: #F8FAF8 !important;
-            border-color: #CBD5E1 !important;
+        html.light-theme button.bg-tractorBg:hover,
+        html.light-theme a.bg-tractorBg:hover {
+            background-color: #E2E8F0 !important;
+            color: #000000 !important;
+        }
+
+        html.light-theme .bg-tractorSurface {
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
         }
 
         html.light-theme input,
@@ -91,6 +101,19 @@
             background-color: #FFFFFF !important;
             color: #0F172A !important;
             border-color: #CBD5E1 !important;
+        }
+
+        html.light-theme .cs-dropdown {
+            background-color: #FFFFFF !important;
+            border-color: #CBD5E1 !important;
+        }
+
+        html.light-theme .cs-item {
+            color: #0F172A !important;
+        }
+
+        html.light-theme .cs-item:hover {
+            background-color: #E8F5E9 !important;
         }
 
         .bg-tractorPrimary,
@@ -272,7 +295,7 @@
 
     <!-- FOOTERIS -->
     <footer class="bg-tractorSurface border-t border-tractorBorder py-6 px-4 text-center text-xs text-slate-400">
-        <p>&copy; 2026 Neighbor P.M. • Sukurta: <a href="https://petrasmo.com" target="_blank" class="hover:text-green-400 font-bold underline decoration-slate-600">Petrasmo Studios</a></p>
+        <p>&copy; 2026 Neighbor P.M. • Sukurta: <a href="https://petrasmo.com" target="_blank" class="text-slate-200 hover:text-green-400 font-bold underline decoration-slate-600">Petrasmo Studios</a></p>
     </footer>
 
     <!-- DIALOGAS -->
