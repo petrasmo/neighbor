@@ -1,12 +1,13 @@
 // js/grain.js
 import { db } from './firebase.js';
 import { calculateDist, calculateBuyerRanking } from './grainCalculator.js';
+import { createCustomSelect } from './customSelect.js';
 import { showDialog } from './ui.js';
 
 let activeMarketData = [];
 let unsubscribeGrain = null;
 let userGarageCoords = null;
-let currentCoords = null; // { lat, lng, sourceText }
+let currentCoords = null;
 let userFieldsList = [];
 
 const state = {
@@ -19,14 +20,14 @@ const state = {
     transportRatePerTonKm: 0.10
 };
 
-const cropNames = {
-    rapeseed: '🌱 Rapsai',
-    wheat2: '🌾 Kviečiai (II klasė)',
-    wheatExtra: '🌾 Kviečiai (Ekstra)',
-    wheatFeed: '🌾 Kviečiai (Pašariniai)',
-    barley: '🌾 Miežiai',
-    peas: '🫘 Žirniai / Pupos'
-};
+const cropItems = [
+    { id: 'rapeseed', name: 'Rapsai', icon: '🌱', subtext: 'Žieminiai / Vasariniai' },
+    { id: 'wheat2', name: 'Kviečiai (II klasė)', icon: '🌾', subtext: 'Maistiniai' },
+    { id: 'wheatExtra', name: 'Kviečiai (Ekstra)', icon: '🌾', subtext: 'Aukščiausia kokybė' },
+    { id: 'wheatFeed', name: 'Kviečiai (Pašariniai)', icon: '🌾', subtext: 'Pašarams' },
+    { id: 'barley', name: 'Miežiai', icon: '🌾', subtext: 'Salykliniai / Pašariniai' },
+    { id: 'peas', name: 'Žirniai / Pupos', icon: '🫘', subtext: 'Baltyminiai augalai' }
+];
 
 export function initGrainTab(currentUser, userData) {
     const container = document.getElementById('view-tab-grain') || document.getElementById('grain-calc-content');
@@ -36,7 +37,7 @@ export function initGrainTab(currentUser, userData) {
         userGarageCoords = { 
             lat: userData.garageLat, 
             lng: userData.garageLon,
-            sourceText: "jūsų išsaugotos ūkio vietos (Nustatymai)"
+            sourceText: "jūsų ūkio / garažo vietos"
         };
         currentCoords = userGarageCoords;
     } else {
@@ -46,7 +47,7 @@ export function initGrainTab(currentUser, userData) {
     container.innerHTML = `
         <div class="space-y-6 max-w-6xl mx-auto w-full">
             
-            <!-- HEADERIS IR LOKACIJOS / LAUKO PARINKIMAS -->
+            <!-- HEADERIS -->
             <div class="bg-tractorSurface border border-tractorBorder rounded-2xl p-6 md:p-8 space-y-5 shadow-xl">
                 <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-tractorBorder/70 pb-4">
                     <div>
@@ -58,26 +59,21 @@ export function initGrainTab(currentUser, userData) {
                         </p>
                     </div>
 
-                    <!-- GPS MYGTUKAS -->
-                    <div class="flex items-center gap-2.5">
-                        <button id="btn-loc-gps" class="h-11 px-4 bg-tractorBg hover:bg-zinc-800 text-slate-200 border border-tractorBorder hover:border-tractorPrimary text-xs font-bold rounded-xl flex items-center gap-2 shadow transition cursor-pointer shrink-0">
-                            <span>📡</span> Nustatyti tikslią GPS vietą
-                        </button>
-                    </div>
+                    <button id="btn-loc-gps" class="h-11 px-4 bg-tractorBg hover:bg-zinc-800 text-slate-200 border border-tractorBorder hover:border-tractorPrimary text-xs font-bold rounded-xl flex items-center gap-2 shadow transition cursor-pointer shrink-0">
+                        <span>📡</span> Nustatyti tikslią GPS vietą
+                    </button>
                 </div>
 
-                <!-- 🌾 PASIRINKTI ATSTUMĄ NUO LAUKO ARBA GARAŽO -->
+                <!-- 🌾 CUSTOM SELECT LAUKUI -->
                 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-tractorBg/80 p-4 rounded-xl border border-tractorBorder">
                     <div class="space-y-0.5">
                         <label class="text-xs font-bold text-tractorPrimaryLight uppercase tracking-wider block">
                             🌾 Skaičiuoti atstumą ir transportą nuo:
                         </label>
-                        <p class="text-[11px] text-slate-400">Pasirinkite konkretų lauką, iš kurio vešite derlių į elevatorių.</p>
+                        <p class="text-[11px] text-slate-400">Pasirinkite konkretų lauką arba ūkio bazę.</p>
                     </div>
 
-                    <select id="grain-field-select" class="w-full sm:w-80 h-11 bg-tractorSurface border border-tractorPrimary/70 focus:border-tractorPrimary rounded-xl px-4 text-xs md:text-sm text-white font-bold outline-none cursor-pointer">
-                        <option value="garage">🏠 Mano ūkio / garažo vieta</option>
-                    </select>
+                    <div id="grain-field-select-box" class="w-full sm:w-80"></div>
                 </div>
 
                 <!-- KROVINIO FORMA -->
@@ -93,16 +89,11 @@ export function initGrainTab(currentUser, userData) {
                     </div>
 
                     <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+                        
+                        <!-- 🔍 CUSTOM SELECT KULTŪRAI -->
                         <div class="space-y-1.5">
                             <label class="text-xs font-bold text-tractorPrimaryLight uppercase tracking-wider">Kultūra</label>
-                            <select id="opt-crop" class="w-full h-12 bg-tractorBg border border-tractorPrimary/70 focus:border-tractorPrimary rounded-xl px-3 text-sm text-white font-bold outline-none cursor-pointer">
-                                <option value="rapeseed" ${state.crop === 'rapeseed' ? 'selected' : ''}>🌱 Rapsai</option>
-                                <option value="wheat2" ${state.crop === 'wheat2' ? 'selected' : ''}>🌾 Kviečiai (II klasė)</option>
-                                <option value="wheatExtra" ${state.crop === 'wheatExtra' ? 'selected' : ''}>🌾 Kviečiai (Ekstra)</option>
-                                <option value="wheatFeed" ${state.crop === 'wheatFeed' ? 'selected' : ''}>🌾 Kviečiai (Pašariniai)</option>
-                                <option value="barley" ${state.crop === 'barley' ? 'selected' : ''}>🌾 Miežiai</option>
-                                <option value="peas" ${state.crop === 'peas' ? 'selected' : ''}>🫘 Žirniai / Pupos</option>
-                            </select>
+                            <div id="grain-crop-select-box"></div>
                         </div>
 
                         <div class="space-y-1.5">
@@ -136,11 +127,11 @@ export function initGrainTab(currentUser, userData) {
                 </button>
             </div>
 
-            <!-- 1 REŽIMAS: SKAIČIUOKLĖ IR REITINGAS -->
+            <!-- 1 REŽIMAS: SKAIČIUOKLĖ -->
             <div id="view-ranked-container" class="space-y-4 ${state.viewMode === 'ranked' ? '' : 'hidden'}">
                 <div class="flex items-center justify-between px-2">
                     <h3 class="font-oswald text-xl font-bold uppercase tracking-wider text-white">
-                        Pelningiausi elevatoriai jūsų kroviniui (<span id="selected-crop-label" class="text-tractorPrimaryLight">${cropNames[state.crop]}</span>)
+                        Pelningiausi elevatoriai jūsų kroviniui (<span id="selected-crop-label" class="text-tractorPrimaryLight">🌱 Rapsai</span>)
                     </h3>
                     <span class="text-xs font-medium text-slate-300">Rikiuojama pagal grynąjį pelną į kišenę</span>
                 </div>
@@ -155,7 +146,24 @@ export function initGrainTab(currentUser, userData) {
         </div>
     `;
 
-    // GPS nustatymas
+    // 🔍 Inicijuojame CustomSelect Kultūrai
+    createCustomSelect({
+        containerId: 'grain-crop-select-box',
+        placeholder: 'Pasirinkite kultūrą...',
+        items: cropItems,
+        selectedId: state.crop,
+        onSelect: (item) => {
+            if (item) {
+                state.crop = item.id;
+                document.getElementById('selected-crop-label').textContent = `${item.icon} ${item.name}`;
+                renderRankedBuyers();
+            }
+        }
+    });
+
+    // 🔍 Inicijuojame CustomSelect Laukui
+    loadUserFieldsSelect(currentUser, userData);
+
     document.getElementById('btn-loc-gps')?.addEventListener('click', () => {
         if (navigator.geolocation) {
             const btn = document.getElementById('btn-loc-gps');
@@ -167,7 +175,6 @@ export function initGrainTab(currentUser, userData) {
                     sourceText: "tikslios GPS vietos"
                 };
                 btn.textContent = "✅ GPS nustatyta!";
-                document.getElementById('grain-field-select').value = "garage";
                 updateLocationText();
                 renderRankedBuyers();
                 renderElevatorsCards();
@@ -177,9 +184,6 @@ export function initGrainTab(currentUser, userData) {
             });
         }
     });
-
-    // Užkrauname vartotojo laukus į sąrašą
-    loadUserFieldsToSelect(currentUser, userData);
 
     const btnRanked = document.getElementById('btn-mode-ranked');
     const btnTable = document.getElementById('btn-mode-table');
@@ -204,12 +208,6 @@ export function initGrainTab(currentUser, userData) {
         renderElevatorsCards();
     };
 
-    document.getElementById('opt-crop').addEventListener('change', (e) => {
-        state.crop = e.target.value;
-        document.getElementById('selected-crop-label').textContent = cropNames[state.crop];
-        renderRankedBuyers();
-    });
-
     document.getElementById('opt-transport-toggle')?.addEventListener('change', (e) => {
         state.includeTransport = e.target.checked;
         renderRankedBuyers();
@@ -228,57 +226,59 @@ export function initGrainTab(currentUser, userData) {
     listenToGrainPrices();
 }
 
-function loadUserFieldsToSelect(currentUser, userData) {
-    const select = document.getElementById('grain-field-select');
-    if (!select) return;
-
+function loadUserFieldsSelect(currentUser, userData) {
     if (!currentUser) {
-        select.innerHTML = `<option value="garage">🏠 Apytikslė Lietuvos vieta (Prisijunkite laukų parinkimui)</option>`;
+        createCustomSelect({
+            containerId: 'grain-field-select-box',
+            placeholder: 'Pasirinkite vietą...',
+            items: [{ id: 'garage', name: '🏠 Apytikslė vieta', subtext: 'Prisijunkite laukų parinkimui' }],
+            selectedId: 'garage'
+        });
         return;
     }
 
     db.collection("user_fields").where("userId", "==", currentUser.uid).get().then(snap => {
         userFieldsList = [];
-        let optionsHtml = `<option value="garage">🏠 Mano ūkio / garažo vieta</option>`;
+        const items = [{ id: 'garage', name: 'Mano ūkio / garažo vieta', icon: '🏠', subtext: 'Nustatymai' }];
 
         snap.forEach(doc => {
             const f = doc.data();
             userFieldsList.push(f);
-
-            if (f.polygonCoordinates && f.polygonCoordinates.length > 0) {
-                optionsHtml += `<option value="${f.id}">🌾 Laukas: „${f.name}“ (${f.areaHa} ha, ${f.crop})</option>`;
-            }
+            items.push({
+                id: f.id,
+                name: f.name,
+                icon: '🌾',
+                subtext: `${f.areaHa} ha • ${f.crop}`
+            });
         });
 
-        select.innerHTML = optionsHtml;
-
-        select.onchange = (e) => {
-            const val = e.target.value;
-            if (val === 'garage') {
-                if (userGarageCoords) {
-                    currentCoords = userGarageCoords;
+        createCustomSelect({
+            containerId: 'grain-field-select-box',
+            placeholder: 'Pasirinkite lauką arba bazę...',
+            items: items,
+            selectedId: 'garage',
+            onSelect: (item) => {
+                if (!item || item.id === 'garage') {
+                    currentCoords = userGarageCoords || { lat: 56.0593, lng: 24.4036, sourceText: "ūkio / garažo vietos" };
                 } else {
-                    currentCoords = { lat: 56.0593, lng: 24.4036, sourceText: "ūkio / garažo vietos" };
-                }
-            } else {
-                const chosenField = userFieldsList.find(f => f.id === val);
-                if (chosenField && chosenField.polygonCoordinates && chosenField.polygonCoordinates.length > 0) {
-                    const firstPt = chosenField.polygonCoordinates[0];
-                    const lat = Array.isArray(firstPt) ? parseFloat(firstPt[0]) : parseFloat(firstPt.lat);
-                    const lng = Array.isArray(firstPt) ? parseFloat(firstPt[1]) : parseFloat(firstPt.lng);
+                    const chosenField = userFieldsList.find(f => f.id === item.id);
+                    if (chosenField && chosenField.polygonCoordinates && chosenField.polygonCoordinates.length > 0) {
+                        const firstPt = chosenField.polygonCoordinates[0];
+                        const lat = Array.isArray(firstPt) ? parseFloat(firstPt[0]) : parseFloat(firstPt.lat);
+                        const lng = Array.isArray(firstPt) ? parseFloat(firstPt[1]) : parseFloat(firstPt.lng);
 
-                    currentCoords = {
-                        lat: lat,
-                        lng: lng,
-                        sourceText: `lauko „${chosenField.name}“ (${chosenField.areaHa} ha)`
-                    };
+                        currentCoords = {
+                            lat: lat,
+                            lng: lng,
+                            sourceText: `lauko „${chosenField.name}“ (${chosenField.areaHa} ha)`
+                        };
+                    }
                 }
+                updateLocationText();
+                renderRankedBuyers();
+                renderElevatorsCards();
             }
-
-            updateLocationText();
-            renderRankedBuyers();
-            renderElevatorsCards();
-        };
+        });
     });
 }
 
@@ -328,19 +328,7 @@ function listenToGrainPrices() {
 
     unsubscribeGrain = db.collection("grain_prices").onSnapshot((snapshot) => {
         activeMarketData = [];
-        let latestTimestamp = null;
-
-        snapshot.forEach(doc => {
-            const data = doc.data();
-            activeMarketData.push(data);
-
-            if (data.updatedAt) {
-                const docDate = data.updatedAt.toDate ? data.updatedAt.toDate() : new Date(data.updatedAt);
-                if (!latestTimestamp || docDate > latestTimestamp) {
-                    latestTimestamp = docDate;
-                }
-            }
-        });
+        snapshot.forEach(doc => activeMarketData.push(doc.data()));
 
         renderRankedBuyers();
         renderElevatorsCards();

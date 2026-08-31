@@ -3,18 +3,18 @@ import { db } from './firebase.js';
 import { showDialog } from './ui.js';
 import { loginWithGoogle } from './auth.js';
 import { calculateDist } from './grainCalculator.js';
+import { createCustomSelect } from './customSelect.js';
 
 let unsubscribePosts = null;
+let selectedTechObj = null;
 
 export function initFeedTab(currentUser, userData, classifierMap) {
     const container = document.getElementById('view-tab-feed');
     if (!container) return;
 
-    let optionsHtml = '';
-    const sortedTech = Object.entries(classifierMap || {}).sort((a, b) => a[1].localeCompare(b[1]));
-    for (const [id, name] of sortedTech) {
-        optionsHtml += `<option value="${id}">${name}</option>`;
-    }
+    const techItems = Object.entries(classifierMap || {})
+        .map(([id, name]) => ({ id, name, icon: '🚜' }))
+        .sort((a, b) => a.name.localeCompare(b.name));
 
     container.innerHTML = `
         <div class="space-y-6 max-w-5xl mx-auto w-full">
@@ -41,7 +41,7 @@ export function initFeedTab(currentUser, userData, classifierMap) {
                     </button>
                 </div>
 
-                <!-- SLIDE-DOWN FORMA (PAGAL NUTYLĖJIMĄ PASLĖPTA) -->
+                <!-- SLIDE-DOWN FORMA -->
                 <div id="sos-form-slide-container" class="hidden pt-5 border-t border-tractorBorder/70 transition-all duration-300">
                     <form id="create-post-form" class="space-y-4 bg-tractorBg/90 p-5 md:p-7 rounded-2xl border border-tractorBorder">
                         <div class="flex items-center justify-between border-b border-tractorBorder/60 pb-3">
@@ -53,15 +53,14 @@ export function initFeedTab(currentUser, userData, classifierMap) {
 
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div class="space-y-1.5">
-                                <label class="text-xs font-bold text-tractorPrimaryLight uppercase tracking-wider">Ieškoma technika *</label>
-                                <select id="sos-tech-select" required class="w-full h-12 bg-tractorSurface border border-tractorBorder focus:border-tractorPrimary rounded-xl px-4 text-xs md:text-sm text-white font-semibold outline-none cursor-pointer">
-                                    <option value="">-- Pasirinkite ieškomą mašiną --</option>
-                                    ${optionsHtml}
-                                </select>
+                                <label class="text-xs font-bold text-tractorPrimaryLight uppercase tracking-wider block">
+                                    Ieškoma technika *
+                                </label>
+                                <div id="sos-tech-select-box"></div>
                             </div>
 
                             <div class="space-y-1.5">
-                                <label class="text-xs font-bold text-slate-300 uppercase tracking-wider">Kur reikia pagalbos?</label>
+                                <label class="text-xs font-bold text-slate-300 uppercase tracking-wider block">Kur reikia pagalbos?</label>
                                 <select id="sos-location-source" class="w-full h-12 bg-tractorSurface border border-tractorBorder focus:border-tractorPrimary rounded-xl px-4 text-xs md:text-sm text-white font-semibold outline-none cursor-pointer">
                                     <option value="garage">Mano Garažo / Ūkio vieta (iš nustatymų)</option>
                                     <option value="current">Dabartinė kompiuterio / telefono vieta (GPS)</option>
@@ -78,7 +77,7 @@ export function initFeedTab(currentUser, userData, classifierMap) {
                         </div>
 
                         <div class="space-y-1.5">
-                            <label class="text-xs font-bold text-slate-300 uppercase tracking-wider">Situacijos aprašymas *</label>
+                            <label class="text-xs font-bold text-slate-300 uppercase tracking-wider block">Situacijos aprašymas *</label>
                             <textarea id="sos-message-input" rows="3" required placeholder="Pvz.: Skubiai reikia kombaino nukulti 15 ha miežių prieš lietų. Tel. atsiliepiu visą parą..." 
                                 class="w-full bg-tractorSurface border border-tractorBorder focus:border-tractorPrimary rounded-xl p-4 text-xs md:text-sm text-white placeholder-slate-500 outline-none"></textarea>
                         </div>
@@ -113,7 +112,17 @@ export function initFeedTab(currentUser, userData, classifierMap) {
         </div>
     `;
 
-    // 🔒 SLIDE-DOWN TOGGLE SU AUTH APSAUGA
+    // 🔍 Inicijuojame CustomSelect technikai
+    createCustomSelect({
+        containerId: 'sos-tech-select-box',
+        placeholder: '🔍 Ieškoti mašinos...',
+        items: techItems,
+        selectedId: '',
+        onSelect: (item) => {
+            selectedTechObj = item;
+        }
+    });
+
     const toggleBtn = document.getElementById('btn-toggle-sos-form');
     const cancelBtn = document.getElementById('btn-cancel-sos');
     const formContainer = document.getElementById('sos-form-slide-container');
@@ -121,7 +130,6 @@ export function initFeedTab(currentUser, userData, classifierMap) {
     const btnText = document.getElementById('sos-btn-text');
 
     const toggleForm = () => {
-        // JEI NEPRISIJUNGĘS – NELEIDŽIAME ATIDARYTI FORMOS IR METAME LOGIN DIALOGĄ!
         if (!currentUser) {
             showDialog(
                 "Reikalingas prisijungimas",
@@ -167,13 +175,16 @@ export function initFeedTab(currentUser, userData, classifierMap) {
                 return;
             }
 
+            if (!selectedTechObj) {
+                showDialog("Pasirinkite techniką", "Iš sąrašo pasirinkite konkrečią ieškomą mašiną.", "⚠️");
+                return;
+            }
+
             const submitBtn = document.getElementById('btn-submit-sos');
             submitBtn.disabled = true;
             submitBtn.innerHTML = `<span>⏳</span> Siunčiama...`;
 
             try {
-                const techId = document.getElementById('sos-tech-select').value;
-                const techName = (classifierMap && classifierMap[techId]) ? classifierMap[techId] : 'Technika';
                 const msg = document.getElementById('sos-message-input').value.trim();
                 const radius = parseFloat(document.getElementById('sos-radius-input').value);
                 const locSource = document.getElementById('sos-location-source').value;
@@ -199,8 +210,8 @@ export function initFeedTab(currentUser, userData, classifierMap) {
                     userId: currentUser.uid,
                     userName: userData?.name || "Ūkininkas",
                     phone: userData?.phone || "",
-                    requiredMachineId: techId,
-                    requiredMachineName: techName,
+                    requiredMachineId: selectedTechObj.id,
+                    requiredMachineName: selectedTechObj.name,
                     message: msg,
                     fulfilled: false,
                     location: new firebase.firestore.GeoPoint(postLat, postLon),
@@ -209,6 +220,7 @@ export function initFeedTab(currentUser, userData, classifierMap) {
                 });
 
                 form.reset();
+                selectedTechObj = null;
                 toggleForm();
 
                 showDialog("SOS Išsiųstas! 🚨", "Jūsų pagalbos skelbimas sėkmingai paskelbtas kaimynams.", "✅");
@@ -258,7 +270,6 @@ function listenToFeedPosts(currentUser, userData, classifierMap) {
 
                 const matchesTech = owned.includes(post.requiredMachineId);
 
-                // Jei neprisijungęs – rodo visus skelbimus viešai. Jei prisijungęs – filtruoja pagal techniką ir atstumą
                 const shouldShow = !currentUser || isMyPost || (matchesTech && isWithinDist) || (!garageLat);
 
                 if (shouldShow) {
