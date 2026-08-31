@@ -3,7 +3,8 @@ import { auth, db } from './firebase.js';
 import { loginWithGoogle, logoutUser } from './auth.js';
 import { initGrainTab } from './grain.js';
 import { renderSeedCalculator } from './seedCalculator.js';
-import { renderSprayerCalculator } from './sprayerCalculator.js'; // 👈 PRIDĖTA
+import { renderSprayerCalculator } from './sprayerCalculator.js';
+import { renderFertilizerCalculator } from './fertilizerCalculator.js'; // 👈 PRIDĖTA
 
 document.addEventListener('DOMContentLoaded', () => {
     let currentUser = null;
@@ -13,23 +14,26 @@ document.addEventListener('DOMContentLoaded', () => {
     const grainView = document.getElementById('view-tab-grain');
     const seedView = document.getElementById('view-tab-seed');
     const sprayView = document.getElementById('view-tab-spray');
+    const fertView = document.getElementById('view-tab-fert');
 
     const openGrainBtn = document.getElementById('btn-open-grain-calc');
     const openSeedBtn = document.getElementById('btn-open-seed-calc');
     const openSprayBtn = document.getElementById('btn-open-spray-calc');
+    const openFertBtn = document.getElementById('btn-open-fert-calc');
 
     const backFromGrainBtn = document.getElementById('btn-back-from-grain');
     const backFromSeedBtn = document.getElementById('btn-back-from-seed');
     const backFromSprayBtn = document.getElementById('btn-back-from-spray');
+    const backFromFertBtn = document.getElementById('btn-back-from-fert');
 
     const hideAllViews = () => {
         hubView.classList.add('hidden');
         grainView.classList.add('hidden');
         seedView.classList.add('hidden');
         sprayView.classList.add('hidden');
+        fertView.classList.add('hidden');
     };
 
-    // 🌾 Grūdų skaičiuoklė
     openGrainBtn.onclick = () => {
         hideAllViews();
         grainView.classList.remove('hidden');
@@ -37,7 +41,6 @@ document.addEventListener('DOMContentLoaded', () => {
         window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
-    // 🌱 Sėjos skaičiuoklė
     openSeedBtn.onclick = () => {
         hideAllViews();
         seedView.classList.remove('hidden');
@@ -45,7 +48,6 @@ document.addEventListener('DOMContentLoaded', () => {
         window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
-    // 💦 Purkštuvo skaičiuoklė
     openSprayBtn.onclick = () => {
         hideAllViews();
         sprayView.classList.remove('hidden');
@@ -53,7 +55,14 @@ document.addEventListener('DOMContentLoaded', () => {
         window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
-    // 🔙 Grįžti į Hubą
+    // 🧪 Trąšų NPK skaičiuoklė
+    openFertBtn.onclick = () => {
+        hideAllViews();
+        fertView.classList.remove('hidden');
+        renderFertilizerCalculator(document.getElementById('fert-calc-content'));
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
     const returnToHub = () => {
         hideAllViews();
         hubView.classList.remove('hidden');
@@ -63,8 +72,8 @@ document.addEventListener('DOMContentLoaded', () => {
     backFromGrainBtn.onclick = returnToHub;
     backFromSeedBtn.onclick = returnToHub;
     backFromSprayBtn.onclick = returnToHub;
+    backFromFertBtn.onclick = returnToHub;
 
-    // Auth stebėjimas
     auth.onAuthStateChanged(async (user) => {
         const slot = document.getElementById('auth-btn-slot');
         if (user) {
