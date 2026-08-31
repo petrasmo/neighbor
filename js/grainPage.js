@@ -2,14 +2,69 @@
 import { auth, db } from './firebase.js';
 import { loginWithGoogle, logoutUser } from './auth.js';
 import { initGrainTab } from './grain.js';
+import { renderSeedCalculator } from './seedCalculator.js';
+import { renderSprayerCalculator } from './sprayerCalculator.js'; // 👈 PRIDĖTA
 
 document.addEventListener('DOMContentLoaded', () => {
     let currentUser = null;
     let userData = null;
 
-    // Pradinis paleidimas (veikia iškart be prisijungimo!)
-    initGrainTab(null, null);
+    const hubView = document.getElementById('view-calculators-hub');
+    const grainView = document.getElementById('view-tab-grain');
+    const seedView = document.getElementById('view-tab-seed');
+    const sprayView = document.getElementById('view-tab-spray');
 
+    const openGrainBtn = document.getElementById('btn-open-grain-calc');
+    const openSeedBtn = document.getElementById('btn-open-seed-calc');
+    const openSprayBtn = document.getElementById('btn-open-spray-calc');
+
+    const backFromGrainBtn = document.getElementById('btn-back-from-grain');
+    const backFromSeedBtn = document.getElementById('btn-back-from-seed');
+    const backFromSprayBtn = document.getElementById('btn-back-from-spray');
+
+    const hideAllViews = () => {
+        hubView.classList.add('hidden');
+        grainView.classList.add('hidden');
+        seedView.classList.add('hidden');
+        sprayView.classList.add('hidden');
+    };
+
+    // 🌾 Grūdų skaičiuoklė
+    openGrainBtn.onclick = () => {
+        hideAllViews();
+        grainView.classList.remove('hidden');
+        initGrainTab(currentUser, userData);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    // 🌱 Sėjos skaičiuoklė
+    openSeedBtn.onclick = () => {
+        hideAllViews();
+        seedView.classList.remove('hidden');
+        renderSeedCalculator(document.getElementById('seed-calc-content'));
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    // 💦 Purkštuvo skaičiuoklė
+    openSprayBtn.onclick = () => {
+        hideAllViews();
+        sprayView.classList.remove('hidden');
+        renderSprayerCalculator(document.getElementById('spray-calc-content'));
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    // 🔙 Grįžti į Hubą
+    const returnToHub = () => {
+        hideAllViews();
+        hubView.classList.remove('hidden');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    backFromGrainBtn.onclick = returnToHub;
+    backFromSeedBtn.onclick = returnToHub;
+    backFromSprayBtn.onclick = returnToHub;
+
+    // Auth stebėjimas
     auth.onAuthStateChanged(async (user) => {
         const slot = document.getElementById('auth-btn-slot');
         if (user) {
@@ -20,15 +75,14 @@ document.addEventListener('DOMContentLoaded', () => {
             if (slot) {
                 slot.innerHTML = `
                     <div class="flex items-center gap-2">
-                        <span class="text-xs text-slate-300 hidden sm:inline">${user.displayName || user.email}</span>
-                        <button id="btn-logout-grain" class="px-3 py-1.5 bg-tractorBg border border-tractorBorder hover:border-red-500 text-xs font-bold text-slate-300 rounded-xl transition">
+                        <span class="text-xs text-slate-300 hidden sm:inline font-semibold">${user.displayName || user.email}</span>
+                        <button id="btn-logout-grain" class="px-3.5 py-1.5 bg-tractorBg border border-tractorBorder hover:border-red-500 text-xs font-bold text-slate-300 rounded-xl transition">
                             Atsijungti
                         </button>
                     </div>
                 `;
                 document.getElementById('btn-logout-grain')?.addEventListener('click', logoutUser);
             }
-            initGrainTab(currentUser, userData);
         } else {
             if (slot) {
                 slot.innerHTML = `
@@ -38,7 +92,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 `;
                 document.getElementById('btn-login-grain')?.addEventListener('click', loginWithGoogle);
             }
-            initGrainTab(null, null);
         }
     });
 });

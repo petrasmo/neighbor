@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     
-    <title>Grūdų Supirkimo Kainos ir Elevatorių Skaičiuoklė 🌾 – Neighbor P.M.</title>
-    <meta name="description" content="Sužinokite, kur labiausiai apsimoka vežti grūdus Lietuvoje. Gyvos supirkimo kainos, džiovinimo nuoskaitų skaičiuoklė ir atstumai iki elevatorių.">
+    <title>Ūkininko Skaičiuoklių Centras 🧮 – Neighbor P.M.</title>
+    <meta name="description" content="Profesionalios žemės ūkio skaičiuoklės: grūdų supirkimo kainos, tiksli sėjos norma bei purkštuvo bako maišymo skaičiuoklė.">
     <link rel="icon" type="image/png" href="logo.png">
 
     <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -42,7 +42,7 @@
 </head>
 <body class="bg-tractorBg text-slate-200 font-sans antialiased min-h-screen flex flex-col">
 
-    <!-- VIRŠUTINĖ NAVIGACIJA -->
+    <!-- HEADERIS -->
     <header class="bg-tractorSurface border-b border-tractorBorder sticky top-0 z-50">
         <div class="max-w-6xl mx-auto px-4 md:px-8 h-16 flex items-center justify-between">
             <a href="index.html" class="flex items-center gap-2.5">
@@ -63,9 +63,113 @@
         </div>
     </header>
 
-    <!-- PAGRINDINIS TURINYS -->
+    <!-- TURINYS -->
     <main class="flex-1 max-w-6xl mx-auto w-full px-4 md:px-8 py-8">
-        <div id="view-tab-grain"></div>
+        
+        <!-- 0. SKAIČIUOKLIŲ KATALOGAS (HUB) -->
+        <div id="view-calculators-hub" class="space-y-6">
+            <div class="border-b border-tractorBorder pb-4">
+                <h2 class="font-oswald text-2xl md:text-3xl font-bold uppercase tracking-wider text-white flex items-center gap-2">
+                    <span>🧮</span> Ūkininko Skaičiuoklių Centras
+                </h2>
+                <p class="text-xs md:text-sm text-slate-300 mt-1">
+                    Pasirinkite reikalingą skaičiuoklę – nuo sėjos ir purškimo iki grūdų pelningumo analizės.
+                </p>
+            </div>
+
+            <!-- SKAIČIUOKLIŲ KORTELĖS -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+                
+                <!-- 1 KORTELĖ: GRŪDAI -->
+                <div class="bg-tractorSurface border border-tractorBorder hover:border-tractorPrimary rounded-2xl p-6 shadow-xl flex flex-col justify-between space-y-4 transition group">
+                    <div class="space-y-2">
+                        <div class="flex justify-between items-start">
+                            <span class="text-3xl bg-tractorBg p-3 rounded-2xl border border-tractorBorder block w-fit">🌾</span>
+                            <span class="text-[10px] bg-tractorPrimary/20 text-tractorPrimaryLight border border-tractorPrimary/40 px-2.5 py-0.5 rounded-full font-bold">
+                                Gyvos kainos
+                            </span>
+                        </div>
+                        <h3 class="font-oswald text-xl font-bold text-white tracking-wide group-hover:text-green-400 transition">
+                            Grūdų Supirkimo ir Elevatorių Skaičiuoklė
+                        </h3>
+                        <p class="text-xs text-slate-300 leading-relaxed">
+                            Sužinokite, kur labiausiai apsimoka vežti derlių. Gyvos kainos, atstumai nuo ūkio, džiovinimo nuoskaitos bei pelningiausias maršrutas.
+                        </p>
+                    </div>
+                    <button id="btn-open-grain-calc" class="w-full h-11 bg-tractorPrimary hover:bg-tractorPrimaryHover text-white font-bold rounded-xl text-xs uppercase tracking-wider shadow-lg shadow-tractorPrimary/20 flex items-center justify-center gap-2 transition cursor-pointer">
+                        <span>Atidaryti skaičiuoklę</span> <span>→</span>
+                    </button>
+                </div>
+
+                <!-- 2 KORTELĖ: SĖJA -->
+                <div class="bg-tractorSurface border border-tractorBorder hover:border-tractorPrimary rounded-2xl p-6 shadow-xl flex flex-col justify-between space-y-4 transition group">
+                    <div class="space-y-2">
+                        <div class="flex justify-between items-start">
+                            <span class="text-3xl bg-tractorBg p-3 rounded-2xl border border-tractorBorder block w-fit">🌱</span>
+                            <span class="text-[10px] bg-tractorPrimary/20 text-tractorPrimaryLight border border-tractorPrimary/40 px-2.5 py-0.5 rounded-full font-bold">
+                                Agronominė norma
+                            </span>
+                        </div>
+                        <h3 class="font-oswald text-xl font-bold text-white tracking-wide group-hover:text-green-400 transition">
+                            Tiksli Sėjos Normos ir Sėklos Skaičiuoklė
+                        </h3>
+                        <p class="text-xs text-slate-300 leading-relaxed">
+                            Apskaičiuokite tikslią sėjos normą (kg/ha) pagal MTG ir daigumą. Sužinokite reikalingų didmaišių kiekį bei savikainą.
+                        </p>
+                    </div>
+                    <button id="btn-open-seed-calc" class="w-full h-11 bg-tractorPrimary hover:bg-tractorPrimaryHover text-white font-bold rounded-xl text-xs uppercase tracking-wider shadow-lg shadow-tractorPrimary/20 flex items-center justify-center gap-2 transition cursor-pointer">
+                        <span>Atidaryti skaičiuoklę</span> <span>→</span>
+                    </button>
+                </div>
+
+                <!-- 3 KORTELĖ: PURKŠTUVAS (NAUJA!) -->
+                <div class="bg-tractorSurface border border-tractorBorder hover:border-tractorPrimary rounded-2xl p-6 shadow-xl flex flex-col justify-between space-y-4 transition group">
+                    <div class="space-y-2">
+                        <div class="flex justify-between items-start">
+                            <span class="text-3xl bg-tractorBg p-3 rounded-2xl border border-tractorBorder block w-fit">💦</span>
+                            <span class="text-[10px] bg-blue-950/40 text-blue-400 border border-blue-800/60 px-2.5 py-0.5 rounded-full font-bold">
+                                Purškimas
+                            </span>
+                        </div>
+                        <h3 class="font-oswald text-xl font-bold text-white tracking-wide group-hover:text-green-400 transition">
+                            Purkštuvo Bako ir Chemikalų Skaičiuoklė
+                        </h3>
+                        <p class="text-xs text-slate-300 leading-relaxed">
+                            Tikslios dozės pilnam ir nepilnam bakui. Išvenkite klaidų maišant herbicidus, fungicidus ir trąšas.
+                        </p>
+                    </div>
+                    <button id="btn-open-spray-calc" class="w-full h-11 bg-tractorPrimary hover:bg-tractorPrimaryHover text-white font-bold rounded-xl text-xs uppercase tracking-wider shadow-lg shadow-tractorPrimary/20 flex items-center justify-center gap-2 transition cursor-pointer">
+                        <span>Atidaryti skaičiuoklę</span> <span>→</span>
+                    </button>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- 1 SKAIČIUOKLĖ: GRŪDAI -->
+        <div id="view-tab-grain" class="hidden space-y-4">
+            <button id="btn-back-from-grain" class="px-4 py-2 bg-tractorSurface hover:bg-zinc-800 border border-tractorBorder rounded-xl text-xs font-bold text-slate-300 flex items-center gap-1.5 transition cursor-pointer">
+                <span>←</span> Grįžti į visas skaičiuokles
+            </button>
+            <div id="grain-calc-content"></div>
+        </div>
+
+        <!-- 2 SKAIČIUOKLĖ: SĖJA -->
+        <div id="view-tab-seed" class="hidden space-y-4">
+            <button id="btn-back-from-seed" class="px-4 py-2 bg-tractorSurface hover:bg-zinc-800 border border-tractorBorder rounded-xl text-xs font-bold text-slate-300 flex items-center gap-1.5 transition cursor-pointer">
+                <span>←</span> Grįžti į visas skaičiuokles
+            </button>
+            <div id="seed-calc-content"></div>
+        </div>
+
+        <!-- 3 SKAIČIUOKLĖ: PURKŠTUVAS -->
+        <div id="view-tab-spray" class="hidden space-y-4">
+            <button id="btn-back-from-spray" class="px-4 py-2 bg-tractorSurface hover:bg-zinc-800 border border-tractorBorder rounded-xl text-xs font-bold text-slate-300 flex items-center gap-1.5 transition cursor-pointer">
+                <span>←</span> Grįžti į visas skaičiuokles
+            </button>
+            <div id="spray-calc-content"></div>
+        </div>
+
     </main>
 
     <!-- DIALOGAS -->
@@ -81,7 +185,6 @@
         </div>
     </div>
 
-    <!-- Firebase Compat SDKs -->
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
