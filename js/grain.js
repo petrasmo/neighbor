@@ -7,6 +7,7 @@ let activeMarketData = [];
 let unsubscribeGrain = null;
 let userGarageCoords = null;
 let currentCoords = null; // { lat, lng, sourceText }
+let userFieldsList = [];
 
 const state = {
     viewMode: 'ranked',
@@ -28,15 +29,14 @@ const cropNames = {
 };
 
 export function initGrainTab(currentUser, userData) {
-    const container = document.getElementById('view-tab-grain');
+    const container = document.getElementById('view-tab-grain') || document.getElementById('grain-calc-content');
     if (!container) return;
 
-    // 1 Lygis: Jei vartotojas turi išsaugotą garažo vietą
     if (userData?.garageLat && userData?.garageLon) {
         userGarageCoords = { 
             lat: userData.garageLat, 
             lng: userData.garageLon,
-            sourceText: "išsaugotos ūkio vietos (Nustatymai)"
+            sourceText: "jūsų išsaugotos ūkio vietos (Nustatymai)"
         };
         currentCoords = userGarageCoords;
     } else {
@@ -44,9 +44,9 @@ export function initGrainTab(currentUser, userData) {
     }
 
     container.innerHTML = `
-        <div class="space-y-6 max-w-6xl mx-auto">
+        <div class="space-y-6 max-w-6xl mx-auto w-full">
             
-            <!-- HEADERIS IR LOKACIJOS BŪSENA -->
+            <!-- HEADERIS IR LOKACIJOS / LAUKO PARINKIMAS -->
             <div class="bg-tractorSurface border border-tractorBorder rounded-2xl p-6 md:p-8 space-y-5 shadow-xl">
                 <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-tractorBorder/70 pb-4">
                     <div>
@@ -54,25 +54,34 @@ export function initGrainTab(currentUser, userData) {
                             <span>🌾</span> Grūdų Supirkimo Kainos ir Skaičiuoklė
                         </h2>
                         <p class="text-xs md:text-sm text-slate-300 mt-1" id="location-status-text">
-                            📍 Nustatoma jūsų apytikslė vieta...
+                            📍 Nustatoma atstumų skaičiavimo vieta...
                         </p>
                     </div>
 
-                    <!-- LOKACIJOS VALDYMO MYGTUKAI -->
-                    <div class="flex flex-wrap items-center gap-2.5">
-                        ${userGarageCoords ? `
-                            <button id="btn-loc-garage" class="h-10 px-4 bg-tractorPrimary text-white text-xs font-bold rounded-xl border border-tractorPrimary flex items-center gap-1.5 transition">
-                                🏠 Ūkio vieta
-                            </button>
-                        ` : ''}
-                        <button id="btn-loc-gps" class="h-10 px-4 bg-tractorBg hover:bg-zinc-800 text-slate-200 text-xs font-bold rounded-xl border border-tractorBorder flex items-center gap-1.5 shadow transition cursor-pointer">
-                            📡 Nustatyti tikslią GPS vietą
+                    <!-- GPS MYGTUKAS -->
+                    <div class="flex items-center gap-2.5">
+                        <button id="btn-loc-gps" class="h-11 px-4 bg-tractorBg hover:bg-zinc-800 text-slate-200 border border-tractorBorder hover:border-tractorPrimary text-xs font-bold rounded-xl flex items-center gap-2 shadow transition cursor-pointer shrink-0">
+                            <span>📡</span> Nustatyti tikslią GPS vietą
                         </button>
                     </div>
                 </div>
 
+                <!-- 🌾 PASIRINKTI ATSTUMĄ NUO LAUKO ARBA GARAŽO -->
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-tractorBg/80 p-4 rounded-xl border border-tractorBorder">
+                    <div class="space-y-0.5">
+                        <label class="text-xs font-bold text-tractorPrimaryLight uppercase tracking-wider block">
+                            🌾 Skaičiuoti atstumą ir transportą nuo:
+                        </label>
+                        <p class="text-[11px] text-slate-400">Pasirinkite konkretų lauką, iš kurio vešite derlių į elevatorių.</p>
+                    </div>
+
+                    <select id="grain-field-select" class="w-full sm:w-80 h-11 bg-tractorSurface border border-tractorPrimary/70 focus:border-tractorPrimary rounded-xl px-4 text-xs md:text-sm text-white font-bold outline-none cursor-pointer">
+                        <option value="garage">🏠 Mano ūkio / garažo vieta</option>
+                    </select>
+                </div>
+
                 <!-- KROVINIO FORMA -->
-                <div class="space-y-4">
+                <div class="space-y-4 pt-1">
                     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                         <h3 class="font-oswald text-lg font-bold text-white uppercase tracking-wider">
                             Jūsų krovinio parametrai
@@ -133,7 +142,7 @@ export function initGrainTab(currentUser, userData) {
                     <h3 class="font-oswald text-xl font-bold uppercase tracking-wider text-white">
                         Pelningiausi elevatoriai jūsų kroviniui (<span id="selected-crop-label" class="text-tractorPrimaryLight">${cropNames[state.crop]}</span>)
                     </h3>
-                    <span class="text-xs font-medium text-slate-300">Rikiuojama pagal grynąjį pelną</span>
+                    <span class="text-xs font-medium text-slate-300">Rikiuojama pagal grynąjį pelną į kišenę</span>
                 </div>
                 <div id="ranked-buyers-list" class="space-y-4"></div>
             </div>
@@ -146,7 +155,7 @@ export function initGrainTab(currentUser, userData) {
         </div>
     `;
 
-    // 📡 Tikslios GPS vietos nustatymas
+    // GPS nustatymas
     document.getElementById('btn-loc-gps')?.addEventListener('click', () => {
         if (navigator.geolocation) {
             const btn = document.getElementById('btn-loc-gps');
@@ -158,24 +167,19 @@ export function initGrainTab(currentUser, userData) {
                     sourceText: "tikslios GPS vietos"
                 };
                 btn.textContent = "✅ GPS nustatyta!";
+                document.getElementById('grain-field-select').value = "garage";
                 updateLocationText();
                 renderRankedBuyers();
                 renderElevatorsCards();
-            }, (err) => {
+            }, () => {
                 btn.textContent = "📡 Nustatyti GPS";
-                showDialog("GPS klaida", "Nepavyko gauti tikslios GPS vietos. Naudojama apytikslė vieta.", "⚠️");
+                showDialog("GPS klaida", "Nepavyko gauti GPS vietos.", "⚠️");
             });
         }
     });
 
-    document.getElementById('btn-loc-garage')?.addEventListener('click', () => {
-        if (userGarageCoords) {
-            currentCoords = userGarageCoords;
-            updateLocationText();
-            renderRankedBuyers();
-            renderElevatorsCards();
-        }
-    });
+    // Užkrauname vartotojo laukus į sąrašą
+    loadUserFieldsToSelect(currentUser, userData);
 
     const btnRanked = document.getElementById('btn-mode-ranked');
     const btnTable = document.getElementById('btn-mode-table');
@@ -220,22 +224,70 @@ export function initGrainTab(currentUser, userData) {
         });
     });
 
-    // 🌐 AUTOMATINĖ VIETOS NUSTATYMO GRANDINĖ (Fallback)
     resolveLocationChain();
-
     listenToGrainPrices();
 }
 
-/**
- * Automatinė grandinė: Garažas -> IP -> Kėdainiai (centras)
- */
+function loadUserFieldsToSelect(currentUser, userData) {
+    const select = document.getElementById('grain-field-select');
+    if (!select) return;
+
+    if (!currentUser) {
+        select.innerHTML = `<option value="garage">🏠 Apytikslė Lietuvos vieta (Prisijunkite laukų parinkimui)</option>`;
+        return;
+    }
+
+    db.collection("user_fields").where("userId", "==", currentUser.uid).get().then(snap => {
+        userFieldsList = [];
+        let optionsHtml = `<option value="garage">🏠 Mano ūkio / garažo vieta</option>`;
+
+        snap.forEach(doc => {
+            const f = doc.data();
+            userFieldsList.push(f);
+
+            if (f.polygonCoordinates && f.polygonCoordinates.length > 0) {
+                optionsHtml += `<option value="${f.id}">🌾 Laukas: „${f.name}“ (${f.areaHa} ha, ${f.crop})</option>`;
+            }
+        });
+
+        select.innerHTML = optionsHtml;
+
+        select.onchange = (e) => {
+            const val = e.target.value;
+            if (val === 'garage') {
+                if (userGarageCoords) {
+                    currentCoords = userGarageCoords;
+                } else {
+                    currentCoords = { lat: 56.0593, lng: 24.4036, sourceText: "ūkio / garažo vietos" };
+                }
+            } else {
+                const chosenField = userFieldsList.find(f => f.id === val);
+                if (chosenField && chosenField.polygonCoordinates && chosenField.polygonCoordinates.length > 0) {
+                    const firstPt = chosenField.polygonCoordinates[0];
+                    const lat = Array.isArray(firstPt) ? parseFloat(firstPt[0]) : parseFloat(firstPt.lat);
+                    const lng = Array.isArray(firstPt) ? parseFloat(firstPt[1]) : parseFloat(firstPt.lng);
+
+                    currentCoords = {
+                        lat: lat,
+                        lng: lng,
+                        sourceText: `lauko „${chosenField.name}“ (${chosenField.areaHa} ha)`
+                    };
+                }
+            }
+
+            updateLocationText();
+            renderRankedBuyers();
+            renderElevatorsCards();
+        };
+    });
+}
+
 async function resolveLocationChain() {
     if (currentCoords) {
         updateLocationText();
         return;
     }
 
-    // 3 Lygis: Nustatome pagal IP fone
     try {
         const res = await fetch("https://ipapi.co/json/", { timeout: 3000 });
         const data = await res.json();
@@ -251,10 +303,9 @@ async function resolveLocationChain() {
             return;
         }
     } catch (e) {
-        console.warn("IP lokacijos klaida, naudojamas Lietuvos centras.");
+        console.warn("IP lokacijos klaida.");
     }
 
-    // 4 Lygis (Saugiklis): Lietuvos centras (Kėdainiai)
     currentCoords = {
         lat: 55.2885,
         lng: 23.9745,
@@ -268,7 +319,7 @@ async function resolveLocationChain() {
 function updateLocationText() {
     const el = document.getElementById('location-status-text');
     if (el && currentCoords) {
-        el.textContent = `📍 Atstumai skaičiuojami nuo jūsų ${currentCoords.sourceText}.`;
+        el.innerHTML = `📍 Atstumai skaičiuojami nuo jūsų <strong class="text-green-400">${currentCoords.sourceText}</strong>.`;
     }
 }
 
@@ -335,7 +386,7 @@ function renderRankedBuyers() {
                         
                         <div class="flex flex-wrap gap-2 text-xs pt-0.5">
                             <span class="bg-tractorBg px-3 py-1 rounded-lg text-green-400 font-bold border border-tractorBorder flex items-center gap-1">
-                                🚗 ~${item.distKm} km nuo jūsų vietos
+                                🚗 ~${item.distKm} km nuo pasirinktos vietos
                             </span>
                             ${item.transportCost > 0 ? `
                                 <span class="bg-tractorBg px-3 py-1 rounded-lg text-amber-300 font-bold border border-tractorBorder">

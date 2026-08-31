@@ -8,7 +8,7 @@
     <meta name="description" content="Žemės ūkio technikos dalijimosi, laukų valdymo, agro-orų ir SOS pagalbos platforma Lietuvos ūkininkams.">
     <link rel="icon" type="image/png" href="logo.png">
 
-    <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;600;700&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
@@ -18,15 +18,15 @@
             theme: {
                 extend: {
                     colors: {
-                        tractorBg: '#0F120F',
+                        tractorBg: 'var(--bg-main)',
                         tractorPrimary: '#2E7D32',
                         tractorPrimaryLight: '#4CAF50',
                         tractorPrimaryHover: '#1B5E20',
-                        tractorSurface: '#181C18',
-                        tractorCard: '#212621',
-                        tractorSecondary: '#94A3B8',
-                        tractorBorder: '#2E382E',
-                        myPostBg: '#182C1A'
+                        tractorSurface: 'var(--bg-surface)',
+                        tractorCard: 'var(--bg-card)',
+                        tractorSecondary: 'var(--text-muted)',
+                        tractorBorder: 'var(--border-color)',
+                        myPostBg: 'var(--bg-highlight)'
                     },
                     fontFamily: {
                         oswald: ['Oswald', 'sans-serif'],
@@ -37,13 +37,87 @@
         }
     </script>
     <style>
+        /* 🌙 Tamsi tema (Default) */
+        :root {
+            --bg-main: #0F120F;
+            --bg-surface: #181C18;
+            --bg-card: #212621;
+            --bg-highlight: #182C1A;
+            --text-main: #F1F5F9;
+            --text-muted: #94A3B8;
+            --border-color: #2E382E;
+        }
+
+        /* ☀️ Šviesi tema (Su giliu kontrastu ir ryškiais tekstais) */
+        html.light-theme {
+            --bg-main: #F1F5F1;
+            --bg-surface: #FFFFFF;
+            --bg-card: #F8FAF8;
+            --bg-highlight: #E8F5E9;
+            --text-main: #0F172A;
+            --text-muted: #334155;
+            --border-color: #CBD5E1;
+        }
+
+        body {
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            transition: background-color 0.2s ease, color 0.2s ease;
+        }
+
+        /* ☀️ ŠVIESIOS TEMOS TEKSTŲ KONTRASTAS */
+        html.light-theme .text-white,
+        html.light-theme h1,
+        html.light-theme h2,
+        html.light-theme h3,
+        html.light-theme h4 {
+            color: #0F172A !important;
+        }
+
+        html.light-theme .text-slate-300,
+        html.light-theme .text-slate-400 {
+            color: #334155 !important;
+        }
+
+        html.light-theme .bg-tractorSurface {
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+        }
+
+        html.light-theme .nav-tab-btn:not(.bg-tractorPrimary) {
+            color: #334155 !important;
+        }
+
+        html.light-theme .nav-tab-btn:not(.bg-tractorPrimary):hover {
+            background-color: #E2E8F0 !important;
+            color: #0F172A !important;
+        }
+
+        html.light-theme .bg-tractorBg {
+            background-color: #F8FAF8 !important;
+            border-color: #CBD5E1 !important;
+        }
+
+        html.light-theme input,
+        html.light-theme select,
+        html.light-theme textarea {
+            background-color: #FFFFFF !important;
+            color: #0F172A !important;
+            border-color: #CBD5E1 !important;
+        }
+
+        /* Aktyvaus mygtuko tekstas visada baltas */
+        .bg-tractorPrimary,
+        .bg-tractorPrimary * {
+            color: #FFFFFF !important;
+        }
+
         ::-webkit-scrollbar { width: 6px; height: 6px; }
-        ::-webkit-scrollbar-track { background: #0F120F; }
-        ::-webkit-scrollbar-thumb { background: #2E382E; border-radius: 4px; }
+        ::-webkit-scrollbar-track { background: var(--bg-main); }
+        ::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 4px; }
         ::-webkit-scrollbar-thumb:hover { background: #2E7D32; }
     </style>
 </head>
-<body class="bg-tractorBg text-slate-200 font-sans antialiased h-[100dvh] w-screen overflow-hidden flex flex-col">
+<body class="font-sans antialiased h-[100dvh] w-screen overflow-hidden flex flex-col">
 
     <!-- 0. PRELOADERIS -->
     <div id="app-preloader" class="fixed inset-0 bg-tractorBg z-[200] flex flex-col items-center justify-center space-y-4 transition-opacity duration-300">
@@ -66,24 +140,36 @@
                 <span class="text-xl">🚜</span>
                 <span class="font-oswald text-lg font-bold tracking-wider text-tractorPrimaryLight">NEIGHBOR P.M.</span>
             </div>
-            <div id="auth-status-mobile">
-                <button class="login-trigger-btn px-3 py-1 bg-tractorPrimary text-white rounded-lg text-xs font-bold">
-                    Prisijungti
+            <div class="flex items-center gap-2">
+                <button class="btn-theme-toggle px-2.5 py-1 bg-tractorBg border border-tractorBorder rounded-lg text-xs font-bold">
+                    <span class="theme-toggle-icon">☀️</span>
                 </button>
+                <div id="auth-status-mobile">
+                    <button class="login-trigger-btn px-3 py-1 bg-tractorPrimary text-white rounded-lg text-xs font-bold">
+                        Prisijungti
+                    </button>
+                </div>
             </div>
         </div>
 
         <!-- 2. Šoninis meniu (Desktop) -->
         <aside class="hidden md:flex flex-col justify-between w-72 bg-tractorSurface border-r border-tractorBorder p-6 h-full shrink-0">
             <div class="space-y-6">
-                <div class="flex items-center gap-3 border-b border-tractorBorder/70 pb-5">
-                    <div class="w-10 h-10 rounded-xl bg-tractorPrimary/20 border border-tractorPrimary/40 flex items-center justify-center text-xl">
-                        🚜
+                <div class="flex items-center justify-between border-b border-tractorBorder/70 pb-5">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl bg-tractorPrimary/20 border border-tractorPrimary/40 flex items-center justify-center text-xl">
+                            🚜
+                        </div>
+                        <div>
+                            <span class="font-oswald text-xl font-bold tracking-wider text-white block">NEIGHBOR P.M.</span>
+                            <span class="text-[10px] text-tractorPrimaryLight font-semibold uppercase tracking-widest">Ūkininkų portalas</span>
+                        </div>
                     </div>
-                    <div>
-                        <span class="font-oswald text-xl font-bold tracking-wider text-white block">NEIGHBOR P.M.</span>
-                        <span class="text-[10px] text-tractorPrimaryLight font-semibold uppercase tracking-widest">Ūkininkų portalas</span>
-                    </div>
+
+                    <!-- ☀️/🌙 TEMOS MYGTUKAS VIRŠUJE -->
+                    <button class="btn-theme-toggle p-2 bg-tractorBg hover:bg-tractorCard border border-tractorBorder rounded-xl text-sm transition cursor-pointer" title="Perjungti temą">
+                        <span class="theme-toggle-icon">☀️</span>
+                    </button>
                 </div>
                 
                 <nav class="space-y-1.5">
@@ -99,7 +185,7 @@
                     <button class="nav-tab-btn w-full text-left px-4 py-3 rounded-xl font-semibold text-sm transition flex items-center gap-3.5 cursor-pointer text-slate-400 hover:text-white" data-tab="4">
                         <span class="text-lg">📄</span> <span>Ataskaitos</span>
                     </button>
-                    <a href="grudai.html" class="w-full text-left px-4 py-3 rounded-xl font-semibold text-sm transition flex items-center gap-3.5 text-green-400 bg-tractorPrimary/10 border border-tractorPrimary/30 hover:bg-tractorPrimary/20">
+                    <a href="grudai.html" class="w-full text-left px-4 py-3.5 rounded-xl font-semibold text-sm transition flex items-center gap-3.5 text-green-400 bg-tractorPrimary/10 border border-tractorPrimary/30 hover:bg-tractorPrimary/20">
                         <span class="text-lg">🧮</span> <span>Skaičiuoklės</span>
                     </a>
                     <button class="nav-tab-btn w-full text-left px-4 py-3 rounded-xl font-semibold text-sm transition flex items-center gap-3.5 cursor-pointer text-slate-400 hover:text-white" data-tab="2">
@@ -111,7 +197,7 @@
                 </nav>
             </div>
 
-            <!-- APAČIA: VARTOTOJAS, INSTRUKCIJA IR PETRASMO STUDIOS PARAŠAS -->
+            <!-- APAČIA -->
             <div class="border-t border-tractorBorder/70 pt-4 space-y-3">
                 <button id="help-btn-desktop" class="w-full py-2.5 bg-tractorBg hover:bg-tractorCard border border-tractorBorder rounded-xl text-xs font-semibold text-slate-300 flex items-center justify-center gap-2 transition">
                     <span>📖</span> <span>Naudojimosi gidas</span>
@@ -124,10 +210,9 @@
                     </button>
                 </div>
 
-                <!-- 🌟 PETRASMO STUDIOS PARAŠAS -->
                 <div class="text-center pt-1 border-t border-tractorBorder/40">
                     <a href="https://petrasmo.com" target="_blank" class="text-[11px] text-slate-400 hover:text-green-400 transition font-medium inline-flex items-center gap-1">
-                        Sukurta: <strong class="text-slate-200 hover:text-green-400">Petrasmo Studios</strong> ↗
+                        Sukurta: <strong class="hover:text-green-400">Petrasmo Studios</strong> ↗
                     </a>
                 </div>
             </div>
@@ -136,27 +221,15 @@
         <!-- 3. Pagrindinis turinys -->
         <main class="flex-1 h-full overflow-y-auto px-6 md:px-12 py-8 w-full">
             <div class="max-w-6xl mx-auto w-full space-y-6">
-                <!-- TAB 0: SOS Skelbimai -->
                 <section id="view-tab-feed" class="tab-view space-y-6"></section>
-                
-                <!-- TAB 5: Agro-Orai -->
                 <section id="view-tab-weather" class="tab-view space-y-6 hidden"></section>
-                
-                <!-- TAB 1: Mano laukai -->
                 <section id="view-tab-fields" class="tab-view space-y-6 hidden"></section>
-                
-                <!-- TAB 4: Ataskaitos -->
                 <section id="view-tab-reports" class="tab-view space-y-6 hidden"></section>
-                
-                <!-- TAB 2: Mano technika -->
                 <section id="view-tab-garage" class="tab-view space-y-6 hidden"></section>
-                
-                <!-- TAB 3: Nustatymai -->
                 <section id="view-tab-settings" class="tab-view space-y-6 hidden"></section>
 
-                <!-- FOOTERIS PAGRINDINIO TURINIO APAČIOJE -->
                 <footer class="text-center text-xs text-slate-400 pt-8 pb-4 border-t border-tractorBorder/50 mt-12">
-                    <p>&copy; 2026 Neighbor P.M. • Sukurta: <a href="https://petrasmo.com" target="_blank" class="text-slate-200 hover:text-green-400 font-bold underline decoration-slate-600">Petrasmo Studios</a></p>
+                    <p>&copy; 2026 Neighbor P.M. • Sukurta: <a href="https://petrasmo.com" target="_blank" class="hover:text-green-400 font-bold underline decoration-slate-600">Petrasmo Studios</a></p>
                 </footer>
             </div>
         </main>
@@ -191,10 +264,10 @@
     <div id="custom-dialog" class="fixed inset-0 bg-black/80 flex items-center justify-center z-[120] hidden p-4 backdrop-blur-sm">
         <div class="bg-tractorSurface border border-tractorBorder p-6 rounded-2xl max-w-sm w-full text-center space-y-4 shadow-2xl">
             <span id="dialog-icon" class="text-4xl block">⚠️</span>
-            <h3 id="dialog-title" class="font-oswald text-xl font-bold text-white uppercase tracking-wider">Dėmesio</h3>
-            <p id="dialog-message" class="text-xs text-slate-300 leading-relaxed"></p>
+            <h3 id="dialog-title" class="font-oswald text-xl font-bold uppercase tracking-wider text-white">Dėmesio</h3>
+            <p id="dialog-message" class="text-xs leading-relaxed text-slate-300"></p>
             <div class="flex gap-3 pt-2">
-                <button id="dialog-cancel-btn" class="flex-1 h-10 bg-tractorBg border border-tractorBorder text-white rounded-xl font-bold text-xs hover:bg-zinc-800 transition hidden">Atšaukti</button>
+                <button id="dialog-cancel-btn" class="flex-1 h-10 bg-tractorBg border border-tractorBorder rounded-xl font-bold text-xs hover:bg-zinc-800 transition hidden">Atšaukti</button>
                 <button id="dialog-confirm-btn" class="flex-1 h-10 bg-tractorPrimary hover:bg-tractorPrimaryHover text-white font-bold rounded-xl text-xs transition">Gerai</button>
             </div>
         </div>

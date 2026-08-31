@@ -2,10 +2,11 @@
 import { auth, db } from './firebase.js';
 import { loginWithGoogle, logoutUser } from './auth.js';
 import { switchTab, showDialog } from './ui.js';
+import { initThemeToggle } from './theme.js'; // 👈 PRIDĖTA
 import { initFeedTab } from './feed.js';
 import { initFieldsTab, refreshFieldsMap } from './fields.js';
 import { initReportsTab } from './reportsTab.js';
-import { initWeatherTab } from './weather.js'; // 👈 PRIDĖTA
+import { initWeatherTab } from './weather.js';
 import { initGarageTab } from './garage.js';
 import { initSettingsTab, refreshSettingsMap } from './settings.js';
 
@@ -15,14 +16,15 @@ let cachedFieldsList = [];
 const classifierMap = {};
 
 document.addEventListener('DOMContentLoaded', () => {
+    // 🎨 Inicijuojame temų perjungimą
+    initThemeToggle();
+
     document.querySelectorAll('.login-trigger-btn').forEach(btn => btn.addEventListener('click', loginWithGoogle));
 
     document.querySelectorAll('.nav-tab-btn').forEach(btn => {
         btn.addEventListener('click', () => {
             const tabIdx = parseInt(btn.getAttribute('data-tab'));
 
-            // Apsauga neprisijungusiems (Laukai: 1, Technika: 2, Nustatymai: 3, Ataskaitos: 4)
-            // Orai (5) ir Skelbimai (0) yra ATVIRI VISIEMS!
             if (!currentUser && (tabIdx === 1 || tabIdx === 2 || tabIdx === 3 || tabIdx === 4)) {
                 showDialog(
                     "Reikalingas prisijungimas",
@@ -41,7 +43,7 @@ document.addEventListener('DOMContentLoaded', () => {
             } else if (tabIdx === 4) {
                 initReportsTab(cachedFieldsList, userData);
             } else if (tabIdx === 5) {
-                initWeatherTab(currentUser, userData); // 👈 UŽKRAUNA AGRO-ORUS
+                initWeatherTab(currentUser, userData);
             } else if (tabIdx === 3) {
                 refreshSettingsMap();
             }
@@ -121,7 +123,7 @@ document.addEventListener('DOMContentLoaded', () => {
             initFieldsTab(currentUser, userData);
             initGarageTab(currentUser, userData);
             initSettingsTab(currentUser, userData);
-            initWeatherTab(currentUser, userData); // 👈 UŽKRAUNA
+            initWeatherTab(currentUser, userData);
         } else {
             currentUser = null;
             userData = null;
@@ -145,7 +147,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             initFeedTab(null, null, classifierMap);
-            initWeatherTab(null, null); // 👈 ORAI MATOMI IR NEPRISIJUNGUS!
+            initWeatherTab(null, null);
         }
 
         if (preloader) {

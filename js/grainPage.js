@@ -1,12 +1,15 @@
 // js/grainPage.js
 import { auth, db } from './firebase.js';
 import { loginWithGoogle, logoutUser } from './auth.js';
+import { initThemeToggle } from './theme.js'; // 👈 PRIDĖTA
 import { initGrainTab } from './grain.js';
 import { renderSeedCalculator } from './seedCalculator.js';
 import { renderSprayerCalculator } from './sprayerCalculator.js';
-import { renderFertilizerCalculator } from './fertilizerCalculator.js'; // 👈 PRIDĖTA
+import { renderFertilizerCalculator } from './fertilizerCalculator.js';
 
 document.addEventListener('DOMContentLoaded', () => {
+    initThemeToggle();
+
     let currentUser = null;
     let userData = null;
 
@@ -55,7 +58,6 @@ document.addEventListener('DOMContentLoaded', () => {
         window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
-    // 🧪 Trąšų NPK skaičiuoklė
     openFertBtn.onclick = () => {
         hideAllViews();
         fertView.classList.remove('hidden');
