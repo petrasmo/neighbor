@@ -2,13 +2,20 @@
 
 let fieldsMap = null;
 let drawnItems = null;
+let garageMarkerLayer = null;
 let currentDrawingPolygon = null;
 let drawingPoints = [];
 let tempMarkers = [];
-let polygonLayersMap = {}; // fieldId -> L.polygon
+let polygonLayersMap = {};
 let cachedFieldsList = [];
 let cachedSelectedId = null;
 let cachedCallback = null;
+let cachedUserData = null;
+
+// Sluoksniai
+let satelliteLayer = null;
+let streetLayer = null;
+let currentBaseLayer = 'satellite';
 
 export function calculatePolygonAreaHa(latLngs) {
     if (latLngs.length < 3) return 0;
@@ -24,30 +31,133 @@ export function calculatePolygonAreaHa(latLngs) {
     return (areaM2 / 10000).toFixed(2);
 }
 
-export function initOrRefreshMap(coords) {
+export function initOrRefreshMap(coords, userData) {
+    cachedUserData = userData;
     const mapEl = document.getElementById('fields-map');
     if (!mapEl) return;
 
     if (!fieldsMap) {
         fieldsMap = L.map('fields-map', { zoomControl: true }).setView([coords.lat, coords.lng], 13);
 
-        L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+        // 1. Palydovinis sluoksnis
+        satelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
             attribution: 'Tiles &copy; Esri World Imagery',
             maxZoom: 18
-        }).addTo(fieldsMap);
+        });
+
+        // 2. Scheminis kelių / miestų sluoksnis (OpenStreetMap)
+        streetLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: 'Map &copy; OpenStreetMap contributors',
+            maxZoom: 19
+        });
+
+        // Pagal nutylėjimą uždedame palydovą
+        satelliteLayer.addTo(fieldsMap);
 
         drawnItems = new L.FeatureGroup();
         fieldsMap.addLayer(drawnItems);
+
+        garageMarkerLayer = new L.FeatureGroup();
+        fieldsMap.addLayer(garageMarkerLayer);
+
+        // Sukuriame gražų sluoksnių perjungimo mygtuką žemėlapio viršuje
+        addLayerSwitchControl();
     }
 
     setTimeout(() => {
         if (fieldsMap) {
             fieldsMap.invalidateSize();
+            renderGarageMarker();
             if (cachedFieldsList.length > 0) {
                 renderPolygonsInternal();
             }
         }
     }, 200);
+}
+
+// 🎛️ SLUOKSNIŲ PERJUNGIKLIS (PALYDOVAS / SCHEMINIS)
+function addLayerSwitchControl() {
+    const customControl = L.Control.extend({
+        options: { position: 'topright' },
+        onAdd: function () {
+            const container = L.DomUtil.create('div', 'leaflet-bar leaflet-control');
+            container.innerHTML = `
+                <div style="background: rgba(0,0,0,0.85); padding: 4px; border-radius: 8px; border: 1px solid #333; display: flex; gap: 4px; box-shadow: 0 4px 12px rgba(0,0,0,0.5);">
+                    <button id="btn-map-sat" style="background: #2E7D32; color: #fff; border: none; padding: 6px 10px; border-radius: 6px; font-weight: bold; font-size: 11px; cursor: pointer;">
+                        🛰️ Palydovas
+                    </button>
+                    <button id="btn-map-street" style="background: transparent; color: #ccc; border: none; padding: 6px 10px; border-radius: 6px; font-weight: bold; font-size: 11px; cursor: pointer;">
+                        🗺️ Kelių planas
+                    </button>
+                </div>
+            `;
+
+            L.DomEvent.disableClickPropagation(container);
+
+            setTimeout(() => {
+                const btnSat = document.getElementById('btn-map-sat');
+                const btnStreet = document.getElementById('btn-map-street');
+
+                if (btnSat && btnStreet) {
+                    btnSat.onclick = () => {
+                        if (currentBaseLayer !== 'satellite') {
+                            fieldsMap.removeLayer(streetLayer);
+                            fieldsMap.addLayer(satelliteLayer);
+                            currentBaseLayer = 'satellite';
+                            btnSat.style.background = '#2E7D32';
+                            btnSat.style.color = '#fff';
+                            btnStreet.style.background = 'transparent';
+                            btnStreet.style.color = '#ccc';
+                        }
+                    };
+
+                    btnStreet.onclick = () => {
+                        if (currentBaseLayer !== 'street') {
+                            fieldsMap.removeLayer(satelliteLayer);
+                            fieldsMap.addLayer(streetLayer);
+                            currentBaseLayer = 'street';
+                            btnStreet.style.background = '#2E7D32';
+                            btnStreet.style.color = '#fff';
+                            btnSat.style.background = 'transparent';
+                            btnSat.style.color = '#ccc';
+                        }
+                    };
+                }
+            }, 100);
+
+            return container;
+        }
+    });
+
+    fieldsMap.addControl(new customControl());
+}
+
+// 🏠 NUKRAUNA GARAŽO / ŪKIO ŽYMEKLĮ
+function renderGarageMarker() {
+    if (!garageMarkerLayer || !cachedUserData) return;
+    garageMarkerLayer.clearLayers();
+
+    if (cachedUserData.garageLat && cachedUserData.garageLon) {
+        const garageIcon = L.divIcon({
+            className: 'custom-garage-icon',
+            html: `
+                <div style="background: #1A1A1A; border: 2px solid #FFD700; border-radius: 50%; width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; font-size: 18px; box-shadow: 0 4px 12px rgba(0,0,0,0.6);">
+                    🏠
+                </div>
+            `,
+            iconSize: [34, 34],
+            iconAnchor: [17, 17]
+        });
+
+        const marker = L.marker([cachedUserData.garageLat, cachedUserData.garageLon], { icon: garageIcon })
+            .addTo(garageMarkerLayer);
+
+        marker.bindTooltip(`
+            <div style="background: rgba(0,0,0,0.9); color: #FFD700; padding: 4px 8px; border-radius: 6px; border: 1px solid #FFD700; font-weight: bold; font-size: 11px; text-align: center;">
+                🚜 Mano ūkio bazė / Garažas
+            </div>
+        `, { permanent: true, direction: 'top', offset: [0, -15] });
+    }
 }
 
 export function drawFieldsOnMap(fieldsList, selectedFieldId, onFieldClick) {
@@ -56,7 +166,6 @@ export function drawFieldsOnMap(fieldsList, selectedFieldId, onFieldClick) {
     cachedCallback = onFieldClick;
 
     if (!fieldsMap || !drawnItems) {
-        // Jei žemėlapis dar nesukurtas, palaukiame 250ms ir nupiešiame
         setTimeout(() => {
             if (fieldsMap && drawnItems) renderPolygonsInternal();
         }, 250);
@@ -82,7 +191,6 @@ function renderPolygonsInternal() {
 
             const isSelected = f.id === cachedSelectedId;
 
-            // 🌟 RYŠKUS NEONINIS POLIGONAS
             const polygon = L.polygon(latLngs, {
                 color: isSelected ? '#FFD700' : '#00FF66',
                 fillColor: isSelected ? '#4CAF50' : '#2E7D32',
@@ -90,16 +198,11 @@ function renderPolygonsInternal() {
                 weight: isSelected ? 6 : 4
             }).addTo(drawnItems);
 
-            // 🏷️ NUOLATINIS RYŠKUS ŽENKLIUKAS SU PAVADINIMU PER VIDURĮ LAUKO
             polygon.bindTooltip(`
                 <div style="background: rgba(0,0,0,0.85); color: #fff; padding: 4px 8px; border-radius: 6px; border: 1.5px solid #00FF66; font-weight: bold; font-size: 11px; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.5);">
                     🌾 ${f.name}<br><span style="color: #00FF66; font-weight: 800;">${f.areaHa} ha</span>
                 </div>
-            `, { 
-                permanent: true, 
-                direction: 'center', 
-                className: 'leaflet-tooltip-field' 
-            });
+            `, { permanent: true, direction: 'center', className: 'leaflet-tooltip-field' });
 
             polygon.on('click', () => {
                 if (cachedCallback) cachedCallback(f.id);
@@ -109,6 +212,7 @@ function renderPolygonsInternal() {
         }
     });
 
+    renderGarageMarker();
     fitAllBounds();
 }
 

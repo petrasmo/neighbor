@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     
     <title>Neighbor P.M. 🚜 – Tavo technika kaimynų pagalbai</title>
-    <meta name="description" content="Žemės ūkio technikos dalijimosi, laukų valdymo ir SOS pagalbos platforma Lietuvos ūkininkams.">
+    <meta name="description" content="Žemės ūkio technikos dalijimosi, laukų valdymo, agro-orų ir SOS pagalbos platforma Lietuvos ūkininkams.">
     <link rel="icon" type="image/png" href="logo.png">
 
     <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -73,7 +73,7 @@
             </div>
         </div>
 
-        <!-- 2. Šoninis meniu (Desktop) - 5 ŠVARŪS PUNKTAI -->
+        <!-- 2. Šoninis meniu (Desktop) -->
         <aside class="hidden md:flex flex-col justify-between w-72 bg-tractorSurface border-r border-tractorBorder p-6 h-full shrink-0">
             <div class="space-y-6">
                 <div class="flex items-center gap-3 border-b border-tractorBorder/70 pb-5">
@@ -86,37 +86,49 @@
                     </div>
                 </div>
                 
-                <nav class="space-y-2">
-                    <button class="nav-tab-btn w-full text-left px-4 py-3.5 rounded-xl font-semibold text-sm transition flex items-center gap-3.5 cursor-pointer bg-tractorPrimary text-white shadow" data-tab="0">
+                <nav class="space-y-1.5">
+                    <button class="nav-tab-btn w-full text-left px-4 py-3 rounded-xl font-semibold text-sm transition flex items-center gap-3.5 cursor-pointer bg-tractorPrimary text-white shadow" data-tab="0">
                         <span class="text-lg">🚨</span> <span>SOS Skelbimai</span>
                     </button>
-                    <button class="nav-tab-btn w-full text-left px-4 py-3.5 rounded-xl font-semibold text-sm transition flex items-center gap-3.5 cursor-pointer text-slate-400 hover:text-white" data-tab="1">
+                    <button class="nav-tab-btn w-full text-left px-4 py-3 rounded-xl font-semibold text-sm transition flex items-center gap-3.5 cursor-pointer text-slate-400 hover:text-white" data-tab="5">
+                        <span class="text-lg">🌦️</span> <span>Agro-Orai (Purškimas)</span>
+                    </button>
+                    <button class="nav-tab-btn w-full text-left px-4 py-3 rounded-xl font-semibold text-sm transition flex items-center gap-3.5 cursor-pointer text-slate-400 hover:text-white" data-tab="1">
                         <span class="text-lg">🗺️</span> <span>Mano laukai</span>
                     </button>
-                    <button class="nav-tab-btn w-full text-left px-4 py-3.5 rounded-xl font-semibold text-sm transition flex items-center gap-3.5 cursor-pointer text-slate-400 hover:text-white" data-tab="4">
+                    <button class="nav-tab-btn w-full text-left px-4 py-3 rounded-xl font-semibold text-sm transition flex items-center gap-3.5 cursor-pointer text-slate-400 hover:text-white" data-tab="4">
                         <span class="text-lg">📄</span> <span>Ataskaitos</span>
                     </button>
-                    <a href="grudai.html" class="w-full text-left px-4 py-3.5 rounded-xl font-semibold text-sm transition flex items-center gap-3.5 text-green-400 bg-tractorPrimary/10 border border-tractorPrimary/30 hover:bg-tractorPrimary/20">
-						<span class="text-lg">🧮</span> <span>Skaičiuoklės</span>
-					</a>
-                    <button class="nav-tab-btn w-full text-left px-4 py-3.5 rounded-xl font-semibold text-sm transition flex items-center gap-3.5 cursor-pointer text-slate-400 hover:text-white" data-tab="2">
+                    <a href="grudai.html" class="w-full text-left px-4 py-3 rounded-xl font-semibold text-sm transition flex items-center gap-3.5 text-green-400 bg-tractorPrimary/10 border border-tractorPrimary/30 hover:bg-tractorPrimary/20">
+                        <span class="text-lg">🧮</span> <span>Skaičiuoklės</span>
+                    </a>
+                    <button class="nav-tab-btn w-full text-left px-4 py-3 rounded-xl font-semibold text-sm transition flex items-center gap-3.5 cursor-pointer text-slate-400 hover:text-white" data-tab="2">
                         <span class="text-lg">🔧</span> <span>Mano technika</span>
                     </button>
-                    <button class="nav-tab-btn w-full text-left px-4 py-3.5 rounded-xl font-semibold text-sm transition flex items-center gap-3.5 cursor-pointer text-slate-400 hover:text-white" data-tab="3">
+                    <button class="nav-tab-btn w-full text-left px-4 py-3 rounded-xl font-semibold text-sm transition flex items-center gap-3.5 cursor-pointer text-slate-400 hover:text-white" data-tab="3">
                         <span class="text-lg">⚙️</span> <span>Nustatymai</span>
                     </button>
                 </nav>
             </div>
 
+            <!-- APAČIA: VARTOTOJAS, INSTRUKCIJA IR PETRASMO STUDIOS PARAŠAS -->
             <div class="border-t border-tractorBorder/70 pt-4 space-y-3">
                 <button id="help-btn-desktop" class="w-full py-2.5 bg-tractorBg hover:bg-tractorCard border border-tractorBorder rounded-xl text-xs font-semibold text-slate-300 flex items-center justify-center gap-2 transition">
                     <span>📖</span> <span>Naudojimosi gidas</span>
                 </button>
-                <div id="auth-sidebar-box" class="bg-tractorBg border border-tractorBorder/60 p-3.5 rounded-xl text-center space-y-2">
+                
+                <div id="auth-sidebar-box" class="bg-tractorBg border border-tractorBorder/60 p-3 rounded-xl text-center space-y-2">
                     <p class="text-[11px] text-slate-400">Esate neprisijungęs</p>
                     <button class="login-trigger-btn w-full py-2 bg-tractorPrimary hover:bg-tractorPrimaryHover text-white text-xs font-bold rounded-lg shadow transition">
                         Prisijungti su Google
                     </button>
+                </div>
+
+                <!-- 🌟 PETRASMO STUDIOS PARAŠAS -->
+                <div class="text-center pt-1 border-t border-tractorBorder/40">
+                    <a href="https://petrasmo.com" target="_blank" class="text-[11px] text-slate-400 hover:text-green-400 transition font-medium inline-flex items-center gap-1">
+                        Sukurta: <strong class="text-slate-200 hover:text-green-400">Petrasmo Studios</strong> ↗
+                    </a>
                 </div>
             </div>
         </aside>
@@ -127,10 +139,13 @@
                 <!-- TAB 0: SOS Skelbimai -->
                 <section id="view-tab-feed" class="tab-view space-y-6"></section>
                 
+                <!-- TAB 5: Agro-Orai -->
+                <section id="view-tab-weather" class="tab-view space-y-6 hidden"></section>
+                
                 <!-- TAB 1: Mano laukai -->
                 <section id="view-tab-fields" class="tab-view space-y-6 hidden"></section>
                 
-                <!-- TAB 4: Ataskaitos (NAUJAS!) -->
+                <!-- TAB 4: Ataskaitos -->
                 <section id="view-tab-reports" class="tab-view space-y-6 hidden"></section>
                 
                 <!-- TAB 2: Mano technika -->
@@ -138,30 +153,35 @@
                 
                 <!-- TAB 3: Nustatymai -->
                 <section id="view-tab-settings" class="tab-view space-y-6 hidden"></section>
+
+                <!-- FOOTERIS PAGRINDINIO TURINIO APAČIOJE -->
+                <footer class="text-center text-xs text-slate-400 pt-8 pb-4 border-t border-tractorBorder/50 mt-12">
+                    <p>&copy; 2026 Neighbor P.M. • Sukurta: <a href="https://petrasmo.com" target="_blank" class="text-slate-200 hover:text-green-400 font-bold underline decoration-slate-600">Petrasmo Studios</a></p>
+                </footer>
             </div>
         </main>
 
         <!-- 4. Mobili navigacija -->
         <nav class="md:hidden fixed bottom-0 left-0 right-0 bg-tractorSurface border-t border-tractorBorder h-16 flex justify-around items-center z-50">
-            <button class="nav-tab-btn flex flex-col items-center justify-center w-14 h-full text-xs text-white bg-tractorPrimary" data-tab="0">
+            <button class="nav-tab-btn flex flex-col items-center justify-center w-12 h-full text-xs text-white bg-tractorPrimary" data-tab="0">
                 <span class="text-base">🚨</span>
-                <span class="mt-0.5 font-bold text-[10px]">Skelbimai</span>
+                <span class="mt-0.5 font-bold text-[9px]">Skelbimai</span>
             </button>
-            <button class="nav-tab-btn flex flex-col items-center justify-center w-14 h-full text-xs text-slate-400" data-tab="1">
+            <button class="nav-tab-btn flex flex-col items-center justify-center w-12 h-full text-xs text-slate-400" data-tab="5">
+                <span class="text-base">🌦️</span>
+                <span class="mt-0.5 font-bold text-[9px]">Orai</span>
+            </button>
+            <button class="nav-tab-btn flex flex-col items-center justify-center w-12 h-full text-xs text-slate-400" data-tab="1">
                 <span class="text-base">🗺️</span>
-                <span class="mt-0.5 font-bold text-[10px]">Laukai</span>
+                <span class="mt-0.5 font-bold text-[9px]">Laukai</span>
             </button>
-            <button class="nav-tab-btn flex flex-col items-center justify-center w-14 h-full text-xs text-slate-400" data-tab="4">
-                <span class="text-base">📄</span>
-                <span class="mt-0.5 font-bold text-[10px]">Ataskaitos</span>
-            </button>
-            <a href="grudai.html" class="flex flex-col items-center justify-center w-14 h-full text-xs text-green-400">
-                <span class="text-base">🌾</span>
-                <span class="mt-0.5 font-bold text-[10px]">Grūdai</span>
+            <a href="grudai.html" class="flex flex-col items-center justify-center w-12 h-full text-xs text-green-400">
+                <span class="text-base">🧮</span>
+                <span class="mt-0.5 font-bold text-[9px]">Skaičiuotuvai</span>
             </a>
-            <button class="nav-tab-btn flex flex-col items-center justify-center w-14 h-full text-xs text-slate-400" data-tab="3">
+            <button class="nav-tab-btn flex flex-col items-center justify-center w-12 h-full text-xs text-slate-400" data-tab="3">
                 <span class="text-base">⚙️</span>
-                <span class="mt-0.5 font-bold text-[10px]">Profilis</span>
+                <span class="mt-0.5 font-bold text-[9px]">Profilis</span>
             </button>
         </nav>
 

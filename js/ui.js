@@ -5,7 +5,8 @@ export function switchTab(tabIndex) {
         1: document.getElementById('view-tab-fields'),    // 1: Mano laukai
         2: document.getElementById('view-tab-garage'),    // 2: Mano technika
         3: document.getElementById('view-tab-settings'),  // 3: Nustatymai
-        4: document.getElementById('view-tab-reports')    // 4: Ataskaitos
+        4: document.getElementById('view-tab-reports'),   // 4: Ataskaitos
+        5: document.getElementById('view-tab-weather')    // 5: Agro-Orai (NAUJAS!)
     };
 
     Object.entries(views).forEach(([idx, el]) => {

@@ -40,7 +40,7 @@
         ::-webkit-scrollbar-thumb:hover { background: #2E7D32; }
     </style>
 </head>
-<body class="bg-tractorBg text-slate-200 font-sans antialiased min-h-screen flex flex-col">
+<body class="bg-tractorBg text-slate-200 font-sans antialiased min-h-screen flex flex-col justify-between">
 
     <!-- HEADERIS -->
     <header class="bg-tractorSurface border-b border-tractorBorder sticky top-0 z-50">
@@ -66,7 +66,7 @@
     <!-- TURINYS -->
     <main class="flex-1 max-w-6xl mx-auto w-full px-4 md:px-8 py-8">
         
-        <!-- 0. SKAIČIUOKLIŲ KATALOGAS (HUB - 4 KORTELĖS) -->
+        <!-- 0. SKAIČIUOKLIŲ KATALOGAS (HUB) -->
         <div id="view-calculators-hub" class="space-y-6">
             <div class="border-b border-tractorBorder pb-4">
                 <h2 class="font-oswald text-2xl md:text-3xl font-bold uppercase tracking-wider text-white flex items-center gap-2">
@@ -91,7 +91,7 @@
                         <h3 class="font-oswald text-xl font-bold text-white tracking-wide group-hover:text-green-400 transition">
                             Grūdų Supirkimo ir Elevatorių Skaičiuoklė
                         </h3>
-                        <p class="text-xs md:text-sm text-slate-300 leading-relaxed">
+                        <p class="text-xs text-slate-300 leading-relaxed">
                             Sužinokite, kur labiausiai apsimoka vežti derlių. Gyvos kainos, atstumai nuo ūkio, džiovinimo nuoskaitos bei pelningiausias maršrutas.
                         </p>
                     </div>
@@ -112,7 +112,7 @@
                         <h3 class="font-oswald text-xl font-bold text-white tracking-wide group-hover:text-green-400 transition">
                             Tiksli Sėjos Normos ir Sėklos Skaičiuoklė
                         </h3>
-                        <p class="text-xs md:text-sm text-slate-300 leading-relaxed">
+                        <p class="text-xs text-slate-300 leading-relaxed">
                             Apskaičiuokite tikslią sėjos normą (kg/ha) pagal MTG ir daigumą. Sužinokite reikalingų didmaišių kiekį bei savikainą.
                         </p>
                     </div>
@@ -133,7 +133,7 @@
                         <h3 class="font-oswald text-xl font-bold text-white tracking-wide group-hover:text-green-400 transition">
                             Purkštuvo Bako ir Chemikalų Skaičiuoklė
                         </h3>
-                        <p class="text-xs md:text-sm text-slate-300 leading-relaxed">
+                        <p class="text-xs text-slate-300 leading-relaxed">
                             Tikslios dozės pilnam ir nepilnam bakui. Išvenkite klaidų maišant herbicidus, fungicidus ir trąšas.
                         </p>
                     </div>
@@ -142,7 +142,7 @@
                     </button>
                 </div>
 
-                <!-- 4 KORTELĖ: TRĄŠOS NPK (NAUJA!) -->
+                <!-- 4 KORTELĖ: TRĄŠOS NPK -->
                 <div class="bg-tractorSurface border border-tractorBorder hover:border-tractorPrimary rounded-2xl p-6 md:p-7 shadow-xl flex flex-col justify-between space-y-4 transition group">
                     <div class="space-y-2">
                         <div class="flex justify-between items-start">
@@ -154,7 +154,7 @@
                         <h3 class="font-oswald text-xl font-bold text-white tracking-wide group-hover:text-green-400 transition">
                             Trąšų N-P-K ir Veikliosios Medžiagos Skaičiuoklė
                         </h3>
-                        <p class="text-xs md:text-sm text-slate-300 leading-relaxed">
+                        <p class="text-xs text-slate-300 leading-relaxed">
                             Apskaičiuokite fizinę normą (kg/ha) pagal gryną NPK poreikį. Palyginkite 1 kg gryno azoto savikainą.
                         </p>
                     </div>
@@ -199,6 +199,11 @@
         </div>
 
     </main>
+
+    <!-- FOOTERIS -->
+    <footer class="bg-tractorSurface border-t border-tractorBorder py-6 px-4 text-center text-xs text-slate-400">
+        <p>&copy; 2026 Neighbor P.M. • Sukurta: <a href="https://petrasmo.com" target="_blank" class="text-slate-200 hover:text-green-400 font-bold underline decoration-slate-600">Petrasmo Studios</a></p>
+    </footer>
 
     <!-- DIALOGAS -->
     <div id="custom-dialog" class="fixed inset-0 bg-black/80 flex items-center justify-center z-[100] hidden p-4 backdrop-blur-sm">

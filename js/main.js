@@ -4,7 +4,8 @@ import { loginWithGoogle, logoutUser } from './auth.js';
 import { switchTab, showDialog } from './ui.js';
 import { initFeedTab } from './feed.js';
 import { initFieldsTab, refreshFieldsMap } from './fields.js';
-import { initReportsTab } from './reportsTab.js'; // 👈 PRIDĖTA
+import { initReportsTab } from './reportsTab.js';
+import { initWeatherTab } from './weather.js'; // 👈 PRIDĖTA
 import { initGarageTab } from './garage.js';
 import { initSettingsTab, refreshSettingsMap } from './settings.js';
 
@@ -20,7 +21,8 @@ document.addEventListener('DOMContentLoaded', () => {
         btn.addEventListener('click', () => {
             const tabIdx = parseInt(btn.getAttribute('data-tab'));
 
-            // Apsauga neprisijungusiems
+            // Apsauga neprisijungusiems (Laukai: 1, Technika: 2, Nustatymai: 3, Ataskaitos: 4)
+            // Orai (5) ir Skelbimai (0) yra ATVIRI VISIEMS!
             if (!currentUser && (tabIdx === 1 || tabIdx === 2 || tabIdx === 3 || tabIdx === 4)) {
                 showDialog(
                     "Reikalingas prisijungimas",
@@ -37,7 +39,9 @@ document.addEventListener('DOMContentLoaded', () => {
             if (tabIdx === 1) {
                 refreshFieldsMap();
             } else if (tabIdx === 4) {
-                initReportsTab(cachedFieldsList, userData); // 👈 UŽKRAUNA ATASKAITAS
+                initReportsTab(cachedFieldsList, userData);
+            } else if (tabIdx === 5) {
+                initWeatherTab(currentUser, userData); // 👈 UŽKRAUNA AGRO-ORUS
             } else if (tabIdx === 3) {
                 refreshSettingsMap();
             }
@@ -48,9 +52,10 @@ document.addEventListener('DOMContentLoaded', () => {
         showDialog(
             "Kaip naudotis Neighbor P.M. 🚜",
             `<b>1. SOS Skelbimai:</b> Skubios pagalbos paieška laukuose.<br><br>
-             <b>2. Mano Laukai:</b> Palydovinis žemėlapis, laukai ir darbų registravimas.<br><br>
-             <b>3. Ataskaitos:</b> Oficialūs NMA žurnalai PDF ir Excel (.CSV) formatu.<br><br>
-             <b>4. Grūdų skaičiuoklė:</b> Elevatorių reitingas ir kainos.`,
+             <b>2. Agro-Orai:</b> Gyvas purškimo lango šviesoforas ir vėjo greitis.<br><br>
+             <b>3. Mano Laukai:</b> Palydovinis žemėlapis, laukai ir darbų registravimas.<br><br>
+             <b>4. Ataskaitos:</b> NMA žurnalai PDF ir Excel formatu.<br><br>
+             <b>5. Skaičiuoklės:</b> Grūdų kainos, sėjos norma, purkštuvai ir trąšos.`,
             "📖"
         );
     };
@@ -107,7 +112,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 document.getElementById('btn-logout-mobile')?.addEventListener('click', logoutUser);
             }
 
-            // Klausomės laukų ataskaitų generavimui
             db.collection("user_fields").where("userId", "==", user.uid).onSnapshot(snap => {
                 cachedFieldsList = [];
                 snap.forEach(d => cachedFieldsList.push(d.data()));
@@ -117,6 +121,7 @@ document.addEventListener('DOMContentLoaded', () => {
             initFieldsTab(currentUser, userData);
             initGarageTab(currentUser, userData);
             initSettingsTab(currentUser, userData);
+            initWeatherTab(currentUser, userData); // 👈 UŽKRAUNA
         } else {
             currentUser = null;
             userData = null;
@@ -140,6 +145,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             initFeedTab(null, null, classifierMap);
+            initWeatherTab(null, null); // 👈 ORAI MATOMI IR NEPRISIJUNGUS!
         }
 
         if (preloader) {
