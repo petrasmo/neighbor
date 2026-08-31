@@ -32,17 +32,17 @@ export function createCustomSelect({ containerId, placeholder = "Pasirinkite..."
         const filtered = items.filter(it => it.name.toLowerCase().includes(q) || (it.subtext && it.subtext.toLowerCase().includes(q)));
 
         if (filtered.length === 0) {
-            dropdown.innerHTML = `<div class="p-3 text-xs text-slate-400 text-center">Nieko nerasta.</div>`;
+            dropdown.innerHTML = `<div class="p-3.5 text-xs text-slate-400 text-center">Nieko nerasta.</div>`;
         } else {
             dropdown.innerHTML = filtered.map(it => {
                 const isSelected = currentSelected && currentSelected.id === it.id;
                 return `
-                    <div class="cs-item p-3 text-xs md:text-sm text-slate-200 hover:text-white hover:bg-tractorPrimary/20 cursor-pointer flex items-center justify-between transition ${isSelected ? 'bg-tractorPrimary/30 font-bold text-green-400' : ''}" data-id="${it.id}">
+                    <div class="cs-item p-3.5 text-xs md:text-sm text-slate-200 hover:text-white hover:bg-tractorPrimary/20 cursor-pointer flex items-center justify-between transition ${isSelected ? 'bg-tractorPrimary/30 font-bold text-green-400' : ''}" data-id="${it.id}">
                         <div class="flex items-center gap-2.5">
                             ${it.icon ? `<span class="text-base">${it.icon}</span>` : ''}
                             <div>
                                 <span class="block">${it.name}</span>
-                                ${it.subtext ? `<span class="text-[10px] text-slate-400 block">${it.subtext}</span>` : ''}
+                                ${it.subtext ? `<span class="text-[10px] text-slate-400 block font-normal">${it.subtext}</span>` : ''}
                             </div>
                         </div>
                         ${isSelected ? '<span class="text-green-400 font-bold">✓</span>' : ''}
@@ -64,7 +64,16 @@ export function createCustomSelect({ containerId, placeholder = "Pasirinkite..."
         dropdown.classList.remove('hidden');
     };
 
-    input.onfocus = () => renderList(input.value);
+    // 🌟 KAI PASPAUDŽIA ANT LAUKELIO: Iškart rodo VISUS variantus ir pažymi tekstą greitam perrašymui!
+    input.onfocus = () => {
+        input.select(); // Pažymi tekstą, kad paspaudus klavišą iškart rašytųsi iš naujo
+        renderList(''); // Rodo VISUS variantus (nefiltruoja pagal seną tekstą)
+    };
+
+    input.onclick = () => {
+        renderList(''); // Užtikrina pilną sąrašą paspaudus pele
+    };
+
     input.oninput = (e) => {
         const val = e.target.value;
         if (val) clearBtn.classList.remove('hidden');
@@ -82,9 +91,16 @@ export function createCustomSelect({ containerId, placeholder = "Pasirinkite..."
         if (onSelect) onSelect(null);
     };
 
+    // Jei nuspaudė šone ir nieko neįvedė – sugrąžina seną pasirinktą reikšmę
     document.addEventListener('click', (e) => {
         if (!root.contains(e.target)) {
             dropdown.classList.add('hidden');
+            if (currentSelected && !input.value.trim()) {
+                input.value = currentSelected.name;
+                clearBtn.classList.remove('hidden');
+            } else if (currentSelected) {
+                input.value = currentSelected.name;
+            }
         }
     });
 

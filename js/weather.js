@@ -1,14 +1,14 @@
 // js/weather.js
 import { db } from './firebase.js';
+import { createCustomSelect } from './customSelect.js';
 
-let currentWeatherCoords = { lat: 56.0593, lng: 24.4036, name: "Apytiksliai pagal Pasvalio r." };
+let currentWeatherCoords = { lat: 56.0593, lng: 24.4036, name: "Pasvalio r." };
 let userFieldsList = [];
 
 export function initWeatherTab(currentUser, userData) {
     const container = document.getElementById('view-tab-weather');
     if (!container) return;
 
-    // Nustatome pradinę vietą (pagal garažą, jei yra)
     if (userData?.garageLat && userData?.garageLon) {
         currentWeatherCoords = {
             lat: userData.garageLat,
@@ -32,13 +32,12 @@ export function initWeatherTab(currentUser, userData) {
                         </p>
                     </div>
 
-                    <!-- GPS MYGTUKAS -->
                     <button id="btn-weather-gps" class="h-11 px-4 bg-tractorBg hover:bg-zinc-800 text-slate-200 border border-tractorBorder hover:border-tractorPrimary text-xs font-bold rounded-xl flex items-center gap-2 shadow transition cursor-pointer self-start md:self-auto shrink-0">
                         <span>📡</span> Nustatyti dabartinę GPS vietą
                     </button>
                 </div>
 
-                <!-- LAUKO ARBA BAZĖS PASIRINKIMAS -->
+                <!-- LAUKO PARINKIMAS SU CUSTOM SELECT -->
                 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-1">
                     <div class="space-y-1">
                         <label class="text-xs font-bold text-tractorPrimaryLight uppercase tracking-wider block">
@@ -47,10 +46,7 @@ export function initWeatherTab(currentUser, userData) {
                         <p class="text-[11px] text-slate-400">Jei jūsų laukai nutolę, pasirinkite konkretų sklypą tiksliam orų modeliui.</p>
                     </div>
 
-                    <select id="weather-field-select" class="w-full sm:w-80 h-12 bg-tractorBg border border-tractorPrimary/70 focus:border-tractorPrimary rounded-xl px-4 text-xs md:text-sm text-white font-bold outline-none cursor-pointer">
-                        <option value="garage">🏠 Mano ūkio / garažo vieta</option>
-                        <!-- Dinamiškai sugeneruojami vartotojo laukai -->
-                    </select>
+                    <div id="weather-field-select-box" class="w-full sm:w-80"></div>
                 </div>
             </div>
 
@@ -81,7 +77,6 @@ export function initWeatherTab(currentUser, userData) {
         </div>
     `;
 
-    // 📡 GPS Mygtukas
     document.getElementById('btn-weather-gps')?.addEventListener('click', () => {
         if (navigator.geolocation) {
             const btn = document.getElementById('btn-weather-gps');
@@ -93,7 +88,6 @@ export function initWeatherTab(currentUser, userData) {
                     name: "Tiksli dabartinė GPS vieta"
                 };
                 btn.textContent = "✅ GPS nustatyta!";
-                document.getElementById('weather-field-select').value = "garage";
                 updateLocationLabel();
                 fetchAgroWeatherData();
             }, () => {
@@ -103,9 +97,7 @@ export function initWeatherTab(currentUser, userData) {
         }
     });
 
-    // 🌾 Užkrauname vartotojo laukus į pasirinkimo sąrašą
     loadFieldsToSelect(currentUser, userData);
-
     fetchAgroWeatherData();
 }
 
@@ -116,60 +108,64 @@ function updateLocationLabel() {
     }
 }
 
-// Užkrauna laukus iš Firestore į Dropdown
 function loadFieldsToSelect(currentUser, userData) {
-    const select = document.getElementById('weather-field-select');
-    if (!select) return;
-
     if (!currentUser) {
-        select.innerHTML = `<option value="garage">🏠 Apytikslė Lietuvos vieta (Prisijunkite laukų parinkimui)</option>`;
+        createCustomSelect({
+            containerId: 'weather-field-select-box',
+            placeholder: 'Pasirinkite...',
+            items: [{ id: 'garage', name: '🏠 Apytikslė vieta', subtext: 'Prisijunkite laukų parinkimui' }],
+            selectedId: 'garage'
+        });
         return;
     }
 
     db.collection("user_fields").where("userId", "==", currentUser.uid).get().then(snap => {
         userFieldsList = [];
-        let optionsHtml = `<option value="garage">🏠 Mano ūkio / garažo vieta</option>`;
+        const selectItems = [
+            { id: 'garage', name: 'Mano ūkio / garažo vieta', icon: '🏠', subtext: 'Iš Nustatymų' }
+        ];
 
         snap.forEach(doc => {
             const f = doc.data();
             userFieldsList.push(f);
-
-            // Apskaičiuojame lauko centrą
-            const rawCoords = f.polygonCoordinates || [];
-            if (rawCoords.length > 0) {
-                optionsHtml += `<option value="${f.id}">🌾 Laukas: „${f.name}“ (${f.areaHa} ha, ${f.crop})</option>`;
-            }
+            selectItems.push({
+                id: f.id,
+                name: f.name,
+                icon: '🌾',
+                subtext: `${f.areaHa} ha, ${f.crop}`
+            });
         });
 
-        select.innerHTML = optionsHtml;
-
-        // Lauko pasirinkimo pasikeitimas
-        select.onchange = (e) => {
-            const val = e.target.value;
-            if (val === 'garage') {
-                currentWeatherCoords = {
-                    lat: userData?.garageLat || 56.0593,
-                    lng: userData?.garageLon || 24.4036,
-                    name: "Apytiksliai pagal jūsų ūkio / garažo vietą"
-                };
-            } else {
-                const chosenField = userFieldsList.find(f => f.id === val);
-                if (chosenField && chosenField.polygonCoordinates && chosenField.polygonCoordinates.length > 0) {
-                    const firstPt = chosenField.polygonCoordinates[0];
-                    const lat = Array.isArray(firstPt) ? parseFloat(firstPt[0]) : parseFloat(firstPt.lat);
-                    const lng = Array.isArray(firstPt) ? parseFloat(firstPt[1]) : parseFloat(firstPt.lng);
-
+        createCustomSelect({
+            containerId: 'weather-field-select-box',
+            placeholder: 'Pasirinkite lauką...',
+            items: selectItems,
+            selectedId: 'garage',
+            onSelect: (item) => {
+                if (!item || item.id === 'garage') {
                     currentWeatherCoords = {
-                        lat: lat,
-                        lng: lng,
-                        name: `Laukas „${chosenField.name}“ (${chosenField.areaHa} ha)`
+                        lat: userData?.garageLat || 56.0593,
+                        lng: userData?.garageLon || 24.4036,
+                        name: "Apytiksliai pagal jūsų ūkio / garažo vietą"
                     };
-                }
-            }
+                } else {
+                    const chosenField = userFieldsList.find(f => f.id === item.id);
+                    if (chosenField && chosenField.polygonCoordinates && chosenField.polygonCoordinates.length > 0) {
+                        const firstPt = chosenField.polygonCoordinates[0];
+                        const lat = Array.isArray(firstPt) ? parseFloat(firstPt[0]) : parseFloat(firstPt.lat);
+                        const lng = Array.isArray(firstPt) ? parseFloat(firstPt[1]) : parseFloat(firstPt.lng);
 
-            updateLocationLabel();
-            fetchAgroWeatherData();
-        };
+                        currentWeatherCoords = {
+                            lat: lat,
+                            lng: lng,
+                            name: `Laukas „${chosenField.name}“ (${chosenField.areaHa} ha)`
+                        };
+                    }
+                }
+                updateLocationLabel();
+                fetchAgroWeatherData();
+            }
+        });
     });
 }
 
@@ -186,21 +182,17 @@ async function fetchAgroWeatherData() {
         renderSoilConditions(data.current, data.hourly);
     } catch (error) {
         console.error("Orų klaida:", error);
-        document.getElementById('live-spray-card').innerHTML = `
-            <div class="text-center py-6 text-red-400 text-xs">
-                Nepavyko gauti orų duomenų. Patikrinkite interneto ryšį.
-            </div>
-        `;
     }
 }
 
+// 🚦 PATAISYTA LOGIKA SU TIKSLIOMIS PRIEŽASTIMIS
 function renderLiveSprayStatus(current, hourly) {
     const liveCard = document.getElementById('live-spray-card');
     if (!liveCard || !current) return;
 
-    const windSpeedMs = (current.wind_speed_10m / 3.6).toFixed(1);
-    const windGustsMs = (current.wind_gusts_10m / 3.6).toFixed(1);
-    const tempC = current.temperature_2m.toFixed(1);
+    const windSpeedMs = parseFloat((current.wind_speed_10m / 3.6).toFixed(1));
+    const windGustsMs = parseFloat((current.wind_gusts_10m / 3.6).toFixed(1));
+    const tempC = parseFloat(current.temperature_2m.toFixed(1));
     const humidity = current.relative_humidity_2m;
     const rainMm = current.rain || current.precipitation || 0;
 
@@ -212,32 +204,40 @@ function renderLiveSprayStatus(current, hourly) {
     let borderColor = "border-tractorPrimary";
     let bgColor = "bg-myPostBg";
 
-    if (windSpeedMs > 4.5 || windGustsMs > 6.0 || rainMm > 0 || next4hRain || tempC > 26) {
+    const warnings = [];
+
+    // Griežta agronomijos patikra
+    if (windSpeedMs > 4.5) warnings.push(`Per stiprus pastovus vėjas (${windSpeedMs} m/s > 4.5 m/s).`);
+    if (windGustsMs > 6.0) warnings.push(`Pavojingi vėjo gūsiai (${windGustsMs} m/s > 6.0 m/s – nuneš lašelius).`);
+    if (rainMm > 0) warnings.push(`Šiuo metu krenta lietus.`);
+    if (next4hRain) warnings.push(`Numatomas lietus per artimiausias 4 val. (nuplaus preparatus).`);
+    if (tempC > 25) warnings.push(`Per aukšta temperatūra (+${tempC}°C > 25°C – garavimo rizika).`);
+    if (tempC < 8) warnings.push(`Per šalta (+${tempC}°C < 8°C – augalai nepasisavina chemikalų).`);
+    if (humidity < 45) warnings.push(`Labai sausas oras (${humidity}% drėgmė – lašeliai išgaruoja ore).`);
+
+    if (windSpeedMs > 4.5 || windGustsMs > 6.0 || rainMm > 0 || next4hRain || tempC > 25 || tempC < 8) {
         statusType = 'red';
         statusTitle = "🔴 PURKŠTI DRAUDŽIAMA ARBA NEREKOMENDUOJAMA";
         borderColor = "border-red-600";
         bgColor = "bg-red-950/30";
-
-        if (windSpeedMs > 4.5) statusDesc = `Per stiprus vėjas (${windSpeedMs} m/s). Pagal LR reikalavimus purkšti draudžiama (nuneš lašelius).`;
-        else if (rainMm > 0 || next4hRain) statusDesc = `Artėja arba krenta lietus. Nupurkšti chemikalai bus nuplauti į dirvą.`;
-        else if (tempC > 26) statusDesc = `Per didelis karštis (+${tempC}°C). Preparatai nugaruos nespėję suveikti.`;
-    } else if (windSpeedMs > 3.0 || tempC > 23 || humidity < 45) {
+        statusDesc = `Priežastys: ${warnings.join(' ')}`;
+    } else if (windSpeedMs > 3.0 || tempC > 22 || humidity < 50) {
         statusType = 'yellow';
-        statusTitle = "🟡 RIZIKINGOS PURŠKIMO SĄLYGOS (Būtina atidumas)";
-        statusDesc = `Vėjas (${windSpeedMs} m/s) ant ribos arba maža oro drėgmė (${humidity}%). Naudokite stambialašius purkštukus ir lipnumo priedus.`;
+        statusTitle = "🟡 RIZIKINGOS PURŠKIMO SĄLYGOS";
         borderColor = "border-amber-500";
         bgColor = "bg-amber-950/30";
+        statusDesc = `Pastabos: Vėjas (${windSpeedMs} m/s) ant ribos. Rekomenduojama naudoti antilašinius purkštukus ir lipnumo priedus.`;
     }
 
-    liveCard.className = `${bgColor} border-2 ${borderColor} rounded-2xl p-6 md:p-8 shadow-2xl space-y-6`;
+    liveCard.className = `${bgColor} border-2 ${borderColor} rounded-2xl p-6 md:p-8 shadow-2xl space-y-6 transition-all`;
     liveCard.innerHTML = `
         <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-tractorBorder/70 pb-5">
-            <div class="space-y-1">
+            <div class="space-y-1.5 flex-1">
                 <span class="text-xs uppercase font-extrabold tracking-wider ${statusType === 'green' ? 'text-green-400' : (statusType === 'yellow' ? 'text-amber-400' : 'text-red-400')}">
                     Agrometeorologinis verdiktas
                 </span>
                 <h3 class="font-oswald text-2xl md:text-3xl font-bold text-white tracking-wide">${statusTitle}</h3>
-                <p class="text-xs md:text-sm text-slate-200">${statusDesc}</p>
+                <p class="text-xs md:text-sm text-slate-200 leading-relaxed">${statusDesc}</p>
             </div>
             <div class="text-right shrink-0">
                 <span class="text-[10px] text-slate-400 block uppercase font-bold">Oro temperatūra</span>
@@ -245,11 +245,12 @@ function renderLiveSprayStatus(current, hourly) {
             </div>
         </div>
 
+        <!-- 4 RODIKLIAI -->
         <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs md:text-sm">
             <div class="bg-tractorBg/80 p-4 rounded-xl border border-tractorBorder space-y-1">
                 <span class="text-slate-400 text-xs block">💨 Vėjas (2m aukštyje)</span>
-                <strong class="text-white font-mono text-lg font-bold ${windSpeedMs > 4 ? 'text-red-400' : 'text-green-400'}">${windSpeedMs} m/s</strong>
-                <span class="text-[11px] text-slate-400 block">Gūsiai: ${windGustsMs} m/s</span>
+                <strong class="font-mono text-lg font-bold ${windSpeedMs > 4 ? 'text-red-400' : 'text-green-400'}">${windSpeedMs} m/s</strong>
+                <span class="text-[11px] text-slate-300 block">Gūsiai: <strong class="${windGustsMs > 6 ? 'text-red-400' : 'text-white'}">${windGustsMs} m/s</strong></span>
             </div>
 
             <div class="bg-tractorBg/80 p-4 rounded-xl border border-tractorBorder space-y-1">
@@ -262,14 +263,14 @@ function renderLiveSprayStatus(current, hourly) {
 
             <div class="bg-tractorBg/80 p-4 rounded-xl border border-tractorBorder space-y-1">
                 <span class="text-slate-400 text-xs block">🌫️ Santykinė oro drėgmė</span>
-                <strong class="text-white font-mono text-lg font-bold">${humidity}%</strong>
-                <span class="text-[11px] text-slate-400 block">${humidity > 50 ? 'Optimali drėgmė' : 'Sausa (garavimo rizika)'}</span>
+                <strong class="text-white font-mono text-lg font-bold ${humidity < 50 ? 'text-amber-400' : 'text-green-400'}">${humidity}%</strong>
+                <span class="text-[11px] text-slate-300 block">${humidity > 50 ? 'Optimali drėgmė' : 'Sausa (garavimo rizika)'}</span>
             </div>
 
             <div class="bg-tractorBg/80 p-4 rounded-xl border border-tractorBorder space-y-1">
                 <span class="text-slate-400 text-xs block">🌱 Dirvos temp. (paviršius)</span>
                 <strong class="text-green-400 font-mono text-lg font-bold">+${(current.soil_temperature_0cm || 12).toFixed(1)}°C</strong>
-                <span class="text-[11px] text-slate-400 block">Aktyvus augalų kvėpavimas</span>
+                <span class="text-[11px] text-slate-300 block">Dirvos būklė</span>
             </div>
         </div>
     `;
@@ -286,7 +287,7 @@ function renderHourlyForecast(hourly) {
         const hour = dateObj.getHours();
         const dayName = dateObj.toLocaleDateString('lt-LT', { weekday: 'short' });
 
-        const windMs = (hourly.wind_speed_10m[i] / 3.6).toFixed(1);
+        const windMs = parseFloat((hourly.wind_speed_10m[i] / 3.6).toFixed(1));
         const temp = Math.round(hourly.temperature_2m[i]);
         const rainProb = hourly.precipitation_probability[i] || 0;
 
@@ -294,11 +295,11 @@ function renderHourlyForecast(hourly) {
         let statusIcon = "🟢";
         let statusText = "Tinka";
 
-        if (windMs > 4.5 || rainProb > 45 || temp > 26) {
+        if (windMs > 4.5 || rainProb > 45 || temp > 25 || temp < 8) {
             badgeColor = "bg-red-500/20 text-red-400 border-red-500/40";
             statusIcon = "🔴";
             statusText = "Netinka";
-        } else if (windMs > 3.0 || temp > 23 || rainProb > 25) {
+        } else if (windMs > 3.0 || temp > 22 || rainProb > 25) {
             badgeColor = "bg-amber-500/20 text-amber-400 border-amber-500/40";
             statusIcon = "🟡";
             statusText = "Rizika";
