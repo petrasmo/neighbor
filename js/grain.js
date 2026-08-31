@@ -1,11 +1,12 @@
 // js/grain.js
 import { db } from './firebase.js';
 import { calculateDist, calculateBuyerRanking } from './grainCalculator.js';
+import { showDialog } from './ui.js';
 
 let activeMarketData = [];
 let unsubscribeGrain = null;
 let userGarageCoords = null;
-let currentBrowserCoords = null;
+let currentCoords = null; // { lat, lng, sourceText }
 
 const state = {
     viewMode: 'ranked',
@@ -14,8 +15,7 @@ const state = {
     moisture: 17.5,
     impurities: 3.5,
     includeTransport: true,
-    transportRatePerTonKm: 0.10,
-    locationSource: 'auto'
+    transportRatePerTonKm: 0.10
 };
 
 const cropNames = {
@@ -27,13 +27,18 @@ const cropNames = {
     peas: '🫘 Žirniai / Pupos'
 };
 
-// 👈 BŪTINAS EXPORT
 export function initGrainTab(currentUser, userData) {
     const container = document.getElementById('view-tab-grain');
     if (!container) return;
 
+    // 1 Lygis: Jei vartotojas turi išsaugotą garažo vietą
     if (userData?.garageLat && userData?.garageLon) {
-        userGarageCoords = { lat: userData.garageLat, lng: userData.garageLon };
+        userGarageCoords = { 
+            lat: userData.garageLat, 
+            lng: userData.garageLon,
+            sourceText: "išsaugotos ūkio vietos (Nustatymai)"
+        };
+        currentCoords = userGarageCoords;
     } else {
         userGarageCoords = null;
     }
@@ -41,7 +46,7 @@ export function initGrainTab(currentUser, userData) {
     container.innerHTML = `
         <div class="space-y-6 max-w-6xl mx-auto">
             
-            <!-- HEADERIS IR LOKACIJOS VALDYMAS -->
+            <!-- HEADERIS IR LOKACIJOS BŪSENA -->
             <div class="bg-tractorSurface border border-tractorBorder rounded-2xl p-6 md:p-8 space-y-5 shadow-xl">
                 <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-tractorBorder/70 pb-4">
                     <div>
@@ -49,19 +54,19 @@ export function initGrainTab(currentUser, userData) {
                             <span>🌾</span> Grūdų Supirkimo Kainos ir Skaičiuoklė
                         </h2>
                         <p class="text-xs md:text-sm text-slate-300 mt-1" id="location-status-text">
-                            ${userGarageCoords ? '📍 Atstumai skaičiuojami nuo jūsų Nustatymuose išsaugotos ūkio vietos.' : '📍 Atstumai skaičiuojami pagal jūsų dabartinę vietą.'}
+                            📍 Nustatoma jūsų apytikslė vieta...
                         </p>
                     </div>
 
-                    <!-- LOKACIJOS PARINKIMO MYGTUKAI -->
-                    <div class="flex flex-wrap gap-2">
+                    <!-- LOKACIJOS VALDYMO MYGTUKAI -->
+                    <div class="flex flex-wrap items-center gap-2.5">
                         ${userGarageCoords ? `
-                            <button id="btn-loc-garage" class="px-3.5 py-2 bg-tractorPrimary text-white text-xs font-bold rounded-xl border border-tractorPrimary flex items-center gap-1.5 transition">
+                            <button id="btn-loc-garage" class="h-10 px-4 bg-tractorPrimary text-white text-xs font-bold rounded-xl border border-tractorPrimary flex items-center gap-1.5 transition">
                                 🏠 Ūkio vieta
                             </button>
                         ` : ''}
-                        <button id="btn-loc-gps" class="px-3.5 py-2 bg-tractorBg hover:bg-zinc-800 text-slate-200 text-xs font-bold rounded-xl border border-tractorBorder flex items-center gap-1.5 transition">
-                            📡 Nustatyti dabartinę GPS vietą
+                        <button id="btn-loc-gps" class="h-10 px-4 bg-tractorBg hover:bg-zinc-800 text-slate-200 text-xs font-bold rounded-xl border border-tractorBorder flex items-center gap-1.5 shadow transition cursor-pointer">
+                            📡 Nustatyti tikslią GPS vietą
                         </button>
                     </div>
                 </div>
@@ -141,25 +146,35 @@ export function initGrainTab(currentUser, userData) {
         </div>
     `;
 
+    // 📡 Tikslios GPS vietos nustatymas
     document.getElementById('btn-loc-gps')?.addEventListener('click', () => {
         if (navigator.geolocation) {
+            const btn = document.getElementById('btn-loc-gps');
+            btn.textContent = "📡 Nustatoma...";
             navigator.geolocation.getCurrentPosition((pos) => {
-                currentBrowserCoords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
-                state.locationSource = 'current';
-                document.getElementById('location-status-text').textContent = "📍 Atstumai skaičiuojami pagal jūsų dabartinę GPS vietą.";
+                currentCoords = {
+                    lat: pos.coords.latitude,
+                    lng: pos.coords.longitude,
+                    sourceText: "tikslios GPS vietos"
+                };
+                btn.textContent = "✅ GPS nustatyta!";
+                updateLocationText();
                 renderRankedBuyers();
                 renderElevatorsCards();
-            }, () => {
-                alert("Nepavyko nustatyti GPS vietos.");
+            }, (err) => {
+                btn.textContent = "📡 Nustatyti GPS";
+                showDialog("GPS klaida", "Nepavyko gauti tikslios GPS vietos. Naudojama apytikslė vieta.", "⚠️");
             });
         }
     });
 
     document.getElementById('btn-loc-garage')?.addEventListener('click', () => {
-        state.locationSource = 'garage';
-        document.getElementById('location-status-text').textContent = "📍 Atstumai skaičiuojami nuo jūsų Nustatymuose išsaugotos ūkio vietos.";
-        renderRankedBuyers();
-        renderElevatorsCards();
+        if (userGarageCoords) {
+            currentCoords = userGarageCoords;
+            updateLocationText();
+            renderRankedBuyers();
+            renderElevatorsCards();
+        }
     });
 
     const btnRanked = document.getElementById('btn-mode-ranked');
@@ -205,13 +220,56 @@ export function initGrainTab(currentUser, userData) {
         });
     });
 
+    // 🌐 AUTOMATINĖ VIETOS NUSTATYMO GRANDINĖ (Fallback)
+    resolveLocationChain();
+
     listenToGrainPrices();
 }
 
-function getActiveCoords() {
-    if (state.locationSource === 'current' && currentBrowserCoords) return currentBrowserCoords;
-    if (userGarageCoords) return userGarageCoords;
-    return currentBrowserCoords;
+/**
+ * Automatinė grandinė: Garažas -> IP -> Kėdainiai (centras)
+ */
+async function resolveLocationChain() {
+    if (currentCoords) {
+        updateLocationText();
+        return;
+    }
+
+    // 3 Lygis: Nustatome pagal IP fone
+    try {
+        const res = await fetch("https://ipapi.co/json/", { timeout: 3000 });
+        const data = await res.json();
+        if (data && data.latitude && data.longitude) {
+            currentCoords = {
+                lat: data.latitude,
+                lng: data.longitude,
+                sourceText: `apytikslės IP vietos (${data.city || 'Lietuva'})`
+            };
+            updateLocationText();
+            renderRankedBuyers();
+            renderElevatorsCards();
+            return;
+        }
+    } catch (e) {
+        console.warn("IP lokacijos klaida, naudojamas Lietuvos centras.");
+    }
+
+    // 4 Lygis (Saugiklis): Lietuvos centras (Kėdainiai)
+    currentCoords = {
+        lat: 55.2885,
+        lng: 23.9745,
+        sourceText: "Lietuvos centro (Kėdainiai)"
+    };
+    updateLocationText();
+    renderRankedBuyers();
+    renderElevatorsCards();
+}
+
+function updateLocationText() {
+    const el = document.getElementById('location-status-text');
+    if (el && currentCoords) {
+        el.textContent = `📍 Atstumai skaičiuojami nuo jūsų ${currentCoords.sourceText}.`;
+    }
 }
 
 function listenToGrainPrices() {
@@ -233,19 +291,6 @@ function listenToGrainPrices() {
             }
         });
 
-        const statusEl = document.getElementById('location-status-text');
-        if (statusEl && latestTimestamp) {
-            const formattedTime = latestTimestamp.toLocaleString('lt-LT', {
-                year: 'numeric', month: '2-digit', day: '2-digit',
-                hour: '2-digit', minute: '2-digit'
-            });
-            const locText = userGarageCoords 
-                ? '📍 Atstumai skaičiuojami nuo jūsų ūkio vietos.' 
-                : '📍 Atstumai skaičiuojami pagal jūsų dabartinę vietą.';
-
-            statusEl.innerHTML = `${locText} <span class="block sm:inline sm:ml-2 text-green-400 font-bold">• 🕒 Atnaujinta: ${formattedTime} (kas 6 val.)</span>`;
-        }
-
         renderRankedBuyers();
         renderElevatorsCards();
     });
@@ -255,8 +300,7 @@ function renderRankedBuyers() {
     const listContainer = document.getElementById('ranked-buyers-list');
     if (!listContainer || activeMarketData.length === 0) return;
 
-    const coords = getActiveCoords();
-    const calculatedList = calculateBuyerRanking(activeMarketData, state, coords);
+    const calculatedList = calculateBuyerRanking(activeMarketData, state, currentCoords);
 
     if (calculatedList.length === 0) {
         listContainer.innerHTML = `<div class="bg-tractorSurface p-8 rounded-2xl text-center text-slate-300 text-sm">Šiuo metu nė vienas elevatorius nepriima pasirinktos kultūros.</div>`;
@@ -290,11 +334,9 @@ function renderRankedBuyers() {
                         </p>
                         
                         <div class="flex flex-wrap gap-2 text-xs pt-0.5">
-                            ${item.distKm > 0 ? `
-                                <span class="bg-tractorBg px-3 py-1 rounded-lg text-green-400 font-bold border border-tractorBorder flex items-center gap-1">
-                                    🚗 ~${item.distKm} km nuo jūsų vietos
-                                </span>
-                            ` : ''}
+                            <span class="bg-tractorBg px-3 py-1 rounded-lg text-green-400 font-bold border border-tractorBorder flex items-center gap-1">
+                                🚗 ~${item.distKm} km nuo jūsų vietos
+                            </span>
                             ${item.transportCost > 0 ? `
                                 <span class="bg-tractorBg px-3 py-1 rounded-lg text-amber-300 font-bold border border-tractorBorder">
                                     ⛽ Transportas: -${item.transportCost.toFixed(2)} €
@@ -360,7 +402,7 @@ function renderElevatorsCards() {
     const grid = document.getElementById('elevators-cards-grid');
     if (!grid || activeMarketData.length === 0) return;
 
-    const coords = getActiveCoords();
+    const coords = currentCoords;
     const sortedByDistance = activeMarketData.map(item => {
         let distKm = 9999;
         if (coords && item.lat && item.lng) {

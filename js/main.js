@@ -3,26 +3,28 @@ import { auth, db } from './firebase.js';
 import { loginWithGoogle, logoutUser } from './auth.js';
 import { switchTab, showDialog } from './ui.js';
 import { initFeedTab } from './feed.js';
+import { initFieldsTab, refreshFieldsMap } from './fields.js';
+import { initReportsTab } from './reportsTab.js'; // 👈 PRIDĖTA
 import { initGarageTab } from './garage.js';
 import { initSettingsTab, refreshSettingsMap } from './settings.js';
 
 let currentUser = null;
 let userData = null;
+let cachedFieldsList = [];
 const classifierMap = {};
 
 document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('.login-trigger-btn').forEach(btn => btn.addEventListener('click', loginWithGoogle));
 
-    // Tabų navigacija su apsauga
     document.querySelectorAll('.nav-tab-btn').forEach(btn => {
         btn.addEventListener('click', () => {
             const tabIdx = parseInt(btn.getAttribute('data-tab'));
 
-            // Jei bando atidaryti Mano techniką (2) arba Nustatymus (3) neprisijungęs
-            if (!currentUser && (tabIdx === 2 || tabIdx === 3)) {
+            // Apsauga neprisijungusiems
+            if (!currentUser && (tabIdx === 1 || tabIdx === 2 || tabIdx === 3 || tabIdx === 4)) {
                 showDialog(
                     "Reikalingas prisijungimas",
-                    "Norėdami valdyti savo techniką ar nustatymus, prisijunkite su savo „Google“ paskyra.",
+                    "Norėdami valdyti laukus, ataskaitas ar techniką, prisijunkite su savo „Google“ paskyra.",
                     "🔒",
                     loginWithGoogle,
                     true
@@ -32,7 +34,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
             switchTab(tabIdx);
 
-            if (tabIdx === 3) {
+            if (tabIdx === 1) {
+                refreshFieldsMap();
+            } else if (tabIdx === 4) {
+                initReportsTab(cachedFieldsList, userData); // 👈 UŽKRAUNA ATASKAITAS
+            } else if (tabIdx === 3) {
                 refreshSettingsMap();
             }
         });
@@ -41,15 +47,15 @@ document.addEventListener('DOMContentLoaded', () => {
     const openHelp = () => {
         showDialog(
             "Kaip naudotis Neighbor P.M. 🚜",
-            `<b>1. SOS Skelbimai:</b> Matomi visiems. Norėdami paskelbti savo prašymą – prisijunkite.<br><br>
-             <b>2. Grūdų skaičiuoklė:</b> Atskiras puslapis grūdų kainoms ir elevatorių reitingui.<br><br>
-             <b>3. Mano technika ir Nustatymai:</b> Skirta registruotiems ūkininkams valdyti savo mašinas ir ūkio lokaciją.`,
+            `<b>1. SOS Skelbimai:</b> Skubios pagalbos paieška laukuose.<br><br>
+             <b>2. Mano Laukai:</b> Palydovinis žemėlapis, laukai ir darbų registravimas.<br><br>
+             <b>3. Ataskaitos:</b> Oficialūs NMA žurnalai PDF ir Excel (.CSV) formatu.<br><br>
+             <b>4. Grūdų skaičiuoklė:</b> Elevatorių reitingas ir kainos.`,
             "📖"
         );
     };
     document.getElementById('help-btn-desktop')?.addEventListener('click', openHelp);
 
-    // Iš anksto užkrauname klasifikatorių
     db.collection("tech_classifier").get().then(classSnap => {
         classSnap.forEach(d => {
             const items = d.data().items || [];
@@ -101,12 +107,20 @@ document.addEventListener('DOMContentLoaded', () => {
                 document.getElementById('btn-logout-mobile')?.addEventListener('click', logoutUser);
             }
 
+            // Klausomės laukų ataskaitų generavimui
+            db.collection("user_fields").where("userId", "==", user.uid).onSnapshot(snap => {
+                cachedFieldsList = [];
+                snap.forEach(d => cachedFieldsList.push(d.data()));
+            });
+
             initFeedTab(currentUser, userData, classifierMap);
+            initFieldsTab(currentUser, userData);
             initGarageTab(currentUser, userData);
             initSettingsTab(currentUser, userData);
         } else {
             currentUser = null;
             userData = null;
+            cachedFieldsList = [];
 
             if (sidebarAuthBox) {
                 sidebarAuthBox.innerHTML = `

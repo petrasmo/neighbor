@@ -1,16 +1,17 @@
 // js/ui.js
 export function switchTab(tabIndex) {
-    const views = [
-        document.getElementById('view-tab-feed'),      // 0: SOS Skelbimai
-        document.getElementById('view-tab-grain'),     // 1: Grūdų kainos
-        document.getElementById('view-tab-garage'),    // 2: Mano technika
-        document.getElementById('view-tab-settings')   // 3: Nustatymai
-    ];
+    const views = {
+        0: document.getElementById('view-tab-feed'),      // 0: SOS Skelbimai
+        1: document.getElementById('view-tab-fields'),    // 1: Mano laukai
+        2: document.getElementById('view-tab-garage'),    // 2: Mano technika
+        3: document.getElementById('view-tab-settings'),  // 3: Nustatymai
+        4: document.getElementById('view-tab-reports')    // 4: Ataskaitos
+    };
 
-    views.forEach((view, idx) => {
-        if (view) {
-            if (idx === tabIndex) view.classList.remove('hidden');
-            else view.classList.add('hidden');
+    Object.entries(views).forEach(([idx, el]) => {
+        if (el) {
+            if (parseInt(idx) === tabIndex) el.classList.remove('hidden');
+            else el.classList.add('hidden');
         }
     });
 
@@ -18,10 +19,10 @@ export function switchTab(tabIndex) {
         const btnTab = parseInt(btn.getAttribute('data-tab'));
         if (btnTab === tabIndex) {
             btn.classList.add('bg-tractorPrimary', 'text-white');
-            btn.classList.remove('text-tractorSecondary');
+            btn.classList.remove('text-slate-400');
         } else {
             btn.classList.remove('bg-tractorPrimary', 'text-white');
-            btn.classList.add('text-tractorSecondary');
+            btn.classList.add('text-slate-400');
         }
     });
 }
