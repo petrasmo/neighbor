@@ -4,11 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     
-    <title>Ūkininko Skaičiuoklių Centras 🧮 – Neighbor P.M.</title>
-    <meta name="description" content="Profesionalios žemės ūkio skaičiuoklės: grūdų supirkimo kainos, tiksli sėjos norma, purkštuvo maišymas ir trąšų NPK skaičiuoklė.">
+    <title>JurgisAgro 🧮 – Ūkininko Skaičiuoklių Centras</title>
+    <meta name="description" content="JurgisAgro profesionalios žemės ūkio skaičiuoklės: grūdų supirkimo kainos, tiksli sėjos norma, purkštuvo maišymas ir trąšų NPK skaičiuoklė.">
     <link rel="icon" type="image/png" href="logo.png">
 
-    <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;600;700&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;600;700&family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -74,7 +74,6 @@
             color: #334155 !important;
         }
 
-        /* 🌟 ŠVIESIOJE TEMOJE PARYŠKINTI ŽENKLIUKAI (BADGES) */
         html.light-theme .badge-spray {
             background-color: #DBEAFE !important;
             color: #1D4ED8 !important;
@@ -127,9 +126,29 @@
             background-color: #E8F5E9 !important;
         }
 
+        /* 🌟 PARYŠKINTI ŽALI MYGTUKAI */
         .bg-tractorPrimary,
-        .bg-tractorPrimary * {
+        button.bg-tractorPrimary,
+        a.bg-tractorPrimary {
+            background-color: #2E7D32 !important;
             color: #FFFFFF !important;
+            font-weight: 800 !important;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35) !important;
+            box-shadow: 0 4px 14px rgba(46, 125, 50, 0.3) !important;
+        }
+
+        .bg-tractorPrimary:hover,
+        button.bg-tractorPrimary:hover,
+        a.bg-tractorPrimary:hover {
+            background-color: #1B5E20 !important;
+            color: #FFFFFF !important;
+        }
+
+        .bg-tractorPrimary *,
+        button.bg-tractorPrimary *,
+        a.bg-tractorPrimary * {
+            color: #FFFFFF !important;
+            font-weight: 800 !important;
         }
 
         ::-webkit-scrollbar { width: 6px; height: 6px; }
@@ -142,13 +161,9 @@
 
     <div class="flex flex-col md:flex-row h-full w-full overflow-hidden">
         
-        <!-- 1. Mobili viršutinė juosta (Iš sidebar.js) -->
         <div id="global-mobile-header"></div>
-
-        <!-- 2. Šoninis meniu (Iš sidebar.js) -->
         <div id="global-sidebar" class="h-full"></div>
 
-        <!-- 3. Pagrindinis turinys -->
         <main class="flex-1 h-full overflow-y-auto px-6 md:px-12 py-8 w-full">
             <div class="max-w-6xl mx-auto w-full space-y-6">
                 
@@ -156,7 +171,7 @@
                 <div id="view-calculators-hub" class="space-y-6">
                     <div class="border-b border-tractorBorder pb-4">
                         <h2 class="font-oswald text-2xl md:text-3xl font-bold uppercase tracking-wider text-white flex items-center gap-2">
-                            <span>🧮</span> Ūkininko Skaičiuoklių Centras
+                            <span>🧮</span> JurgisAgro Skaičiuoklių Centras
                         </h2>
                         <p class="text-xs md:text-sm text-slate-300 mt-1">
                             Pasirinkite reikalingą skaičiuoklę – nuo sėjos, purškimo ir tręšimo iki grūdų pelningumo analizės.
@@ -164,91 +179,61 @@
                     </div>
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-                        
-                        <!-- 1. GRŪDAI -->
                         <div class="bg-tractorSurface border border-tractorBorder hover:border-tractorPrimary rounded-2xl p-6 md:p-7 shadow-xl flex flex-col justify-between space-y-4 transition group">
                             <div class="space-y-2">
                                 <div class="flex justify-between items-start">
                                     <span class="text-3xl bg-tractorBg p-3 rounded-2xl border border-tractorBorder block w-fit">🌾</span>
-                                    <span class="badge-grain text-[11px] bg-tractorPrimary/20 text-tractorPrimaryLight border border-tractorPrimary/40 px-3 py-1 rounded-full font-bold">
-                                        Gyvos kainos
-                                    </span>
+                                    <span class="badge-grain text-[11px] bg-tractorPrimary/20 text-tractorPrimaryLight border border-tractorPrimary/40 px-2.5 py-0.5 rounded-full font-bold">Gyvos kainos</span>
                                 </div>
-                                <h3 class="font-oswald text-xl font-bold text-white tracking-wide group-hover:text-green-400 transition">
-                                    Grūdų Supirkimo ir Elevatorių Skaičiuoklė
-                                </h3>
-                                <p class="text-xs md:text-sm text-slate-300 leading-relaxed">
-                                    Sužinokite, kur labiausiai apsimoka vežti derlių. Gyvos kainos, atstumai nuo ūkio, džiovinimo nuoskaitos bei pelningiausias maršrutas.
-                                </p>
+                                <h3 class="font-oswald text-xl font-bold text-white tracking-wide group-hover:text-green-400 transition">Grūdų Supirkimo ir Elevatorių Skaičiuoklė</h3>
+                                <p class="text-xs text-slate-300 leading-relaxed">Sužinokite, kur labiausiai apsimoka vežti derlių. Gyvos kainos, atstumai nuo ūkio, džiovinimo nuoskaitos bei pelningiausias maršrutas.</p>
                             </div>
-                            <button id="btn-open-grain-calc" class="w-full h-11 bg-tractorPrimary hover:bg-tractorPrimaryHover text-white font-bold rounded-xl text-xs md:text-sm uppercase tracking-wider shadow-lg shadow-tractorPrimary/20 flex items-center justify-center gap-2 transition cursor-pointer">
+                            <button id="btn-open-grain-calc" class="w-full h-12 bg-tractorPrimary hover:bg-tractorPrimaryHover text-white font-bold rounded-xl text-xs md:text-sm uppercase tracking-wider shadow-lg shadow-tractorPrimary/20 flex items-center justify-center gap-2 transition cursor-pointer">
                                 <span>Atidaryti skaičiuoklę</span> <span>→</span>
                             </button>
                         </div>
 
-                        <!-- 2. SĖJA -->
                         <div class="bg-tractorSurface border border-tractorBorder hover:border-tractorPrimary rounded-2xl p-6 md:p-7 shadow-xl flex flex-col justify-between space-y-4 transition group">
                             <div class="space-y-2">
                                 <div class="flex justify-between items-start">
                                     <span class="text-3xl bg-tractorBg p-3 rounded-2xl border border-tractorBorder block w-fit">🌱</span>
-                                    <span class="badge-seed text-[11px] bg-tractorPrimary/20 text-tractorPrimaryLight border border-tractorPrimary/40 px-3 py-1 rounded-full font-bold">
-                                        Agronominė norma
-                                    </span>
+                                    <span class="badge-seed text-[11px] bg-tractorPrimary/20 text-tractorPrimaryLight border border-tractorPrimary/40 px-2.5 py-0.5 rounded-full font-bold">Agronominė norma</span>
                                 </div>
-                                <h3 class="font-oswald text-xl font-bold text-white tracking-wide group-hover:text-green-400 transition">
-                                    Tiksli Sėjos Normos ir Sėklos Skaičiuoklė
-                                </h3>
-                                <p class="text-xs md:text-sm text-slate-300 leading-relaxed">
-                                    Apskaičiuokite tikslią sėjos normą (kg/ha) pagal MTG ir daigumą. Sužinokite reikalingų didmaišių kiekį bei savikainą.
-                                </p>
+                                <h3 class="font-oswald text-xl font-bold text-white tracking-wide group-hover:text-green-400 transition">Tiksli Sėjos Normos ir Sėklos Skaičiuoklė</h3>
+                                <p class="text-xs text-slate-300 leading-relaxed">Apskaičiuokite tikslią sėjos normą (kg/ha) pagal MTG ir daigumą. Sužinokite reikalingų didmaišių kiekį bei savikainą.</p>
                             </div>
-                            <button id="btn-open-seed-calc" class="w-full h-11 bg-tractorPrimary hover:bg-tractorPrimaryHover text-white font-bold rounded-xl text-xs md:text-sm uppercase tracking-wider shadow-lg shadow-tractorPrimary/20 flex items-center justify-center gap-2 transition cursor-pointer">
+                            <button id="btn-open-seed-calc" class="w-full h-12 bg-tractorPrimary hover:bg-tractorPrimaryHover text-white font-bold rounded-xl text-xs md:text-sm uppercase tracking-wider shadow-lg shadow-tractorPrimary/20 flex items-center justify-center gap-2 transition cursor-pointer">
                                 <span>Atidaryti skaičiuoklę</span> <span>→</span>
                             </button>
                         </div>
 
-                        <!-- 3. PURKŠTUVAS (PARYŠKINTAS ŽENKLIUKAS) -->
                         <div class="bg-tractorSurface border border-tractorBorder hover:border-tractorPrimary rounded-2xl p-6 md:p-7 shadow-xl flex flex-col justify-between space-y-4 transition group">
                             <div class="space-y-2">
                                 <div class="flex justify-between items-start">
                                     <span class="text-3xl bg-tractorBg p-3 rounded-2xl border border-tractorBorder block w-fit">💦</span>
-                                    <span class="badge-spray text-[11px] bg-blue-950/40 text-blue-400 border border-blue-800/60 px-3 py-1 rounded-full font-bold">
-                                        Purškimas
-                                    </span>
+                                    <span class="badge-spray text-[11px] bg-blue-950/40 text-blue-400 border border-blue-800/60 px-2.5 py-0.5 rounded-full font-bold">Purškimas</span>
                                 </div>
-                                <h3 class="font-oswald text-xl font-bold text-white tracking-wide group-hover:text-green-400 transition">
-                                    Purkštuvo Bako ir Chemikalų Skaičiuoklė
-                                </h3>
-                                <p class="text-xs md:text-sm text-slate-300 leading-relaxed">
-                                    Tikslios dozės pilnam ir nepilnam bakui. Išvenkite klaidų maišant herbicidus, fungicidus ir trąšas.
-                                </p>
+                                <h3 class="font-oswald text-xl font-bold text-white tracking-wide group-hover:text-green-400 transition">Purkštuvo Bako ir Chemikalų Skaičiuoklė</h3>
+                                <p class="text-xs text-slate-300 leading-relaxed">Tikslios dozės pilnam ir nepilnam bakui. Išvenkite klaidų maišant herbicidus, fungicidus ir trąšas.</p>
                             </div>
-                            <button id="btn-open-spray-calc" class="w-full h-11 bg-tractorPrimary hover:bg-tractorPrimaryHover text-white font-bold rounded-xl text-xs md:text-sm uppercase tracking-wider shadow-lg shadow-tractorPrimary/20 flex items-center justify-center gap-2 transition cursor-pointer">
+                            <button id="btn-open-spray-calc" class="w-full h-12 bg-tractorPrimary hover:bg-tractorPrimaryHover text-white font-bold rounded-xl text-xs md:text-sm uppercase tracking-wider shadow-lg shadow-tractorPrimary/20 flex items-center justify-center gap-2 transition cursor-pointer">
                                 <span>Atidaryti skaičiuoklę</span> <span>→</span>
                             </button>
                         </div>
 
-                        <!-- 4. TRĄŠOS NPK (PARYŠKINTAS ŽENKLIUKAS) -->
                         <div class="bg-tractorSurface border border-tractorBorder hover:border-tractorPrimary rounded-2xl p-6 md:p-7 shadow-xl flex flex-col justify-between space-y-4 transition group">
                             <div class="space-y-2">
                                 <div class="flex justify-between items-start">
                                     <span class="text-3xl bg-tractorBg p-3 rounded-2xl border border-tractorBorder block w-fit">🧪</span>
-                                    <span class="badge-fert text-[11px] bg-amber-950/40 text-amber-400 border border-amber-800/60 px-3 py-1 rounded-full font-bold">
-                                        N-P-K ir Kaina
-                                    </span>
+                                    <span class="badge-fert text-[11px] bg-amber-950/40 text-amber-400 border border-amber-800/60 px-2.5 py-0.5 rounded-full font-bold">N-P-K ir Kaina</span>
                                 </div>
-                                <h3 class="font-oswald text-xl font-bold text-white tracking-wide group-hover:text-green-400 transition">
-                                    Trąšų N-P-K ir Veikliosios Medžiagos Skaičiuoklė
-                                </h3>
-                                <p class="text-xs md:text-sm text-slate-300 leading-relaxed">
-                                    Apskaičiuokite fizinę normą (kg/ha) pagal gryną NPK poreikį. Palyginkite 1 kg gryno azoto savikainą.
-                                </p>
+                                <h3 class="font-oswald text-xl font-bold text-white tracking-wide group-hover:text-green-400 transition">Trąšų N-P-K ir Veikliosios Medžiagos Skaičiuoklė</h3>
+                                <p class="text-xs text-slate-300 leading-relaxed">Apskaičiuokite fizinę normą (kg/ha) pagal gryną NPK poreikį. Palyginkite 1 kg gryno azoto savikainą.</p>
                             </div>
-                            <button id="btn-open-fert-calc" class="w-full h-11 bg-tractorPrimary hover:bg-tractorPrimaryHover text-white font-bold rounded-xl text-xs md:text-sm uppercase tracking-wider shadow-lg shadow-tractorPrimary/20 flex items-center justify-center gap-2 transition cursor-pointer">
+                            <button id="btn-open-fert-calc" class="w-full h-12 bg-tractorPrimary hover:bg-tractorPrimaryHover text-white font-bold rounded-xl text-xs md:text-sm uppercase tracking-wider shadow-lg shadow-tractorPrimary/20 flex items-center justify-center gap-2 transition cursor-pointer">
                                 <span>Atidaryti skaičiuoklę</span> <span>→</span>
                             </button>
                         </div>
-
                     </div>
                 </div>
 
@@ -281,13 +266,12 @@
                 </div>
 
                 <footer class="text-center text-xs text-slate-400 pt-8 pb-4 border-t border-tractorBorder/50 mt-12">
-                    <p>&copy; 2026 Neighbor P.M. • Sukurta: <a href="https://petrasmo.com" target="_blank" class="hover:text-green-400 font-bold underline decoration-slate-600">Petrasmo Studios</a></p>
+                    <p>&copy; 2026 JurgisAgro.com • Sukurta: <a href="https://petrasmo.com" target="_blank" class="hover:text-green-400 font-bold underline decoration-slate-600">Petrasmo Studios</a></p>
                 </footer>
 
             </div>
         </main>
 
-        <!-- 4. Mobili navigacija (Iš sidebar.js) -->
         <div id="global-mobile-nav"></div>
 
     </div>
@@ -299,7 +283,7 @@
             <h3 id="dialog-title" class="font-oswald text-xl font-bold uppercase tracking-wider text-white">Dėmesio</h3>
             <p id="dialog-message" class="text-xs leading-relaxed text-slate-300"></p>
             <div class="flex gap-3 pt-2">
-                <button id="dialog-cancel-btn" class="flex-1 h-10 bg-tractorBg border border-tractorBorder text-white rounded-xl font-bold text-xs hover:bg-zinc-800 transition hidden">Atšaukti</button>
+                <button id="dialog-cancel-btn" class="flex-1 h-10 bg-tractorBg border border-tractorBorder rounded-xl font-bold text-xs hover:bg-zinc-800 transition hidden">Atšaukti</button>
                 <button id="dialog-confirm-btn" class="flex-1 h-10 bg-tractorPrimary hover:bg-tractorPrimaryHover text-white font-bold rounded-xl text-xs transition">Gerai</button>
             </div>
         </div>

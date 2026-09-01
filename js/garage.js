@@ -4,14 +4,16 @@ import { showDialog } from './ui.js';
 
 export async function initGarageTab(currentUser, userData) {
     const container = document.getElementById('view-tab-garage');
+    if (!container) return;
+
     container.innerHTML = `
         <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-tractorBorder pb-5">
             <div>
                 <h2 class="font-oswald text-2xl font-bold uppercase tracking-wider text-white">MANO TECHNIKA</h2>
                 <p class="text-xs text-slate-400 mt-1">Išskleiskite kategorijas ir pažymėkite turimą techniką kaimynų pagalbai.</p>
             </div>
-            <button id="save-tech-btn-top" class="h-11 px-8 bg-tractorPrimary hover:bg-tractorPrimaryHover text-white font-bold rounded-xl text-xs uppercase tracking-wider shadow-lg shadow-tractorPrimary/20 flex items-center justify-center gap-2 cursor-pointer transition">
-                <span>💾</span> Išsaugoti pasirinkimą
+            <button id="save-tech-btn-top" class="h-11 px-8 bg-tractorPrimary hover:bg-tractorPrimaryHover text-white font-extrabold rounded-xl text-xs uppercase tracking-wider shadow-lg shadow-tractorPrimary/20 flex items-center justify-center gap-2 cursor-pointer transition">
+                <span>💾</span> <span class="text-white font-black">IŠSAUGOTI PASIRINKIMĄ</span>
             </button>
         </div>
 
@@ -20,14 +22,15 @@ export async function initGarageTab(currentUser, userData) {
         </div>
 
         <div class="pt-4 pb-12">
-            <button id="save-tech-btn-bottom" class="w-full h-12 bg-tractorPrimary hover:bg-tractorPrimaryHover text-white font-bold rounded-xl text-xs uppercase tracking-wider shadow-lg shadow-tractorPrimary/20 flex items-center justify-center gap-2 cursor-pointer transition">
-                <span>💾</span> Išsaugoti pasirinkimą
+            <button id="save-tech-btn-bottom" class="w-full h-12 bg-tractorPrimary hover:bg-tractorPrimaryHover text-white font-extrabold rounded-xl text-xs uppercase tracking-wider shadow-lg shadow-tractorPrimary/20 flex items-center justify-center gap-2 cursor-pointer transition">
+                <span>💾</span> <span class="text-white font-black">IŠSAUGOTI PASIRINKIMĄ</span>
             </button>
         </div>
     `;
 
     const snap = await db.collection("tech_classifier").get();
     const accordionBox = document.getElementById('tech-accordion-container');
+    if (!accordionBox) return;
     accordionBox.innerHTML = '';
 
     const owned = userData?.ownedTech || [];
@@ -38,22 +41,18 @@ export async function initGarageTab(currentUser, userData) {
         const catTitle = cat.name?.lt || cat.name?.en || "Kategorija";
         const items = cat.items || [];
         
-        // Suskaičiuojame, kiek šioje kategorijoje jau yra pasirinkta
         const selectedCountInCat = items.filter(it => owned.includes(it.id)).length;
-        
-        // Pirmą kategoriją paliekame atidarytą pagal nutylėjimą, kitas uždarytas
         const isInitiallyOpen = idx === 0;
 
         const catCard = document.createElement('div');
         catCard.className = "bg-tractorSurface border border-tractorBorder rounded-2xl overflow-hidden transition-all duration-200";
         catCard.id = `cat-card-${catId}`;
 
-        // 1. KATEGORIJOS HEADERIS (PASPAUDUS IŠSKLEIDŽIA)
         let headerHtml = `
             <div class="cat-toggle-header flex items-center justify-between p-4 cursor-pointer hover:bg-tractorCard select-none transition" data-cat-id="${catId}">
                 <div class="flex items-center gap-3">
                     <span class="w-2.5 h-2.5 rounded-full bg-tractorPrimary"></span>
-                    <h3 class="text-xs font-bold text-white uppercase tracking-wider">${catTitle}</h3>
+                    <h3 class="text-xs md:text-sm font-bold text-white uppercase tracking-wider">${catTitle}</h3>
                     <span id="badge-count-${catId}" class="text-[10px] font-bold px-2 py-0.5 rounded-full ${
                         selectedCountInCat > 0 ? 'bg-tractorPrimary/30 text-tractorPrimaryLight border border-tractorPrimary/50' : 'hidden'
                     }">
@@ -68,7 +67,6 @@ export async function initGarageTab(currentUser, userData) {
             </div>
         `;
 
-        // 2. KATEGORIJOS ELEMENTAI (PLYTELĖS)
         let bodyHtml = `
             <div id="cat-body-${catId}" class="p-4 pt-0 border-t border-tractorBorder/40 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5 ${isInitiallyOpen ? '' : 'hidden'}">
         `;
@@ -97,7 +95,6 @@ export async function initGarageTab(currentUser, userData) {
         accordionBox.appendChild(catCard);
     });
 
-    // A. IŠSKLEIDIMO / SUSKLEIDIMO LOGIKA
     document.querySelectorAll('.cat-toggle-header').forEach(header => {
         header.onclick = function() {
             const catId = this.getAttribute('data-cat-id');
@@ -115,7 +112,6 @@ export async function initGarageTab(currentUser, userData) {
         };
     });
 
-    // B. TECHNIKOS PASIRINKIMO LOGIKA + SKAIČIAVIMAS KATEGORIJOJE
     document.querySelectorAll('.tech-tile').forEach(tile => {
         tile.onclick = function(e) {
             e.stopPropagation();
@@ -136,7 +132,6 @@ export async function initGarageTab(currentUser, userData) {
                 checkIcon.classList.add('hidden');
             }
 
-            // Atnaujiname kategorijos pasirinkimų skaičiaus ženkliuką
             updateCategoryBadge(parentCatId);
         };
     });
@@ -155,7 +150,6 @@ export async function initGarageTab(currentUser, userData) {
         }
     }
 
-    // C. IŠSAUGOJIMAS Į FIRESTORE
     const handleSave = async () => {
         const selected = [];
         document.querySelectorAll('.owned-tech-cb:checked').forEach(cb => selected.push(cb.value));

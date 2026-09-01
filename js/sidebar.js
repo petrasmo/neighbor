@@ -7,7 +7,6 @@ export function renderGlobalSidebar(activePage = 'index', activeTab = 0) {
 
     const isIndex = activePage === 'index';
 
-    // Pagalbinė funkcija nuorodoms: jei esame grudai.html, nukreipiame į index.html su tabo numeriu
     const getNavClickAction = (tabIdx) => {
         if (isIndex) {
             return `data-tab="${tabIdx}"`;
@@ -16,7 +15,7 @@ export function renderGlobalSidebar(activePage = 'index', activeTab = 0) {
         }
     };
 
-    // 1. DESKTOP ŠONINIS MENIU
+    // 1. DESKTOP ŠONINIS MENIU (JURGISAGRO)
     if (sidebarContainer) {
         sidebarContainer.innerHTML = `
             <aside class="hidden md:flex flex-col justify-between w-72 bg-tractorSurface border-r border-tractorBorder p-6 h-full shrink-0">
@@ -27,8 +26,8 @@ export function renderGlobalSidebar(activePage = 'index', activeTab = 0) {
                                 🚜
                             </div>
                             <div>
-                                <span class="font-oswald text-xl font-bold tracking-wider text-white block">NEIGHBOR P.M.</span>
-                                <span class="text-[10px] text-tractorPrimaryLight font-semibold uppercase tracking-widest">Ūkininkų portalas</span>
+                                <span class="font-oswald text-2xl font-black tracking-wider text-white block">JURGISAGRO</span>
+                                <span class="text-[10px] text-tractorPrimaryLight font-bold uppercase tracking-widest">Ūkininkų portalas</span>
                             </div>
                         </a>
 
@@ -90,7 +89,7 @@ export function renderGlobalSidebar(activePage = 'index', activeTab = 0) {
             <div class="md:hidden bg-tractorSurface border-b border-tractorBorder w-full px-4 py-3 flex justify-between items-center z-10 shrink-0">
                 <a href="index.html" class="flex items-center gap-2">
                     <span class="text-xl">🚜</span>
-                    <span class="font-oswald text-lg font-bold tracking-wider text-tractorPrimaryLight">NEIGHBOR P.M.</span>
+                    <span class="font-oswald text-xl font-bold tracking-wider text-tractorPrimaryLight">JURGISAGRO</span>
                 </a>
                 <div class="flex items-center gap-2">
                     <button class="btn-theme-toggle px-2.5 py-1 bg-tractorBg border border-tractorBorder rounded-lg text-xs font-bold">
