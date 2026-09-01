@@ -38,7 +38,7 @@ export function renderSprayerCalculator(container) {
                     </div>
                 </div>
 
-                <!-- 2. CHEMIKALŲ / PREPARATŲ NORMOS (IKI 3 PRODUKTŲ MIŠINYJE) -->
+                <!-- 2. CHEMIKALŲ / PREPARATŲ NORMOS -->
                 <div class="space-y-3 pt-3 border-t border-tractorBorder/60">
                     <span class="text-xs font-bold text-slate-300 uppercase tracking-wider block">
                         🧪 Naudojami preparatai ir normos (l/ha arba kg/ha):
@@ -46,7 +46,7 @@ export function renderSprayerCalculator(container) {
 
                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                         <div class="space-y-1 bg-tractorBg p-3.5 rounded-xl border border-tractorBorder">
-                            <label class="text-[11px] font-bold text-green-400 uppercase block">1 Preparatas (pvz. Herbicidas)</label>
+                            <label class="text-[11px] font-bold text-green-600 dark:text-green-400 uppercase block">1 Preparatas (pvz. Herbicidas)</label>
                             <input id="spray-chem-name-1" type="text" value="Herbicidas" class="w-full h-9 bg-tractorSurface border border-tractorBorder rounded-lg px-2.5 text-xs text-white outline-none mb-1.5">
                             <div class="flex items-center gap-2">
                                 <span class="text-xs text-slate-400">Norma:</span>
@@ -56,7 +56,7 @@ export function renderSprayerCalculator(container) {
                         </div>
 
                         <div class="space-y-1 bg-tractorBg p-3.5 rounded-xl border border-tractorBorder">
-                            <label class="text-[11px] font-bold text-amber-400 uppercase block">2 Preparatas (pvz. Fungicidas)</label>
+                            <label class="text-[11px] font-bold text-amber-600 dark:text-amber-400 uppercase block">2 Preparatas (pvz. Fungicidas)</label>
                             <input id="spray-chem-name-2" type="text" value="Fungicidas" class="w-full h-9 bg-tractorSurface border border-tractorBorder rounded-lg px-2.5 text-xs text-white outline-none mb-1.5">
                             <div class="flex items-center gap-2">
                                 <span class="text-xs text-slate-400">Norma:</span>
@@ -66,7 +66,7 @@ export function renderSprayerCalculator(container) {
                         </div>
 
                         <div class="space-y-1 bg-tractorBg p-3.5 rounded-xl border border-tractorBorder">
-                            <label class="text-[11px] font-bold text-blue-400 uppercase block">3 Preparatas (Lipnumas / Trąšos)</label>
+                            <label class="text-[11px] font-bold text-blue-600 dark:text-blue-400 uppercase block">3 Preparatas (Lipnumas / Trąšos)</label>
                             <input id="spray-chem-name-3" type="text" value="Paviršiaus aktyvioji m." class="w-full h-9 bg-tractorSurface border border-tractorBorder rounded-lg px-2.5 text-xs text-white outline-none mb-1.5">
                             <div class="flex items-center gap-2">
                                 <span class="text-xs text-slate-400">Norma:</span>
@@ -78,48 +78,41 @@ export function renderSprayerCalculator(container) {
                 </div>
             </div>
 
-            <!-- REZULTATŲ KORTELĖS (INSTRUKCIJA TRAKTORININKUI) -->
+            <!-- REZULTATŲ KORTELĖS -->
             <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
                 
                 <!-- 1 KORTELĖ: BAKŲ SKAIČIUS -->
-                <div class="bg-tractorPrimary/20 border-2 border-tractorPrimary p-6 rounded-2xl space-y-2 shadow-xl shadow-tractorPrimary/10">
-                    <span class="text-xs uppercase font-extrabold text-tractorPrimaryLight tracking-wider">Reikalingi bakai</span>
-                    <div class="text-3xl font-black text-white font-mono" id="res-tanks-summary">2 pilni + 1 nepilnas</div>
-                    <p class="text-xs text-green-300 font-semibold" id="res-tank-details">1 pilnas bakas apipurškia 15.0 ha</p>
+                <div class="bg-tractorPrimary/20 border-2 border-tractorPrimary p-6 rounded-2xl space-y-2 shadow-xl">
+                    <span class="text-xs uppercase font-extrabold text-tractorPrimaryLight tracking-wider block">Reikalingi bakai</span>
+                    <div class="text-2xl sm:text-3xl font-black font-mono" id="res-tanks-summary" style="color: var(--text-main);">2 pilni + 1 nepilnas</div>
+                    <p class="text-xs font-bold text-green-600 dark:text-green-400" id="res-tank-details">1 pilnas bakas apipurškia 15.00 ha</p>
                 </div>
 
                 <!-- 2 KORTELĖ: DOZAVIMAS PILNAM BAKUI -->
                 <div class="bg-tractorSurface border border-tractorBorder p-6 rounded-2xl space-y-2 shadow-xl">
-                    <span class="text-xs uppercase font-bold text-amber-400 tracking-wider">Pilti į PILNĄ baką (${document.getElementById('spray-tank-capacity')?.value || 3000} l)</span>
-                    <div class="text-xs space-y-1.5 pt-1" id="res-full-tank-recipe">
-                        <!-- Generuojamas receptas -->
-                    </div>
+                    <span class="text-xs uppercase font-bold text-amber-600 dark:text-amber-400 tracking-wider">Pilti į PILNĄ baką (${document.getElementById('spray-tank-capacity')?.value || 3000} l)</span>
+                    <div class="text-xs space-y-1.5 pt-1" id="res-full-tank-recipe"></div>
                 </div>
 
                 <!-- 3 KORTELĖ: DOZAVIMAS PASKUTINIAM NEPILNAM BAKUI -->
                 <div class="bg-tractorSurface border border-tractorBorder p-6 rounded-2xl space-y-2 shadow-xl">
-                    <span class="text-xs uppercase font-bold text-blue-400 tracking-wider" id="res-last-tank-header">Paskutinis NEPILNAS bakas</span>
-                    <div class="text-xs space-y-1.5 pt-1" id="res-partial-tank-recipe">
-                        <!-- Generuojamas receptas -->
-                    </div>
+                    <span class="text-xs uppercase font-bold text-blue-600 dark:text-blue-400 tracking-wider" id="res-last-tank-header">Paskutinis NEPILNAS bakas</span>
+                    <div class="text-xs space-y-1.5 pt-1" id="res-partial-tank-recipe"></div>
                 </div>
 
             </div>
 
             <!-- BENDRAS MEDŽIAGŲ POREIKIS LAUKUI -->
             <div class="bg-tractorSurface border border-tractorBorder rounded-2xl p-6 shadow-xl space-y-3">
-                <h4 class="text-xs font-bold text-white uppercase tracking-wider border-b border-tractorBorder/60 pb-2">
+                <h4 class="text-xs font-bold uppercase tracking-wider border-b border-tractorBorder/60 pb-2" style="color: var(--text-main);">
                     📦 Bendras chemikalų ir vandens poreikis visam laukui (<span id="res-field-area-label">38 ha</span>):
                 </h4>
-                <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs" id="res-total-materials-grid">
-                    <!-- Suvestinė -->
-                </div>
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs" id="res-total-materials-grid"></div>
             </div>
 
         </div>
     `;
 
-    // Listeneriai
     ['spray-tank-capacity', 'spray-water-rate', 'spray-field-area', 'spray-chem-rate-1', 'spray-chem-rate-2', 'spray-chem-rate-3', 'spray-chem-name-1', 'spray-chem-name-2', 'spray-chem-name-3'].forEach(id => {
         document.getElementById(id)?.addEventListener('input', calculateSprayerMix);
     });
@@ -141,18 +134,13 @@ function calculateSprayerMix() {
     const chem3Name = document.getElementById('spray-chem-name-3').value.trim() || "3 Preparatas";
     const chem3Rate = parseFloat(document.getElementById('spray-chem-rate-3').value) || 0;
 
-    // 1. Kiek ha apipurškia 1 pilnas bakas
     const haPerFullTank = waterRate > 0 ? (tankCap / waterRate) : 0;
-
-    // 2. Kiek iš viso litrų vandens reikia laukui
     const totalWaterLiters = fieldArea * waterRate;
 
-    // 3. Bakų skaičius
     const fullTanksCount = Math.floor(totalWaterLiters / tankCap);
     const remainingLiters = totalWaterLiters % tankCap;
     const remainingHa = waterRate > 0 ? (remainingLiters / waterRate) : 0;
 
-    // Bakų santraukos tekstas
     const summaryText = remainingLiters > 0 
         ? `${fullTanksCount} pilni + 1 nepilnas (${Math.round(remainingLiters)} l)`
         : `${fullTanksCount} pilni bakai`;
@@ -163,10 +151,10 @@ function calculateSprayerMix() {
 
     // 4. Dozavimas PILNAM bakui
     let fullTankRecipeHtml = '';
-    if (chem1Rate > 0) fullTankRecipeHtml += `<div class="flex justify-between border-b border-tractorBorder/40 pb-1 text-slate-200"><span>${chem1Name}:</span> <strong class="text-green-400 font-bold font-mono">${(chem1Rate * haPerFullTank).toFixed(2)} l (kg)</strong></div>`;
-    if (chem2Rate > 0) fullTankRecipeHtml += `<div class="flex justify-between border-b border-tractorBorder/40 pb-1 text-slate-200"><span>${chem2Name}:</span> <strong class="text-amber-400 font-bold font-mono">${(chem2Rate * haPerFullTank).toFixed(2)} l (kg)</strong></div>`;
-    if (chem3Rate > 0) fullTankRecipeHtml += `<div class="flex justify-between text-slate-200"><span>${chem3Name}:</span> <strong class="text-blue-400 font-bold font-mono">${(chem3Rate * haPerFullTank).toFixed(2)} l (kg)</strong></div>`;
-    if (!fullTankRecipeHtml) fullTankRecipeHtml = `<span class="text-slate-500">Nenurodytos normos</span>`;
+    if (chem1Rate > 0) fullTankRecipeHtml += `<div class="flex justify-between border-b border-tractorBorder/40 pb-1 text-slate-300"><span>${chem1Name}:</span> <strong class="font-bold font-mono text-green-600 dark:text-green-400">${(chem1Rate * haPerFullTank).toFixed(2)} l (kg)</strong></div>`;
+    if (chem2Rate > 0) fullTankRecipeHtml += `<div class="flex justify-between border-b border-tractorBorder/40 pb-1 text-slate-300"><span>${chem2Name}:</span> <strong class="font-bold font-mono text-amber-600 dark:text-amber-400">${(chem2Rate * haPerFullTank).toFixed(2)} l (kg)</strong></div>`;
+    if (chem3Rate > 0) fullTankRecipeHtml += `<div class="flex justify-between text-slate-300"><span>${chem3Name}:</span> <strong class="font-bold font-mono text-blue-600 dark:text-blue-400">${(chem3Rate * haPerFullTank).toFixed(2)} l (kg)</strong></div>`;
+    if (!fullTankRecipeHtml) fullTankRecipeHtml = `<span class="text-slate-400">Nenurodytos normos</span>`;
     document.getElementById('res-full-tank-recipe').innerHTML = fullTankRecipeHtml;
 
     // 5. Dozavimas NEPILNAM bakui
@@ -176,31 +164,31 @@ function calculateSprayerMix() {
 
     let partialTankRecipeHtml = '';
     if (remainingLiters > 0) {
-        if (chem1Rate > 0) partialTankRecipeHtml += `<div class="flex justify-between border-b border-tractorBorder/40 pb-1 text-slate-200"><span>${chem1Name}:</span> <strong class="text-green-400 font-bold font-mono">${(chem1Rate * remainingHa).toFixed(2)} l (kg)</strong></div>`;
-        if (chem2Rate > 0) partialTankRecipeHtml += `<div class="flex justify-between border-b border-tractorBorder/40 pb-1 text-slate-200"><span>${chem2Name}:</span> <strong class="text-amber-400 font-bold font-mono">${(chem2Rate * remainingHa).toFixed(2)} l (kg)</strong></div>`;
-        if (chem3Rate > 0) partialTankRecipeHtml += `<div class="flex justify-between text-slate-200"><span>${chem3Name}:</span> <strong class="text-blue-400 font-bold font-mono">${(chem3Rate * remainingHa).toFixed(2)} l (kg)</strong></div>`;
+        if (chem1Rate > 0) partialTankRecipeHtml += `<div class="flex justify-between border-b border-tractorBorder/40 pb-1 text-slate-300"><span>${chem1Name}:</span> <strong class="font-bold font-mono text-green-600 dark:text-green-400">${(chem1Rate * remainingHa).toFixed(2)} l (kg)</strong></div>`;
+        if (chem2Rate > 0) partialTankRecipeHtml += `<div class="flex justify-between border-b border-tractorBorder/40 pb-1 text-slate-300"><span>${chem2Name}:</span> <strong class="font-bold font-mono text-amber-600 dark:text-amber-400">${(chem2Rate * remainingHa).toFixed(2)} l (kg)</strong></div>`;
+        if (chem3Rate > 0) partialTankRecipeHtml += `<div class="flex justify-between text-slate-300"><span>${chem3Name}:</span> <strong class="font-bold font-mono text-blue-600 dark:text-blue-400">${(chem3Rate * remainingHa).toFixed(2)} l (kg)</strong></div>`;
     } else {
-        partialTankRecipeHtml = `<span class="text-green-400 font-bold">Laukas pilnai padengiamas pilnais bakais!</span>`;
+        partialTankRecipeHtml = `<span class="text-green-600 dark:text-green-400 font-bold">Laukas pilnai padengiamas pilnais bakais!</span>`;
     }
     document.getElementById('res-partial-tank-recipe').innerHTML = partialTankRecipeHtml;
 
-    // 6. Bendra suvestinė visam laukui
+    // 6. Bendra suvestinė visam laukui (🌟 100% RYŠKŪS SKAIČIAI ŠVIESIOJE TEMOJE)
     document.getElementById('res-total-materials-grid').innerHTML = `
-        <div class="bg-tractorBg p-3 rounded-xl border border-tractorBorder">
-            <span class="text-slate-400 block">Vanduo</span>
-            <strong class="text-white font-bold font-mono text-sm">${totalWaterLiters.toLocaleString('lt-LT')} l</strong>
+        <div class="bg-tractorBg p-3.5 rounded-xl border border-tractorBorder space-y-1">
+            <span class="text-slate-500 font-semibold block text-xs">Vanduo</span>
+            <strong class="font-bold font-mono text-base block" style="color: var(--text-main);">${totalWaterLiters.toLocaleString('lt-LT')} l</strong>
         </div>
-        <div class="bg-tractorBg p-3 rounded-xl border border-tractorBorder">
-            <span class="text-green-400 block">${chem1Name}</span>
-            <strong class="text-white font-bold font-mono text-sm">${(chem1Rate * fieldArea).toFixed(2)} l (kg)</strong>
+        <div class="bg-tractorBg p-3.5 rounded-xl border border-tractorBorder space-y-1">
+            <span class="text-green-600 dark:text-green-400 font-bold block text-xs">${chem1Name}</span>
+            <strong class="font-bold font-mono text-base block" style="color: var(--text-main);">${(chem1Rate * fieldArea).toFixed(2)} l (kg)</strong>
         </div>
-        <div class="bg-tractorBg p-3 rounded-xl border border-tractorBorder">
-            <span class="text-amber-400 block">${chem2Name}</span>
-            <strong class="text-white font-bold font-mono text-sm">${(chem2Rate * fieldArea).toFixed(2)} l (kg)</strong>
+        <div class="bg-tractorBg p-3.5 rounded-xl border border-tractorBorder space-y-1">
+            <span class="text-amber-600 dark:text-amber-400 font-bold block text-xs">${chem2Name}</span>
+            <strong class="font-bold font-mono text-base block" style="color: var(--text-main);">${(chem2Rate * fieldArea).toFixed(2)} l (kg)</strong>
         </div>
-        <div class="bg-tractorBg p-3 rounded-xl border border-tractorBorder">
-            <span class="text-blue-400 block">${chem3Name}</span>
-            <strong class="text-white font-bold font-mono text-sm">${(chem3Rate * fieldArea).toFixed(2)} l (kg)</strong>
+        <div class="bg-tractorBg p-3.5 rounded-xl border border-tractorBorder space-y-1">
+            <span class="text-blue-600 dark:text-blue-400 font-bold block text-xs">${chem3Name}</span>
+            <strong class="font-bold font-mono text-base block" style="color: var(--text-main);">${(chem3Rate * fieldArea).toFixed(2)} l (kg)</strong>
         </div>
     `;
 }
