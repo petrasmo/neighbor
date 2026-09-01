@@ -23,7 +23,6 @@ let cachedFieldsList = [];
 const classifierMap = {};
 
 document.addEventListener('DOMContentLoaded', () => {
-    // Patikriname ar URL yra parametras ?tab=X (Pagal nutylėjimą: 0 - Skaičiuoklės)
     const urlParams = new URLSearchParams(window.location.search);
     const requestedTab = parseInt(urlParams.get('tab')) || 0;
 
@@ -38,7 +37,6 @@ document.addEventListener('DOMContentLoaded', () => {
             const tabIdx = parseInt(btn.getAttribute('data-tab'));
 
             // Apsauga neprisijungusiems (Laukai: 2, Ataskaitos: 3, Technika: 4, Nustatymai: 6)
-            // Skaičiuoklės (0), Orai (1) ir Skelbimai (5) yra ATVIRI VISIEMS!
             if (!currentUser && (tabIdx === 2 || tabIdx === 3 || tabIdx === 4 || tabIdx === 6)) {
                 showDialog(
                     "Reikalingas prisijungimas",
@@ -66,20 +64,84 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // Inicijuojame Skaičiuoklių Hubo mygtukus
     setupCalculatorsHub();
 
+    // 🌟 IŠSAMUS IR PROFESIONALUS NAUDOJIMOSI GIDAS
     const openHelp = () => {
         showDialog(
-            "Kaip naudotis JurgisAgro.com 🚜",
-            `<b>1. Skaičiuoklės:</b> Grūdų kainos, sėjos normos, purkštuvai ir trąšos vienoje vietoje.<br><br>
-             <b>2. Agro-Orai:</b> Gyvas purškimo lango šviesoforas ir vėjo greitis.<br><br>
-             <b>3. Mano Laukai:</b> Palydovinis žemėlapis, laukai ir darbų registravimas.<br><br>
-             <b>4. Ataskaitos:</b> NMA žurnalai PDF ir Excel formatu.<br><br>
-             <b>5. SOS Skelbimai:</b> Skubios technikos pagalbos paieška tarp kaimynų.`,
+            "Kaip išnaudoti visą JurgisAgro naudą? 🚜",
+            `
+            <div class="space-y-4 text-left">
+                
+                <!-- SVARBIAUSIA ŽINUTĖ: PRISIJUNGIMAS IR LAUKAI -->
+                <div class="p-3.5 bg-tractorPrimary/15 border border-tractorPrimary/40 rounded-xl space-y-1.5">
+                    <div class="flex items-center gap-2">
+                        <span class="text-base">💡</span>
+                        <strong class="text-xs md:text-sm text-green-700 dark:text-tractorPrimaryLight uppercase tracking-wider font-extrabold">
+                            Svarbiausias žingsnis: Prisijunkite ir pažymėkite laukus!
+                        </strong>
+                    </div>
+                    <p class="text-xs leading-relaxed text-slate-700 dark:text-slate-200">
+                        Prisijungę su „Google“ ir palydoviniame žemėlapyje apibrėžę savo laukus bei ūkio bazę, <b>visos sistemos skaičiuoklės pradeda veikti automatiškai pagal jūsų tikslią vietą ir sklypų plotus.</b>
+                    </p>
+                </div>
+
+                <!-- ŽINGSNIAI IR FUNKCIJOS -->
+                <div class="space-y-2.5 text-xs md:text-sm">
+                    
+                    <div class="p-2.5 bg-tractorBg rounded-xl border border-tractorBorder space-y-1">
+                        <div class="font-bold flex items-center gap-1.5" style="color: var(--text-main);">
+                            <span>🌾</span> <span>1. Grūdų ir agronomijos skaičiuoklės</span>
+                        </div>
+                        <p class="text-slate-600 dark:text-slate-300 text-xs">
+                            Pasirinkite konkretų savo lauką – sistema automatiškai apskaičiuos tikslų atstumą iki kiekvieno elevatoriaus, transporto savikainą, sėklos didmaišių kiekį ar purkštuvo bakų maišymo proporcijas.
+                        </p>
+                    </div>
+
+                    <div class="p-2.5 bg-tractorBg rounded-xl border border-tractorBorder space-y-1">
+                        <div class="font-bold flex items-center gap-1.5" style="color: var(--text-main);">
+                            <span>🌦️</span> <span>2. Agro-Orai ir Purškimo šviesoforas</span>
+                        </div>
+                        <p class="text-slate-600 dark:text-slate-300 text-xs">
+                            Orų prognozė, vėjo greitis 2m aukštyje ir lietaus rizika tikrinami konkrečioms jūsų pasirinkto sklypo GPS koordinatėms.
+                        </p>
+                    </div>
+
+                    <div class="p-2.5 bg-tractorBg rounded-xl border border-tractorBorder space-y-1">
+                        <div class="font-bold flex items-center gap-1.5" style="color: var(--text-main);">
+                            <span>🗺️</span> <span>3. Mano Laukai ir Darbų žurnalas</span>
+                        </div>
+                        <p class="text-slate-600 dark:text-slate-300 text-xs">
+                            Apveskite laukus palydove, registruokite sėją, purškimą, trąšas ir derlių. Programa skaičiuoja kiekvieno lauko pajamas, išlaidas ir savikainą.
+                        </p>
+                    </div>
+
+                    <div class="p-2.5 bg-tractorBg rounded-xl border border-tractorBorder space-y-1">
+                        <div class="font-bold flex items-center gap-1.5" style="color: var(--text-main);">
+                            <span>📄</span> <span>4. Oficialios NMA / ŽŪM ataskaitos</span>
+                        </div>
+                        <p class="text-slate-600 dark:text-slate-300 text-xs">
+                            Pagal jūsų įvestus darbus vienu paspaudimu sugeneruojami oficialios formos Augalų apsaugos ir Trąšų apskaitos žurnalai PDF (spausdinimui) arba Excel formatu.
+                        </p>
+                    </div>
+
+                    <div class="p-2.5 bg-tractorBg rounded-xl border border-tractorBorder space-y-1">
+                        <div class="font-bold flex items-center gap-1.5" style="color: var(--text-main);">
+                            <span>🚨</span> <span>5. SOS Pagalba tarp kaimynų</span>
+                        </div>
+                        <p class="text-slate-600 dark:text-slate-300 text-xs">
+                            Sugedus technikai ar skubant nukulti derlių, paskelbkite SOS pranešimą – jį matys aplinkiniai ūkininkai jūsų pasirinktu spinduliu.
+                        </p>
+                    </div>
+
+                </div>
+
+            </div>
+            `,
             "📖"
         );
     };
+
     document.getElementById('help-btn-desktop')?.addEventListener('click', openHelp);
 
     db.collection("tech_classifier").get().then(classSnap => {
@@ -115,7 +177,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 await db.collection("users").doc(user.uid).set(userData);
             }
 
-            // 🌟 PATAISYTAS BLOKAS: Ryškus el. paštas ir aiškus mygtukas abiejose temose
             if (sidebarAuthBox) {
                 sidebarAuthBox.innerHTML = `
                     <p class="text-[10px] text-slate-500 uppercase font-bold tracking-wider">Prisijungta kaip:</p>

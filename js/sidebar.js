@@ -26,8 +26,8 @@ export function renderGlobalSidebar(activePage = 'index', activeTab = 0) {
                                 🚜
                             </div>
                             <div>
-                                <span class="font-oswald text-2xl font-black tracking-wider text-white block">JURGISAGRO</span>
-                                <span class="text-[10px] text-tractorPrimaryLight font-bold uppercase tracking-widest">Ūkininkų portalas</span>
+                                <span class="font-oswald text-2xl font-black tracking-wider block" style="color: var(--text-main);">JURGISAGRO</span>
+                                <span class="text-[10px] text-green-600 dark:text-tractorPrimaryLight font-bold uppercase tracking-widest">Ūkininkų portalas</span>
                             </div>
                         </a>
 
@@ -37,58 +37,58 @@ export function renderGlobalSidebar(activePage = 'index', activeTab = 0) {
                     </div>
                     
                     <nav class="space-y-1.5">
-                        <!-- 1. SKAIČIUOKLĖS (PIRMAS PUNKTAS) -->
-                        <button class="nav-tab-btn w-full text-left px-4 py-3 rounded-xl font-semibold text-sm transition flex items-center gap-3.5 cursor-pointer ${activeTab === 0 ? 'bg-tractorPrimary text-white shadow' : 'text-slate-400 hover:text-white'}" ${getNavClickAction(0)}>
+                        <!-- 1. SKAIČIUOKLĖS -->
+                        <button class="nav-tab-btn w-full text-left px-4 py-3 rounded-xl font-semibold text-sm transition flex items-center gap-3.5 cursor-pointer ${activeTab === 0 ? 'bg-tractorPrimary text-white shadow' : 'text-slate-700 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-zinc-800'}" ${getNavClickAction(0)}>
                             <span class="text-lg">🧮</span> <span>Skaičiuoklės</span>
                         </button>
 
                         <!-- 2. AGRO-ORAI -->
-                        <button class="nav-tab-btn w-full text-left px-4 py-3 rounded-xl font-semibold text-sm transition flex items-center gap-3.5 cursor-pointer ${activeTab === 1 ? 'bg-tractorPrimary text-white shadow' : 'text-slate-400 hover:text-white'}" ${getNavClickAction(1)}>
+                        <button class="nav-tab-btn w-full text-left px-4 py-3 rounded-xl font-semibold text-sm transition flex items-center gap-3.5 cursor-pointer ${activeTab === 1 ? 'bg-tractorPrimary text-white shadow' : 'text-slate-700 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-zinc-800'}" ${getNavClickAction(1)}>
                             <span class="text-lg">🌦️</span> <span>Agro-Orai (Purškimas)</span>
                         </button>
 
                         <!-- 3. MANO LAUKAI -->
-                        <button class="nav-tab-btn w-full text-left px-4 py-3 rounded-xl font-semibold text-sm transition flex items-center gap-3.5 cursor-pointer ${activeTab === 2 ? 'bg-tractorPrimary text-white shadow' : 'text-slate-400 hover:text-white'}" ${getNavClickAction(2)}>
+                        <button class="nav-tab-btn w-full text-left px-4 py-3 rounded-xl font-semibold text-sm transition flex items-center gap-3.5 cursor-pointer ${activeTab === 2 ? 'bg-tractorPrimary text-white shadow' : 'text-slate-700 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-zinc-800'}" ${getNavClickAction(2)}>
                             <span class="text-lg">🗺️</span> <span>Mano laukai</span>
                         </button>
 
                         <!-- 4. ATASKAITOS -->
-                        <button class="nav-tab-btn w-full text-left px-4 py-3 rounded-xl font-semibold text-sm transition flex items-center gap-3.5 cursor-pointer ${activeTab === 3 ? 'bg-tractorPrimary text-white shadow' : 'text-slate-400 hover:text-white'}" ${getNavClickAction(3)}>
+                        <button class="nav-tab-btn w-full text-left px-4 py-3 rounded-xl font-semibold text-sm transition flex items-center gap-3.5 cursor-pointer ${activeTab === 3 ? 'bg-tractorPrimary text-white shadow' : 'text-slate-700 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-zinc-800'}" ${getNavClickAction(3)}>
                             <span class="text-lg">📄</span> <span>Ataskaitos</span>
                         </button>
 
                         <!-- 5. MANO TECHNIKA -->
-                        <button class="nav-tab-btn w-full text-left px-4 py-3 rounded-xl font-semibold text-sm transition flex items-center gap-3.5 cursor-pointer ${activeTab === 4 ? 'bg-tractorPrimary text-white shadow' : 'text-slate-400 hover:text-white'}" ${getNavClickAction(4)}>
+                        <button class="nav-tab-btn w-full text-left px-4 py-3 rounded-xl font-semibold text-sm transition flex items-center gap-3.5 cursor-pointer ${activeTab === 4 ? 'bg-tractorPrimary text-white shadow' : 'text-slate-700 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-zinc-800'}" ${getNavClickAction(4)}>
                             <span class="text-lg">🔧</span> <span>Mano technika</span>
                         </button>
 
-                        <!-- 6. SOS SKELBIMAI (PERKELTI PRIEŠ NUSTATYMUS) -->
-                        <button class="nav-tab-btn w-full text-left px-4 py-3 rounded-xl font-semibold text-sm transition flex items-center gap-3.5 cursor-pointer ${activeTab === 5 ? 'bg-tractorPrimary text-white shadow' : 'text-slate-400 hover:text-white'}" ${getNavClickAction(5)}>
+                        <!-- 6. SOS SKELBIMAI -->
+                        <button class="nav-tab-btn w-full text-left px-4 py-3 rounded-xl font-semibold text-sm transition flex items-center gap-3.5 cursor-pointer ${activeTab === 5 ? 'bg-tractorPrimary text-white shadow' : 'text-slate-700 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-zinc-800'}" ${getNavClickAction(5)}>
                             <span class="text-lg">🚨</span> <span>SOS Skelbimai</span>
                         </button>
 
                         <!-- 7. NUSTATYMAI -->
-                        <button class="nav-tab-btn w-full text-left px-4 py-3 rounded-xl font-semibold text-sm transition flex items-center gap-3.5 cursor-pointer ${activeTab === 6 ? 'bg-tractorPrimary text-white shadow' : 'text-slate-400 hover:text-white'}" ${getNavClickAction(6)}>
+                        <button class="nav-tab-btn w-full text-left px-4 py-3 rounded-xl font-semibold text-sm transition flex items-center gap-3.5 cursor-pointer ${activeTab === 6 ? 'bg-tractorPrimary text-white shadow' : 'text-slate-700 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-zinc-800'}" ${getNavClickAction(6)}>
                             <span class="text-lg">⚙️</span> <span>Nustatymai</span>
                         </button>
                     </nav>
                 </div>
 
                 <div class="border-t border-tractorBorder/70 pt-4 space-y-3">
-                    <button id="help-btn-desktop" class="w-full py-2.5 bg-tractorBg hover:bg-tractorCard border border-tractorBorder rounded-xl text-xs font-semibold text-slate-300 flex items-center justify-center gap-2 transition cursor-pointer">
+                    <button id="help-btn-desktop" class="w-full py-2.5 bg-tractorBg hover:bg-slate-100 dark:hover:bg-zinc-800 border border-tractorBorder rounded-xl text-xs font-semibold flex items-center justify-center gap-2 transition cursor-pointer" style="color: var(--text-main);">
                         <span>📖</span> <span>Naudojimosi gidas</span>
                     </button>
                     
                     <div id="auth-sidebar-box" class="bg-tractorBg border border-tractorBorder/60 p-3 rounded-xl text-center space-y-2">
-                        <p class="text-[11px] text-slate-400">Esate neprisijungęs</p>
+                        <p class="text-[11px] text-slate-500">Esate neprisijungęs</p>
                         <button class="login-trigger-btn w-full py-2 bg-tractorPrimary hover:bg-tractorPrimaryHover text-white text-xs font-bold rounded-lg shadow transition cursor-pointer">
                             Prisijungti su Google
                         </button>
                     </div>
 
                     <div class="text-center pt-1 border-t border-tractorBorder/40">
-                        <a href="https://petrasmo.com" target="_blank" class="text-[11px] text-slate-400 hover:text-green-400 transition font-medium inline-flex items-center gap-1">
-                            Sukurta: <strong class="hover:text-green-400">Petrasmo Studios</strong> ↗
+                        <a href="https://petrasmo.com" target="_blank" class="text-[11px] text-slate-500 hover:text-green-600 dark:hover:text-green-400 transition font-medium inline-flex items-center gap-1">
+                            Sukurta: <strong class="hover:text-green-600 dark:hover:text-green-400">Petrasmo Studios</strong> ↗
                         </a>
                     </div>
                 </div>
@@ -102,7 +102,7 @@ export function renderGlobalSidebar(activePage = 'index', activeTab = 0) {
             <div class="md:hidden bg-tractorSurface border-b border-tractorBorder w-full px-4 py-3 flex justify-between items-center z-10 shrink-0">
                 <a href="index.html" class="flex items-center gap-2">
                     <span class="text-xl">🚜</span>
-                    <span class="font-oswald text-xl font-bold tracking-wider text-tractorPrimaryLight">JURGISAGRO</span>
+                    <span class="font-oswald text-xl font-bold tracking-wider text-green-600 dark:text-tractorPrimaryLight">JURGISAGRO</span>
                 </a>
                 <div class="flex items-center gap-2">
                     <button class="btn-theme-toggle px-2.5 py-1 bg-tractorBg border border-tractorBorder rounded-lg text-xs font-bold">
@@ -122,23 +122,23 @@ export function renderGlobalSidebar(activePage = 'index', activeTab = 0) {
     if (mobileNavContainer) {
         mobileNavContainer.innerHTML = `
             <nav class="md:hidden fixed bottom-0 left-0 right-0 bg-tractorSurface border-t border-tractorBorder h-16 flex justify-around items-center z-50">
-                <button class="nav-tab-btn flex flex-col items-center justify-center w-12 h-full text-xs ${activeTab === 0 ? 'text-white bg-tractorPrimary' : 'text-slate-400'}" ${getNavClickAction(0)}>
+                <button class="nav-tab-btn flex flex-col items-center justify-center w-12 h-full text-xs ${activeTab === 0 ? 'text-white bg-tractorPrimary' : 'text-slate-600 dark:text-slate-400'}" ${getNavClickAction(0)}>
                     <span class="text-base">🧮</span>
                     <span class="mt-0.5 font-bold text-[9px]">Skaičiuotuvai</span>
                 </button>
-                <button class="nav-tab-btn flex flex-col items-center justify-center w-12 h-full text-xs ${activeTab === 1 ? 'text-white bg-tractorPrimary' : 'text-slate-400'}" ${getNavClickAction(1)}>
+                <button class="nav-tab-btn flex flex-col items-center justify-center w-12 h-full text-xs ${activeTab === 1 ? 'text-white bg-tractorPrimary' : 'text-slate-600 dark:text-slate-400'}" ${getNavClickAction(1)}>
                     <span class="text-base">🌦️</span>
                     <span class="mt-0.5 font-bold text-[9px]">Orai</span>
                 </button>
-                <button class="nav-tab-btn flex flex-col items-center justify-center w-12 h-full text-xs ${activeTab === 2 ? 'text-white bg-tractorPrimary' : 'text-slate-400'}" ${getNavClickAction(2)}>
+                <button class="nav-tab-btn flex flex-col items-center justify-center w-12 h-full text-xs ${activeTab === 2 ? 'text-white bg-tractorPrimary' : 'text-slate-600 dark:text-slate-400'}" ${getNavClickAction(2)}>
                     <span class="text-base">🗺️</span>
                     <span class="mt-0.5 font-bold text-[9px]">Laukai</span>
                 </button>
-                <button class="nav-tab-btn flex flex-col items-center justify-center w-12 h-full text-xs ${activeTab === 5 ? 'text-white bg-tractorPrimary' : 'text-slate-400'}" ${getNavClickAction(5)}>
+                <button class="nav-tab-btn flex flex-col items-center justify-center w-12 h-full text-xs ${activeTab === 5 ? 'text-white bg-tractorPrimary' : 'text-slate-600 dark:text-slate-400'}" ${getNavClickAction(5)}>
                     <span class="text-base">🚨</span>
                     <span class="mt-0.5 font-bold text-[9px]">Skelbimai</span>
                 </button>
-                <button class="nav-tab-btn flex flex-col items-center justify-center w-12 h-full text-xs ${activeTab === 6 ? 'text-white bg-tractorPrimary' : 'text-slate-400'}" ${getNavClickAction(6)}>
+                <button class="nav-tab-btn flex flex-col items-center justify-center w-12 h-full text-xs ${activeTab === 6 ? 'text-white bg-tractorPrimary' : 'text-slate-600 dark:text-slate-400'}" ${getNavClickAction(6)}>
                     <span class="text-base">⚙️</span>
                     <span class="mt-0.5 font-bold text-[9px]">Profilis</span>
                 </button>
