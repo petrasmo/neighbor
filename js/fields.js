@@ -5,14 +5,17 @@ import {
     initOrRefreshMap, drawFieldsOnMap, highlightFieldPolygon, 
     startDrawing, stopDrawing, getDrawingPoints, calculatePolygonAreaHa 
 } from './fieldsMap.js';
-import { getTodayDateString, openFieldDetail, renderOperationsList } from './fieldsJournal.js';
+import { 
+    getTodayDateString, openFieldDetail, renderOperationsList, 
+    resetOperationForm, getEditingOpIndex 
+} from './fieldsJournal.js';
 import { generateOfficialReport, exportReportToExcel } from './fieldsReport.js';
 
 let userFieldsList = [];
 let unsubscribeFields = null;
 let selectedFieldId = null;
 let currentMapCoords = { lat: 56.0593, lng: 24.4036 };
-let cachedUserData = null; // 👈 IŠSAUGOME VARTOTOJO DUOMENIS GARAŽUI
+let cachedUserData = null;
 
 export function initFieldsTab(currentUser, userData) {
     const container = document.getElementById('view-tab-fields');
@@ -27,7 +30,7 @@ export function initFieldsTab(currentUser, userData) {
     container.innerHTML = `
         <div class="space-y-6 max-w-6xl mx-auto w-full">
             
-            <!-- HEADERIS -->
+            <!-- HEADERIS IR VALDYMAS -->
             <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-tractorBorder pb-4">
                 <div>
                     <h2 class="font-oswald text-2xl md:text-3xl font-bold uppercase tracking-wider text-white flex items-center gap-2">
@@ -68,41 +71,60 @@ export function initFieldsTab(currentUser, userData) {
                 </div>
             </div>
 
-            <!-- 2. DETALUS LAUKO PASAS -->
+            <!-- 2. DETALUS LAUKO PASAS (RODOMAS KAI PASIRENKAMAS LAUKAS) -->
             <div id="field-detail-section" class="hidden bg-tractorSurface border-2 border-tractorPrimary rounded-2xl p-6 md:p-8 shadow-2xl space-y-6">
+                
+                <!-- PASO ANTRAŠTĖ SU VALDYMO MYGTUKAIS -->
                 <div class="flex flex-col md:flex-row md:items-start justify-between gap-4 border-b border-tractorBorder/80 pb-5">
-                    <div>
-                        <div class="inline-flex items-center gap-1.5 bg-tractorPrimary/20 text-tractorPrimaryLight px-3 py-1 rounded-full text-xs font-extrabold uppercase tracking-wider mb-2">
-                            <span>🌾</span> Pasirinktas lauko pasas
+                    <div class="space-y-1.5 flex-1">
+                        <div class="flex flex-wrap items-center gap-2">
+                            <span class="inline-flex items-center gap-1 bg-tractorPrimary/20 text-tractorPrimaryLight px-3 py-0.5 rounded-full text-xs font-extrabold uppercase tracking-wider">
+                                🌾 Pasirinktas lauko pasas
+                            </span>
                         </div>
                         <h3 id="detail-field-title" class="font-oswald text-2xl md:text-3xl font-bold text-white tracking-wide">Kraunasi...</h3>
                         <p id="detail-field-meta" class="text-sm text-slate-300 mt-1"></p>
                     </div>
 
-                    <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                        <div class="bg-tractorBg border border-tractorBorder p-3.5 rounded-xl text-center">
-                            <span class="text-[10px] uppercase font-bold text-slate-400 block">Visos Išlaidos</span>
-                            <strong class="text-amber-400 text-base md:text-lg font-mono font-bold" id="detail-stat-cost">0.00 €</strong>
-                            <span class="text-[10px] text-slate-400 block" id="detail-stat-cost-ha">0.00 €/ha</span>
-                        </div>
-                        <div class="bg-tractorBg border border-tractorBorder p-3.5 rounded-xl text-center">
-                            <span class="text-[10px] uppercase font-bold text-slate-400 block">Gautas Derlius</span>
-                            <strong class="text-green-400 text-base md:text-lg font-mono font-bold" id="detail-stat-yield">0.00 t</strong>
-                            <span class="text-[10px] text-slate-400 block" id="detail-stat-yield-ha">0.00 t/ha</span>
-                        </div>
-                        <div class="bg-tractorBg border border-tractorBorder p-3.5 rounded-xl text-center col-span-2 sm:col-span-1">
-                            <span class="text-[10px] uppercase font-bold text-slate-400 block">Darbų skaičius</span>
-                            <strong class="text-white text-base md:text-lg font-mono font-bold" id="detail-stat-ops">0</strong>
-                            <span class="text-[10px] text-slate-400 block">operacijos</span>
-                        </div>
+                    <div class="flex items-center gap-2.5 shrink-0 self-start md:self-auto">
+                        <button id="btn-edit-field-info" class="h-10 px-4 bg-tractorBg hover:bg-zinc-800 text-slate-200 border border-tractorBorder hover:border-tractorPrimary text-xs font-bold rounded-xl flex items-center gap-1.5 transition cursor-pointer">
+                            <span>✏️</span> Redaguoti lauką
+                        </button>
+                        <button id="btn-delete-field-entirely" class="h-10 px-4 bg-red-950/40 hover:bg-red-900 text-red-300 border border-red-800/60 text-xs font-bold rounded-xl flex items-center gap-1.5 transition cursor-pointer">
+                            <span>🗑️</span> Ištrinti lauką
+                        </button>
                     </div>
                 </div>
 
-                <!-- OPERACIJOS REGISTRAVIMAS -->
+                <!-- FINANSINĖ LAUKO SUVESTINĖ -->
+                <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                    <div class="bg-tractorBg border border-tractorBorder p-3.5 rounded-xl text-center">
+                        <span class="text-[10px] uppercase font-bold text-slate-400 block">Visos Išlaidos</span>
+                        <strong class="text-amber-400 text-base md:text-lg font-mono font-bold" id="detail-stat-cost">0.00 €</strong>
+                        <span class="text-[10px] text-slate-400 block" id="detail-stat-cost-ha">0.00 €/ha</span>
+                    </div>
+                    <div class="bg-tractorBg border border-tractorBorder p-3.5 rounded-xl text-center">
+                        <span class="text-[10px] uppercase font-bold text-slate-400 block">Gautas Derlius</span>
+                        <strong class="text-green-400 text-base md:text-lg font-mono font-bold" id="detail-stat-yield">0.00 t</strong>
+                        <span class="text-[10px] text-slate-400 block" id="detail-stat-yield-ha">0.00 t/ha</span>
+                    </div>
+                    <div class="bg-tractorBg border border-tractorBorder p-3.5 rounded-xl text-center col-span-2 sm:col-span-1">
+                        <span class="text-[10px] uppercase font-bold text-slate-400 block">Darbų skaičius</span>
+                        <strong class="text-white text-base md:text-lg font-mono font-bold" id="detail-stat-ops">0</strong>
+                        <span class="text-[10px] text-slate-400 block">operacijos</span>
+                    </div>
+                </div>
+
+                <!-- REGISTRUOTI / REDAGUOTI DARBĄ FORMA -->
                 <div class="bg-tractorBg/90 border border-tractorBorder p-5 md:p-6 rounded-2xl space-y-4">
-                    <h4 class="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
-                        <span>➕</span> Registruoti atliktą darbą šiame lauke
-                    </h4>
+                    <div class="flex justify-between items-center">
+                        <h4 class="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
+                            <span>➕</span> Registruoti atliktą darbą šiame lauke
+                        </h4>
+                        <button type="button" id="btn-cancel-edit-op" class="text-xs text-amber-400 hover:underline hidden font-bold cursor-pointer">
+                            Atšaukti redagavimą ✕
+                        </button>
+                    </div>
 
                     <form id="add-operation-form" class="space-y-4">
                         <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -119,7 +141,7 @@ export function initFieldsTab(currentUser, userData) {
                             </div>
                             <div class="space-y-1">
                                 <label class="text-[11px] font-bold text-slate-300 uppercase block">Data (YYYY-MM-DD) *</label>
-                                <input id="op-date" type="text" pattern="[0-9]{4}-[0-9]{2}-[0-9]{2}" placeholder="2026-08-31" required 
+                                <input id="op-date" type="text" pattern="[0-9]{4}-[0-9]{2}-[0-9]{2}" placeholder="2026-09-01" required 
                                     class="w-full h-11 bg-tractorSurface border border-tractorBorder focus:border-tractorPrimary rounded-xl px-3 text-xs md:text-sm text-white font-mono font-bold outline-none">
                             </div>
                             <div class="space-y-1">
@@ -144,7 +166,7 @@ export function initFieldsTab(currentUser, userData) {
                             <input id="op-notes" type="text" placeholder="Pvz.: Vėjas 2 m/s, oro temp. +18°C" class="w-full h-11 bg-tractorSurface border border-tractorBorder focus:border-tractorPrimary rounded-xl px-3 text-xs md:text-sm text-white outline-none">
                         </div>
 
-                        <button type="submit" class="w-full h-12 bg-tractorPrimary hover:bg-tractorPrimaryHover text-white font-bold rounded-xl text-xs md:text-sm uppercase tracking-wider shadow-lg shadow-tractorPrimary/20 transition cursor-pointer">
+                        <button type="submit" id="btn-submit-operation" class="w-full h-12 bg-tractorPrimary hover:bg-tractorPrimaryHover text-white font-bold rounded-xl text-xs md:text-sm uppercase tracking-wider shadow-lg shadow-tractorPrimary/20 transition cursor-pointer">
                             📝 Įrašyti darbą į lauko žurnalą
                         </button>
                     </form>
@@ -157,7 +179,7 @@ export function initFieldsTab(currentUser, userData) {
                 </div>
             </div>
 
-            <!-- 3. LAUKŲ SĄRAŠAS EILUTĖMIS PER VISĄ PLOTĮ -->
+            <!-- 3. LAUKŲ SĄRAŠAS EILUTĖMIS -->
             <div class="bg-tractorSurface border border-tractorBorder rounded-2xl p-6 md:p-8 shadow-xl space-y-4">
                 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-tractorBorder/70 pb-3">
                     <div>
@@ -190,29 +212,23 @@ export function initFieldsTab(currentUser, userData) {
 
                         <div class="grid grid-cols-2 gap-3">
                             <div class="space-y-1">
-                                <label class="text-xs font-bold text-slate-300 uppercase tracking-wider">Lauko / Bloko Nr. (NMA)</label>
-                                <input id="field-block-input" type="text" placeholder="Pvz.: 12-04 / Laukas 1" 
-                                    class="w-full h-11 bg-tractorBg border border-tractorBorder focus:border-tractorPrimary rounded-xl px-3.5 text-xs text-white outline-none">
-                            </div>
-
-                            <div class="space-y-1">
                                 <label class="text-xs font-bold text-slate-300 uppercase tracking-wider">Plotas</label>
                                 <input id="field-area-input" type="text" readonly 
                                     class="w-full h-11 bg-tractorBg/50 border border-tractorBorder rounded-xl px-3.5 text-xs text-green-400 font-bold outline-none">
                             </div>
-                        </div>
 
-                        <div class="space-y-1">
-                            <label class="text-xs font-bold text-tractorPrimaryLight uppercase tracking-wider">Pagrindinis pasėlis</label>
-                            <select id="field-crop-select" class="w-full h-11 bg-tractorBg border border-tractorBorder focus:border-tractorPrimary rounded-xl px-3 text-xs text-white outline-none cursor-pointer">
-                                <option value="Žieminiai kviečiai">🌾 Žieminiai kviečiai</option>
-                                <option value="Žieminiai rapsai">🌱 Žieminiai rapsai</option>
-                                <option value="Vasariniai miežiai">🌾 Vasariniai miežiai</option>
-                                <option value="Žirniai / Pupos">🫘 Žirniai / Pupos</option>
-                                <option value="Kukurūzai">🌽 Kukurūzai</option>
-                                <option value="Cukriniai runkeliai">🌱 Cukriniai runkeliai</option>
-                                <option value="Pūdymas / Kita">🌾 Pūdymas / Kita</option>
-                            </select>
+                            <div class="space-y-1">
+                                <label class="text-xs font-bold text-tractorPrimaryLight uppercase tracking-wider">Pagrindinis pasėlis</label>
+                                <select id="field-crop-select" class="w-full h-11 bg-tractorBg border border-tractorBorder focus:border-tractorPrimary rounded-xl px-3 text-xs text-white outline-none cursor-pointer">
+                                    <option value="Žieminiai kviečiai">🌾 Žieminiai kviečiai</option>
+                                    <option value="Žieminiai rapsai">🌱 Žieminiai rapsai</option>
+                                    <option value="Vasariniai miežiai">🌾 Vasariniai miežiai</option>
+                                    <option value="Žirniai / Pupos">🫘 Žirniai / Pupos</option>
+                                    <option value="Kukurūzai">🌽 Kukurūzai</option>
+                                    <option value="Cukriniai runkeliai">🌱 Cukriniai runkeliai</option>
+                                    <option value="Pūdymas / Kita">🌾 Pūdymas / Kita</option>
+                                </select>
+                            </div>
                         </div>
 
                         <div class="space-y-1">
@@ -223,6 +239,52 @@ export function initFieldsTab(currentUser, userData) {
 
                         <button type="submit" class="w-full h-12 bg-tractorPrimary hover:bg-tractorPrimaryHover text-white font-bold rounded-xl text-xs uppercase tracking-wider shadow-lg shadow-tractorPrimary/20 transition cursor-pointer">
                             💾 Išsaugoti lauką
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- MODALAS: LAUKO DUOMENŲ REDAGAVIMAS -->
+            <div id="field-edit-modal" class="fixed inset-0 bg-black/80 flex items-center justify-center z-[110] hidden p-4 backdrop-blur-sm">
+                <div class="bg-tractorSurface border border-tractorBorder p-6 md:p-8 rounded-2xl max-w-md w-full space-y-4 shadow-2xl">
+                    <div class="flex justify-between items-center border-b border-tractorBorder pb-3">
+                        <h3 class="font-oswald text-xl font-bold text-white uppercase tracking-wider">✏️ Redaguoti lauko duomenis</h3>
+                        <button id="btn-close-edit-modal" class="text-slate-400 hover:text-white text-xl">&times;</button>
+                    </div>
+
+                    <form id="edit-field-form" class="space-y-4">
+                        <div class="space-y-1">
+                            <label class="text-xs font-bold text-slate-300 uppercase tracking-wider">Lauko pavadinimas *</label>
+                            <input id="edit-field-name" type="text" required class="w-full h-11 bg-tractorBg border border-tractorBorder focus:border-tractorPrimary rounded-xl px-3.5 text-xs text-white outline-none font-bold">
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-3">
+                            <div class="space-y-1">
+                                <label class="text-xs font-bold text-slate-300 uppercase tracking-wider">Bloko / Lauko Nr.</label>
+                                <input id="edit-field-block" type="text" class="w-full h-11 bg-tractorBg border border-tractorBorder focus:border-tractorPrimary rounded-xl px-3.5 text-xs text-white outline-none">
+                            </div>
+
+                            <div class="space-y-1">
+                                <label class="text-xs font-bold text-tractorPrimaryLight uppercase tracking-wider">Pasėlis</label>
+                                <select id="edit-field-crop" class="w-full h-11 bg-tractorBg border border-tractorBorder focus:border-tractorPrimary rounded-xl px-3 text-xs text-white outline-none cursor-pointer">
+                                    <option value="Žieminiai kviečiai">🌾 Žieminiai kviečiai</option>
+                                    <option value="Žieminiai rapsai">🌱 Žieminiai rapsai</option>
+                                    <option value="Vasariniai miežiai">🌾 Vasariniai miežiai</option>
+                                    <option value="Žirniai / Pupos">🫘 Žirniai / Pupos</option>
+                                    <option value="Kukurūzai">🌽 Kukurūzai</option>
+                                    <option value="Cukriniai runkeliai">🌱 Cukriniai runkeliai</option>
+                                    <option value="Pūdymas / Kita">🌾 Pūdymas / Kita</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="space-y-1">
+                            <label class="text-xs font-bold text-slate-300 uppercase tracking-wider">Veislė / Pastabos</label>
+                            <input id="edit-field-notes" type="text" class="w-full h-11 bg-tractorBg border border-tractorBorder focus:border-tractorPrimary rounded-xl px-3.5 text-xs text-white outline-none">
+                        </div>
+
+                        <button type="submit" class="w-full h-12 bg-tractorPrimary hover:bg-tractorPrimaryHover text-white font-bold rounded-xl text-xs uppercase tracking-wider shadow-lg shadow-tractorPrimary/20 transition cursor-pointer">
+                            💾 Išsaugoti pakeitimus
                         </button>
                     </form>
                 </div>
@@ -249,8 +311,8 @@ export function initFieldsTab(currentUser, userData) {
                                 <div class="text-[11px] text-slate-400">Oficiali forma pagal LR ŽŪM reikalavimus.</div>
                             </div>
                             <div class="flex items-center gap-2 shrink-0">
-                                <button id="btn-pdf-spray" class="px-3 py-1.5 bg-red-950/40 hover:bg-red-900 border border-red-800/60 text-red-300 text-xs font-bold rounded-lg transition cursor-pointer">📄 PDF</button>
-                                <button id="btn-xls-spray" class="px-3 py-1.5 bg-green-950/40 hover:bg-green-900 border border-green-800/60 text-green-300 text-xs font-bold rounded-lg transition cursor-pointer">📊 Excel (.CSV)</button>
+                                <button id="btn-pdf-spray" class="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white text-xs font-bold rounded-lg transition cursor-pointer">📄 PDF</button>
+                                <button id="btn-xls-spray" class="px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white text-xs font-bold rounded-lg transition cursor-pointer">📊 Excel (.XLS)</button>
                             </div>
                         </div>
 
@@ -260,8 +322,8 @@ export function initFieldsTab(currentUser, userData) {
                                 <div class="text-[11px] text-slate-400">Tręšimo normos, NPK ir kalkinimo operacijos.</div>
                             </div>
                             <div class="flex items-center gap-2 shrink-0">
-                                <button id="btn-pdf-fert" class="px-3 py-1.5 bg-red-950/40 hover:bg-red-900 border border-red-800/60 text-red-300 text-xs font-bold rounded-lg transition cursor-pointer">📄 PDF</button>
-                                <button id="btn-xls-fert" class="px-3 py-1.5 bg-green-950/40 hover:bg-green-900 border border-green-800/60 text-green-300 text-xs font-bold rounded-lg transition cursor-pointer">📊 Excel (.CSV)</button>
+                                <button id="btn-pdf-fert" class="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white text-xs font-bold rounded-lg transition cursor-pointer">📄 PDF</button>
+                                <button id="btn-xls-fert" class="px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white text-xs font-bold rounded-lg transition cursor-pointer">📊 Excel (.XLS)</button>
                             </div>
                         </div>
 
@@ -271,8 +333,8 @@ export function initFieldsTab(currentUser, userData) {
                                 <div class="text-[11px] text-slate-400">Visi laukai, plotai, pasėliai, nukultas derlius ir savikaina.</div>
                             </div>
                             <div class="flex items-center gap-2 shrink-0">
-                                <button id="btn-pdf-rot" class="px-3 py-1.5 bg-red-950/40 hover:bg-red-900 border border-red-800/60 text-red-300 text-xs font-bold rounded-lg transition cursor-pointer">📄 PDF</button>
-                                <button id="btn-xls-rot" class="px-3 py-1.5 bg-green-950/40 hover:bg-green-900 border border-green-800/60 text-green-300 text-xs font-bold rounded-lg transition cursor-pointer">📊 Excel (.CSV)</button>
+                                <button id="btn-pdf-rot" class="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white text-xs font-bold rounded-lg transition cursor-pointer">📄 PDF</button>
+                                <button id="btn-xls-rot" class="px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white text-xs font-bold rounded-lg transition cursor-pointer">📊 Excel (.XLS)</button>
                             </div>
                         </div>
                     </div>
@@ -282,7 +344,6 @@ export function initFieldsTab(currentUser, userData) {
         </div>
     `;
 
-    // 👈 PERDUODAME userData SU GARAŽO KOORDINATĖMIS
     initOrRefreshMap(currentMapCoords, userData);
     setupFieldEvents(currentUser, userData);
     listenToUserFields(currentUser);
@@ -300,9 +361,73 @@ function setupFieldEvents(currentUser, userData) {
     const saveModal = document.getElementById('field-save-modal');
     const closeSaveModalBtn = document.getElementById('btn-close-save-modal');
 
+    const editModal = document.getElementById('field-edit-modal');
+    const closeEditModalBtn = document.getElementById('btn-close-edit-modal');
+    const btnEditField = document.getElementById('btn-edit-field-info');
+    const btnDeleteField = document.getElementById('btn-delete-field-entirely');
+
     const reportsModal = document.getElementById('reports-choice-modal');
     const openReportsBtn = document.getElementById('btn-open-reports-modal');
     const closeReportsBtn = document.getElementById('btn-close-reports-modal');
+
+    if (btnEditField) {
+        btnEditField.onclick = () => {
+            const field = userFieldsList.find(f => f.id === selectedFieldId);
+            if (!field) return;
+
+            document.getElementById('edit-field-name').value = field.name || '';
+            document.getElementById('edit-field-block').value = field.fieldBlockNumber || '';
+            document.getElementById('edit-field-crop').value = field.crop || 'Žieminiai kviečiai';
+            document.getElementById('edit-field-notes').value = field.notes || '';
+
+            editModal.classList.remove('hidden');
+        };
+    }
+
+    if (closeEditModalBtn) closeEditModalBtn.onclick = () => editModal.classList.add('hidden');
+
+    document.getElementById('edit-field-form').onsubmit = async (e) => {
+        e.preventDefault();
+        if (!selectedFieldId) return;
+
+        const newName = document.getElementById('edit-field-name').value.trim();
+        const newBlock = document.getElementById('edit-field-block').value.trim();
+        const newCrop = document.getElementById('edit-field-crop').value;
+        const newNotes = document.getElementById('edit-field-notes').value.trim();
+
+        await db.collection("user_fields").doc(selectedFieldId).update({
+            name: newName,
+            fieldBlockNumber: newBlock,
+            crop: newCrop,
+            notes: newNotes
+        });
+
+        const field = userFieldsList.find(f => f.id === selectedFieldId);
+        if (field) {
+            field.name = newName;
+            field.fieldBlockNumber = newBlock;
+            field.crop = newCrop;
+            field.notes = newNotes;
+            openFieldDetail(field, userFieldsList);
+        }
+
+        editModal.classList.add('hidden');
+        showDialog("Atnaujinta! 🌾", `Lauko „${newName}“ duomenys sėkmingai išsaugoti.`, "✅");
+    };
+
+    if (btnDeleteField) {
+        btnDeleteField.onclick = () => {
+            const field = userFieldsList.find(f => f.id === selectedFieldId);
+            if (!field) return;
+
+            showDialog("Trinti lauką?", `Ar tikrai norite negrįžtamai pašalinti lauką „${field.name}“ ir visą jo žurnalą?`, "🗑️", async () => {
+                await db.collection("user_fields").doc(selectedFieldId).delete();
+                document.getElementById('field-detail-section').classList.add('hidden');
+                selectedFieldId = null;
+                showDialog("Laukas pašalintas", "Laukas sėkmingai ištrintas iš jūsų ūkio.", "✅");
+            }, true);
+        };
+    }
 
     openReportsBtn.onclick = () => reportsModal.classList.remove('hidden');
     closeReportsBtn.onclick = () => reportsModal.classList.add('hidden');
@@ -388,6 +513,9 @@ function setupFieldEvents(currentUser, userData) {
         e.preventDefault();
         if (!selectedFieldId) return;
 
+        const field = userFieldsList.find(f => f.id === selectedFieldId);
+        if (!field) return;
+
         const opType = document.getElementById('op-type').value;
         const opDate = document.getElementById('op-date').value || getTodayDateString();
         const opProduct = document.getElementById('op-product').value.trim();
@@ -404,24 +532,29 @@ function setupFieldEvents(currentUser, userData) {
             notes: opNotes
         };
 
-        await db.collection("user_fields").doc(selectedFieldId).update({
-            operations: firebase.firestore.FieldValue.arrayUnion(newOp)
-        });
+        const editingIdx = getEditingOpIndex();
+        let updatedOperations = field.operations ? [...field.operations] : [];
 
-        document.getElementById('op-product').value = '';
-        document.getElementById('op-rate').value = '';
-        document.getElementById('op-cost').value = '';
-        document.getElementById('op-notes').value = '';
-
-        const field = userFieldsList.find(f => f.id === selectedFieldId);
-        if (field) {
-            field.operations = field.operations || [];
-            field.operations.push(newOp);
-            renderOperationsList(field);
+        if (editingIdx !== null && editingIdx >= 0) {
+            updatedOperations[editingIdx] = newOp;
+        } else {
+            updatedOperations.push(newOp);
         }
 
-        showDialog("Įrašyta! 🚜", "Operacija sėkmingai įtraukta į žurnalą.", "✅");
+        await db.collection("user_fields").doc(selectedFieldId).update({
+            operations: updatedOperations
+        });
+
+        field.operations = updatedOperations;
+        resetOperationForm();
+        renderOperationsList(field, userFieldsList);
+
+        showDialog("Išsaugota! 🚜", editingIdx !== null ? "Darbų įrašas atnaujintas." : "Operacija sėkmingai įtraukta į žurnalą.", "✅");
     };
+
+    document.getElementById('btn-cancel-edit-op')?.addEventListener('click', () => {
+        resetOperationForm();
+    });
 }
 
 function listenToUserFields(currentUser) {
@@ -447,6 +580,11 @@ function listenToUserFields(currentUser) {
 
             renderFieldsTableRows();
             drawFieldsOnMap(userFieldsList, selectedFieldId, (id) => window.selectAndFocusField(id));
+
+            if (selectedFieldId) {
+                const activeField = userFieldsList.find(f => f.id === selectedFieldId);
+                if (activeField) openFieldDetail(activeField, userFieldsList);
+            }
         });
 }
 
@@ -505,7 +643,7 @@ window.selectAndFocusField = function(fieldId) {
     const field = userFieldsList.find(f => f.id === fieldId);
     if (!field) return;
 
-    openFieldDetail(field);
+    openFieldDetail(field, userFieldsList);
     highlightFieldPolygon(fieldId);
     renderFieldsTableRows();
 };

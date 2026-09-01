@@ -33,12 +33,12 @@ export function initReportsTab(userFieldsList, userData) {
                         </p>
                     </div>
 
-                    <!-- 🌟 PARYŠKINTI RYŠKŪS MYGTUKAI -->
+                    <!-- 🌟 100% NEPERMATOMI RYŠKŪS MYGTUKAI -->
                     <div class="flex items-center gap-3 shrink-0">
-                        <button id="tab-btn-pdf-spray" class="h-11 px-5 bg-red-600 hover:bg-red-700 text-white font-extrabold text-xs md:text-sm rounded-xl flex items-center gap-2 shadow-lg shadow-red-600/20 transition cursor-pointer">
+                        <button id="tab-btn-pdf-spray" style="background-color: #DC2626 !important; color: #FFFFFF !important;" class="h-11 px-5 font-extrabold text-xs md:text-sm rounded-xl flex items-center gap-2 shadow-md transition cursor-pointer">
                             <span>🖨️</span> <span>PDF / Spausdinti</span>
                         </button>
-                        <button id="tab-btn-xls-spray" class="h-11 px-5 bg-green-600 hover:bg-green-700 text-white font-extrabold text-xs md:text-sm rounded-xl flex items-center gap-2 shadow-lg shadow-green-600/20 transition cursor-pointer">
+                        <button id="tab-btn-xls-spray" style="background-color: #16A34A !important; color: #FFFFFF !important;" class="h-11 px-5 font-extrabold text-xs md:text-sm rounded-xl flex items-center gap-2 shadow-md transition cursor-pointer">
                             <span>📊</span> <span>Excel (.XLS)</span>
                         </button>
                     </div>
@@ -57,10 +57,10 @@ export function initReportsTab(userFieldsList, userData) {
                     </div>
 
                     <div class="flex items-center gap-3 shrink-0">
-                        <button id="tab-btn-pdf-fert" class="h-11 px-5 bg-red-600 hover:bg-red-700 text-white font-extrabold text-xs md:text-sm rounded-xl flex items-center gap-2 shadow-lg shadow-red-600/20 transition cursor-pointer">
+                        <button id="tab-btn-pdf-fert" style="background-color: #DC2626 !important; color: #FFFFFF !important;" class="h-11 px-5 font-extrabold text-xs md:text-sm rounded-xl flex items-center gap-2 shadow-md transition cursor-pointer">
                             <span>🖨️</span> <span>PDF / Spausdinti</span>
                         </button>
-                        <button id="tab-btn-xls-fert" class="h-11 px-5 bg-green-600 hover:bg-green-700 text-white font-extrabold text-xs md:text-sm rounded-xl flex items-center gap-2 shadow-lg shadow-green-600/20 transition cursor-pointer">
+                        <button id="tab-btn-xls-fert" style="background-color: #16A34A !important; color: #FFFFFF !important;" class="h-11 px-5 font-extrabold text-xs md:text-sm rounded-xl flex items-center gap-2 shadow-md transition cursor-pointer">
                             <span>📊</span> <span>Excel (.XLS)</span>
                         </button>
                     </div>
@@ -79,10 +79,10 @@ export function initReportsTab(userFieldsList, userData) {
                     </div>
 
                     <div class="flex items-center gap-3 shrink-0">
-                        <button id="tab-btn-pdf-rot" class="h-11 px-5 bg-red-600 hover:bg-red-700 text-white font-extrabold text-xs md:text-sm rounded-xl flex items-center gap-2 shadow-lg shadow-red-600/20 transition cursor-pointer">
+                        <button id="tab-btn-pdf-rot" style="background-color: #DC2626 !important; color: #FFFFFF !important;" class="h-11 px-5 font-extrabold text-xs md:text-sm rounded-xl flex items-center gap-2 shadow-md transition cursor-pointer">
                             <span>🖨️</span> <span>PDF / Spausdinti</span>
                         </button>
-                        <button id="tab-btn-xls-rot" class="h-11 px-5 bg-green-600 hover:bg-green-700 text-white font-extrabold text-xs md:text-sm rounded-xl flex items-center gap-2 shadow-lg shadow-green-600/20 transition cursor-pointer">
+                        <button id="tab-btn-xls-rot" style="background-color: #16A34A !important; color: #FFFFFF !important;" class="h-11 px-5 font-extrabold text-xs md:text-sm rounded-xl flex items-center gap-2 shadow-md transition cursor-pointer">
                             <span>📊</span> <span>Excel (.XLS)</span>
                         </button>
                     </div>
@@ -93,12 +93,10 @@ export function initReportsTab(userFieldsList, userData) {
         </div>
     `;
 
-    // PDF mygtukai
     document.getElementById('tab-btn-pdf-spray').onclick = () => generateOfficialReport('spray', userFieldsList, userData);
     document.getElementById('tab-btn-pdf-fert').onclick = () => generateOfficialReport('fertilizer', userFieldsList, userData);
     document.getElementById('tab-btn-pdf-rot').onclick = () => generateOfficialReport('rotation', userFieldsList, userData);
 
-    // Excel mygtukai
     document.getElementById('tab-btn-xls-spray').onclick = () => exportReportToExcel('spray', userFieldsList, userData);
     document.getElementById('tab-btn-xls-fert').onclick = () => exportReportToExcel('fertilizer', userFieldsList, userData);
     document.getElementById('tab-btn-xls-rot').onclick = () => exportReportToExcel('rotation', userFieldsList, userData);

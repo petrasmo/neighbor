@@ -20,43 +20,45 @@ export function initWeatherTab(currentUser, userData) {
     container.innerHTML = `
         <div class="space-y-6 max-w-6xl mx-auto w-full">
             
-            <!-- HEADERIS IR LOKACIJOS / LAUKO PARINKIMAS -->
-            <div class="bg-tractorSurface border border-tractorBorder rounded-2xl p-6 md:p-8 space-y-4 shadow-xl">
+            <!-- 1. VIENTISA VIRŠUTINĖ AGRO-ORŲ KORTELĖ (SUJUNGTA, BE TARPŲ) -->
+            <div id="weather-top-unified-card" class="bg-tractorSurface border border-tractorBorder rounded-2xl p-6 md:p-7 shadow-xl space-y-5">
+                
+                <!-- VIRŠUTINĖ EILUTĖ: ANTRAŠTĖ IR GPS -->
                 <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-tractorBorder/70 pb-4">
                     <div>
                         <h2 class="font-oswald text-2xl md:text-3xl font-bold uppercase tracking-wider text-white flex items-center gap-2">
                             <span>🌦️</span> Agro-Orai ir Purškimo Langas
                         </h2>
-                        <p class="text-xs md:text-sm text-slate-300 mt-1" id="weather-loc-label">
+                        <p class="text-xs md:text-sm text-slate-300 mt-0.5" id="weather-loc-label">
                             📍 Orų radaras nustatytas: <strong class="text-green-400 font-bold">${currentWeatherCoords.name}</strong> (${currentWeatherCoords.lat.toFixed(4)}, ${currentWeatherCoords.lng.toFixed(4)})
                         </p>
                     </div>
 
-                    <button id="btn-weather-gps" class="h-11 px-4 bg-tractorBg hover:bg-zinc-800 text-slate-200 border border-tractorBorder hover:border-tractorPrimary text-xs font-bold rounded-xl flex items-center gap-2 shadow transition cursor-pointer self-start md:self-auto shrink-0">
+                    <button id="btn-weather-gps" style="background-color: #2E7D32 !important; color: #FFFFFF !important;" class="h-11 px-4 text-xs font-bold rounded-xl flex items-center gap-2 shadow-lg transition cursor-pointer self-start md:self-auto shrink-0">
                         <span>📡</span> Nustatyti dabartinę GPS vietą
                     </button>
                 </div>
 
-                <!-- LAUKO PARINKIMAS SU CUSTOM SELECT -->
-                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-1">
-                    <div class="space-y-1">
+                <!-- LAUKO PASIRINKIMAS -->
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-tractorBg/80 p-3.5 rounded-xl border border-tractorBorder">
+                    <div class="space-y-0.5">
                         <label class="text-xs font-bold text-tractorPrimaryLight uppercase tracking-wider block">
                             🌾 Pasirinkite lauką orų prognozei:
                         </label>
-                        <p class="text-[11px] text-slate-400">Jei jūsų laukai nutolę, pasirinkite konkretų sklypą tiksliam orų modeliui.</p>
+                        <p class="text-[11px] text-slate-400">Jei jūsų laukai nutolę, pasirinkite konkretų sklypą tiksliam modeliui.</p>
                     </div>
 
                     <div id="weather-field-select-box" class="w-full sm:w-80"></div>
                 </div>
-            </div>
 
-            <!-- 1. GYVAS PURŠKIMO ŠVIESOFORAS -->
-            <div id="live-spray-card" class="bg-tractorSurface border border-tractorBorder rounded-2xl p-6 md:p-8 shadow-xl space-y-6">
-                <div class="text-center py-8 text-slate-500 text-sm">Jungiamasi prie meteorologinių palydovų...</div>
+                <!-- ŠVIESOFORO IR VERDIKTO BLOKAS (INTEGRUOTAS Į TĄ PATĮ LANGĄ) -->
+                <div id="live-spray-inner-box" class="pt-2">
+                    <div class="text-center py-6 text-slate-500 text-sm">Jungiamasi prie meteorologinių palydovų...</div>
+                </div>
             </div>
 
             <!-- 2. 48 VALANDŲ PURŠKIMO LANGO GRAFIKAS -->
-            <div class="bg-tractorSurface border border-tractorBorder rounded-2xl p-6 md:p-8 space-y-4 shadow-xl">
+            <div class="bg-tractorSurface border border-tractorBorder rounded-2xl p-6 md:p-7 shadow-xl space-y-4">
                 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-tractorBorder/70 pb-3">
                     <div>
                         <h3 class="font-oswald text-xl font-bold text-white uppercase tracking-wider flex items-center gap-2">
@@ -66,7 +68,7 @@ export function initWeatherTab(currentUser, userData) {
                     </div>
                 </div>
 
-                <div id="hourly-forecast-grid" class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-3 pt-2">
+                <div id="hourly-forecast-grid" class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-3 pt-1">
                     <div class="text-center py-8 text-slate-500 text-xs col-span-full">Kraunamas valandinis grafikas...</div>
                 </div>
             </div>
@@ -200,32 +202,38 @@ function findCurrentHourIndex(hourly) {
 }
 
 function evaluateSprayCondition(windSpeedMs, windGustsMs, tempC, rainProb, rainMm) {
-    const warnings = [];
+    const redReasons = [];
+    const yellowReasons = [];
 
-    if (windSpeedMs > 4.5) warnings.push(`Per stiprus vėjas (${windSpeedMs} m/s > 4.5 m/s).`);
-    if (windGustsMs > 6.0) warnings.push(`Pavojingi vėjo gūsiai (${windGustsMs} m/s > 6.0 m/s – nuneš lašelius).`);
-    if (rainMm > 0) warnings.push(`Šiuo metu krenta lietus.`);
-    if (rainProb > 40) warnings.push(`Didelė lietaus tikimybė (${rainProb}%).`);
-    if (tempC > 25) warnings.push(`Per karšta (+${tempC}°C > 25°C – garavimo rizika).`);
-    if (tempC < 8) warnings.push(`Per šalta (+${tempC}°C < 8°C – augalai nepasisavina chemikalų).`);
+    if (windSpeedMs > 4.5) redReasons.push(`Per stiprus vėjas (${windSpeedMs} m/s > 4.5 m/s).`);
+    if (windGustsMs > 6.0) redReasons.push(`Pavojingi vėjo gūsiai (${windGustsMs} m/s > 6.0 m/s).`);
+    if (rainMm > 0) redReasons.push(`Šiuo metu krenta lietus.`);
+    if (rainProb > 40) redReasons.push(`Didelė lietaus tikimybė (${rainProb}%).`);
+    if (tempC > 25) redReasons.push(`Per karšta (+${tempC}°C > 25°C).`);
+    if (tempC < 8) redReasons.push(`Per šalta (+${tempC}°C < 8°C).`);
 
-    if (windSpeedMs > 4.5 || windGustsMs > 6.0 || rainMm > 0 || rainProb > 40 || tempC > 25 || tempC < 8) {
+    if (redReasons.length > 0) {
         return {
             status: 'red',
             icon: '🔴',
             text: 'Netinka',
             badgeClass: 'bg-red-500/20 text-red-600 border-red-500/40',
-            warnings: warnings
+            reasons: redReasons
         };
     }
 
-    if (windSpeedMs > 3.0 || windGustsMs > 4.5 || tempC > 22 || rainProb > 20) {
+    if (windSpeedMs > 3.0) yellowReasons.push(`Vėjas (${windSpeedMs} m/s) ant ribos.`);
+    if (windGustsMs > 4.5) yellowReasons.push(`Vėjo gūsiai (${windGustsMs} m/s).`);
+    if (tempC > 22) yellowReasons.push(`Šilta (+${tempC}°C).`);
+    if (rainProb > 20) yellowReasons.push(`Lietaus tikimybė (${rainProb}%).`);
+
+    if (yellowReasons.length > 0) {
         return {
             status: 'yellow',
             icon: '🟡',
             text: 'Rizika',
             badgeClass: 'bg-amber-500/20 text-amber-600 border-amber-500/40',
-            warnings: [`Vėjas (${windSpeedMs} m/s) ant ribos.`]
+            reasons: yellowReasons
         };
     }
 
@@ -238,9 +246,9 @@ function evaluateSprayCondition(windSpeedMs, windGustsMs, tempC, rainProb, rainM
     };
 }
 
-// 🚦 GILIU KONTRASTU PARYŠKINTAS VERDIKTAS
+// 🚦 INTEGRUOTAS ŠVIESOFORAS
 function renderLiveSprayStatus(current, hourly, currentIdx) {
-    const liveCard = document.getElementById('live-spray-card');
+    const liveCard = document.getElementById('live-spray-inner-box');
     if (!liveCard || !current) return;
 
     const windSpeedMs = parseFloat((hourly.wind_speed_10m[currentIdx] / 3.6).toFixed(1));
@@ -266,61 +274,62 @@ function renderLiveSprayStatus(current, hourly, currentIdx) {
         statusTitle = "🔴 ŠIUO METU PURKŠTI DRAUDŽIAMA ARBA NEREKOMENDUOJAMA";
         borderColor = "border-red-600";
         bgColor = "bg-red-950/30";
-        statusDesc = `Priežastys: ${evaluation.warnings.join(' ')}`;
+        statusDesc = `Priežastys: ${evaluation.reasons.join(' ')}`;
     } else if (evaluation.status === 'yellow') {
         statusTitle = "🟡 ŠIUO METU SĄLYGOS RIZIKINGOS";
         borderColor = "border-amber-500";
         bgColor = "bg-amber-950/30";
-        statusDesc = `Pastaba: Vėjas (${windSpeedMs} m/s) ant ribos. Rekomenduojama naudoti antilašinius purkštukus.`;
+        statusDesc = `Pastaba: ${evaluation.reasons.join(' ')} Rekomenduojama naudoti antilašinius purkštukus.`;
     }
 
     if (evaluation.status === 'green' && futureRainRelIndex !== -1) {
         const hoursLater = futureRainRelIndex + 1;
         const rainProbFuture = futureHours[futureRainRelIndex];
-        statusDesc += ` <span class="text-amber-500 font-extrabold block mt-2 bg-amber-500/10 p-2.5 rounded-lg border border-amber-500/30">⚠️ Dėmesio: po ${hoursLater} val. prognozuojamas lietus (${rainProbFuture}% tikimybė). Purkškite greitai įsigeriančius preparatus!</span>`;
+        statusDesc += ` <span class="text-amber-600 font-extrabold block mt-2 bg-amber-500/10 p-2.5 rounded-lg border border-amber-500/30">⚠️ Dėmesio: po ${hoursLater} val. prognozuojamas lietus (${rainProbFuture}% tikimybė). Purkškite greitai įsigeriančius preparatus!</span>`;
     }
 
-    liveCard.className = `${bgColor} border-2 ${borderColor} rounded-2xl p-6 md:p-8 shadow-xl space-y-6 transition-all`;
     liveCard.innerHTML = `
-        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-tractorBorder/70 pb-5">
-            <div class="space-y-1.5 flex-1">
-                <span class="text-xs uppercase font-black tracking-wider ${evaluation.status === 'green' ? 'text-green-600' : (evaluation.status === 'yellow' ? 'text-amber-600' : 'text-red-600')}">
-                    Agrometeorologinis verdiktas (Šiuo metu)
-                </span>
-                <h3 class="font-oswald text-2xl md:text-3xl font-bold tracking-wide" style="color: var(--text-main);">${statusTitle}</h3>
-                <p class="text-xs md:text-sm font-medium leading-relaxed" style="color: var(--text-muted);">${statusDesc}</p>
-            </div>
-            <div class="text-right shrink-0">
-                <span class="text-[11px] text-slate-500 block uppercase font-bold">Oro temperatūra</span>
-                <span class="text-3xl md:text-4xl font-black font-mono" style="color: var(--text-main);">${tempC > 0 ? '+' : ''}${tempC}°C</span>
-            </div>
-        </div>
-
-        <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs md:text-sm">
-            <div class="bg-tractorBg p-4 rounded-xl border border-tractorBorder space-y-1">
-                <span class="text-slate-500 text-xs block font-bold">💨 Vėjas (2m aukštyje)</span>
-                <strong class="font-mono text-xl font-bold ${windSpeedMs > 4.5 ? 'text-red-500' : 'text-green-600'}">${windSpeedMs} m/s</strong>
-                <span class="text-[11px] text-slate-500 block font-medium">Gūsiai: <strong class="${windGustsMs > 6 ? 'text-red-500' : 'text-slate-700'}">${windGustsMs} m/s</strong></span>
+        <div class="${bgColor} border-2 ${borderColor} rounded-2xl p-6 md:p-7 shadow-lg space-y-5 transition-all">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-tractorBorder/70 pb-4">
+                <div class="space-y-1 flex-1">
+                    <span class="text-xs uppercase font-black tracking-wider ${evaluation.status === 'green' ? 'text-green-600' : (evaluation.status === 'yellow' ? 'text-amber-600' : 'text-red-600')}">
+                        Agrometeorologinis verdiktas (Šiuo metu)
+                    </span>
+                    <h3 class="font-oswald text-2xl md:text-3xl font-bold tracking-wide" style="color: var(--text-main);">${statusTitle}</h3>
+                    <p class="text-xs md:text-sm font-medium leading-relaxed" style="color: var(--text-muted);">${statusDesc}</p>
+                </div>
+                <div class="text-right shrink-0">
+                    <span class="text-[11px] text-slate-500 block uppercase font-bold">Oro temperatūra</span>
+                    <span class="text-3xl md:text-4xl font-black font-mono" style="color: var(--text-main);">${tempC > 0 ? '+' : ''}${tempC}°C</span>
+                </div>
             </div>
 
-            <div class="bg-tractorBg p-4 rounded-xl border border-tractorBorder space-y-1">
-                <span class="text-slate-500 text-xs block font-bold">💧 Krituliai šiuo metu</span>
-                <strong class="font-mono text-xl font-bold" style="color: var(--text-main);">${rainMm} mm</strong>
-                <span class="text-[11px] ${currentRainProb > 30 ? 'text-red-500 font-bold' : 'text-green-600 font-bold'} block">
-                    Lietaus tikimybė: ${currentRainProb}%
-                </span>
-            </div>
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs md:text-sm">
+                <div class="bg-tractorBg p-3.5 rounded-xl border border-tractorBorder space-y-1">
+                    <span class="text-slate-500 text-xs block font-bold">💨 Vėjas (2m aukštyje)</span>
+                    <strong class="font-mono text-xl font-bold ${windSpeedMs > 4.5 ? 'text-red-500' : 'text-green-600'}">${windSpeedMs} m/s</strong>
+                    <span class="text-[11px] text-slate-500 block font-medium">Gūsiai: <strong class="${windGustsMs > 6 ? 'text-red-500' : 'text-slate-700'}">${windGustsMs} m/s</strong></span>
+                </div>
 
-            <div class="bg-tractorBg p-4 rounded-xl border border-tractorBorder space-y-1">
-                <span class="text-slate-500 text-xs block font-bold">🌫️ Santykinė oro drėgmė</span>
-                <strong class="font-mono text-xl font-bold ${humidity < 50 ? 'text-amber-500' : 'text-green-600'}">${humidity}%</strong>
-                <span class="text-[11px] text-slate-500 block font-medium">${humidity > 50 ? 'Optimali drėgmė' : 'Sausa (garavimo rizika)'}</span>
-            </div>
+                <div class="bg-tractorBg p-3.5 rounded-xl border border-tractorBorder space-y-1">
+                    <span class="text-slate-500 text-xs block font-bold">💧 Krituliai šiuo metu</span>
+                    <strong class="font-mono text-xl font-bold" style="color: var(--text-main);">${rainMm} mm</strong>
+                    <span class="text-[11px] ${currentRainProb > 30 ? 'text-red-500 font-bold' : 'text-green-600 font-bold'} block">
+                        Lietaus tikimybė: ${currentRainProb}%
+                    </span>
+                </div>
 
-            <div class="bg-tractorBg p-4 rounded-xl border border-tractorBorder space-y-1">
-                <span class="text-slate-500 text-xs block font-bold">🌱 Dirvos temp. (paviršius)</span>
-                <strong class="text-green-600 font-mono text-xl font-bold">+${(current.soil_temperature_0cm || 12).toFixed(1)}°C</strong>
-                <span class="text-[11px] text-slate-500 block font-medium">Dirvos būklė</span>
+                <div class="bg-tractorBg p-3.5 rounded-xl border border-tractorBorder space-y-1">
+                    <span class="text-slate-500 text-xs block font-bold">🌫️ Santykinė oro drėgmė</span>
+                    <strong class="font-mono text-xl font-bold ${humidity < 50 ? 'text-amber-500' : 'text-green-600'}">${humidity}%</strong>
+                    <span class="text-[11px] text-slate-500 block font-medium">${humidity > 50 ? 'Optimali drėgmė' : 'Sausa (garavimo rizika)'}</span>
+                </div>
+
+                <div class="bg-tractorBg p-3.5 rounded-xl border border-tractorBorder space-y-1">
+                    <span class="text-slate-500 text-xs block font-bold">🌱 Dirvos temp. (paviršius)</span>
+                    <strong class="text-green-600 font-mono text-xl font-bold">+${(current.soil_temperature_0cm || 12).toFixed(1)}°C</strong>
+                    <span class="text-[11px] text-slate-500 block font-medium">Dirvos būklė</span>
+                </div>
             </div>
         </div>
     `;

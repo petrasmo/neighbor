@@ -1,12 +1,13 @@
 // js/ui.js
 export function switchTab(tabIndex) {
     const views = {
-        0: document.getElementById('view-tab-feed'),      // 0: SOS Skelbimai
-        1: document.getElementById('view-tab-fields'),    // 1: Mano laukai
-        2: document.getElementById('view-tab-garage'),    // 2: Mano technika
-        3: document.getElementById('view-tab-settings'),  // 3: Nustatymai
-        4: document.getElementById('view-tab-reports'),   // 4: Ataskaitos
-        5: document.getElementById('view-tab-weather')    // 5: Agro-Orai (NAUJAS!)
+        0: document.getElementById('view-tab-calculators'), // 0: Skaičiuoklės (Default)
+        1: document.getElementById('view-tab-weather'),     // 1: Agro-Orai
+        2: document.getElementById('view-tab-fields'),      // 2: Mano laukai
+        3: document.getElementById('view-tab-reports'),     // 3: Ataskaitos
+        4: document.getElementById('view-tab-garage'),      // 4: Mano technika
+        5: document.getElementById('view-tab-feed'),        // 5: SOS Skelbimai
+        6: document.getElementById('view-tab-settings')     // 6: Nustatymai
     };
 
     Object.entries(views).forEach(([idx, el]) => {

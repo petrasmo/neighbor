@@ -15,7 +15,7 @@ export function renderGlobalSidebar(activePage = 'index', activeTab = 0) {
         }
     };
 
-    // 1. DESKTOP ŠONINIS MENIU (JURGISAGRO)
+    // 1. DESKTOP ŠONINIS MENIU
     if (sidebarContainer) {
         sidebarContainer.innerHTML = `
             <aside class="hidden md:flex flex-col justify-between w-72 bg-tractorSurface border-r border-tractorBorder p-6 h-full shrink-0">
@@ -37,25 +37,38 @@ export function renderGlobalSidebar(activePage = 'index', activeTab = 0) {
                     </div>
                     
                     <nav class="space-y-1.5">
-                        <button class="nav-tab-btn w-full text-left px-4 py-3 rounded-xl font-semibold text-sm transition flex items-center gap-3.5 cursor-pointer ${isIndex && activeTab === 0 ? 'bg-tractorPrimary text-white shadow' : 'text-slate-400 hover:text-white'}" ${getNavClickAction(0)}>
-                            <span class="text-lg">🚨</span> <span>SOS Skelbimai</span>
+                        <!-- 1. SKAIČIUOKLĖS (PIRMAS PUNKTAS) -->
+                        <button class="nav-tab-btn w-full text-left px-4 py-3 rounded-xl font-semibold text-sm transition flex items-center gap-3.5 cursor-pointer ${activeTab === 0 ? 'bg-tractorPrimary text-white shadow' : 'text-slate-400 hover:text-white'}" ${getNavClickAction(0)}>
+                            <span class="text-lg">🧮</span> <span>Skaičiuoklės</span>
                         </button>
-                        <button class="nav-tab-btn w-full text-left px-4 py-3 rounded-xl font-semibold text-sm transition flex items-center gap-3.5 cursor-pointer ${isIndex && activeTab === 5 ? 'bg-tractorPrimary text-white shadow' : 'text-slate-400 hover:text-white'}" ${getNavClickAction(5)}>
+
+                        <!-- 2. AGRO-ORAI -->
+                        <button class="nav-tab-btn w-full text-left px-4 py-3 rounded-xl font-semibold text-sm transition flex items-center gap-3.5 cursor-pointer ${activeTab === 1 ? 'bg-tractorPrimary text-white shadow' : 'text-slate-400 hover:text-white'}" ${getNavClickAction(1)}>
                             <span class="text-lg">🌦️</span> <span>Agro-Orai (Purškimas)</span>
                         </button>
-                        <button class="nav-tab-btn w-full text-left px-4 py-3 rounded-xl font-semibold text-sm transition flex items-center gap-3.5 cursor-pointer ${isIndex && activeTab === 1 ? 'bg-tractorPrimary text-white shadow' : 'text-slate-400 hover:text-white'}" ${getNavClickAction(1)}>
+
+                        <!-- 3. MANO LAUKAI -->
+                        <button class="nav-tab-btn w-full text-left px-4 py-3 rounded-xl font-semibold text-sm transition flex items-center gap-3.5 cursor-pointer ${activeTab === 2 ? 'bg-tractorPrimary text-white shadow' : 'text-slate-400 hover:text-white'}" ${getNavClickAction(2)}>
                             <span class="text-lg">🗺️</span> <span>Mano laukai</span>
                         </button>
-                        <button class="nav-tab-btn w-full text-left px-4 py-3 rounded-xl font-semibold text-sm transition flex items-center gap-3.5 cursor-pointer ${isIndex && activeTab === 4 ? 'bg-tractorPrimary text-white shadow' : 'text-slate-400 hover:text-white'}" ${getNavClickAction(4)}>
+
+                        <!-- 4. ATASKAITOS -->
+                        <button class="nav-tab-btn w-full text-left px-4 py-3 rounded-xl font-semibold text-sm transition flex items-center gap-3.5 cursor-pointer ${activeTab === 3 ? 'bg-tractorPrimary text-white shadow' : 'text-slate-400 hover:text-white'}" ${getNavClickAction(3)}>
                             <span class="text-lg">📄</span> <span>Ataskaitos</span>
                         </button>
-                        <a href="grudai.html" class="w-full text-left px-4 py-3 rounded-xl font-semibold text-sm transition flex items-center gap-3.5 ${!isIndex ? 'bg-tractorPrimary text-white shadow' : 'text-green-400 bg-tractorPrimary/10 border border-tractorPrimary/30 hover:bg-tractorPrimary/20'}">
-                            <span class="text-lg">🧮</span> <span>Skaičiuoklės</span>
-                        </a>
-                        <button class="nav-tab-btn w-full text-left px-4 py-3 rounded-xl font-semibold text-sm transition flex items-center gap-3.5 cursor-pointer ${isIndex && activeTab === 2 ? 'bg-tractorPrimary text-white shadow' : 'text-slate-400 hover:text-white'}" ${getNavClickAction(2)}>
+
+                        <!-- 5. MANO TECHNIKA -->
+                        <button class="nav-tab-btn w-full text-left px-4 py-3 rounded-xl font-semibold text-sm transition flex items-center gap-3.5 cursor-pointer ${activeTab === 4 ? 'bg-tractorPrimary text-white shadow' : 'text-slate-400 hover:text-white'}" ${getNavClickAction(4)}>
                             <span class="text-lg">🔧</span> <span>Mano technika</span>
                         </button>
-                        <button class="nav-tab-btn w-full text-left px-4 py-3 rounded-xl font-semibold text-sm transition flex items-center gap-3.5 cursor-pointer ${isIndex && activeTab === 3 ? 'bg-tractorPrimary text-white shadow' : 'text-slate-400 hover:text-white'}" ${getNavClickAction(3)}>
+
+                        <!-- 6. SOS SKELBIMAI (PERKELTI PRIEŠ NUSTATYMUS) -->
+                        <button class="nav-tab-btn w-full text-left px-4 py-3 rounded-xl font-semibold text-sm transition flex items-center gap-3.5 cursor-pointer ${activeTab === 5 ? 'bg-tractorPrimary text-white shadow' : 'text-slate-400 hover:text-white'}" ${getNavClickAction(5)}>
+                            <span class="text-lg">🚨</span> <span>SOS Skelbimai</span>
+                        </button>
+
+                        <!-- 7. NUSTATYMAI -->
+                        <button class="nav-tab-btn w-full text-left px-4 py-3 rounded-xl font-semibold text-sm transition flex items-center gap-3.5 cursor-pointer ${activeTab === 6 ? 'bg-tractorPrimary text-white shadow' : 'text-slate-400 hover:text-white'}" ${getNavClickAction(6)}>
                             <span class="text-lg">⚙️</span> <span>Nustatymai</span>
                         </button>
                     </nav>
@@ -109,23 +122,23 @@ export function renderGlobalSidebar(activePage = 'index', activeTab = 0) {
     if (mobileNavContainer) {
         mobileNavContainer.innerHTML = `
             <nav class="md:hidden fixed bottom-0 left-0 right-0 bg-tractorSurface border-t border-tractorBorder h-16 flex justify-around items-center z-50">
-                <button class="nav-tab-btn flex flex-col items-center justify-center w-12 h-full text-xs ${isIndex && activeTab === 0 ? 'text-white bg-tractorPrimary' : 'text-slate-400'}" ${getNavClickAction(0)}>
-                    <span class="text-base">🚨</span>
-                    <span class="mt-0.5 font-bold text-[9px]">Skelbimai</span>
+                <button class="nav-tab-btn flex flex-col items-center justify-center w-12 h-full text-xs ${activeTab === 0 ? 'text-white bg-tractorPrimary' : 'text-slate-400'}" ${getNavClickAction(0)}>
+                    <span class="text-base">🧮</span>
+                    <span class="mt-0.5 font-bold text-[9px]">Skaičiuotuvai</span>
                 </button>
-                <button class="nav-tab-btn flex flex-col items-center justify-center w-12 h-full text-xs ${isIndex && activeTab === 5 ? 'text-white bg-tractorPrimary' : 'text-slate-400'}" ${getNavClickAction(5)}>
+                <button class="nav-tab-btn flex flex-col items-center justify-center w-12 h-full text-xs ${activeTab === 1 ? 'text-white bg-tractorPrimary' : 'text-slate-400'}" ${getNavClickAction(1)}>
                     <span class="text-base">🌦️</span>
                     <span class="mt-0.5 font-bold text-[9px]">Orai</span>
                 </button>
-                <button class="nav-tab-btn flex flex-col items-center justify-center w-12 h-full text-xs ${isIndex && activeTab === 1 ? 'text-white bg-tractorPrimary' : 'text-slate-400'}" ${getNavClickAction(1)}>
+                <button class="nav-tab-btn flex flex-col items-center justify-center w-12 h-full text-xs ${activeTab === 2 ? 'text-white bg-tractorPrimary' : 'text-slate-400'}" ${getNavClickAction(2)}>
                     <span class="text-base">🗺️</span>
                     <span class="mt-0.5 font-bold text-[9px]">Laukai</span>
                 </button>
-                <a href="grudai.html" class="flex flex-col items-center justify-center w-12 h-full text-xs ${!isIndex ? 'text-white bg-tractorPrimary' : 'text-green-400'}">
-                    <span class="text-base">🧮</span>
-                    <span class="mt-0.5 font-bold text-[9px]">Skaičiuotuvai</span>
-                </a>
-                <button class="nav-tab-btn flex flex-col items-center justify-center w-12 h-full text-xs ${isIndex && activeTab === 3 ? 'text-white bg-tractorPrimary' : 'text-slate-400'}" ${getNavClickAction(3)}>
+                <button class="nav-tab-btn flex flex-col items-center justify-center w-12 h-full text-xs ${activeTab === 5 ? 'text-white bg-tractorPrimary' : 'text-slate-400'}" ${getNavClickAction(5)}>
+                    <span class="text-base">🚨</span>
+                    <span class="mt-0.5 font-bold text-[9px]">Skelbimai</span>
+                </button>
+                <button class="nav-tab-btn flex flex-col items-center justify-center w-12 h-full text-xs ${activeTab === 6 ? 'text-white bg-tractorPrimary' : 'text-slate-400'}" ${getNavClickAction(6)}>
                     <span class="text-base">⚙️</span>
                     <span class="mt-0.5 font-bold text-[9px]">Profilis</span>
                 </button>

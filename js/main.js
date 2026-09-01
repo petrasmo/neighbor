@@ -11,13 +11,19 @@ import { initWeatherTab } from './weather.js';
 import { initGarageTab } from './garage.js';
 import { initSettingsTab, refreshSettingsMap } from './settings.js';
 
+// Skaičiuoklių moduliai
+import { initGrainTab } from './grain.js';
+import { renderSeedCalculator } from './seedCalculator.js';
+import { renderSprayerCalculator } from './sprayerCalculator.js';
+import { renderFertilizerCalculator } from './fertilizerCalculator.js';
+
 let currentUser = null;
 let userData = null;
 let cachedFieldsList = [];
 const classifierMap = {};
 
 document.addEventListener('DOMContentLoaded', () => {
-    // Patikriname ar URL yra parametras ?tab=X
+    // Patikriname ar URL yra parametras ?tab=X (Pagal nutylėjimą: 0 - Skaičiuoklės)
     const urlParams = new URLSearchParams(window.location.search);
     const requestedTab = parseInt(urlParams.get('tab')) || 0;
 
@@ -31,10 +37,12 @@ document.addEventListener('DOMContentLoaded', () => {
         btn.addEventListener('click', () => {
             const tabIdx = parseInt(btn.getAttribute('data-tab'));
 
-            if (!currentUser && (tabIdx === 1 || tabIdx === 2 || tabIdx === 3 || tabIdx === 4)) {
+            // Apsauga neprisijungusiems (Laukai: 2, Ataskaitos: 3, Technika: 4, Nustatymai: 6)
+            // Skaičiuoklės (0), Orai (1) ir Skelbimai (5) yra ATVIRI VISIEMS!
+            if (!currentUser && (tabIdx === 2 || tabIdx === 3 || tabIdx === 4 || tabIdx === 6)) {
                 showDialog(
                     "Reikalingas prisijungimas",
-                    "Norėdami valdyti laukus, ataskaitas ar techniką, prisijunkite su savo „Google“ paskyra.",
+                    "Norėdami valdyti savo laukus, ataskaitas ar nustatymus, prisijunkite su savo „Google“ paskyra.",
                     "🔒",
                     loginWithGoogle,
                     true
@@ -44,26 +52,31 @@ document.addEventListener('DOMContentLoaded', () => {
 
             switchTab(tabIdx);
 
-            if (tabIdx === 1) {
-                refreshFieldsMap();
-            } else if (tabIdx === 4) {
-                initReportsTab(cachedFieldsList, userData);
-            } else if (tabIdx === 5) {
+            if (tabIdx === 0) {
+                // Skaičiuoklių centras
+            } else if (tabIdx === 1) {
                 initWeatherTab(currentUser, userData);
+            } else if (tabIdx === 2) {
+                refreshFieldsMap();
             } else if (tabIdx === 3) {
+                initReportsTab(cachedFieldsList, userData);
+            } else if (tabIdx === 6) {
                 refreshSettingsMap();
             }
         });
     });
 
+    // Inicijuojame Skaičiuoklių Hubo mygtukus
+    setupCalculatorsHub();
+
     const openHelp = () => {
         showDialog(
-            "Kaip naudotis Neighbor P.M. 🚜",
-            `<b>1. SOS Skelbimai:</b> Skubios pagalbos paieška laukuose.<br><br>
+            "Kaip naudotis JurgisAgro.com 🚜",
+            `<b>1. Skaičiuoklės:</b> Grūdų kainos, sėjos normos, purkštuvai ir trąšos vienoje vietoje.<br><br>
              <b>2. Agro-Orai:</b> Gyvas purškimo lango šviesoforas ir vėjo greitis.<br><br>
              <b>3. Mano Laukai:</b> Palydovinis žemėlapis, laukai ir darbų registravimas.<br><br>
              <b>4. Ataskaitos:</b> NMA žurnalai PDF ir Excel formatu.<br><br>
-             <b>5. Skaičiuoklės:</b> Grūdų kainos, sėjos norma, purkštuvai ir trąšos.`,
+             <b>5. SOS Skelbimai:</b> Skubios technikos pagalbos paieška tarp kaimynų.`,
             "📖"
         );
     };
@@ -131,13 +144,10 @@ document.addEventListener('DOMContentLoaded', () => {
             initSettingsTab(currentUser, userData);
             initWeatherTab(currentUser, userData);
 
-            // Jei buvo atidarytas konkretus tabas per URL
-            if (requestedTab > 0) {
-                switchTab(requestedTab);
-                if (requestedTab === 1) refreshFieldsMap();
-                if (requestedTab === 5) initWeatherTab(currentUser, userData);
-                if (requestedTab === 4) initReportsTab(cachedFieldsList, userData);
-            }
+            switchTab(requestedTab);
+            if (requestedTab === 2) refreshFieldsMap();
+            if (requestedTab === 1) initWeatherTab(currentUser, userData);
+            if (requestedTab === 3) initReportsTab(cachedFieldsList, userData);
         } else {
             currentUser = null;
             userData = null;
@@ -163,10 +173,7 @@ document.addEventListener('DOMContentLoaded', () => {
             initFeedTab(null, null, classifierMap);
             initWeatherTab(null, null);
 
-            if (requestedTab === 5) {
-                switchTab(5);
-                initWeatherTab(null, null);
-            }
+            switchTab(requestedTab);
         }
 
         if (preloader) {
@@ -175,3 +182,68 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 });
+
+function setupCalculatorsHub() {
+    const hubView = document.getElementById('view-calculators-hub');
+    const grainView = document.getElementById('view-tab-grain-embed');
+    const seedView = document.getElementById('view-tab-seed-embed');
+    const sprayView = document.getElementById('view-tab-spray-embed');
+    const fertView = document.getElementById('view-tab-fert-embed');
+
+    const openGrainBtn = document.getElementById('btn-open-grain-calc');
+    const openSeedBtn = document.getElementById('btn-open-seed-calc');
+    const openSprayBtn = document.getElementById('btn-open-spray-calc');
+    const openFertBtn = document.getElementById('btn-open-fert-calc');
+
+    const backFromGrainBtn = document.getElementById('btn-back-from-grain');
+    const backFromSeedBtn = document.getElementById('btn-back-from-seed');
+    const backFromSprayBtn = document.getElementById('btn-back-from-spray');
+    const backFromFertBtn = document.getElementById('btn-back-from-fert');
+
+    const hideAll = () => {
+        hubView?.classList.add('hidden');
+        grainView?.classList.add('hidden');
+        seedView?.classList.add('hidden');
+        sprayView?.classList.add('hidden');
+        fertView?.classList.add('hidden');
+    };
+
+    if (openGrainBtn) openGrainBtn.onclick = () => {
+        hideAll();
+        grainView?.classList.remove('hidden');
+        initGrainTab(currentUser, userData);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    if (openSeedBtn) openSeedBtn.onclick = () => {
+        hideAll();
+        seedView?.classList.remove('hidden');
+        renderSeedCalculator(document.getElementById('seed-calc-content'));
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    if (openSprayBtn) openSprayBtn.onclick = () => {
+        hideAll();
+        sprayView?.classList.remove('hidden');
+        renderSprayerCalculator(document.getElementById('spray-calc-content'));
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    if (openFertBtn) openFertBtn.onclick = () => {
+        hideAll();
+        fertView?.classList.remove('hidden');
+        renderFertilizerCalculator(document.getElementById('fert-calc-content'));
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    const returnToHub = () => {
+        hideAll();
+        hubView?.classList.remove('hidden');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    if (backFromGrainBtn) backFromGrainBtn.onclick = returnToHub;
+    if (backFromSeedBtn) backFromSeedBtn.onclick = returnToHub;
+    if (backFromSprayBtn) backFromSprayBtn.onclick = returnToHub;
+    if (backFromFertBtn) backFromFertBtn.onclick = returnToHub;
+}

@@ -9,6 +9,7 @@ let unsubscribeGrain = null;
 let userGarageCoords = null;
 let currentCoords = null;
 let userFieldsList = [];
+let lastUpdatedTimeFormatted = null; // 👈 LAIKO ŽYMA
 
 const state = {
     viewMode: 'ranked',
@@ -303,7 +304,7 @@ async function resolveLocationChain() {
             return;
         }
     } catch (e) {
-        console.warn("IP lokacijos klaida.");
+        console.warn("IP klaida.");
     }
 
     currentCoords = {
@@ -316,11 +317,16 @@ async function resolveLocationChain() {
     renderElevatorsCards();
 }
 
+// 🌟 ATNAUJINA LOKACIJĄ IR RODO ŠVIEŽIĄ KAINŲ ATNAUJINIMO DATĄ
 function updateLocationText() {
     const el = document.getElementById('location-status-text');
-    if (el && currentCoords) {
-        el.innerHTML = `📍 Atstumai skaičiuojami nuo jūsų <strong class="text-green-400">${currentCoords.sourceText}</strong>.`;
-    }
+    if (!el || !currentCoords) return;
+
+    const timeString = lastUpdatedTimeFormatted 
+        ? `<span class="block sm:inline sm:ml-2 text-green-400 font-bold">• 🕒 Kainos atnaujintos: ${lastUpdatedTimeFormatted} (kas 6 val.)</span>`
+        : '';
+
+    el.innerHTML = `📍 Atstumai skaičiuojami nuo jūsų <strong class="text-green-400">${currentCoords.sourceText}</strong>.${timeString}`;
 }
 
 function listenToGrainPrices() {
@@ -328,8 +334,29 @@ function listenToGrainPrices() {
 
     unsubscribeGrain = db.collection("grain_prices").onSnapshot((snapshot) => {
         activeMarketData = [];
-        snapshot.forEach(doc => activeMarketData.push(doc.data()));
+        let latestTimestamp = null;
 
+        snapshot.forEach(doc => {
+            const data = doc.data();
+            activeMarketData.push(data);
+
+            if (data.updatedAt) {
+                const docDate = data.updatedAt.toDate ? data.updatedAt.toDate() : new Date(data.updatedAt);
+                if (!latestTimestamp || docDate > latestTimestamp) {
+                    latestTimestamp = docDate;
+                }
+            }
+        });
+
+        // 🕒 Išsaugome suformatuotą atnaujinimo datą
+        if (latestTimestamp) {
+            lastUpdatedTimeFormatted = latestTimestamp.toLocaleString('lt-LT', {
+                year: 'numeric', month: '2-digit', day: '2-digit',
+                hour: '2-digit', minute: '2-digit'
+            });
+        }
+
+        updateLocationText();
         renderRankedBuyers();
         renderElevatorsCards();
     });
