@@ -1,13 +1,16 @@
 // js/grainPage.js
 import { auth, db } from './firebase.js';
 import { loginWithGoogle, logoutUser } from './auth.js';
-import { initThemeToggle } from './theme.js'; // 👈 PRIDĖTA
+import { initThemeToggle } from './theme.js';
+import { renderGlobalSidebar } from './sidebar.js'; // 👈 BENDRO MENIU GENERAVIMAS
 import { initGrainTab } from './grain.js';
 import { renderSeedCalculator } from './seedCalculator.js';
 import { renderSprayerCalculator } from './sprayerCalculator.js';
 import { renderFertilizerCalculator } from './fertilizerCalculator.js';
 
 document.addEventListener('DOMContentLoaded', () => {
+    // 1. Sugeneruojame šoninį meniu (grudai puslapis)
+    renderGlobalSidebar('grudai');
     initThemeToggle();
 
     let currentUser = null;
@@ -77,31 +80,47 @@ document.addEventListener('DOMContentLoaded', () => {
     backFromFertBtn.onclick = returnToHub;
 
     auth.onAuthStateChanged(async (user) => {
-        const slot = document.getElementById('auth-btn-slot');
+        const sidebarAuthBox = document.getElementById('auth-sidebar-box');
+        const mobileAuthSlot = document.getElementById('auth-status-mobile');
+
         if (user) {
             currentUser = user;
             const doc = await db.collection("users").doc(user.uid).get();
             if (doc.exists) userData = doc.data();
 
-            if (slot) {
-                slot.innerHTML = `
-                    <div class="flex items-center gap-2">
-                        <span class="text-xs text-slate-300 hidden sm:inline font-semibold">${user.displayName || user.email}</span>
-                        <button id="btn-logout-grain" class="px-3.5 py-1.5 bg-tractorBg border border-tractorBorder hover:border-red-500 text-xs font-bold text-slate-300 rounded-xl transition">
-                            Atsijungti
-                        </button>
-                    </div>
+            if (sidebarAuthBox) {
+                sidebarAuthBox.innerHTML = `
+                    <p class="text-[10px] text-slate-500 uppercase font-bold">Prisijungta kaip:</p>
+                    <p class="text-xs text-white truncate font-medium">${user.email}</p>
+                    <button id="btn-logout-grain-side" class="w-full py-1.5 mt-2 bg-tractorBg hover:bg-red-950/40 text-slate-300 hover:text-red-400 border border-tractorBorder rounded-lg text-xs font-bold transition cursor-pointer">
+                        🚪 Atsijungti
+                    </button>
                 `;
-                document.getElementById('btn-logout-grain')?.addEventListener('click', logoutUser);
+                document.getElementById('btn-logout-grain-side')?.addEventListener('click', logoutUser);
+            }
+
+            if (mobileAuthSlot) {
+                mobileAuthSlot.innerHTML = `
+                    <button id="btn-logout-grain-mob" class="px-3 py-1 bg-tractorBg border border-tractorBorder text-xs font-bold text-slate-300 rounded-lg">Atsijungti</button>
+                `;
+                document.getElementById('btn-logout-grain-mob')?.addEventListener('click', logoutUser);
             }
         } else {
-            if (slot) {
-                slot.innerHTML = `
-                    <button id="btn-login-grain" class="px-4 py-2 bg-tractorPrimary hover:bg-tractorPrimaryHover text-white text-xs font-bold rounded-xl shadow transition">
+            if (sidebarAuthBox) {
+                sidebarAuthBox.innerHTML = `
+                    <p class="text-[11px] text-slate-400">Esate neprisijungęs</p>
+                    <button class="login-trigger-btn w-full py-2 bg-tractorPrimary hover:bg-tractorPrimaryHover text-white text-xs font-bold rounded-lg shadow transition cursor-pointer">
                         Prisijungti su Google
                     </button>
                 `;
-                document.getElementById('btn-login-grain')?.addEventListener('click', loginWithGoogle);
+                sidebarAuthBox.querySelector('.login-trigger-btn')?.addEventListener('click', loginWithGoogle);
+            }
+
+            if (mobileAuthSlot) {
+                mobileAuthSlot.innerHTML = `
+                    <button class="login-trigger-btn px-3 py-1 bg-tractorPrimary text-white rounded-lg text-xs font-bold">Prisijungti</button>
+                `;
+                mobileAuthSlot.querySelector('.login-trigger-btn')?.addEventListener('click', loginWithGoogle);
             }
         }
     });

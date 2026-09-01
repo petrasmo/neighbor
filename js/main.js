@@ -2,7 +2,8 @@
 import { auth, db } from './firebase.js';
 import { loginWithGoogle, logoutUser } from './auth.js';
 import { switchTab, showDialog } from './ui.js';
-import { initThemeToggle } from './theme.js'; // 👈 PRIDĖTA
+import { initThemeToggle } from './theme.js';
+import { renderGlobalSidebar } from './sidebar.js';
 import { initFeedTab } from './feed.js';
 import { initFieldsTab, refreshFieldsMap } from './fields.js';
 import { initReportsTab } from './reportsTab.js';
@@ -16,11 +17,16 @@ let cachedFieldsList = [];
 const classifierMap = {};
 
 document.addEventListener('DOMContentLoaded', () => {
-    // 🎨 Inicijuojame temų perjungimą
+    // Patikriname ar URL yra parametras ?tab=X
+    const urlParams = new URLSearchParams(window.location.search);
+    const requestedTab = parseInt(urlParams.get('tab')) || 0;
+
+    renderGlobalSidebar('index', requestedTab);
     initThemeToggle();
 
     document.querySelectorAll('.login-trigger-btn').forEach(btn => btn.addEventListener('click', loginWithGoogle));
 
+    // Navigacija
     document.querySelectorAll('.nav-tab-btn').forEach(btn => {
         btn.addEventListener('click', () => {
             const tabIdx = parseInt(btn.getAttribute('data-tab'));
@@ -100,7 +106,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 sidebarAuthBox.innerHTML = `
                     <p class="text-[10px] text-slate-500 uppercase font-bold">Prisijungta kaip:</p>
                     <p class="text-xs text-white truncate font-medium">${user.email}</p>
-                    <button id="btn-logout-main" class="w-full py-1.5 mt-2 bg-tractorBg hover:bg-red-950/40 text-slate-300 hover:text-red-400 border border-tractorBorder rounded-lg text-xs font-bold transition">
+                    <button id="btn-logout-main" class="w-full py-1.5 mt-2 bg-tractorBg hover:bg-red-950/40 text-slate-300 hover:text-red-400 border border-tractorBorder rounded-lg text-xs font-bold transition cursor-pointer">
                         🚪 Atsijungti
                     </button>
                 `;
@@ -124,6 +130,14 @@ document.addEventListener('DOMContentLoaded', () => {
             initGarageTab(currentUser, userData);
             initSettingsTab(currentUser, userData);
             initWeatherTab(currentUser, userData);
+
+            // Jei buvo atidarytas konkretus tabas per URL
+            if (requestedTab > 0) {
+                switchTab(requestedTab);
+                if (requestedTab === 1) refreshFieldsMap();
+                if (requestedTab === 5) initWeatherTab(currentUser, userData);
+                if (requestedTab === 4) initReportsTab(cachedFieldsList, userData);
+            }
         } else {
             currentUser = null;
             userData = null;
@@ -132,7 +146,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (sidebarAuthBox) {
                 sidebarAuthBox.innerHTML = `
                     <p class="text-[11px] text-slate-400">Esate neprisijungęs</p>
-                    <button class="login-trigger-btn w-full py-2 bg-tractorPrimary hover:bg-tractorPrimaryHover text-white text-xs font-bold rounded-lg shadow transition">
+                    <button class="login-trigger-btn w-full py-2 bg-tractorPrimary hover:bg-tractorPrimaryHover text-white text-xs font-bold rounded-lg shadow transition cursor-pointer">
                         Prisijungti su Google
                     </button>
                 `;
@@ -148,6 +162,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
             initFeedTab(null, null, classifierMap);
             initWeatherTab(null, null);
+
+            if (requestedTab === 5) {
+                switchTab(5);
+                initWeatherTab(null, null);
+            }
         }
 
         if (preloader) {
