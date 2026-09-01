@@ -71,10 +71,8 @@ export function initFieldsTab(currentUser, userData) {
                 </div>
             </div>
 
-            <!-- 2. DETALUS LAUKO PASAS (RODOMAS KAI PASIRENKAMAS LAUKAS) -->
+            <!-- 2. DETALUS LAUKO PASAS -->
             <div id="field-detail-section" class="hidden bg-tractorSurface border-2 border-tractorPrimary rounded-2xl p-6 md:p-8 shadow-2xl space-y-6">
-                
-                <!-- PASO ANTRAŠTĖ SU VALDYMO MYGTUKAIS -->
                 <div class="flex flex-col md:flex-row md:items-start justify-between gap-4 border-b border-tractorBorder/80 pb-5">
                     <div class="space-y-1.5 flex-1">
                         <div class="flex flex-wrap items-center gap-2">
@@ -115,7 +113,7 @@ export function initFieldsTab(currentUser, userData) {
                     </div>
                 </div>
 
-                <!-- REGISTRUOTI / REDAGUOTI DARBĄ FORMA -->
+                <!-- REGISTRUOTI DARBĄ FORMA -->
                 <div class="bg-tractorBg/90 border border-tractorBorder p-5 md:p-6 rounded-2xl space-y-4">
                     <div class="flex justify-between items-center">
                         <h4 class="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">

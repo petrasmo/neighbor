@@ -14,6 +14,8 @@ import { initSettingsTab, refreshSettingsMap } from './settings.js';
 // Skaičiuoklių moduliai
 import { initGrainTab } from './grain.js';
 import { renderSeedCalculator } from './seedCalculator.js';
+import { renderCoverCropCalculator } from './coverCropCalculator.js';
+import { renderCombineLossCalculator } from './combineLossCalculator.js';
 import { renderSprayerCalculator } from './sprayerCalculator.js';
 import { renderFertilizerCalculator } from './fertilizerCalculator.js';
 
@@ -36,7 +38,6 @@ document.addEventListener('DOMContentLoaded', () => {
         btn.addEventListener('click', () => {
             const tabIdx = parseInt(btn.getAttribute('data-tab'));
 
-            // Apsauga neprisijungusiems (Laukai: 2, Ataskaitos: 3, Technika: 4, Nustatymai: 6)
             if (!currentUser && (tabIdx === 2 || tabIdx === 3 || tabIdx === 4 || tabIdx === 6)) {
                 showDialog(
                     "Reikalingas prisijungimas",
@@ -66,14 +67,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     setupCalculatorsHub();
 
-    // 🌟 IŠSAMUS IR PROFESIONALUS NAUDOJIMOSI GIDAS
     const openHelp = () => {
         showDialog(
             "Kaip išnaudoti visą JurgisAgro naudą? 🚜",
             `
             <div class="space-y-4 text-left">
-                
-                <!-- SVARBIAUSIA ŽINUTĖ: PRISIJUNGIMAS IR LAUKAI -->
                 <div class="p-3.5 bg-tractorPrimary/15 border border-tractorPrimary/40 rounded-xl space-y-1.5">
                     <div class="flex items-center gap-2">
                         <span class="text-base">💡</span>
@@ -86,15 +84,13 @@ document.addEventListener('DOMContentLoaded', () => {
                     </p>
                 </div>
 
-                <!-- ŽINGSNIAI IR FUNKCIJOS -->
                 <div class="space-y-2.5 text-xs md:text-sm">
-                    
                     <div class="p-2.5 bg-tractorBg rounded-xl border border-tractorBorder space-y-1">
                         <div class="font-bold flex items-center gap-1.5" style="color: var(--text-main);">
                             <span>🌾</span> <span>1. Grūdų ir agronomijos skaičiuoklės</span>
                         </div>
                         <p class="text-slate-600 dark:text-slate-300 text-xs">
-                            Pasirinkite konkretų savo lauką – sistema automatiškai apskaičiuos tikslų atstumą iki kiekvieno elevatoriaus, transporto savikainą, sėklos didmaišių kiekį ar purkštuvo bakų maišymo proporcijas.
+                            Pasirinkite konkretų savo lauką – sistema automatiškai apskaičiuos tikslų atstumą iki kiekvieno elevatoriaus, posėlių mišinių poreikį, kombaino nuostolius ar purkštuvo proporcijas.
                         </p>
                     </div>
 
@@ -121,7 +117,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             <span>📄</span> <span>4. Oficialios NMA / ŽŪM ataskaitos</span>
                         </div>
                         <p class="text-slate-600 dark:text-slate-300 text-xs">
-                            Pagal jūsų įvestus darbus vienu paspaudimu sugeneruojami oficialios formos Augalų apsaugos ir Trąšų apskaitos žurnalai PDF (spausdinimui) arba Excel formatu.
+                            Pagal jūsų įvestus darbus vienu paspaudimu sugeneruojami oficialios formos Augalų apsaugos ir Trąšų apskaitos žurnalai PDF arba Excel formatu.
                         </p>
                     </div>
 
@@ -133,9 +129,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             Sugedus technikai ar skubant nukulti derlių, paskelbkite SOS pranešimą – jį matys aplinkiniai ūkininkai jūsų pasirinktu spinduliu.
                         </p>
                     </div>
-
                 </div>
-
             </div>
             `,
             "📖"
@@ -249,16 +243,22 @@ function setupCalculatorsHub() {
     const hubView = document.getElementById('view-calculators-hub');
     const grainView = document.getElementById('view-tab-grain-embed');
     const seedView = document.getElementById('view-tab-seed-embed');
+    const coverView = document.getElementById('view-tab-cover-embed');
+    const combineView = document.getElementById('view-tab-combine-embed');
     const sprayView = document.getElementById('view-tab-spray-embed');
     const fertView = document.getElementById('view-tab-fert-embed');
 
     const openGrainBtn = document.getElementById('btn-open-grain-calc');
     const openSeedBtn = document.getElementById('btn-open-seed-calc');
+    const openCoverBtn = document.getElementById('btn-open-cover-calc');
+    const openCombineBtn = document.getElementById('btn-open-combine-calc');
     const openSprayBtn = document.getElementById('btn-open-spray-calc');
     const openFertBtn = document.getElementById('btn-open-fert-calc');
 
     const backFromGrainBtn = document.getElementById('btn-back-from-grain');
     const backFromSeedBtn = document.getElementById('btn-back-from-seed');
+    const backFromCoverBtn = document.getElementById('btn-back-from-cover');
+    const backFromCombineBtn = document.getElementById('btn-back-from-combine');
     const backFromSprayBtn = document.getElementById('btn-back-from-spray');
     const backFromFertBtn = document.getElementById('btn-back-from-fert');
 
@@ -266,6 +266,8 @@ function setupCalculatorsHub() {
         hubView?.classList.add('hidden');
         grainView?.classList.add('hidden');
         seedView?.classList.add('hidden');
+        coverView?.classList.add('hidden');
+        combineView?.classList.add('hidden');
         sprayView?.classList.add('hidden');
         fertView?.classList.add('hidden');
     };
@@ -281,6 +283,20 @@ function setupCalculatorsHub() {
         hideAll();
         seedView?.classList.remove('hidden');
         renderSeedCalculator(document.getElementById('seed-calc-content'));
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    if (openCoverBtn) openCoverBtn.onclick = () => {
+        hideAll();
+        coverView?.classList.remove('hidden');
+        renderCoverCropCalculator(document.getElementById('cover-calc-content'));
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    if (openCombineBtn) openCombineBtn.onclick = () => {
+        hideAll();
+        combineView?.classList.remove('hidden');
+        renderCombineLossCalculator(document.getElementById('combine-calc-content'));
         window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
@@ -306,6 +322,8 @@ function setupCalculatorsHub() {
 
     if (backFromGrainBtn) backFromGrainBtn.onclick = returnToHub;
     if (backFromSeedBtn) backFromSeedBtn.onclick = returnToHub;
+    if (backFromCoverBtn) backFromCoverBtn.onclick = returnToHub;
+    if (backFromCombineBtn) backFromCombineBtn.onclick = returnToHub;
     if (backFromSprayBtn) backFromSprayBtn.onclick = returnToHub;
     if (backFromFertBtn) backFromFertBtn.onclick = returnToHub;
 }

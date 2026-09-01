@@ -5,6 +5,8 @@ import { initThemeToggle } from './theme.js';
 import { renderGlobalSidebar } from './sidebar.js';
 import { initGrainTab } from './grain.js';
 import { renderSeedCalculator } from './seedCalculator.js';
+import { renderCoverCropCalculator } from './coverCropCalculator.js';
+import { renderCombineLossCalculator } from './combineLossCalculator.js';
 import { renderSprayerCalculator } from './sprayerCalculator.js';
 import { renderFertilizerCalculator } from './fertilizerCalculator.js';
 
@@ -18,16 +20,22 @@ document.addEventListener('DOMContentLoaded', () => {
     const hubView = document.getElementById('view-calculators-hub');
     const grainView = document.getElementById('view-tab-grain');
     const seedView = document.getElementById('view-tab-seed');
+    const coverView = document.getElementById('view-tab-cover');
+    const combineView = document.getElementById('view-tab-combine');
     const sprayView = document.getElementById('view-tab-spray');
     const fertView = document.getElementById('view-tab-fert');
 
     const openGrainBtn = document.getElementById('btn-open-grain-calc');
     const openSeedBtn = document.getElementById('btn-open-seed-calc');
+    const openCoverBtn = document.getElementById('btn-open-cover-calc');
+    const openCombineBtn = document.getElementById('btn-open-combine-calc');
     const openSprayBtn = document.getElementById('btn-open-spray-calc');
     const openFertBtn = document.getElementById('btn-open-fert-calc');
 
     const backFromGrainBtn = document.getElementById('btn-back-from-grain');
     const backFromSeedBtn = document.getElementById('btn-back-from-seed');
+    const backFromCoverBtn = document.getElementById('btn-back-from-cover');
+    const backFromCombineBtn = document.getElementById('btn-back-from-combine');
     const backFromSprayBtn = document.getElementById('btn-back-from-spray');
     const backFromFertBtn = document.getElementById('btn-back-from-fert');
 
@@ -35,6 +43,8 @@ document.addEventListener('DOMContentLoaded', () => {
         hubView.classList.add('hidden');
         grainView.classList.add('hidden');
         seedView.classList.add('hidden');
+        coverView.classList.add('hidden');
+        combineView.classList.add('hidden');
         sprayView.classList.add('hidden');
         fertView.classList.add('hidden');
     };
@@ -50,6 +60,20 @@ document.addEventListener('DOMContentLoaded', () => {
         hideAllViews();
         seedView.classList.remove('hidden');
         renderSeedCalculator(document.getElementById('seed-calc-content'));
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    openCoverBtn.onclick = () => {
+        hideAllViews();
+        coverView.classList.remove('hidden');
+        renderCoverCropCalculator(document.getElementById('cover-calc-content'));
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    openCombineBtn.onclick = () => {
+        hideAllViews();
+        combineView.classList.remove('hidden');
+        renderCombineLossCalculator(document.getElementById('combine-calc-content'));
         window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
@@ -75,6 +99,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     backFromGrainBtn.onclick = returnToHub;
     backFromSeedBtn.onclick = returnToHub;
+    backFromCoverBtn.onclick = returnToHub;
+    backFromCombineBtn.onclick = returnToHub;
     backFromSprayBtn.onclick = returnToHub;
     backFromFertBtn.onclick = returnToHub;
 
@@ -87,7 +113,6 @@ document.addEventListener('DOMContentLoaded', () => {
             const doc = await db.collection("users").doc(user.uid).get();
             if (doc.exists) userData = doc.data();
 
-            // 🌟 PATAISYTAS BLOKAS: Ryškus el. paštas ir aiškus mygtukas abiejose temose
             if (sidebarAuthBox) {
                 sidebarAuthBox.innerHTML = `
                     <p class="text-[10px] text-slate-500 uppercase font-bold tracking-wider">Prisijungta kaip:</p>
