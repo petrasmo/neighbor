@@ -218,17 +218,23 @@ export function initFieldsTab(currentUser, userData) {
                             </div>
 
                             <div class="space-y-1">
-                                <label class="text-xs font-bold text-tractorPrimaryLight uppercase tracking-wider">Pagrindinis pasėlis</label>
-                                <select id="field-crop-select" class="w-full h-11 bg-tractorBg border border-tractorBorder focus:border-tractorPrimary rounded-xl px-3 text-xs text-white outline-none cursor-pointer">
-                                    <option value="Žieminiai kviečiai">🌾 Žieminiai kviečiai</option>
-                                    <option value="Žieminiai rapsai">🌱 Žieminiai rapsai</option>
-                                    <option value="Vasariniai miežiai">🌾 Vasariniai miežiai</option>
-                                    <option value="Žirniai / Pupos">🫘 Žirniai / Pupos</option>
-                                    <option value="Kukurūzai">🌽 Kukurūzai</option>
-                                    <option value="Cukriniai runkeliai">🌱 Cukriniai runkeliai</option>
-                                    <option value="Pūdymas / Kita">🌾 Pūdymas / Kita</option>
-                                </select>
+                                <label class="text-xs font-bold text-slate-300 uppercase tracking-wider">Bloko / Lauko Nr.</label>
+                                <input id="field-block-input" type="text" placeholder="Pvz.: 123-01" 
+                                    class="w-full h-11 bg-tractorBg border border-tractorBorder focus:border-tractorPrimary rounded-xl px-3.5 text-xs text-white outline-none">
                             </div>
+                        </div>
+
+                        <div class="space-y-1">
+                            <label class="text-xs font-bold text-tractorPrimaryLight uppercase tracking-wider">Pagrindinis pasėlis</label>
+                            <select id="field-crop-select" class="w-full h-11 bg-tractorBg border border-tractorBorder focus:border-tractorPrimary rounded-xl px-3 text-xs text-white outline-none cursor-pointer">
+                                <option value="Žieminiai kviečiai">🌾 Žieminiai kviečiai</option>
+                                <option value="Žieminiai rapsai">🌱 Žieminiai rapsai</option>
+                                <option value="Vasariniai miežiai">🌾 Vasariniai miežiai</option>
+                                <option value="Žirniai / Pupos">🫘 Žirniai / Pupos</option>
+                                <option value="Kukurūzai">🌽 Kukurūzai</option>
+                                <option value="Cukriniai runkeliai">🌱 Cukriniai runkeliai</option>
+                                <option value="Pūdymas / Kita">🌾 Pūdymas / Kita</option>
+                            </select>
                         </div>
 
                         <div class="space-y-1">
@@ -474,10 +480,10 @@ function setupFieldEvents(currentUser, userData) {
     document.getElementById('save-field-form').onsubmit = async (e) => {
         e.preventDefault();
         const name = document.getElementById('field-name-input').value.trim();
-        const blockNumber = document.getElementById('field-block-input').value.trim();
+        const blockNumber = document.getElementById('field-block-input')?.value?.trim() || '';
         const areaHa = parseFloat(document.getElementById('field-area-input').value) || 0;
         const crop = document.getElementById('field-crop-select').value;
-        const notes = document.getElementById('field-notes-input').value.trim();
+        const notes = document.getElementById('field-notes-input')?.value?.trim() || '';
 
         const cleanCoords = getDrawingPoints().map(p => ({ lat: p.lat, lng: p.lng }));
 
@@ -504,6 +510,7 @@ function setupFieldEvents(currentUser, userData) {
             createdAt: firebase.firestore.FieldValue.serverTimestamp()
         });
 
+        document.getElementById('save-field-form').reset();
         saveModal.classList.add('hidden');
         cancelBtn.click();
         showDialog("Laukas išsaugotas! 🌾", `Laukas „${name}“ (${areaHa} ha) sėkmingai pridėtas.`, "✅");

@@ -115,12 +115,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 await db.collection("users").doc(user.uid).set(userData);
             }
 
+            // 🌟 PATAISYTAS BLOKAS: Ryškus el. paštas ir aiškus mygtukas abiejose temose
             if (sidebarAuthBox) {
                 sidebarAuthBox.innerHTML = `
-                    <p class="text-[10px] text-slate-500 uppercase font-bold">Prisijungta kaip:</p>
-                    <p class="text-xs text-white truncate font-medium">${user.email}</p>
-                    <button id="btn-logout-main" class="w-full py-1.5 mt-2 bg-tractorBg hover:bg-red-950/40 text-slate-300 hover:text-red-400 border border-tractorBorder rounded-lg text-xs font-bold transition cursor-pointer">
-                        🚪 Atsijungti
+                    <p class="text-[10px] text-slate-500 uppercase font-bold tracking-wider">Prisijungta kaip:</p>
+                    <p class="text-xs truncate font-bold mt-0.5" style="color: var(--text-main);">${user.email}</p>
+                    <button id="btn-logout-main" class="w-full py-2 mt-2 bg-tractorBg hover:bg-red-500/10 text-red-500 dark:text-red-400 border border-tractorBorder hover:border-red-400 rounded-xl text-xs font-bold transition cursor-pointer flex items-center justify-center gap-1.5">
+                        <span>🚪</span> <span>Atsijungti</span>
                     </button>
                 `;
                 document.getElementById('btn-logout-main')?.addEventListener('click', logoutUser);
@@ -128,7 +129,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (mobileAuthSlot) {
                 mobileAuthSlot.innerHTML = `
-                    <button id="btn-logout-mobile" class="px-3 py-1 bg-tractorBg border border-tractorBorder text-xs font-bold text-slate-300 rounded-lg">Atsijungti</button>
+                    <button id="btn-logout-mobile" class="px-3 py-1 bg-tractorBg border border-tractorBorder text-xs font-bold text-red-500 rounded-lg">Atsijungti</button>
                 `;
                 document.getElementById('btn-logout-mobile')?.addEventListener('click', logoutUser);
             }
