@@ -4,9 +4,40 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     
-    <title>JurgisAgro 🚜 – Skaitmeninis Ūkininko Portalas ir Pagalbos Tinklas</title>
-    <meta name="description" content="JurgisAgro – modernus Lietuvos ūkininkų portalas: SOS technikos pagalba, grūdų supirkimo kainos, laukų žemėlapis, NMA žurnalai ir agro-orai.">
-    <link rel="icon" type="image/png" href="logo.png">
+    <!-- 🎯 TIKSLUS SEO PAVADINIMAS IR APRAŠYMAS -->
+    <title>JurgisAgro 🚜 – Grūdų Supirkimo Kainos, Sėjos Skaičiuoklė ir Agro-Orai</title>
+    <meta name="description" content="Oficialus ūkininko portalas JurgisAgro: gyvos grūdų supirkimo kainos Lietuvoje, elevatorių atstumai ir nuoskaitos, tiksli sėjos norma, purškimo langas ir NMA žurnalai.">
+    <meta name="keywords" content="grūdų supirkimo kainos, grūdų kainos šiandien, elevatoriai Lietuva, sėjos normos skaičiuoklė, orai purškimui, purškimo langas, NMA ataskaitos, traktoriaus nuoma, žemės ūkio technika, JurgisAgro">
+    <meta name="author" content="Petrasmo Studios">
+    <link rel="canonical" href="https://jurgisagro.com/">
+
+    <!-- 🌐 OPEN GRAPH -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://jurgisagro.com/">
+    <meta property="og:title" content="JurgisAgro 🚜 – Skaitmeninis Ūkininko Portalas">
+    <meta property="og:description" content="Gyvos grūdų supirkimo kainos, elevatorių reitingas, sėjos normos ir purškimo orų radaras vienoje vietoje.">
+    <meta property="og:image" content="https://jurgisagro.com/logo.png">
+
+    <!-- 🤖 SCHEMA.ORG STRUKTŪRIZUOTI DUOMENYS GOOGLEI -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "JurgisAgro - Ūkininkų Portalas",
+      "url": "https://jurgisagro.com/",
+      "description": "Skaitmeninis žemės ūkio portalas: grūdų kainos, sėjos skaičiuoklės, agro-orai ir technikos dalijimasis.",
+      "applicationCategory": "BusinessApplication",
+      "operatingSystem": "Web",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "EUR"
+      }
+    }
+    </script>
+
+    <!-- 🚜 TRAKTORIAUS FAVICON IKONA -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🚜</text></svg>">
 
     <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;600;700&family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -37,7 +68,6 @@
         }
     </script>
     <style>
-        /* 🌙 Tamsi tema (Default) */
         :root {
             --bg-main: #0F120F;
             --bg-surface: #181C18;
@@ -48,7 +78,6 @@
             --border-color: #2E382E;
         }
 
-        /* ☀️ Šviesi tema (Gilus kontrastas) */
         html.light-theme {
             --bg-main: #F1F5F1;
             --bg-surface: #FFFFFF;
@@ -65,7 +94,6 @@
             transition: background-color 0.2s ease, color 0.2s ease;
         }
 
-        /* ☀️ ŠVIESIOS TEMOS TEKSTŲ IR SKAIČIŲ KONTRASTAS */
         html.light-theme h1,
         html.light-theme h2,
         html.light-theme h3,
@@ -81,41 +109,12 @@
             color: #1E293B !important;
         }
 
-        /* 🌟 VISI SKAIČIAI IR STORI TEKSTAI KORTELĖSE ŠVIESIOJE TEMOJE */
-        html.light-theme strong:not(button *):not(a *),
-        html.light-theme b:not(button *):not(a *),
-        html.light-theme .text-white:not(button):not(a):not(button *):not(a *):not(.bg-tractorPrimary *):not(.btn-export-pdf *):not(.btn-export-xls *) {
-            color: #0F172A !important;
-        }
-
-        /* Žaliai šviečiantys rezultatai šviesioje temoje */
-        html.light-theme .bg-tractorPrimary\/20 {
-            background-color: #DCFCE7 !important;
-            border-color: #2E7D32 !important;
-        }
-
-        html.light-theme .bg-tractorPrimary\/20 .text-white,
-        html.light-theme .bg-tractorPrimary\/20 div,
-        html.light-theme .bg-tractorPrimary\/20 span {
-            color: #0F172A !important;
-        }
-
-        html.light-theme .bg-tractorPrimary\/20 p,
-        html.light-theme .bg-tractorPrimary\/20 strong {
-            color: #15803D !important;
-        }
-
         html.light-theme #global-sidebar a span.text-white,
         html.light-theme #global-mobile-header a span {
             color: #0F172A !important;
         }
 
-        html.light-theme #auth-sidebar-box p {
-            color: #0F172A !important;
-            font-weight: 700 !important;
-        }
-
-        /* 🌟 VEIKSMO MYGTUKAI: VISADA BALTAS TEKSTAS */
+        /* 🌟 VISI VEIKSMO MYGTUKAI: VISADA BALTAS TEKSTAS */
         button.bg-tractorPrimary,
         a.bg-tractorPrimary,
         .bg-tractorPrimary,
@@ -130,6 +129,7 @@
         .btn-export-xls * {
             color: #FFFFFF !important;
             font-weight: 800 !important;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4) !important;
         }
 
         button.bg-tractorPrimary:hover,
@@ -229,7 +229,10 @@
     <!-- PAGRINDINIS PORTALAS -->
     <div class="flex flex-col md:flex-row h-full w-full overflow-hidden">
         
+        <!-- 1. Mobili viršutinė juosta (Iš sidebar.js) -->
         <div id="global-mobile-header"></div>
+
+        <!-- 2. Šoninis meniu (Iš sidebar.js) -->
         <div id="global-sidebar" class="h-full"></div>
 
         <!-- 3. Pagrindinis turinys -->
@@ -259,7 +262,7 @@
                                     <p class="text-xs text-slate-300 leading-relaxed">Sužinokite, kur labiausiai apsimoka vežti derlių. Gyvos kainos, atstumai nuo ūkio, džiovinimo nuoskaitos bei pelningiausias maršrutas.</p>
                                 </div>
                                 <button id="btn-open-grain-calc" class="w-full h-12 bg-tractorPrimary hover:bg-tractorPrimaryHover text-white font-extrabold rounded-xl text-xs md:text-sm uppercase tracking-wider shadow-lg shadow-tractorPrimary/20 flex items-center justify-center gap-2 transition cursor-pointer">
-                                    <span class="text-white font-black">Atidaryti skaičiuoklę</span> <span>→</span>
+                                    <span>Atidaryti skaičiuoklę</span> <span>→</span>
                                 </button>
                             </div>
 
@@ -273,7 +276,7 @@
                                     <p class="text-xs text-slate-300 leading-relaxed">Apskaičiuokite tikslią sėjos normą (kg/ha) pagal MTG ir daigumą. Sužinokite reikalingų didmaišių kiekį bei savikainą.</p>
                                 </div>
                                 <button id="btn-open-seed-calc" class="w-full h-12 bg-tractorPrimary hover:bg-tractorPrimaryHover text-white font-extrabold rounded-xl text-xs md:text-sm uppercase tracking-wider shadow-lg shadow-tractorPrimary/20 flex items-center justify-center gap-2 transition cursor-pointer">
-                                    <span class="text-white font-black">Atidaryti skaičiuoklę</span> <span>→</span>
+                                    <span>Atidaryti skaičiuoklę</span> <span>→</span>
                                 </button>
                             </div>
 
@@ -287,7 +290,7 @@
                                     <p class="text-xs text-slate-300 leading-relaxed">Tikslios dozės pilnam ir nepilnam bakui. Išvenkite klaidų maišant herbicidus, fungicidus ir trąšas.</p>
                                 </div>
                                 <button id="btn-open-spray-calc" class="w-full h-12 bg-tractorPrimary hover:bg-tractorPrimaryHover text-white font-extrabold rounded-xl text-xs md:text-sm uppercase tracking-wider shadow-lg shadow-tractorPrimary/20 flex items-center justify-center gap-2 transition cursor-pointer">
-                                    <span class="text-white font-black">Atidaryti skaičiuoklę</span> <span>→</span>
+                                    <span>Atidaryti skaičiuoklę</span> <span>→</span>
                                 </button>
                             </div>
 
@@ -301,7 +304,7 @@
                                     <p class="text-xs text-slate-300 leading-relaxed">Apskaičiuokite fizinę normą (kg/ha) pagal gryną NPK poreikį. Palyginkite 1 kg gryno azoto savikainą.</p>
                                 </div>
                                 <button id="btn-open-fert-calc" class="w-full h-12 bg-tractorPrimary hover:bg-tractorPrimaryHover text-white font-extrabold rounded-xl text-xs md:text-sm uppercase tracking-wider shadow-lg shadow-tractorPrimary/20 flex items-center justify-center gap-2 transition cursor-pointer">
-                                    <span class="text-white font-black">Atidaryti skaičiuoklę</span> <span>→</span>
+                                    <span>Atidaryti skaičiuoklę</span> <span>→</span>
                                 </button>
                             </div>
                         </div>
@@ -365,7 +368,7 @@
 
     </div>
 
-    <!-- 5. DIALOGAS -->
+    <!-- DIALOGAS -->
     <div id="custom-dialog" class="fixed inset-0 bg-black/80 flex items-center justify-center z-[120] hidden p-4 backdrop-blur-sm">
         <div class="bg-tractorSurface border border-tractorBorder p-6 rounded-2xl max-w-sm w-full text-center space-y-4 shadow-2xl">
             <span id="dialog-icon" class="text-4xl block">⚠️</span>

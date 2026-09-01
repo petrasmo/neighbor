@@ -4,9 +4,40 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     
+    <!-- 🎯 TIKSLUS SEO PAVADINIMAS IR APRAŠYMAS -->
     <title>JurgisAgro 🧮 – Ūkininko Skaičiuoklių Centras</title>
     <meta name="description" content="JurgisAgro profesionalios žemės ūkio skaičiuoklės: grūdų supirkimo kainos, tiksli sėjos norma, purkštuvo maišymas ir trąšų NPK skaičiuoklė.">
-    <link rel="icon" type="image/png" href="logo.png">
+    <meta name="keywords" content="grūdų supirkimo kainos, grūdų kainos šiandien, sėjos normos skaičiuoklė, purkštuvo skaičiuoklė, trąšų skaičiuoklė NPK, JurgisAgro">
+    <meta name="author" content="Petrasmo Studios">
+    <link rel="canonical" href="https://jurgisagro.com/grudai.html">
+
+    <!-- 🌐 OPEN GRAPH -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://jurgisagro.com/grudai.html">
+    <meta property="og:title" content="JurgisAgro 🧮 – Ūkininko Skaičiuoklių Centras">
+    <meta property="og:description" content="Profesionalios žemės ūkio skaičiuoklės: grūdai, sėjos norma, purkštuvai ir trąšos.">
+    <meta property="og:image" content="https://jurgisagro.com/logo.png">
+
+    <!-- 🤖 SCHEMA.ORG -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "JurgisAgro Skaičiuoklių Centras",
+      "url": "https://jurgisagro.com/grudai.html",
+      "description": "Žemės ūkio skaičiuoklės: grūdų supirkimas, sėjos norma, purkštuvai ir trąšos.",
+      "applicationCategory": "BusinessApplication",
+      "operatingSystem": "Web",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "EUR"
+      }
+    }
+    </script>
+
+    <!-- 🚜 TRAKTORIAUS FAVICON IKONA -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🚜</text></svg>">
 
     <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;600;700&family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
@@ -50,7 +81,7 @@
             --bg-card: #F8FAF8;
             --bg-highlight: #E8F5E9;
             --text-main: #0F172A;
-            --text-muted: #1E293B;
+            --text-muted: #334155;
             --border-color: #CBD5E1;
         }
 
@@ -71,29 +102,6 @@
         html.light-theme .text-slate-300,
         html.light-theme .text-slate-400 {
             color: #334155 !important;
-        }
-
-        /* 🌟 VISI SKAIČIAI IR STORI TEKSTAI KORTELĖSE */
-        html.light-theme strong:not(button *):not(a *),
-        html.light-theme b:not(button *):not(a *),
-        html.light-theme .text-white:not(button):not(a):not(button *):not(a *):not(.bg-tractorPrimary *):not(.btn-export-pdf *):not(.btn-export-xls *) {
-            color: #0F172A !important;
-        }
-
-        html.light-theme .bg-tractorPrimary\/20 {
-            background-color: #DCFCE7 !important;
-            border-color: #2E7D32 !important;
-        }
-
-        html.light-theme .bg-tractorPrimary\/20 .text-white,
-        html.light-theme .bg-tractorPrimary\/20 div,
-        html.light-theme .bg-tractorPrimary\/20 span {
-            color: #0F172A !important;
-        }
-
-        html.light-theme .bg-tractorPrimary\/20 p,
-        html.light-theme .bg-tractorPrimary\/20 strong {
-            color: #15803D !important;
         }
 
         html.light-theme .badge-spray {
@@ -145,6 +153,7 @@
             background-color: #E8F5E9 !important;
         }
 
+        /* 🌟 VISI VEIKSMO MYGTUKAI */
         button.bg-tractorPrimary,
         a.bg-tractorPrimary,
         .bg-tractorPrimary,
