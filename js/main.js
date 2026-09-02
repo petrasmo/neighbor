@@ -11,6 +11,9 @@ import { initWeatherTab } from './weather.js';
 import { initGarageTab } from './garage.js';
 import { initSettingsTab, refreshSettingsMap } from './settings.js';
 
+// MATIF Birža
+import { renderMatifSection } from './matif.js';
+
 // Skaičiuoklių moduliai
 import { initGrainTab } from './grain.js';
 import { renderSeedCalculator } from './seedCalculator.js';
@@ -87,10 +90,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div class="space-y-2.5 text-xs md:text-sm">
                     <div class="p-2.5 bg-tractorBg rounded-xl border border-tractorBorder space-y-1">
                         <div class="font-bold flex items-center gap-1.5" style="color: var(--text-main);">
-                            <span>🌾</span> <span>1. Grūdų ir agronomijos skaičiuoklės</span>
+                            <span>🌾</span> <span>1. Grūdų ir MATIF biržos analizė</span>
                         </div>
                         <p class="text-slate-600 dark:text-slate-300 text-xs">
-                            Pasirinkite konkretų savo lauką – sistema automatiškai apskaičiuos tikslų atstumą iki kiekvieno elevatoriaus, posėlių mišinių poreikį, kombaino nuostolius ar purkštuvo proporcijas.
+                            Palyginkite visų Lietuvos elevatorių pelningumą ir stebėkite Paryžiaus MATIF biržos kainas bei ateities sandorius.
                         </p>
                     </div>
 
@@ -118,15 +121,6 @@ document.addEventListener('DOMContentLoaded', () => {
                         </div>
                         <p class="text-slate-600 dark:text-slate-300 text-xs">
                             Pagal jūsų įvestus darbus vienu paspaudimu sugeneruojami oficialios formos Augalų apsaugos ir Trąšų apskaitos žurnalai PDF arba Excel formatu.
-                        </p>
-                    </div>
-
-                    <div class="p-2.5 bg-tractorBg rounded-xl border border-tractorBorder space-y-1">
-                        <div class="font-bold flex items-center gap-1.5" style="color: var(--text-main);">
-                            <span>🚨</span> <span>5. SOS Pagalba tarp kaimynų</span>
-                        </div>
-                        <p class="text-slate-600 dark:text-slate-300 text-xs">
-                            Sugedus technikai ar skubant nukulti derlių, paskelbkite SOS pranešimą – jį matys aplinkiniai ūkininkai jūsų pasirinktu spinduliu.
                         </p>
                     </div>
                 </div>
@@ -242,6 +236,7 @@ document.addEventListener('DOMContentLoaded', () => {
 function setupCalculatorsHub() {
     const hubView = document.getElementById('view-calculators-hub');
     const grainView = document.getElementById('view-tab-grain-embed');
+    const matifView = document.getElementById('view-tab-matif-embed');
     const seedView = document.getElementById('view-tab-seed-embed');
     const coverView = document.getElementById('view-tab-cover-embed');
     const combineView = document.getElementById('view-tab-combine-embed');
@@ -249,6 +244,7 @@ function setupCalculatorsHub() {
     const fertView = document.getElementById('view-tab-fert-embed');
 
     const openGrainBtn = document.getElementById('btn-open-grain-calc');
+    const openMatifBtn = document.getElementById('btn-open-matif-calc');
     const openSeedBtn = document.getElementById('btn-open-seed-calc');
     const openCoverBtn = document.getElementById('btn-open-cover-calc');
     const openCombineBtn = document.getElementById('btn-open-combine-calc');
@@ -256,6 +252,7 @@ function setupCalculatorsHub() {
     const openFertBtn = document.getElementById('btn-open-fert-calc');
 
     const backFromGrainBtn = document.getElementById('btn-back-from-grain');
+    const backFromMatifBtn = document.getElementById('btn-back-from-matif');
     const backFromSeedBtn = document.getElementById('btn-back-from-seed');
     const backFromCoverBtn = document.getElementById('btn-back-from-cover');
     const backFromCombineBtn = document.getElementById('btn-back-from-combine');
@@ -265,6 +262,7 @@ function setupCalculatorsHub() {
     const hideAll = () => {
         hubView?.classList.add('hidden');
         grainView?.classList.add('hidden');
+        matifView?.classList.add('hidden');
         seedView?.classList.add('hidden');
         coverView?.classList.add('hidden');
         combineView?.classList.add('hidden');
@@ -276,6 +274,13 @@ function setupCalculatorsHub() {
         hideAll();
         grainView?.classList.remove('hidden');
         initGrainTab(currentUser, userData);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    if (openMatifBtn) openMatifBtn.onclick = () => {
+        hideAll();
+        matifView?.classList.remove('hidden');
+        renderMatifSection(document.getElementById('matif-calc-content'));
         window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
@@ -321,6 +326,7 @@ function setupCalculatorsHub() {
     };
 
     if (backFromGrainBtn) backFromGrainBtn.onclick = returnToHub;
+    if (backFromMatifBtn) backFromMatifBtn.onclick = returnToHub;
     if (backFromSeedBtn) backFromSeedBtn.onclick = returnToHub;
     if (backFromCoverBtn) backFromCoverBtn.onclick = returnToHub;
     if (backFromCombineBtn) backFromCombineBtn.onclick = returnToHub;

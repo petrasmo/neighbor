@@ -3,6 +3,11 @@ import { auth, db } from './firebase.js';
 import { loginWithGoogle, logoutUser } from './auth.js';
 import { initThemeToggle } from './theme.js';
 import { renderGlobalSidebar } from './sidebar.js';
+
+// MATIF Birža
+import { renderMatifSection } from './matif.js';
+
+// Skaičiuoklių moduliai
 import { initGrainTab } from './grain.js';
 import { renderSeedCalculator } from './seedCalculator.js';
 import { renderCoverCropCalculator } from './coverCropCalculator.js';
@@ -19,6 +24,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const hubView = document.getElementById('view-calculators-hub');
     const grainView = document.getElementById('view-tab-grain');
+    const matifView = document.getElementById('view-tab-matif');
     const seedView = document.getElementById('view-tab-seed');
     const coverView = document.getElementById('view-tab-cover');
     const combineView = document.getElementById('view-tab-combine');
@@ -26,6 +32,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const fertView = document.getElementById('view-tab-fert');
 
     const openGrainBtn = document.getElementById('btn-open-grain-calc');
+    const openMatifBtn = document.getElementById('btn-open-matif-calc');
     const openSeedBtn = document.getElementById('btn-open-seed-calc');
     const openCoverBtn = document.getElementById('btn-open-cover-calc');
     const openCombineBtn = document.getElementById('btn-open-combine-calc');
@@ -33,6 +40,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const openFertBtn = document.getElementById('btn-open-fert-calc');
 
     const backFromGrainBtn = document.getElementById('btn-back-from-grain');
+    const backFromMatifBtn = document.getElementById('btn-back-from-matif');
     const backFromSeedBtn = document.getElementById('btn-back-from-seed');
     const backFromCoverBtn = document.getElementById('btn-back-from-cover');
     const backFromCombineBtn = document.getElementById('btn-back-from-combine');
@@ -42,6 +50,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const hideAllViews = () => {
         hubView.classList.add('hidden');
         grainView.classList.add('hidden');
+        matifView.classList.add('hidden');
         seedView.classList.add('hidden');
         coverView.classList.add('hidden');
         combineView.classList.add('hidden');
@@ -53,6 +62,13 @@ document.addEventListener('DOMContentLoaded', () => {
         hideAllViews();
         grainView.classList.remove('hidden');
         initGrainTab(currentUser, userData);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    openMatifBtn.onclick = () => {
+        hideAllViews();
+        matifView.classList.remove('hidden');
+        renderMatifSection(document.getElementById('matif-calc-content'));
         window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
@@ -97,12 +113,13 @@ document.addEventListener('DOMContentLoaded', () => {
         window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
-    backFromGrainBtn.onclick = returnToHub;
-    backFromSeedBtn.onclick = returnToHub;
-    backFromCoverBtn.onclick = returnToHub;
-    backFromCombineBtn.onclick = returnToHub;
-    backFromSprayBtn.onclick = returnToHub;
-    backFromFertBtn.onclick = returnToHub;
+    if (backFromGrainBtn) backFromGrainBtn.onclick = returnToHub;
+    if (backFromMatifBtn) backFromMatifBtn.onclick = returnToHub;
+    if (backFromSeedBtn) backFromSeedBtn.onclick = returnToHub;
+    if (backFromCoverBtn) backFromCoverBtn.onclick = returnToHub;
+    if (backFromCombineBtn) backFromCombineBtn.onclick = returnToHub;
+    if (backFromSprayBtn) backFromSprayBtn.onclick = returnToHub;
+    if (backFromFertBtn) backFromFertBtn.onclick = returnToHub;
 
     auth.onAuthStateChanged(async (user) => {
         const sidebarAuthBox = document.getElementById('auth-sidebar-box');
