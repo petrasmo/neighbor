@@ -224,6 +224,7 @@
 </head>
 <body class="font-sans antialiased h-[100dvh] w-screen overflow-hidden flex flex-col">
 
+    <!-- PRELOADERIS -->
     <div id="app-preloader" class="fixed inset-0 bg-tractorBg z-[200] flex flex-col items-center justify-center space-y-4 transition-opacity duration-300">
         <div class="relative flex items-center justify-center">
             <div class="w-16 h-16 rounded-full border-4 border-tractorBorder border-t-tractorPrimaryLight animate-spin"></div>
@@ -235,11 +236,17 @@
         </div>
     </div>
 
+    <!-- PAGRINDINIS PORTALAS -->
     <div class="flex flex-col md:flex-row h-full w-full overflow-hidden">
-        <div id="global-mobile-header"></div>
-        <div id="global-sidebar" class="h-full"></div>
+        
+        <!-- 1. Mobili viršutinė juosta -->
+        <div id="global-mobile-header" class="md:hidden shrink-0"></div>
 
-        <main class="flex-1 h-full overflow-y-auto px-4 md:px-8 py-6 pb-16 w-full">
+        <!-- 2. Šoninis meniu (tik Desktop!) -->
+        <div id="global-sidebar" class="hidden md:flex md:h-full shrink-0"></div>
+
+        <!-- 3. Pagrindinis turinys -->
+        <main class="flex-1 h-full overflow-y-auto px-4 md:px-8 py-6 pb-24 md:pb-12 w-full">
             <div class="max-w-6xl mx-auto w-full space-y-6">
                 
                 <!-- TAB 0: SKAIČIUOKLĖS -->
@@ -349,7 +356,7 @@
                         </div>
                     </div>
 
-                    <!-- VIDINIAI BLOKAI -->
+                    <!-- VIDINIAI SKAIČIUOKLIŲ BLOKAI -->
                     <div id="view-tab-grain-embed" class="hidden space-y-4">
                         <button id="btn-back-from-grain" class="px-4 py-2 bg-tractorSurface hover:bg-zinc-800 border border-tractorBorder rounded-xl text-xs font-bold text-slate-300 flex items-center gap-1.5 transition cursor-pointer">
                             <span>←</span> Grįžti į visas skaičiuokles
@@ -401,12 +408,13 @@
                 <section id="view-tab-settings" class="tab-view space-y-6 hidden"></section>
 
                 <footer class="text-center text-xs text-slate-400 pt-8 pb-4 border-t border-tractorBorder/50 mt-12">
-                    <p>&copy; 2026 JurgisAgro.com • Sukurta: <a href="https://petrasmo.com" target="_blank" class="hover:text-green-600 font-bold underline decoration-slate-400">Petrasmo Studios</a></p>
+                    <p>&copy; 2026 <a href="https://petrasmo.com" target="_blank" class="hover:text-green-600 font-bold underline decoration-slate-400">Petrasmo Studios</a></p>
                 </footer>
             </div>
         </main>
 
-        <div id="global-mobile-nav"></div>
+        <!-- 4. Mobili apatinė juosta -->
+        <div id="global-mobile-nav" class="md:hidden"></div>
 
     </div>
 

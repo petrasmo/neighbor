@@ -95,7 +95,6 @@
             color: #475569 !important;
         }
 
-        /* Ženkliukai (Badges) */
         html.light-theme .badge-spray,
         html.light-theme [class*="bg-blue-950"] {
             background-color: #DBEAFE !important;
@@ -220,13 +219,17 @@
 
     <div class="flex flex-col md:flex-row h-full w-full overflow-hidden">
         
-        <div id="global-mobile-header"></div>
-        <div id="global-sidebar" class="h-full"></div>
+        <!-- 1. Mobili viršutinė juosta -->
+        <div id="global-mobile-header" class="md:hidden shrink-0"></div>
 
-        <main class="flex-1 h-full overflow-y-auto px-4 md:px-8 py-6 pb-16 w-full">
+        <!-- 2. Šoninis meniu (tik Desktop!) -->
+        <div id="global-sidebar" class="hidden md:flex md:h-full shrink-0"></div>
+
+        <!-- 3. Pagrindinis turinys -->
+        <main class="flex-1 h-full overflow-y-auto px-4 md:px-8 py-6 pb-24 md:pb-12 w-full">
             <div class="max-w-6xl mx-auto w-full space-y-6">
                 
-                <!-- 0. SKAIČIUOKLIŲ KATALOGAS (6 SKAIČIUOKLĖS) -->
+                <!-- 0. SKAIČIUOKLIŲ KATALOGAS -->
                 <div id="view-calculators-hub" class="space-y-6">
                     <div class="border-b border-tractorBorder pb-4">
                         <h2 class="font-oswald text-2xl md:text-3xl font-bold uppercase tracking-wider text-white flex items-center gap-2">
@@ -376,13 +379,14 @@
                 </div>
 
                 <footer class="text-center text-xs text-slate-400 pt-8 pb-4 border-t border-tractorBorder/50 mt-12">
-                    <p>&copy; 2026 JurgisAgro.com • Sukurta: <a href="https://petrasmo.com" target="_blank" class="hover:text-green-600 font-bold underline decoration-slate-400">Petrasmo Studios</a></p>
+                    <p>&copy; 2026 <a href="https://petrasmo.com" target="_blank" class="hover:text-green-600 font-bold underline decoration-slate-400">Petrasmo Studios</a></p>
                 </footer>
 
             </div>
         </main>
 
-        <div id="global-mobile-nav"></div>
+        <!-- 4. Mobili apatinė juosta -->
+        <div id="global-mobile-nav" class="md:hidden"></div>
 
     </div>
 
@@ -391,7 +395,7 @@
         <div class="bg-tractorSurface border border-tractorBorder p-6 md:p-8 rounded-2xl max-w-xl w-full text-center space-y-4 shadow-2xl max-h-[90vh] overflow-y-auto">
             <span id="dialog-icon" class="text-4xl block">⚠️</span>
             <h3 id="dialog-title" class="font-oswald text-xl md:text-2xl font-bold uppercase tracking-wider text-white">Dėmesio</h3>
-            <div id="dialog-message" class="text-xs leading-relaxed text-slate-300"></div>
+            <div id="dialog-message" class="text-xs md:text-sm leading-relaxed text-slate-300"></div>
             <div class="flex gap-3 pt-2">
                 <button id="dialog-cancel-btn" class="flex-1 h-11 bg-tractorBg border border-tractorBorder rounded-xl font-bold text-xs hover:bg-zinc-800 transition hidden">Atšaukti</button>
                 <button id="dialog-confirm-btn" class="flex-1 h-11 bg-tractorPrimary hover:bg-tractorPrimaryHover text-white font-bold rounded-xl text-xs transition cursor-pointer">Supratau 👍</button>
