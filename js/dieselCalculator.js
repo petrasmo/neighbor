@@ -2,10 +2,12 @@
 import { db } from './firebase.js';
 import { calculateDist } from './grainCalculator.js';
 import { createCustomSelect } from './customSelect.js';
+import { showDialog } from './ui.js';
+import { loginWithGoogle } from './auth.js';
 
 let activeDieselSuppliers = [];
 let unsubscribeDiesel = null;
-let currentDieselCoords = { lat: 54.8985, lng: 23.9036, name: "Mano ūkio / garažo bazė" };
+let currentDieselCoords = { lat: 54.8985, lng: 23.9036, name: "Apytikslė vieta (Lietuva)" };
 let userGarageCoords = null;
 let userFieldsList = [];
 let lastDieselUpdatedFormatted = null;
@@ -21,7 +23,10 @@ const dieselState = {
 export function renderDieselCalculator(container, currentUser, userData) {
     if (!container) return;
 
-    if (userData?.garageLat && userData?.garageLon) {
+    const isLogged = !!currentUser;
+    const hasGarage = !!(userData?.garageLat && userData?.garageLon);
+
+    if (hasGarage) {
         userGarageCoords = {
             lat: userData.garageLat,
             lng: userData.garageLon,
@@ -29,8 +34,8 @@ export function renderDieselCalculator(container, currentUser, userData) {
         };
         currentDieselCoords = userGarageCoords;
     } else {
-        userGarageCoords = { lat: 54.8985, lng: 23.9036, name: "Mano ūkio bazė" };
-        currentDieselCoords = userGarageCoords;
+        userGarageCoords = null;
+        currentDieselCoords = { lat: 54.8985, lng: 23.9036, name: "Apytikslė vieta (Lietuva)" };
     }
 
     container.innerHTML = `
@@ -66,6 +71,26 @@ export function renderDieselCalculator(container, currentUser, userData) {
                         </div>
                     </div>
                 </div>
+
+                <!-- 🌟 PRANEŠIMAS NEPRISIJUNGUSIEMS ARBA BE GARAŽO -->
+                ${!isLogged || !hasGarage ? `
+                    <div class="p-4 bg-tractorPrimary/15 border border-tractorPrimary/40 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+                        <div class="flex items-start sm:items-center gap-3">
+                            <span class="text-2xl">💡</span>
+                            <div>
+                                <strong class="text-green-600 dark:text-tractorPrimaryLight block text-xs uppercase font-extrabold tracking-wider">
+                                    Norite 100% tikslios atvežimo kainos į savo kiemą?
+                                </strong>
+                                <p class="text-slate-600 dark:text-slate-300 mt-0.5 leading-relaxed">
+                                    Prisijunkite ir Nustatymuose pažymėkite savo ūkio bazę – tuomet atstumas ir autocisternos kaina bus skaičiuojami tiesiai iki jūsų kiemo!
+                                </p>
+                            </div>
+                        </div>
+                        <button type="button" id="btn-login-diesel-prompt" class="px-4 py-2.5 bg-tractorPrimary hover:bg-tractorPrimaryHover text-white font-bold rounded-xl text-xs uppercase tracking-wider shrink-0 shadow-lg cursor-pointer transition">
+                            ${!isLogged ? 'Prisijungti su Google' : 'Nurodyti ūkio vietą'}
+                        </button>
+                    </div>
+                ` : ''}
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
                     
@@ -113,12 +138,12 @@ export function renderDieselCalculator(container, currentUser, userData) {
     `;
 
     setupLocationSelect(currentUser, userData);
-    setupEvents();
+    setupEvents(currentUser, userData);
     updateQuickVolButtons();
     listenToDieselFirebase();
 }
 
-function setupEvents() {
+function setupEvents(currentUser, userData) {
     const input = document.getElementById('diesel-volume-input');
     const unitLabel = document.getElementById('diesel-unit-label');
     const btnLiters = document.getElementById('btn-unit-liters');
@@ -126,6 +151,21 @@ function setupEvents() {
     const btnVatNo = document.getElementById('btn-vat-no');
     const btnVatYes = document.getElementById('btn-vat-yes');
     const transportCb = document.getElementById('diesel-opt-transport');
+    const btnLoginPrompt = document.getElementById('btn-login-diesel-prompt');
+
+    if (btnLoginPrompt) {
+        btnLoginPrompt.onclick = () => {
+            if (!currentUser) {
+                loginWithGoogle();
+            } else {
+                showDialog(
+                    "Nurodykite ūkio bazę 🏠",
+                    "Eikite į skirtuką <b>„Nustatymai“</b> ir žemėlapyje pažymėkite savo garažo / ūkio vietą. Tuomet kuro atvežimas visada bus skaičiuojamas tiksliai į jūsų kiemą.",
+                    "📍"
+                );
+            }
+        };
+    }
 
     const updateVolumeFromInput = () => {
         const val = parseFloat(input.value) || 0;
@@ -208,13 +248,22 @@ function updateQuickVolButtons() {
     });
 }
 
+// 📍 PRISTATYMO VIETOS: GARAŽAS / GPS / VARTOTOJO LAUKAI
 function setupLocationSelect(currentUser, userData) {
-    const items = [
-        { id: 'garage', name: '🏠 Mano ūkio / garažo bazė', icon: '🏠', subtext: 'Iš Nustatymų žemėlapio' },
-        { id: 'gps', name: '📡 Dabartinė vieta (GPS)', icon: '📡', subtext: 'Pagal telefono / kompiuterio vietą' }
-    ];
+    const isLogged = !!currentUser;
+    const hasGarage = !!(userData?.garageLat && userData?.garageLon);
 
-    if (currentUser) {
+    const items = [];
+
+    if (isLogged && hasGarage) {
+        items.push({ id: 'garage', name: '🏠 Mano ūkio / garažo bazė', icon: '🏠', subtext: 'Iš Nustatymų žemėlapio' });
+    } else {
+        items.push({ id: 'login_prompt', name: '🏠 Mano ūkio bazė (Prisijunkite)', icon: '🏠', subtext: 'Spauskite čia, kad nurodytumėte vietą' });
+    }
+
+    items.push({ id: 'gps', name: '📡 Dabartinė vieta (GPS)', icon: '📡', subtext: 'Pagal telefono / kompiuterio vietą' });
+
+    if (isLogged) {
         db.collection("user_fields").where("userId", "==", currentUser.uid).get().then(snap => {
             userFieldsList = [];
             snap.forEach(doc => {
@@ -228,21 +277,46 @@ function setupLocationSelect(currentUser, userData) {
                 });
             });
 
-            initLocationCustomSelect(items, userData);
+            initLocationCustomSelect(items, currentUser, userData);
         });
     } else {
-        initLocationCustomSelect(items, userData);
+        initLocationCustomSelect(items, currentUser, userData);
     }
 }
 
-function initLocationCustomSelect(items, userData) {
+function initLocationCustomSelect(items, currentUser, userData) {
+    const isLogged = !!currentUser;
+    const hasGarage = !!(userData?.garageLat && userData?.garageLon);
+    const defaultId = isLogged && hasGarage ? 'garage' : 'gps';
+
     createCustomSelect({
         containerId: 'diesel-location-select-box',
         placeholder: 'Pasirinkite pristatymo vietą...',
         items: items,
-        selectedId: 'garage',
+        selectedId: defaultId,
         onSelect: (item) => {
-            if (!item || item.id === 'garage') {
+            if (!item) return;
+
+            if (item.id === 'login_prompt') {
+                if (!isLogged) {
+                    showDialog(
+                        "Tikslus kuro pristatymas į ūkį 📍",
+                        "Prisijunkite su „Google“ paskyra ir nustatymuose pažymėkite savo ūkio / garažo vietą žemėlapyje. Tuomet kuro atvežimas visada bus skaičiuojamas tiksliai iki jūsų kiemo!",
+                        "🌾",
+                        loginWithGoogle,
+                        true
+                    );
+                } else {
+                    showDialog(
+                        "Nurodykite ūkio bazę 🏠",
+                        "Eikite į skirtuką <b>„Nustatymai“</b> ir pažymėkite savo garažo vietą žemėlapyje.",
+                        "📍"
+                    );
+                }
+                return;
+            }
+
+            if (item.id === 'garage') {
                 currentDieselCoords = userGarageCoords || { lat: 54.8985, lng: 23.9036, name: "Mano ūkio / garažo bazė" };
                 updateLocationDisplay();
                 renderRankedSuppliers();
@@ -260,8 +334,8 @@ function initLocationCustomSelect(items, userData) {
                         updateLocationDisplay();
                         renderRankedSuppliers();
                     }, () => {
-                        alert("Nepavyko nustatyti GPS. Naudojama ūkio bazės vieta.");
-                        currentDieselCoords = userGarageCoords;
+                        alert("Nepavyko nustatyti GPS. Naudojama apytikslė vieta.");
+                        currentDieselCoords = { lat: 54.8985, lng: 23.9036, name: "Apytikslė vieta (Lietuva)" };
                         updateLocationDisplay();
                         renderRankedSuppliers();
                     });
@@ -286,7 +360,6 @@ function initLocationCustomSelect(items, userData) {
     });
 }
 
-// 🕒 ATNAUJINA LOKACIJOS IR GAUTOS DATOS EILUTĘ
 function updateLocationDisplay() {
     const lbl = document.getElementById('diesel-loc-label');
     if (!lbl) return;
@@ -298,7 +371,6 @@ function updateLocationDisplay() {
     lbl.innerHTML = `📍 Pristatymo vieta: <strong class="text-green-400 font-bold">${currentDieselCoords.name}</strong> (${currentDieselCoords.lat.toFixed(4)}, ${currentDieselCoords.lng.toFixed(4)})${timeText}`;
 }
 
-// 📡 KLAUSOMĖS TIEKĖJŲ IR DUOMENŲ DATOS IŠ FIREBASE
 function listenToDieselFirebase() {
     if (unsubscribeDiesel) unsubscribeDiesel();
 

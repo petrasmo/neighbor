@@ -35,6 +35,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     document.querySelectorAll('.login-trigger-btn').forEach(btn => btn.addEventListener('click', loginWithGoogle));
 
+    // Navigacija
     document.querySelectorAll('.nav-tab-btn').forEach(btn => {
         btn.addEventListener('click', () => {
             const tabIdx = parseInt(btn.getAttribute('data-tab'));
@@ -138,6 +139,7 @@ document.addEventListener('DOMContentLoaded', () => {
         initFeedTab(currentUser, userData, classifierMap);
     });
 
+    // 🌟 GYVAS PRISIJUNGIMO IR DUOMENŲ KLAUSYMASIS
     auth.onAuthStateChanged(async (user) => {
         const preloader = document.getElementById('app-preloader');
         const sidebarAuthBox = document.getElementById('auth-sidebar-box');
@@ -192,6 +194,9 @@ document.addEventListener('DOMContentLoaded', () => {
             initSettingsTab(currentUser, userData);
             initWeatherTab(currentUser, userData);
 
+            // ⚡ ŽAIBIŠKAS SKAIČIUOKLIŲ ATNAUJINIMAS SU NAUJAIS VARTOTOJO DUOMENIMIS
+            refreshActiveCalculators(currentUser, userData);
+
             switchTab(requestedTab);
             if (requestedTab === 2) refreshFieldsMap();
             if (requestedTab === 1) initWeatherTab(currentUser, userData);
@@ -221,6 +226,7 @@ document.addEventListener('DOMContentLoaded', () => {
             initFeedTab(null, null, classifierMap);
             initWeatherTab(null, null);
 
+            refreshActiveCalculators(null, null);
             switchTab(requestedTab);
         }
 
@@ -230,6 +236,18 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 });
+
+function refreshActiveCalculators(user, uData) {
+    const dieselView = document.getElementById('view-tab-diesel-embed');
+    if (dieselView && !dieselView.classList.contains('hidden')) {
+        renderDieselCalculator(document.getElementById('diesel-calc-content'), user, uData);
+    }
+
+    const grainView = document.getElementById('view-tab-grain-embed');
+    if (grainView && !grainView.classList.contains('hidden')) {
+        initGrainTab(user, uData);
+    }
+}
 
 function setupCalculatorsHub() {
     const hubView = document.getElementById('view-calculators-hub');

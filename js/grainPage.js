@@ -123,14 +123,14 @@ document.addEventListener('DOMContentLoaded', () => {
         window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
-    backFromGrainBtn.onclick = returnToHub;
-    backFromMatifBtn.onclick = returnToHub;
-    backFromDieselBtn.onclick = returnToHub;
-    backFromSeedBtn.onclick = returnToHub;
-    backFromCoverBtn.onclick = returnToHub;
-    backFromCombineBtn.onclick = returnToHub;
-    backFromSprayBtn.onclick = returnToHub;
-    backFromFertBtn.onclick = returnToHub;
+    if (backFromGrainBtn) backFromGrainBtn.onclick = returnToHub;
+    if (backFromMatifBtn) backFromMatifBtn.onclick = returnToHub;
+    if (backFromDieselBtn) backFromDieselBtn.onclick = returnToHub;
+    if (backFromSeedBtn) backFromSeedBtn.onclick = returnToHub;
+    if (backFromCoverBtn) backFromCoverBtn.onclick = returnToHub;
+    if (backFromCombineBtn) backFromCombineBtn.onclick = returnToHub;
+    if (backFromSprayBtn) backFromSprayBtn.onclick = returnToHub;
+    if (backFromFertBtn) backFromFertBtn.onclick = returnToHub;
 
     auth.onAuthStateChanged(async (user) => {
         const sidebarAuthBox = document.getElementById('auth-sidebar-box');
@@ -158,6 +158,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 `;
                 document.getElementById('btn-logout-grain-mob')?.addEventListener('click', logoutUser);
             }
+
+            // Atnaujiname atviras skaičiuokles
+            if (dieselView && !dieselView.classList.contains('hidden')) {
+                renderDieselCalculator(document.getElementById('diesel-calc-content'), currentUser, userData);
+            }
+            if (grainView && !grainView.classList.contains('hidden')) {
+                initGrainTab(currentUser, userData);
+            }
         } else {
             if (sidebarAuthBox) {
                 sidebarAuthBox.innerHTML = `
@@ -174,6 +182,13 @@ document.addEventListener('DOMContentLoaded', () => {
                     <button class="login-trigger-btn px-3 py-1 bg-tractorPrimary text-white rounded-lg text-xs font-bold">Prisijungti</button>
                 `;
                 mobileAuthSlot.querySelector('.login-trigger-btn')?.addEventListener('click', loginWithGoogle);
+            }
+
+            if (dieselView && !dieselView.classList.contains('hidden')) {
+                renderDieselCalculator(document.getElementById('diesel-calc-content'), null, null);
+            }
+            if (grainView && !grainView.classList.contains('hidden')) {
+                initGrainTab(null, null);
             }
         }
     });
