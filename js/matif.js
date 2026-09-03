@@ -1,18 +1,19 @@
 // js/matif.js
 import { db } from './firebase.js';
 
-let matifMarketData = null; // Pradžioje duomenų nėra
+let matifMarketData = null;
 let activeCropId = 'rapeseed';
 let activeRange = '6M';
 let hoveredPoint = null;
 let unsubscribeMatif = null;
-let lastMatifUpdatedFormatted = "";
 
 export function renderMatifSection(container) {
     if (!container) return;
 
     container.innerHTML = `
         <div class="bg-tractorSurface border border-tractorBorder rounded-2xl p-5 md:p-7 shadow-xl space-y-5">
+            
+            <!-- ANTRAŠTĖ -->
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-tractorBorder/70 pb-4">
                 <div class="space-y-1">
                     <div class="inline-flex items-center gap-2 bg-green-500/10 border border-green-500/30 text-green-600 dark:text-green-400 text-xs px-3 py-1 rounded-full font-bold uppercase tracking-wider">
@@ -23,21 +24,28 @@ export function renderMatifSection(container) {
                         📈 MATIF Grūdų ir Žaliavų Biržos Kainos
                     </h3>
                 </div>
+
                 <div class="flex items-center gap-2 self-start sm:self-auto text-xs text-slate-500 dark:text-slate-400">
-                    <span id="matif-sync-time">Atnaujinama iš Firebase...</span>
+                    <span id="matif-sync-time">Kraunama iš Firebase...</span>
                 </div>
             </div>
 
+            <!-- 5 SKAITIKLIŲ KORTELĖS -->
             <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3" id="matif-cards-grid">
                 <div class="text-center py-6 text-slate-500 text-xs col-span-full">Kraunami biržos duomenys...</div>
             </div>
 
+            <!-- GRAFIKO BLOKAS -->
             <div class="space-y-3 bg-tractorBg/90 border border-tractorBorder p-4 md:p-5 rounded-2xl">
                 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-tractorBorder/60 pb-3">
                     <div class="flex items-center gap-2">
-                        <span class="text-sm font-bold" id="matif-chart-title" style="color: var(--text-main);"></span>
+                        <span class="text-sm font-bold" id="matif-chart-title" style="color: var(--text-main);">
+                            🌱 Rapsai (Euronext MATIF)
+                        </span>
                         <span class="text-xs text-slate-400 font-mono" id="matif-chart-hover-val"></span>
                     </div>
+
+                    <!-- PERIODŲ MYGTUKAI -->
                     <div class="flex items-center gap-1 bg-tractorSurface p-1 rounded-xl border border-tractorBorder">
                         <button type="button" class="btn-range px-2.5 py-1 rounded-lg text-xs font-bold transition cursor-pointer" data-range="1W">1 sav.</button>
                         <button type="button" class="btn-range px-2.5 py-1 rounded-lg text-xs font-bold transition cursor-pointer" data-range="1M">1 mėn.</button>
@@ -46,20 +54,27 @@ export function renderMatifSection(container) {
                         <button type="button" class="btn-range px-2.5 py-1 rounded-lg text-xs font-bold transition cursor-pointer" data-range="1Y">1 metai</button>
                     </div>
                 </div>
+
+                <!-- CANVAS GRAFIKAS -->
                 <div class="relative w-full h-64 select-none cursor-crosshair">
                     <canvas id="matif-canvas" class="w-full h-full block"></canvas>
                 </div>
             </div>
 
+            <!-- ATEITIES SANDORIAI -->
             <div class="bg-tractorBg p-4 rounded-xl border border-tractorBorder space-y-2">
-                <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block" id="matif-contracts-label"></span>
+                <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block" id="matif-contracts-label">
+                    🌱 Rapsų būsimo derliaus fiksuoti sandoriai:
+                </span>
                 <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs" id="matif-contracts-grid"></div>
             </div>
 
+            <!-- DISCLAIMER -->
             <div class="text-[11px] text-slate-400 dark:text-slate-500 flex items-center gap-1.5 pt-1 border-t border-tractorBorder/40">
                 <span>ℹ️</span> 
-                <span>Kviečių, rapsų ir kukurūzų duomenys: <strong>Euronext Paris (MATIF)</strong>. Miežių ir žirnių duomenys: <strong>FOB Baltijos eksporto indeksas</strong>. Duomenys sinchronizuojami realiu laiku.</span>
+                <span>Kviečių, rapsų ir kukurūzų duomenys: <strong>Euronext Paris (MATIF)</strong>. Miežių ir žirnių duomenys: <strong>FOB Baltijos eksporto indeksas</strong>. Duomenys atnaujinami realiu laiku.</span>
             </div>
+
         </div>
     `;
 
@@ -85,6 +100,20 @@ function listenToMatifFirebase() {
             const data = doc.data();
             matifMarketData = data.crops || {};
 
+            // 💡 Užtikriname, kad viršutinė kaina visada yra lygiai paskutinis istorijos taškas
+            Object.keys(matifMarketData).forEach(k => {
+                const c = matifMarketData[k];
+                if (c.history && c.history.length > 0) {
+                    const last = c.history[c.history.length - 1];
+                    const prev = c.history[c.history.length - 2] || last;
+                    c.currentPrice = last.price;
+                    const diff = last.price - prev.price;
+                    c.change = (diff >= 0 ? "+" : "") + diff.toFixed(2);
+                    c.changePercent = (prev.price > 0 ? (diff / prev.price) * 100 : 0).toFixed(2) + "%";
+                    c.isPositive = diff >= 0;
+                }
+            });
+
             if (data.updatedAt) {
                 const date = data.updatedAt.toDate ? data.updatedAt.toDate() : new Date();
                 const timeStr = date.toLocaleTimeString('lt-LT', { hour: '2-digit', minute: '2-digit' });
@@ -96,8 +125,6 @@ function listenToMatifFirebase() {
             renderContracts();
             drawChart();
         }
-    }, err => {
-        console.warn("MATIF Firebase klaida:", err);
     });
 }
 
@@ -153,7 +180,6 @@ function renderContracts() {
             <div class="p-2.5 bg-tractorSurface rounded-lg border border-tractorBorder space-y-0.5">
                 <span class="text-slate-400 block text-[10px] uppercase font-semibold truncate">${c.month}</span>
                 <strong class="text-sm font-mono font-bold block" style="color: var(--text-main);">${c.price}</strong>
-                <span class="text-[11px] font-bold ${c.isPositive ? 'text-green-600 dark:text-green-400' : 'text-red-500'}">${c.change}</span>
             </div>
         `).join('');
     }
@@ -273,8 +299,8 @@ function drawChart() {
     });
 
     const grad = ctx.createLinearGradient(0, padTop, 0, height - padBottom);
-    grad.addColorStop(0, crop.gradientStart || "rgba(22,163,74,0.3)");
-    grad.addColorStop(1, crop.gradientEnd || "rgba(22,163,74,0)");
+    grad.addColorStop(0, "rgba(22, 163, 74, 0.35)");
+    grad.addColorStop(1, "rgba(22, 163, 74, 0.0)");
 
     ctx.beginPath();
     ctx.moveTo(points[0].x, points[0].y);
@@ -317,7 +343,7 @@ function drawChart() {
         ctx.stroke();
         ctx.setLineDash([]);
 
-        ctx.fillStyle = crop.color;
+        ctx.fillStyle = crop.color || "#16A34A";
         ctx.beginPath();
         ctx.arc(hoveredPt.x, hoveredPt.y, 5, 0, Math.PI * 2);
         ctx.fill();
