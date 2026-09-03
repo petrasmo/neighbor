@@ -11,11 +11,10 @@ import { initWeatherTab } from './weather.js';
 import { initGarageTab } from './garage.js';
 import { initSettingsTab, refreshSettingsMap } from './settings.js';
 
-// MATIF Birža
-import { renderMatifSection } from './matif.js';
-
 // Skaičiuoklių moduliai
 import { initGrainTab } from './grain.js';
+import { renderMatifSection } from './matif.js';
+import { renderDieselCalculator } from './dieselCalculator.js';
 import { renderSeedCalculator } from './seedCalculator.js';
 import { renderCoverCropCalculator } from './coverCropCalculator.js';
 import { renderCombineLossCalculator } from './combineLossCalculator.js';
@@ -36,7 +35,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     document.querySelectorAll('.login-trigger-btn').forEach(btn => btn.addEventListener('click', loginWithGoogle));
 
-    // Navigacija
     document.querySelectorAll('.nav-tab-btn').forEach(btn => {
         btn.addEventListener('click', () => {
             const tabIdx = parseInt(btn.getAttribute('data-tab'));
@@ -55,7 +53,7 @@ document.addEventListener('DOMContentLoaded', () => {
             switchTab(tabIdx);
 
             if (tabIdx === 0) {
-                // Skaičiuoklių centras
+                // Skaičiuoklės
             } else if (tabIdx === 1) {
                 initWeatherTab(currentUser, userData);
             } else if (tabIdx === 2) {
@@ -90,10 +88,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div class="space-y-2.5 text-xs md:text-sm">
                     <div class="p-2.5 bg-tractorBg rounded-xl border border-tractorBorder space-y-1">
                         <div class="font-bold flex items-center gap-1.5" style="color: var(--text-main);">
-                            <span>🌾</span> <span>1. Grūdų ir MATIF biržos analizė</span>
+                            <span>🌾</span> <span>1. Grūdų, MATIF ir Gazolio analizė</span>
                         </div>
                         <p class="text-slate-600 dark:text-slate-300 text-xs">
-                            Palyginkite visų Lietuvos elevatorių pelningumą ir stebėkite Paryžiaus MATIF biržos kainas bei ateities sandorius.
+                            Palyginkite visų Lietuvos elevatorių pelningumą, stebėkite MATIF biržą ir sužinokite, kas pigiausiai atveš žymėtą dyzeliną į jūsų kiemą.
                         </p>
                     </div>
 
@@ -237,6 +235,7 @@ function setupCalculatorsHub() {
     const hubView = document.getElementById('view-calculators-hub');
     const grainView = document.getElementById('view-tab-grain-embed');
     const matifView = document.getElementById('view-tab-matif-embed');
+    const dieselView = document.getElementById('view-tab-diesel-embed');
     const seedView = document.getElementById('view-tab-seed-embed');
     const coverView = document.getElementById('view-tab-cover-embed');
     const combineView = document.getElementById('view-tab-combine-embed');
@@ -245,6 +244,7 @@ function setupCalculatorsHub() {
 
     const openGrainBtn = document.getElementById('btn-open-grain-calc');
     const openMatifBtn = document.getElementById('btn-open-matif-calc');
+    const openDieselBtn = document.getElementById('btn-open-diesel-calc');
     const openSeedBtn = document.getElementById('btn-open-seed-calc');
     const openCoverBtn = document.getElementById('btn-open-cover-calc');
     const openCombineBtn = document.getElementById('btn-open-combine-calc');
@@ -253,6 +253,7 @@ function setupCalculatorsHub() {
 
     const backFromGrainBtn = document.getElementById('btn-back-from-grain');
     const backFromMatifBtn = document.getElementById('btn-back-from-matif');
+    const backFromDieselBtn = document.getElementById('btn-back-from-diesel');
     const backFromSeedBtn = document.getElementById('btn-back-from-seed');
     const backFromCoverBtn = document.getElementById('btn-back-from-cover');
     const backFromCombineBtn = document.getElementById('btn-back-from-combine');
@@ -263,6 +264,7 @@ function setupCalculatorsHub() {
         hubView?.classList.add('hidden');
         grainView?.classList.add('hidden');
         matifView?.classList.add('hidden');
+        dieselView?.classList.add('hidden');
         seedView?.classList.add('hidden');
         coverView?.classList.add('hidden');
         combineView?.classList.add('hidden');
@@ -281,6 +283,13 @@ function setupCalculatorsHub() {
         hideAll();
         matifView?.classList.remove('hidden');
         renderMatifSection(document.getElementById('matif-calc-content'));
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    if (openDieselBtn) openDieselBtn.onclick = () => {
+        hideAll();
+        dieselView?.classList.remove('hidden');
+        renderDieselCalculator(document.getElementById('diesel-calc-content'), currentUser, userData);
         window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
@@ -327,6 +336,7 @@ function setupCalculatorsHub() {
 
     if (backFromGrainBtn) backFromGrainBtn.onclick = returnToHub;
     if (backFromMatifBtn) backFromMatifBtn.onclick = returnToHub;
+    if (backFromDieselBtn) backFromDieselBtn.onclick = returnToHub;
     if (backFromSeedBtn) backFromSeedBtn.onclick = returnToHub;
     if (backFromCoverBtn) backFromCoverBtn.onclick = returnToHub;
     if (backFromCombineBtn) backFromCombineBtn.onclick = returnToHub;

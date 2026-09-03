@@ -4,11 +4,10 @@ import { loginWithGoogle, logoutUser } from './auth.js';
 import { initThemeToggle } from './theme.js';
 import { renderGlobalSidebar } from './sidebar.js';
 
-// MATIF Birža
-import { renderMatifSection } from './matif.js';
-
 // Skaičiuoklių moduliai
 import { initGrainTab } from './grain.js';
+import { renderMatifSection } from './matif.js';
+import { renderDieselCalculator } from './dieselCalculator.js';
 import { renderSeedCalculator } from './seedCalculator.js';
 import { renderCoverCropCalculator } from './coverCropCalculator.js';
 import { renderCombineLossCalculator } from './combineLossCalculator.js';
@@ -25,6 +24,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const hubView = document.getElementById('view-calculators-hub');
     const grainView = document.getElementById('view-tab-grain');
     const matifView = document.getElementById('view-tab-matif');
+    const dieselView = document.getElementById('view-tab-diesel');
     const seedView = document.getElementById('view-tab-seed');
     const coverView = document.getElementById('view-tab-cover');
     const combineView = document.getElementById('view-tab-combine');
@@ -33,6 +33,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const openGrainBtn = document.getElementById('btn-open-grain-calc');
     const openMatifBtn = document.getElementById('btn-open-matif-calc');
+    const openDieselBtn = document.getElementById('btn-open-diesel-calc');
     const openSeedBtn = document.getElementById('btn-open-seed-calc');
     const openCoverBtn = document.getElementById('btn-open-cover-calc');
     const openCombineBtn = document.getElementById('btn-open-combine-calc');
@@ -41,6 +42,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const backFromGrainBtn = document.getElementById('btn-back-from-grain');
     const backFromMatifBtn = document.getElementById('btn-back-from-matif');
+    const backFromDieselBtn = document.getElementById('btn-back-from-diesel');
     const backFromSeedBtn = document.getElementById('btn-back-from-seed');
     const backFromCoverBtn = document.getElementById('btn-back-from-cover');
     const backFromCombineBtn = document.getElementById('btn-back-from-combine');
@@ -51,6 +53,7 @@ document.addEventListener('DOMContentLoaded', () => {
         hubView.classList.add('hidden');
         grainView.classList.add('hidden');
         matifView.classList.add('hidden');
+        dieselView.classList.add('hidden');
         seedView.classList.add('hidden');
         coverView.classList.add('hidden');
         combineView.classList.add('hidden');
@@ -69,6 +72,13 @@ document.addEventListener('DOMContentLoaded', () => {
         hideAllViews();
         matifView.classList.remove('hidden');
         renderMatifSection(document.getElementById('matif-calc-content'));
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    openDieselBtn.onclick = () => {
+        hideAllViews();
+        dieselView.classList.remove('hidden');
+        renderDieselCalculator(document.getElementById('diesel-calc-content'), currentUser, userData);
         window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
@@ -113,13 +123,14 @@ document.addEventListener('DOMContentLoaded', () => {
         window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
-    if (backFromGrainBtn) backFromGrainBtn.onclick = returnToHub;
-    if (backFromMatifBtn) backFromMatifBtn.onclick = returnToHub;
-    if (backFromSeedBtn) backFromSeedBtn.onclick = returnToHub;
-    if (backFromCoverBtn) backFromCoverBtn.onclick = returnToHub;
-    if (backFromCombineBtn) backFromCombineBtn.onclick = returnToHub;
-    if (backFromSprayBtn) backFromSprayBtn.onclick = returnToHub;
-    if (backFromFertBtn) backFromFertBtn.onclick = returnToHub;
+    backFromGrainBtn.onclick = returnToHub;
+    backFromMatifBtn.onclick = returnToHub;
+    backFromDieselBtn.onclick = returnToHub;
+    backFromSeedBtn.onclick = returnToHub;
+    backFromCoverBtn.onclick = returnToHub;
+    backFromCombineBtn.onclick = returnToHub;
+    backFromSprayBtn.onclick = returnToHub;
+    backFromFertBtn.onclick = returnToHub;
 
     auth.onAuthStateChanged(async (user) => {
         const sidebarAuthBox = document.getElementById('auth-sidebar-box');
