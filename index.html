@@ -83,6 +83,23 @@
             transition: background-color 0.2s ease, color 0.2s ease;
         }
 
+        /* 🌟 ŠONINIO MENIU TEKSTAI (Tamsioje temoje ryškūs, šviesioje tamsūs) */
+        .nav-tab-btn:not(.bg-tractorPrimary) {
+            color: #CBD5E1 !important;
+        }
+        .nav-tab-btn:not(.bg-tractorPrimary):hover {
+            color: #FFFFFF !important;
+            background-color: #212621 !important;
+        }
+
+        html.light-theme .nav-tab-btn:not(.bg-tractorPrimary) {
+            color: #334155 !important;
+        }
+        html.light-theme .nav-tab-btn:not(.bg-tractorPrimary):hover {
+            color: #0F172A !important;
+            background-color: #E2E8F0 !important;
+        }
+
         html.light-theme h1,
         html.light-theme h2,
         html.light-theme h3,
@@ -182,15 +199,6 @@
         html.light-theme .cs-item:hover {
             background-color: #E8F5E9 !important;
             color: #15803D !important;
-        }
-
-        html.light-theme .nav-tab-btn:not(.bg-tractorPrimary) {
-            color: #334155 !important;
-        }
-
-        html.light-theme .nav-tab-btn:not(.bg-tractorPrimary):hover {
-            background-color: #E2E8F0 !important;
-            color: #0F172A !important;
         }
 
         button.bg-tractorPrimary,
@@ -300,7 +308,7 @@
                                 </button>
                             </div>
 
-                            <!-- 3. 🌟 GAZOLIO SKAIČIUOKLĖ -->
+                            <!-- 3. GAZOLIO SKAIČIUOKLĖ -->
                             <div class="bg-tractorSurface border border-tractorBorder hover:border-tractorPrimary rounded-2xl p-5 shadow-xl flex flex-col justify-between space-y-3 transition group">
                                 <div class="space-y-2">
                                     <div class="flex justify-between items-start">

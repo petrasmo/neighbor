@@ -66,27 +66,27 @@ export function renderDieselCalculator(container, currentUser, userData) {
 
                         <!-- PVM PERJUNGIKLIS -->
                         <div class="flex items-center gap-1 bg-tractorBg p-1 rounded-xl border border-tractorBorder">
-                            <button type="button" id="btn-vat-no" class="px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${!dieselState.includeVat ? 'bg-tractorPrimary text-white shadow' : 'text-slate-400 hover:text-white'}">Be PVM</button>
-                            <button type="button" id="btn-vat-yes" class="px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${dieselState.includeVat ? 'bg-tractorPrimary text-white shadow' : 'text-slate-400 hover:text-white'}">Su PVM (21%)</button>
+                            <button type="button" id="btn-vat-no" class="px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${!dieselState.includeVat ? 'bg-tractorPrimary text-white shadow' : 'text-slate-300 hover:text-white'}">Be PVM</button>
+                            <button type="button" id="btn-vat-yes" class="px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${dieselState.includeVat ? 'bg-tractorPrimary text-white shadow' : 'text-slate-300 hover:text-white'}">Su PVM (21%)</button>
                         </div>
                     </div>
                 </div>
 
-                <!-- 🌟 PRANEŠIMAS NEPRISIJUNGUSIEMS ARBA BE GARAŽO -->
+                <!-- 🌟 RYŠKUS PRANEŠIMAS NEPRISIJUNGUSIEMS ARBA BE GARAŽO -->
                 ${!isLogged || !hasGarage ? `
-                    <div class="p-4 bg-tractorPrimary/15 border border-tractorPrimary/40 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
-                        <div class="flex items-start sm:items-center gap-3">
-                            <span class="text-2xl">💡</span>
-                            <div>
-                                <strong class="text-green-600 dark:text-tractorPrimaryLight block text-xs uppercase font-extrabold tracking-wider">
+                    <div class="p-4 md:p-5 bg-tractorBg border border-tractorPrimary rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-lg">
+                        <div class="flex items-start sm:items-center gap-3.5">
+                            <span class="text-3xl">💡</span>
+                            <div class="space-y-0.5">
+                                <strong class="text-green-400 block text-sm uppercase font-extrabold tracking-wider">
                                     Norite 100% tikslios atvežimo kainos į savo kiemą?
                                 </strong>
-                                <p class="text-slate-600 dark:text-slate-300 mt-0.5 leading-relaxed">
+                                <p class="text-xs text-slate-200 leading-relaxed">
                                     Prisijunkite ir Nustatymuose pažymėkite savo ūkio bazę – tuomet atstumas ir autocisternos kaina bus skaičiuojami tiesiai iki jūsų kiemo!
                                 </p>
                             </div>
                         </div>
-                        <button type="button" id="btn-login-diesel-prompt" class="px-4 py-2.5 bg-tractorPrimary hover:bg-tractorPrimaryHover text-white font-bold rounded-xl text-xs uppercase tracking-wider shrink-0 shadow-lg cursor-pointer transition">
+                        <button type="button" id="btn-login-diesel-prompt" class="px-5 py-2.5 bg-tractorPrimary hover:bg-tractorPrimaryHover text-white font-extrabold rounded-xl text-xs uppercase tracking-wider shrink-0 shadow-lg cursor-pointer transition">
                             ${!isLogged ? 'Prisijungti su Google' : 'Nurodyti ūkio vietą'}
                         </button>
                     </div>
@@ -99,9 +99,9 @@ export function renderDieselCalculator(container, currentUser, userData) {
                         <div class="flex justify-between items-center">
                             <label class="text-xs font-bold text-tractorPrimaryLight uppercase tracking-wider">Užsakomas kuro kiekis</label>
                             <div class="flex items-center gap-2 text-xs">
-                                <button type="button" id="btn-unit-liters" class="${!dieselState.isTonsMode ? 'text-green-400 font-bold underline' : 'text-slate-400 hover:text-white'}">Litrai (l)</button>
+                                <button type="button" id="btn-unit-liters" class="${!dieselState.isTonsMode ? 'text-green-400 font-bold underline' : 'text-slate-300 hover:text-white'}">Litrai (l)</button>
                                 <span class="text-slate-500">|</span>
-                                <button type="button" id="btn-unit-tons" class="${dieselState.isTonsMode ? 'text-green-400 font-bold underline' : 'text-slate-400 hover:text-white'}">Tonos (t)</button>
+                                <button type="button" id="btn-unit-tons" class="${dieselState.isTonsMode ? 'text-green-400 font-bold underline' : 'text-slate-300 hover:text-white'}">Tonos (t)</button>
                             </div>
                         </div>
                         <div class="relative">
@@ -192,7 +192,7 @@ function setupEvents(currentUser, userData) {
     btnLiters.onclick = () => {
         dieselState.isTonsMode = false;
         btnLiters.className = "text-green-400 font-bold underline";
-        btnTons.className = "text-slate-400 hover:text-white";
+        btnTons.className = "text-slate-300 hover:text-white";
         input.value = dieselState.volumeLiters;
         updateVolumeFromInput();
     };
@@ -200,7 +200,7 @@ function setupEvents(currentUser, userData) {
     btnTons.onclick = () => {
         dieselState.isTonsMode = true;
         btnTons.className = "text-green-400 font-bold underline";
-        btnLiters.className = "text-slate-400 hover:text-white";
+        btnLiters.className = "text-slate-300 hover:text-white";
         input.value = (dieselState.volumeLiters / 1190).toFixed(1);
         updateVolumeFromInput();
     };
@@ -208,14 +208,14 @@ function setupEvents(currentUser, userData) {
     btnVatNo.onclick = () => {
         dieselState.includeVat = false;
         btnVatNo.className = "px-3 py-1.5 rounded-lg text-xs font-bold bg-tractorPrimary text-white shadow";
-        btnVatYes.className = "px-3 py-1.5 rounded-lg text-xs font-bold text-slate-400 hover:text-white";
+        btnVatYes.className = "px-3 py-1.5 rounded-lg text-xs font-bold text-slate-300 hover:text-white";
         renderRankedSuppliers();
     };
 
     btnVatYes.onclick = () => {
         dieselState.includeVat = true;
         btnVatYes.className = "px-3 py-1.5 rounded-lg text-xs font-bold bg-tractorPrimary text-white shadow";
-        btnVatNo.className = "px-3 py-1.5 rounded-lg text-xs font-bold text-slate-400 hover:text-white";
+        btnVatNo.className = "px-3 py-1.5 rounded-lg text-xs font-bold text-slate-300 hover:text-white";
         renderRankedSuppliers();
     };
 
@@ -227,7 +227,7 @@ function setupEvents(currentUser, userData) {
             dieselState.activeQuickVol = vol;
 
             btnLiters.className = "text-green-400 font-bold underline";
-            btnTons.className = "text-slate-400 hover:text-white";
+            btnTons.className = "text-slate-300 hover:text-white";
             input.value = vol;
             unitLabel.textContent = `litrų (~${(vol / 1190).toFixed(1)} t)`;
 
@@ -243,12 +243,11 @@ function updateQuickVolButtons() {
         if (vol === dieselState.activeQuickVol) {
             btn.className = "btn-quick-vol px-3.5 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer bg-tractorPrimary text-white border-tractorPrimary shadow-md";
         } else {
-            btn.className = "btn-quick-vol px-3.5 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer bg-tractorBg border-tractorBorder text-slate-400 hover:text-white hover:border-slate-400";
+            btn.className = "btn-quick-vol px-3.5 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer bg-tractorBg border-tractorBorder text-slate-300 hover:text-white hover:border-slate-400";
         }
     });
 }
 
-// 📍 PRISTATYMO VIETOS: GARAŽAS / GPS / VARTOTOJO LAUKAI
 function setupLocationSelect(currentUser, userData) {
     const isLogged = !!currentUser;
     const hasGarage = !!(userData?.garageLat && userData?.garageLon);
@@ -414,7 +413,6 @@ function renderRankedSuppliers() {
     const ranked = activeDieselSuppliers.map(s => {
         const distKm = Math.round(calculateDist(currentDieselCoords.lat, currentDieselCoords.lng, s.lat, s.lng));
 
-        // Tūrio nuolaida
         let discountPerL = 0;
         if (volume >= 20000) discountPerL = s.discounts?.tier20k || -0.035;
         else if (volume >= 10000) discountPerL = s.discounts?.tier10k || -0.025;
@@ -423,7 +421,6 @@ function renderRankedSuppliers() {
         const effectiveBasePriceNoVat = Math.max(0.70, (s.basePriceNoVat || 0.85) + discountPerL);
         const fuelCostNoVat = effectiveBasePriceNoVat * volume;
 
-        // Transporto kaina
         let transportCostNoVat = 0;
         if (includeTransport) {
             const transportRate = s.transportRatePerLKm || 0.0014;
