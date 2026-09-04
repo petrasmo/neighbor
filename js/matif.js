@@ -18,7 +18,7 @@ export function renderMatifSection(container) {
                 <div class="space-y-1">
                     <div class="inline-flex items-center gap-2 bg-green-500/10 border border-green-500/30 text-green-600 dark:text-green-400 text-xs px-3 py-1 rounded-full font-bold uppercase tracking-wider">
                         <span class="w-2 h-2 rounded-full bg-green-500 animate-ping"></span>
-                        <span>Gyva rinka • Euronext MATIF & Baltijos biržos</span>
+                        <span>Gyva rinka • Euronext MATIF birža</span>
                     </div>
                     <h3 class="font-oswald text-xl md:text-2xl font-bold tracking-wide" style="color: var(--text-main);">
                         📈 MATIF Grūdų ir Žaliavų Biržos Kainos
@@ -26,12 +26,12 @@ export function renderMatifSection(container) {
                 </div>
 
                 <div class="flex items-center gap-2 self-start sm:self-auto text-xs text-slate-500 dark:text-slate-400">
-                    <span id="matif-sync-time">Kraunama iš Firebase...</span>
+                    <span id="matif-sync-time">Kraunama iš biržos...</span>
                 </div>
             </div>
 
-            <!-- 5 SKAITIKLIŲ KORTELĖS -->
-            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3" id="matif-cards-grid">
+            <!-- 3 BIRŽOS KORTELĖS (IDEALIAI SUBALANSUOTOS) -->
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4" id="matif-cards-grid">
                 <div class="text-center py-6 text-slate-500 text-xs col-span-full">Kraunami biržos duomenys...</div>
             </div>
 
@@ -69,10 +69,10 @@ export function renderMatifSection(container) {
                 <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs" id="matif-contracts-grid"></div>
             </div>
 
-            <!-- DISCLAIMER -->
+            <!-- INFORMACIJA -->
             <div class="text-[11px] text-slate-400 dark:text-slate-500 flex items-center gap-1.5 pt-1 border-t border-tractorBorder/40">
                 <span>ℹ️</span> 
-                <span>Kviečių, rapsų ir kukurūzų duomenys: <strong>Euronext Paris (MATIF)</strong>. Miežių ir žirnių duomenys: <strong>FOB Baltijos eksporto indeksas</strong>. Duomenys atnaujinami realiu laiku.</span>
+                <span>Rapsų, kviečių ir kukurūzų duomenys tiesiogiai iš <strong>Euronext Paris (MATIF)</strong> biržos srauto. 100% tikros dienos uždarymo kainos ir gyvi biržos sandoriai.</span>
             </div>
 
         </div>
@@ -100,20 +100,6 @@ function listenToMatifFirebase() {
             const data = doc.data();
             matifMarketData = data.crops || {};
 
-            // 💡 Užtikriname, kad viršutinė kaina visada yra lygiai paskutinis istorijos taškas
-            Object.keys(matifMarketData).forEach(k => {
-                const c = matifMarketData[k];
-                if (c.history && c.history.length > 0) {
-                    const last = c.history[c.history.length - 1];
-                    const prev = c.history[c.history.length - 2] || last;
-                    c.currentPrice = last.price;
-                    const diff = last.price - prev.price;
-                    c.change = (diff >= 0 ? "+" : "") + diff.toFixed(2);
-                    c.changePercent = (prev.price > 0 ? (diff / prev.price) * 100 : 0).toFixed(2) + "%";
-                    c.isPositive = diff >= 0;
-                }
-            });
-
             if (data.updatedAt) {
                 const date = data.updatedAt.toDate ? data.updatedAt.toDate() : new Date();
                 const timeStr = date.toLocaleTimeString('lt-LT', { hour: '2-digit', minute: '2-digit' });
@@ -132,22 +118,27 @@ function renderCropCards() {
     const grid = document.getElementById('matif-cards-grid');
     if (!grid || !matifMarketData) return;
 
-    grid.innerHTML = Object.values(matifMarketData).map(crop => {
+    // RODO TIK 3 TIKRAS OFICIALIAS EURONEXT BIRŽOS KULTŪRAS:
+    const allowedCrops = ['rapeseed', 'wheat', 'corn'];
+    const cropsList = allowedCrops.map(id => matifMarketData[id]).filter(Boolean);
+
+    grid.innerHTML = cropsList.map(crop => {
         const isSelected = crop.id === activeCropId;
         const changeClass = crop.isPositive ? 'text-green-600 dark:text-green-400' : 'text-red-500';
 
         return `
-            <div class="matif-card p-3 sm:p-4 rounded-xl border-2 transition cursor-pointer ${
+            <div class="matif-card p-4 rounded-xl border-2 transition cursor-pointer ${
                 isSelected 
                 ? 'bg-tractorPrimary/15 border-tractorPrimary ring-1 ring-tractorPrimary shadow-md' 
                 : 'bg-tractorBg border-tractorBorder hover:border-slate-400'
             }" data-crop="${crop.id}">
                 <div class="flex justify-between items-start">
-                    <span class="text-xs font-bold uppercase truncate" style="color: var(--text-main);">${crop.icon} ${crop.name.split(' ')[0]}</span>
+                    <span class="text-sm font-bold uppercase truncate" style="color: var(--text-main);">${crop.icon} ${crop.name.split(' ')[0]}</span>
+                    <span class="text-[10px] text-slate-400 font-mono">MATIF</span>
                 </div>
-                <div class="text-xl sm:text-2xl font-black font-mono mt-1.5" style="color: var(--text-main);">${crop.currentPrice.toFixed(2)} €</div>
-                <div class="flex justify-between items-center text-[11px] mt-1 font-bold ${changeClass}">
-                    <span>${crop.change} €</span>
+                <div class="text-2xl sm:text-3xl font-black font-mono mt-2" style="color: var(--text-main);">${crop.currentPrice.toFixed(2)} €</div>
+                <div class="flex justify-between items-center text-xs mt-1.5 font-bold ${changeClass}">
+                    <span>${crop.change}</span>
                     <span class="text-[10px] text-slate-400 font-normal">Gyva</span>
                 </div>
             </div>
@@ -355,12 +346,23 @@ function drawChart() {
 }
 
 function filterDataByRange(history, range) {
+    if (!history || history.length === 0) return [];
+
+    const now = new Date();
+    let daysToSubtract = 180;
+
     switch (range) {
-        case '1W': return history.slice(-7);
-        case '1M': return history.slice(-30);
-        case '3M': return history.slice(-90);
-        case '6M': return history.slice(-180);
-        case '1Y': return history.slice(-365);
-        default: return history.slice(-180);
+        case '1W': daysToSubtract = 7; break;
+        case '1M': daysToSubtract = 30; break;
+        case '3M': daysToSubtract = 90; break;
+        case '6M': daysToSubtract = 180; break;
+        case '1Y': daysToSubtract = 365; break;
     }
+
+    const cutoffDate = new Date();
+    cutoffDate.setDate(now.getDate() - daysToSubtract);
+    const cutoffStr = cutoffDate.toISOString().split("T")[0];
+
+    const filtered = history.filter(item => item.date >= cutoffStr);
+    return filtered.length >= 2 ? filtered : history.slice(-5);
 }
