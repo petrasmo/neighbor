@@ -11,10 +11,11 @@ const { executeElevatorsSync } = require("./grainSync");
 const { executeMatifSync } = require("./matifSync");
 const { executeDieselSync } = require("./dieselSync");
 
-// 🔄 BENDRAS VISŲ DUOMENŲ ATNAUJINIMAS
+// 🔄 BENDRAS VISŲ DUOMENŲ ATNAUJINIMAS (KAS 6 VAL.)
 async function syncAllAgroData() {
   const elevatorsCount = await executeElevatorsSync(db, admin);
-  const matifCount = await executeMatifSync(db, admin);
+  // normalus atnaujinimas: atnaujina tik šiandienos tašką
+  const matifCount = await executeMatifSync(db, admin, false);
   const dieselCount = await executeDieselSync(db, admin);
 
   return { elevators: elevatorsCount, matif: matifCount, diesel: dieselCount };
@@ -29,7 +30,23 @@ exports.scrapeAllAgroData = onSchedule(
   }
 );
 
-// 🚀 2. RANKINIS PALEIDIMAS: VISKAS VIENU PASPAUDIMU
+// 🌟 2. VIENKARTINIS 1 METŲ BIRŽOS ISTORIJOS UŽPILDYMAS (SEED)
+// Šią nuorodą paspausite naršyklėje TIK VIENĄ KARTĄ, kad užsipildytų 365 dienų grafikai
+exports.seedMatifHistory = onRequest(
+  { cors: true, invoker: "public" },
+  async (req, res) => {
+    try {
+      console.log("Pradedamas vienkartinis 1 metų istorijos parsiuntimas iš biržos...");
+      const count = await executeMatifSync(db, admin, true); // true = pilnas 1 m. perkrovimas
+      res.send(`✅ SĖKMINGAI UŽKRAUTA 1 METŲ BIRŽOS ISTORIJA (${count} kultūros)! 📈
+Kainos ir 365 dienų grafikai paruošti. Dabar kas 6 valandas sistema atnaujins tik einamosios dienos kainą.`);
+    } catch (err) {
+      res.status(500).send("Klaida: " + err.message);
+    }
+  }
+);
+
+// 🚀 3. RANKINIS PALEIDIMAS: VISKAS VIENU PASPAUDIMU
 exports.manualTriggerAllSync = onRequest(
   { cors: true, invoker: "public" },
   async (req, res) => {
@@ -37,7 +54,7 @@ exports.manualTriggerAllSync = onRequest(
       const stats = await syncAllAgroData();
       res.send(`✅ SĖKMINGAI ATNAUJINTA:
 - 🌾 Elevatoriai: ${stats.elevators} taškai
-- 📈 MATIF birža: ${stats.matif} kultūros su 365 d. istorija
+- 📈 MATIF birža: ${stats.matif} kultūros
 - ⛽ Gazolio rinka: ${stats.diesel} kuro bazės visoje Lietuvoje!`);
     } catch (err) {
       res.status(500).send("Klaida: " + err.message);
@@ -45,7 +62,7 @@ exports.manualTriggerAllSync = onRequest(
   }
 );
 
-// 🚀 3. RANKINIS PALEIDIMAS: TIK ELEVATORIAI
+// 🚀 4. RANKINIS PALEIDIMAS: TIK ELEVATORIAI
 exports.manualTriggerGrainScrape = onRequest(
   { cors: true, invoker: "public" },
   async (req, res) => {
@@ -58,20 +75,20 @@ exports.manualTriggerGrainScrape = onRequest(
   }
 );
 
-// 🚀 4. RANKINIS PALEIDIMAS: TIK MATIF BIRŽA
+// 🚀 5. RANKINIS PALEIDIMAS: TIK MATIF (Einamosios dienos atnaujinimas)
 exports.manualTriggerMatifScrape = onRequest(
   { cors: true, invoker: "public" },
   async (req, res) => {
     try {
-      const count = await executeMatifSync(db, admin);
-      res.send(`✅ Sėkmingai atnaujintos ${count} MATIF biržos kultūros! 📈`);
+      const count = await executeMatifSync(db, admin, false);
+      res.send(`✅ Sėkmingai atnaujinta einamoji MATIF biržos kaina! 📈`);
     } catch (err) {
       res.status(500).send("Klaida: " + err.message);
     }
   }
 );
 
-// 🚀 5. RANKINIS PALEIDIMAS: TIK GAZOLAS / DYZELINAS
+// 🚀 6. RANKINIS PALEIDIMAS: TIK GAZOLAS / DYZELINAS
 exports.manualTriggerDieselScrape = onRequest(
   { cors: true, invoker: "public" },
   async (req, res) => {
