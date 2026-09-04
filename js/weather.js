@@ -1,26 +1,42 @@
 // js/weather.js
 import { db } from './firebase.js';
 import { createCustomSelect } from './customSelect.js';
+import { loginWithGoogle } from './auth.js';
+import { switchTab } from './ui.js';
+import { refreshSettingsMap } from './settings.js';
 
 let currentWeatherCoords = { lat: 56.0593, lng: 24.4036, name: "Pasvalio r." };
 let userFieldsList = [];
+
+function navigateToSettings() {
+    if (typeof switchTab === 'function' && document.getElementById('view-tab-settings')) {
+        switchTab(6);
+        if (typeof refreshSettingsMap === 'function') refreshSettingsMap();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else {
+        window.location.href = 'index.html?tab=6';
+    }
+}
 
 export function initWeatherTab(currentUser, userData) {
     const container = document.getElementById('view-tab-weather');
     if (!container) return;
 
-    if (userData?.garageLat && userData?.garageLon) {
+    const isLogged = !!currentUser;
+    const hasGarage = !!(userData?.garageLat && userData?.garageLon);
+
+    if (hasGarage) {
         currentWeatherCoords = {
             lat: userData.garageLat,
             lng: userData.garageLon,
-            name: "Apytiksliai pagal jūsų ūkio / garažo vietą"
+            name: "Mano ūkio bazė (garažas)"
         };
     }
 
     container.innerHTML = `
         <div class="space-y-6 max-w-6xl mx-auto w-full">
             
-            <!-- 1. VIENTISA VIRŠUTINĖ AGRO-ORŲ KORTELĖ (SUJUNGTA, BE TARPŲ) -->
+            <!-- 1. VIENTISA VIRŠUTINĖ AGRO-ORŲ KORTELĖ -->
             <div id="weather-top-unified-card" class="bg-tractorSurface border border-tractorBorder rounded-2xl p-6 md:p-7 shadow-xl space-y-5">
                 
                 <!-- VIRŠUTINĖ EILUTĖ: ANTRAŠTĖ IR GPS -->
@@ -39,19 +55,60 @@ export function initWeatherTab(currentUser, userData) {
                     </button>
                 </div>
 
+                <!-- 🌟 INTERAKTYVUS BANERIS NEPRISIJUNGUSIEMS ARBA BE ŪKIO BAZĖS -->
+                ${!isLogged || !hasGarage ? `
+                    <div class="p-5 md:p-6 bg-tractorBg border border-tractorPrimary rounded-2xl shadow-xl space-y-4">
+                        <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                            <div class="space-y-1">
+                                <div class="flex items-center gap-2">
+                                    <span class="text-2xl">${!isLogged ? '💡' : '🏠'}</span>
+                                    <h4 class="text-sm md:text-base font-extrabold uppercase tracking-wider text-green-400">
+                                        ${!isLogged 
+                                            ? 'Norite 100% tikslių skaičiavimų ir prognozių savo ūkiui?' 
+                                            : 'Liko 1 žingsnis: Nurodykite savo ūkio bazės (garažo) vietą!'}
+                                    </h4>
+                                </div>
+                                <p class="text-xs md:text-sm text-slate-200 leading-relaxed">
+                                    ${!isLogged
+                                        ? 'Prisijunkite prie sistemos ir pažymėkite savo ūkio bazės (garažo) vietą – tai atrakins tikslius skaičiavimus tiesiai jūsų kiemui:'
+                                        : 'Jūs esate prisijungęs, tačiau dar nepažymėjote savo ūkio bazės (garažo) vietos žemėlapyje. Vienas taškas žemėlapyje automatiškai atrakins visą sistemos naudą:'}
+                                </p>
+                            </div>
+                            <button type="button" id="btn-weather-farm-prompt" class="px-5 py-3 bg-tractorPrimary hover:bg-tractorPrimaryHover text-white font-black rounded-xl text-xs md:text-sm uppercase tracking-wider shrink-0 shadow-lg cursor-pointer transition">
+                                ${!isLogged ? '🔑 Prisijungti su Google' : '📍 Nurodyti ūkio vietą Nustatymuose ➔'}
+                            </button>
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2 border-t border-tractorBorder/60 text-xs">
+                            <div class="bg-tractorSurface p-3 rounded-xl border border-tractorBorder/70 space-y-1">
+                                <strong class="text-amber-400 flex items-center gap-1"><span>⛽</span> Gazolio atvežimas</strong>
+                                <p class="text-[11px] text-slate-300">Tiksli autocisternos kaina tiesiai į jūsų kiemą iš 36 bazių.</p>
+                            </div>
+                            <div class="bg-tractorSurface p-3 rounded-xl border border-tractorBorder/70 space-y-1">
+                                <strong class="text-green-400 flex items-center gap-1"><span>🌾</span> Grūdų logistika</strong>
+                                <p class="text-[11px] text-slate-300">Transporto kaina iki elevatoriaus ir grynasis pelnas už toną.</p>
+                            </div>
+                            <div class="bg-tractorSurface p-3 rounded-xl border border-tractorBorder/70 space-y-1">
+                                <strong class="text-blue-400 flex items-center gap-1"><span>🌦️</span> Agro-orai ir purškimas</strong>
+                                <p class="text-[11px] text-slate-300">Vėjo greitis 2m aukštyje ir lietaus langas jūsų sklypams.</p>
+                            </div>
+                        </div>
+                    </div>
+                ` : ''}
+
                 <!-- LAUKO PASIRINKIMAS -->
                 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-tractorBg/80 p-3.5 rounded-xl border border-tractorBorder">
                     <div class="space-y-0.5">
                         <label class="text-xs font-bold text-tractorPrimaryLight uppercase tracking-wider block">
                             🌾 Pasirinkite lauką orų prognozei:
                         </label>
-                        <p class="text-[11px] text-slate-400">Jei jūsų laukai nutolę, pasirinkite konkretų sklypą tiksliam modeliui.</p>
+                        <p class="text-[11px] text-slate-400">Pasirinkite savo ūkio bazę arba konkretų sklypą tiksliam orų modeliui.</p>
                     </div>
 
                     <div id="weather-field-select-box" class="w-full sm:w-80"></div>
                 </div>
 
-                <!-- ŠVIESOFORO IR VERDIKTO BLOKAS (INTEGRUOTAS Į TĄ PATĮ LANGĄ) -->
+                <!-- ŠVIESOFORO IR VERDIKTO BLOKAS -->
                 <div id="live-spray-inner-box" class="pt-2">
                     <div class="text-center py-6 text-slate-500 text-sm">Jungiamasi prie meteorologinių palydovų...</div>
                 </div>
@@ -78,6 +135,17 @@ export function initWeatherTab(currentUser, userData) {
 
         </div>
     `;
+
+    const btnPrompt = document.getElementById('btn-weather-farm-prompt');
+    if (btnPrompt) {
+        btnPrompt.onclick = () => {
+            if (!isLogged) {
+                loginWithGoogle();
+            } else {
+                navigateToSettings();
+            }
+        };
+    }
 
     document.getElementById('btn-weather-gps')?.addEventListener('click', () => {
         if (navigator.geolocation) {
@@ -111,44 +179,42 @@ function updateLocationLabel() {
 }
 
 function loadFieldsToSelect(currentUser, userData) {
-    if (!currentUser) {
-        createCustomSelect({
-            containerId: 'weather-field-select-box',
-            placeholder: 'Pasirinkite...',
-            items: [{ id: 'garage', name: '🏠 Apytikslė vieta', subtext: 'Prisijunkite laukų parinkimui' }],
-            selectedId: 'garage'
+    const isLogged = !!currentUser;
+    const hasGarage = !!(userData?.garageLat && userData?.garageLon);
+
+    const selectItems = [];
+
+    if (isLogged && hasGarage) {
+        selectItems.push({ id: 'garage', name: '🏠 Mano ūkio bazė (garažas)', icon: '🏠', subtext: 'Iš Nustatymų' });
+    } else {
+        selectItems.push({
+            id: 'setup_prompt',
+            name: isLogged ? '🏠 Mano ūkio bazė (Nurodyti vietą)' : '🏠 Mano ūkio bazė (Prisijunkite)',
+            icon: '🏠',
+            subtext: isLogged ? 'Spauskite vietos pažymėjimui' : 'Prisijunkite ūkio parinkimui'
         });
-        return;
     }
 
-    db.collection("user_fields").where("userId", "==", currentUser.uid).get().then(snap => {
-        userFieldsList = [];
-        const selectItems = [
-            { id: 'garage', name: 'Mano ūkio / garažo vieta', icon: '🏠', subtext: 'Iš Nustatymų' }
-        ];
-
-        snap.forEach(doc => {
-            const f = doc.data();
-            userFieldsList.push(f);
-            selectItems.push({
-                id: f.id,
-                name: f.name,
-                icon: '🌾',
-                subtext: `${f.areaHa} ha, ${f.crop}`
-            });
-        });
-
+    const initSelect = () => {
         createCustomSelect({
             containerId: 'weather-field-select-box',
             placeholder: 'Pasirinkite lauką...',
             items: selectItems,
-            selectedId: 'garage',
+            selectedId: hasGarage ? 'garage' : 'setup_prompt',
             onSelect: (item) => {
-                if (!item || item.id === 'garage') {
+                if (!item) return;
+
+                if (item.id === 'setup_prompt') {
+                    if (!isLogged) loginWithGoogle();
+                    else navigateToSettings();
+                    return;
+                }
+
+                if (item.id === 'garage') {
                     currentWeatherCoords = {
                         lat: userData?.garageLat || 56.0593,
                         lng: userData?.garageLon || 24.4036,
-                        name: "Apytiksliai pagal jūsų ūkio / garažo vietą"
+                        name: "Mano ūkio bazė (garažas)"
                     };
                 } else {
                     const chosenField = userFieldsList.find(f => f.id === item.id);
@@ -168,7 +234,26 @@ function loadFieldsToSelect(currentUser, userData) {
                 fetchAgroWeatherData();
             }
         });
-    });
+    };
+
+    if (isLogged) {
+        db.collection("user_fields").where("userId", "==", currentUser.uid).get().then(snap => {
+            userFieldsList = [];
+            snap.forEach(doc => {
+                const f = doc.data();
+                userFieldsList.push(f);
+                selectItems.push({
+                    id: f.id,
+                    name: f.name,
+                    icon: '🌾',
+                    subtext: `${f.areaHa} ha, ${f.crop}`
+                });
+            });
+            initSelect();
+        });
+    } else {
+        initSelect();
+    }
 }
 
 async function fetchAgroWeatherData() {
@@ -246,7 +331,6 @@ function evaluateSprayCondition(windSpeedMs, windGustsMs, tempC, rainProb, rainM
     };
 }
 
-// 🚦 INTEGRUOTAS ŠVIESOFORAS
 function renderLiveSprayStatus(current, hourly, currentIdx) {
     const liveCard = document.getElementById('live-spray-inner-box');
     if (!liveCard || !current) return;

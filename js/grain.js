@@ -3,13 +3,16 @@ import { db } from './firebase.js';
 import { calculateDist, calculateBuyerRanking } from './grainCalculator.js';
 import { createCustomSelect } from './customSelect.js';
 import { showDialog } from './ui.js';
+import { loginWithGoogle } from './auth.js';
+import { switchTab } from './ui.js';
+import { refreshSettingsMap } from './settings.js';
 
 let activeMarketData = [];
 let unsubscribeGrain = null;
 let userGarageCoords = null;
 let currentCoords = null;
 let userFieldsList = [];
-let lastUpdatedTimeFormatted = null; // 👈 LAIKO ŽYMA
+let lastUpdatedTimeFormatted = null;
 
 const state = {
     viewMode: 'ranked',
@@ -30,15 +33,28 @@ const cropItems = [
     { id: 'peas', name: 'Žirniai / Pupos', icon: '🫘', subtext: 'Baltyminiai augalai' }
 ];
 
+function navigateToSettings() {
+    if (typeof switchTab === 'function' && document.getElementById('view-tab-settings')) {
+        switchTab(6);
+        if (typeof refreshSettingsMap === 'function') refreshSettingsMap();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else {
+        window.location.href = 'index.html?tab=6';
+    }
+}
+
 export function initGrainTab(currentUser, userData) {
     const container = document.getElementById('view-tab-grain') || document.getElementById('grain-calc-content');
     if (!container) return;
 
-    if (userData?.garageLat && userData?.garageLon) {
+    const isLogged = !!currentUser;
+    const hasGarage = !!(userData?.garageLat && userData?.garageLon);
+
+    if (hasGarage) {
         userGarageCoords = { 
             lat: userData.garageLat, 
             lng: userData.garageLon,
-            sourceText: "jūsų ūkio / garažo vietos"
+            sourceText: "jūsų ūkio bazės (garažo) vietos"
         };
         currentCoords = userGarageCoords;
     } else {
@@ -65,13 +81,54 @@ export function initGrainTab(currentUser, userData) {
                     </button>
                 </div>
 
+                <!-- 🌟 INTERAKTYVUS BANERIS NEPRISIJUNGUSIEMS ARBA BE ŪKIO BAZĖS -->
+                ${!isLogged || !hasGarage ? `
+                    <div class="p-5 md:p-6 bg-tractorBg border border-tractorPrimary rounded-2xl shadow-xl space-y-4">
+                        <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                            <div class="space-y-1">
+                                <div class="flex items-center gap-2">
+                                    <span class="text-2xl">${!isLogged ? '💡' : '🏠'}</span>
+                                    <h4 class="text-sm md:text-base font-extrabold uppercase tracking-wider text-green-400">
+                                        ${!isLogged 
+                                            ? 'Norite 100% tikslių skaičiavimų ir kainų savo ūkiui?' 
+                                            : 'Liko 1 žingsnis: Nurodykite savo ūkio bazės (garažo) vietą!'}
+                                    </h4>
+                                </div>
+                                <p class="text-xs md:text-sm text-slate-200 leading-relaxed">
+                                    ${!isLogged
+                                        ? 'Prisijunkite prie sistemos ir pažymėkite savo ūkio bazės (garažo) vietą – tai atrakins tikslius grūdų logistikos skaičiavimus tiesiai nuo jūsų kiemo:'
+                                        : 'Jūs esate prisijungęs, tačiau dar nepažymėjote savo ūkio bazės (garažo) vietos žemėlapyje. Vienas taškas žemėlapyje automatiškai atrakins visą sistemos naudą:'}
+                                </p>
+                            </div>
+                            <button type="button" id="btn-grain-farm-prompt" class="px-5 py-3 bg-tractorPrimary hover:bg-tractorPrimaryHover text-white font-black rounded-xl text-xs md:text-sm uppercase tracking-wider shrink-0 shadow-lg cursor-pointer transition">
+                                ${!isLogged ? '🔑 Prisijungti su Google' : '📍 Nurodyti ūkio vietą Nustatymuose ➔'}
+                            </button>
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2 border-t border-tractorBorder/60 text-xs">
+                            <div class="bg-tractorSurface p-3 rounded-xl border border-tractorBorder/70 space-y-1">
+                                <strong class="text-amber-400 flex items-center gap-1"><span>⛽</span> Gazolio atvežimas</strong>
+                                <p class="text-[11px] text-slate-300">Tiksli autocisternos kaina tiesiai į jūsų kiemą iš 36 bazių.</p>
+                            </div>
+                            <div class="bg-tractorSurface p-3 rounded-xl border border-tractorBorder/70 space-y-1">
+                                <strong class="text-green-400 flex items-center gap-1"><span>🌾</span> Grūdų logistika</strong>
+                                <p class="text-[11px] text-slate-300">Transporto kaina iki elevatoriaus ir grynasis pelnas už toną.</p>
+                            </div>
+                            <div class="bg-tractorSurface p-3 rounded-xl border border-tractorBorder/70 space-y-1">
+                                <strong class="text-blue-400 flex items-center gap-1"><span>🌦️</span> Agro-orai ir purškimas</strong>
+                                <p class="text-[11px] text-slate-300">Vėjo greitis 2m aukštyje ir lietaus langas jūsų sklypams.</p>
+                            </div>
+                        </div>
+                    </div>
+                ` : ''}
+
                 <!-- 🌾 CUSTOM SELECT LAUKUI -->
                 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-tractorBg/80 p-4 rounded-xl border border-tractorBorder">
                     <div class="space-y-0.5">
                         <label class="text-xs font-bold text-tractorPrimaryLight uppercase tracking-wider block">
                             🌾 Skaičiuoti atstumą ir transportą nuo:
                         </label>
-                        <p class="text-[11px] text-slate-400">Pasirinkite konkretų lauką arba ūkio bazę.</p>
+                        <p class="text-[11px] text-slate-400">Pasirinkite konkretų lauką arba ūkio bazę (garažą).</p>
                     </div>
 
                     <div id="grain-field-select-box" class="w-full sm:w-80"></div>
@@ -147,7 +204,17 @@ export function initGrainTab(currentUser, userData) {
         </div>
     `;
 
-    // 🔍 Inicijuojame CustomSelect Kultūrai
+    const btnPrompt = document.getElementById('btn-grain-farm-prompt');
+    if (btnPrompt) {
+        btnPrompt.onclick = () => {
+            if (!isLogged) {
+                loginWithGoogle();
+            } else {
+                navigateToSettings();
+            }
+        };
+    }
+
     createCustomSelect({
         containerId: 'grain-crop-select-box',
         placeholder: 'Pasirinkite kultūrą...',
@@ -162,7 +229,6 @@ export function initGrainTab(currentUser, userData) {
         }
     });
 
-    // 🔍 Inicijuojame CustomSelect Laukui
     loadUserFieldsSelect(currentUser, userData);
 
     document.getElementById('btn-loc-gps')?.addEventListener('click', () => {
@@ -228,39 +294,39 @@ export function initGrainTab(currentUser, userData) {
 }
 
 function loadUserFieldsSelect(currentUser, userData) {
-    if (!currentUser) {
-        createCustomSelect({
-            containerId: 'grain-field-select-box',
-            placeholder: 'Pasirinkite vietą...',
-            items: [{ id: 'garage', name: '🏠 Apytikslė vieta', subtext: 'Prisijunkite laukų parinkimui' }],
-            selectedId: 'garage'
+    const isLogged = !!currentUser;
+    const hasGarage = !!(userData?.garageLat && userData?.garageLon);
+
+    const items = [];
+
+    if (isLogged && hasGarage) {
+        items.push({ id: 'garage', name: '🏠 Mano ūkio bazė (garažas)', icon: '🏠', subtext: 'Iš Nustatymų' });
+    } else {
+        items.push({
+            id: 'setup_prompt',
+            name: isLogged ? '🏠 Mano ūkio bazė (Nurodyti vietą)' : '🏠 Mano ūkio bazė (Prisijunkite)',
+            icon: '🏠',
+            subtext: isLogged ? 'Spauskite vietos pažymėjimui' : 'Prisijunkite ūkio parinkimui'
         });
-        return;
     }
 
-    db.collection("user_fields").where("userId", "==", currentUser.uid).get().then(snap => {
-        userFieldsList = [];
-        const items = [{ id: 'garage', name: 'Mano ūkio / garažo vieta', icon: '🏠', subtext: 'Nustatymai' }];
-
-        snap.forEach(doc => {
-            const f = doc.data();
-            userFieldsList.push(f);
-            items.push({
-                id: f.id,
-                name: f.name,
-                icon: '🌾',
-                subtext: `${f.areaHa} ha • ${f.crop}`
-            });
-        });
-
+    const initSelect = () => {
         createCustomSelect({
             containerId: 'grain-field-select-box',
             placeholder: 'Pasirinkite lauką arba bazę...',
             items: items,
-            selectedId: 'garage',
+            selectedId: hasGarage ? 'garage' : 'setup_prompt',
             onSelect: (item) => {
-                if (!item || item.id === 'garage') {
-                    currentCoords = userGarageCoords || { lat: 56.0593, lng: 24.4036, sourceText: "ūkio / garažo vietos" };
+                if (!item) return;
+
+                if (item.id === 'setup_prompt') {
+                    if (!isLogged) loginWithGoogle();
+                    else navigateToSettings();
+                    return;
+                }
+
+                if (item.id === 'garage') {
+                    currentCoords = userGarageCoords || { lat: 56.0593, lng: 24.4036, sourceText: "ūkio bazės (garažo) vietos" };
                 } else {
                     const chosenField = userFieldsList.find(f => f.id === item.id);
                     if (chosenField && chosenField.polygonCoordinates && chosenField.polygonCoordinates.length > 0) {
@@ -280,7 +346,26 @@ function loadUserFieldsSelect(currentUser, userData) {
                 renderElevatorsCards();
             }
         });
-    });
+    };
+
+    if (isLogged) {
+        db.collection("user_fields").where("userId", "==", currentUser.uid).get().then(snap => {
+            userFieldsList = [];
+            snap.forEach(doc => {
+                const f = doc.data();
+                userFieldsList.push(f);
+                items.push({
+                    id: f.id,
+                    name: f.name,
+                    icon: '🌾',
+                    subtext: `${f.areaHa} ha • ${f.crop}`
+                });
+            });
+            initSelect();
+        });
+    } else {
+        initSelect();
+    }
 }
 
 async function resolveLocationChain() {
@@ -317,7 +402,6 @@ async function resolveLocationChain() {
     renderElevatorsCards();
 }
 
-// 🌟 ATNAUJINA LOKACIJĄ IR RODO ŠVIEŽIĄ KAINŲ ATNAUJINIMO DATĄ
 function updateLocationText() {
     const el = document.getElementById('location-status-text');
     if (!el || !currentCoords) return;
@@ -348,7 +432,6 @@ function listenToGrainPrices() {
             }
         });
 
-        // 🕒 Išsaugome suformatuotą atnaujinimo datą
         if (latestTimestamp) {
             lastUpdatedTimeFormatted = latestTimestamp.toLocaleString('lt-LT', {
                 year: 'numeric', month: '2-digit', day: '2-digit',

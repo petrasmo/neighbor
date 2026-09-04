@@ -2,8 +2,9 @@
 import { db } from './firebase.js';
 import { calculateDist } from './grainCalculator.js';
 import { createCustomSelect } from './customSelect.js';
-import { showDialog } from './ui.js';
 import { loginWithGoogle } from './auth.js';
+import { switchTab } from './ui.js';
+import { refreshSettingsMap } from './settings.js';
 
 let activeDieselSuppliers = [];
 let unsubscribeDiesel = null;
@@ -20,6 +21,16 @@ const dieselState = {
     activeQuickVol: 5000
 };
 
+function navigateToSettings() {
+    if (typeof switchTab === 'function' && document.getElementById('view-tab-settings')) {
+        switchTab(6);
+        if (typeof refreshSettingsMap === 'function') refreshSettingsMap();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else {
+        window.location.href = 'index.html?tab=6';
+    }
+}
+
 export function renderDieselCalculator(container, currentUser, userData) {
     if (!container) return;
 
@@ -30,7 +41,7 @@ export function renderDieselCalculator(container, currentUser, userData) {
         userGarageCoords = {
             lat: userData.garageLat,
             lng: userData.garageLon,
-            name: "Mano ūkio / garažo bazė"
+            name: "Mano ūkio bazė (garažas)"
         };
         currentDieselCoords = userGarageCoords;
     } else {
@@ -72,23 +83,44 @@ export function renderDieselCalculator(container, currentUser, userData) {
                     </div>
                 </div>
 
-                <!-- 🌟 RYŠKUS PRANEŠIMAS NEPRISIJUNGUSIEMS ARBA BE GARAŽO -->
+                <!-- 🌟 INTERAKTYVUS BANERIS NEPRISIJUNGUSIEMS ARBA BE ŪKIO BAZĖS -->
                 ${!isLogged || !hasGarage ? `
-                    <div class="p-4 md:p-5 bg-tractorBg border border-tractorPrimary rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-lg">
-                        <div class="flex items-start sm:items-center gap-3.5">
-                            <span class="text-3xl">💡</span>
-                            <div class="space-y-0.5">
-                                <strong class="text-green-400 block text-sm uppercase font-extrabold tracking-wider">
-                                    Norite 100% tikslios atvežimo kainos į savo kiemą?
-                                </strong>
-                                <p class="text-xs text-slate-200 leading-relaxed">
-                                    Prisijunkite ir Nustatymuose pažymėkite savo ūkio bazę – tuomet atstumas ir autocisternos kaina bus skaičiuojami tiesiai iki jūsų kiemo!
+                    <div class="p-5 md:p-6 bg-tractorBg border border-tractorPrimary rounded-2xl shadow-xl space-y-4">
+                        <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                            <div class="space-y-1">
+                                <div class="flex items-center gap-2">
+                                    <span class="text-2xl">${!isLogged ? '💡' : '🏠'}</span>
+                                    <h4 class="text-sm md:text-base font-extrabold uppercase tracking-wider text-green-400">
+                                        ${!isLogged 
+                                            ? 'Norite 100% tikslių skaičiavimų ir kainų savo ūkiui?' 
+                                            : 'Liko 1 žingsnis: Nurodykite savo ūkio bazės (garažo) vietą!'}
+                                    </h4>
+                                </div>
+                                <p class="text-xs md:text-sm text-slate-200 leading-relaxed">
+                                    ${!isLogged
+                                        ? 'Prisijunkite prie sistemos ir pažymėkite savo ūkio bazės (garažo) vietą – tai atrakins tikslius kuro atvežimo skaičiavimus tiesiai į jūsų kiemą:'
+                                        : 'Jūs esate prisijungęs, tačiau dar nepažymėjote savo ūkio bazės (garažo) vietos žemėlapyje. Vienas taškas žemėlapyje automatiškai atrakins visą sistemos naudą:'}
                                 </p>
                             </div>
+                            <button type="button" id="btn-login-diesel-prompt" class="px-5 py-3 bg-tractorPrimary hover:bg-tractorPrimaryHover text-white font-black rounded-xl text-xs md:text-sm uppercase tracking-wider shrink-0 shadow-lg cursor-pointer transition">
+                                ${!isLogged ? '🔑 Prisijungti su Google' : '📍 Nurodyti ūkio vietą Nustatymuose ➔'}
+                            </button>
                         </div>
-                        <button type="button" id="btn-login-diesel-prompt" class="px-5 py-2.5 bg-tractorPrimary hover:bg-tractorPrimaryHover text-white font-extrabold rounded-xl text-xs uppercase tracking-wider shrink-0 shadow-lg cursor-pointer transition">
-                            ${!isLogged ? 'Prisijungti su Google' : 'Nurodyti ūkio vietą'}
-                        </button>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2 border-t border-tractorBorder/60 text-xs">
+                            <div class="bg-tractorSurface p-3 rounded-xl border border-tractorBorder/70 space-y-1">
+                                <strong class="text-amber-400 flex items-center gap-1"><span>⛽</span> Gazolio atvežimas</strong>
+                                <p class="text-[11px] text-slate-300">Tiksli autocisternos kaina tiesiai į jūsų kiemą iš 36 bazių.</p>
+                            </div>
+                            <div class="bg-tractorSurface p-3 rounded-xl border border-tractorBorder/70 space-y-1">
+                                <strong class="text-green-400 flex items-center gap-1"><span>🌾</span> Grūdų logistika</strong>
+                                <p class="text-[11px] text-slate-300">Transporto kaina iki elevatoriaus ir grynasis pelnas už toną.</p>
+                            </div>
+                            <div class="bg-tractorSurface p-3 rounded-xl border border-tractorBorder/70 space-y-1">
+                                <strong class="text-blue-400 flex items-center gap-1"><span>🌦️</span> Agro-orai ir purškimas</strong>
+                                <p class="text-[11px] text-slate-300">Vėjo greitis 2m aukštyje ir lietaus langas jūsų sklypams.</p>
+                            </div>
+                        </div>
                     </div>
                 ` : ''}
 
@@ -158,11 +190,7 @@ function setupEvents(currentUser, userData) {
             if (!currentUser) {
                 loginWithGoogle();
             } else {
-                showDialog(
-                    "Nurodykite ūkio bazę 🏠",
-                    "Eikite į skirtuką <b>„Nustatymai“</b> ir žemėlapyje pažymėkite savo garažo / ūkio vietą. Tuomet kuro atvežimas visada bus skaičiuojamas tiksliai į jūsų kiemą.",
-                    "📍"
-                );
+                navigateToSettings();
             }
         };
     }
@@ -255,9 +283,14 @@ function setupLocationSelect(currentUser, userData) {
     const items = [];
 
     if (isLogged && hasGarage) {
-        items.push({ id: 'garage', name: '🏠 Mano ūkio / garažo bazė', icon: '🏠', subtext: 'Iš Nustatymų žemėlapio' });
+        items.push({ id: 'garage', name: '🏠 Mano ūkio bazė (garažas)', icon: '🏠', subtext: 'Iš Nustatymų žemėlapio' });
     } else {
-        items.push({ id: 'login_prompt', name: '🏠 Mano ūkio bazė (Prisijunkite)', icon: '🏠', subtext: 'Spauskite čia, kad nurodytumėte vietą' });
+        items.push({
+            id: 'login_prompt',
+            name: isLogged ? '🏠 Mano ūkio bazė (Nurodyti vietą)' : '🏠 Mano ūkio bazė (Prisijunkite)',
+            icon: '🏠',
+            subtext: isLogged ? 'Spauskite vietos pažymėjimui' : 'Spauskite prisijungimui'
+        });
     }
 
     items.push({ id: 'gps', name: '📡 Dabartinė vieta (GPS)', icon: '📡', subtext: 'Pagal telefono / kompiuterio vietą' });
@@ -286,7 +319,7 @@ function setupLocationSelect(currentUser, userData) {
 function initLocationCustomSelect(items, currentUser, userData) {
     const isLogged = !!currentUser;
     const hasGarage = !!(userData?.garageLat && userData?.garageLon);
-    const defaultId = isLogged && hasGarage ? 'garage' : 'gps';
+    const defaultId = isLogged && hasGarage ? 'garage' : (hasGarage ? 'garage' : 'gps');
 
     createCustomSelect({
         containerId: 'diesel-location-select-box',
@@ -298,25 +331,15 @@ function initLocationCustomSelect(items, currentUser, userData) {
 
             if (item.id === 'login_prompt') {
                 if (!isLogged) {
-                    showDialog(
-                        "Tikslus kuro pristatymas į ūkį 📍",
-                        "Prisijunkite su „Google“ paskyra ir nustatymuose pažymėkite savo ūkio / garažo vietą žemėlapyje. Tuomet kuro atvežimas visada bus skaičiuojamas tiksliai iki jūsų kiemo!",
-                        "🌾",
-                        loginWithGoogle,
-                        true
-                    );
+                    loginWithGoogle();
                 } else {
-                    showDialog(
-                        "Nurodykite ūkio bazę 🏠",
-                        "Eikite į skirtuką <b>„Nustatymai“</b> ir pažymėkite savo garažo vietą žemėlapyje.",
-                        "📍"
-                    );
+                    navigateToSettings();
                 }
                 return;
             }
 
             if (item.id === 'garage') {
-                currentDieselCoords = userGarageCoords || { lat: 54.8985, lng: 23.9036, name: "Mano ūkio / garažo bazė" };
+                currentDieselCoords = userGarageCoords || { lat: 54.8985, lng: 23.9036, name: "Mano ūkio bazė (garažas)" };
                 updateLocationDisplay();
                 renderRankedSuppliers();
             } else if (item.id === 'gps') {
