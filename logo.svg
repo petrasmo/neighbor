@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="100%" height="100%">
+  <defs>
+    <!-- Traktoriaus kėbulo žalia -->
+    <linearGradient id="trGreen" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#15803D" />
+      <stop offset="100%" stop-color="#16A34A" />
+    </linearGradient>
+
+    <!-- Ratlankių geltona/auksinė -->
+    <linearGradient id="rimGold" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#F59E0B" />
+      <stop offset="100%" stop-color="#FBBF24" />
+    </linearGradient>
+
+    <!-- Švelnus šešėlis po traktoriu -->
+    <filter id="tractorShadow" x="-10%" y="-10%" width="130%" height="130%">
+      <feDropShadow dx="0" dy="4" stdDeviation="4" flood-color="#000000" flood-opacity="0.25" />
+    </filter>
+  </defs>
+
+  <!-- ==================== TIK TRAKTORIUS (SUCENTRUOTAS) ==================== -->
+  <g transform="translate(0, 5)" filter="url(#tractorShadow)">
+    
+    <!-- Dirvos vaga apačioje -->
+    <path d="M 25 156 Q 95 150 175 156" fill="none" stroke="#22C55E" stroke-width="4" stroke-linecap="round"/>
+
+    <!-- Duslintuvas su žaliu lapeliu -->
+    <rect x="126" y="44" width="6" height="36" rx="2" fill="#334155"/>
+    <path d="M 129 42 C 122 34 138 30 137 40 Z" fill="#22C55E"/>
+
+    <!-- Kabinos stogas -->
+    <path d="M 52 42 L 118 42 Q 123 42 122 47 L 118 53 L 48 53 Q 48 42 52 42 Z" fill="#15803D"/>
+
+    <!-- Kabinos rėmas ir stiklas -->
+    <polygon points="56,55 113,55 106,94 56,94" fill="#E0F2FE" stroke="#1E293B" stroke-width="3"/>
+    <line x1="84" y1="55" x2="82" y2="94" stroke="#1E293B" stroke-width="2.5"/>
+
+    <!-- Variklio gaubtas -->
+    <path d="M 106 82 L 160 82 Q 170 82 170 92 L 170 124 L 106 124 Z" fill="url(#trGreen)"/>
+
+    <!-- Priekinės grotelės ir žibintas -->
+    <rect x="166" y="88" width="4" height="12" rx="2" fill="url(#rimGold)"/>
+    <line x1="140" y1="90" x2="164" y2="90" stroke="#14532D" stroke-width="2.5" stroke-linecap="round"/>
+    <line x1="135" y1="96" x2="164" y2="96" stroke="#14532D" stroke-width="2.5" stroke-linecap="round"/>
+    <line x1="130" y1="102" x2="164" y2="102" stroke="#14532D" stroke-width="2.5" stroke-linecap="round"/>
+
+    <!-- Galinis sparnas -->
+    <path d="M 40 122 A 38 38 0 0 1 106 102 L 106 122 Z" fill="#14532D"/>
+
+    <!-- Galinis didelis ratas -->
+    <circle cx="72" cy="120" r="34" fill="#0F172A"/>
+    <circle cx="72" cy="120" r="34" fill="none" stroke="#334155" stroke-width="5" stroke-dasharray="10 8"/>
+    <circle cx="72" cy="120" r="22" fill="url(#rimGold)"/>
+    <circle cx="72" cy="120" r="9" fill="#0F172A"/>
+    <circle cx="72" cy="120" r="4" fill="#94A3B8"/>
+
+    <!-- Priekinis mažas ratas -->
+    <circle cx="150" cy="129" r="23" fill="#0F172A"/>
+    <circle cx="150" cy="129" r="23" fill="none" stroke="#334155" stroke-width="4" stroke-dasharray="8 6"/>
+    <circle cx="150" cy="129" r="14" fill="url(#rimGold)"/>
+    <circle cx="150" cy="129" r="6" fill="#0F172A"/>
+  </g>
+</svg>

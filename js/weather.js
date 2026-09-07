@@ -5,7 +5,7 @@ import { loginWithGoogle } from './auth.js';
 import { switchTab } from './ui.js';
 import { refreshSettingsMap } from './settings.js';
 
-let currentWeatherCoords = { lat: 56.0593, lng: 24.4036, name: "Pasvalio r." };
+let currentWeatherCoords = { lat: 54.6872, lng: 25.2797, name: "Nustatoma vieta..." };
 let userFieldsList = [];
 
 function navigateToSettings() {
@@ -31,6 +31,11 @@ export function initWeatherTab(currentUser, userData) {
             lng: userData.garageLon,
             name: "Mano ūkio bazė (garažas)"
         };
+        updateLocationLabel();
+        fetchAgroWeatherData();
+    } else {
+        // 1 PATAISYMAS: Automatinis IP vietos nustatymas (pvz. Vilnius)
+        resolveAutoLocation();
     }
 
     container.innerHTML = `
@@ -168,6 +173,30 @@ export function initWeatherTab(currentUser, userData) {
     });
 
     loadFieldsToSelect(currentUser, userData);
+}
+
+// 1 PATAISYMAS: Automatinis miesto nustatymas pagal lankytojo IP (pvz. Vilnius)
+async function resolveAutoLocation() {
+    try {
+        const res = await fetch("https://ipapi.co/json/", { timeout: 3000 });
+        const data = await res.json();
+        if (data && data.latitude && data.longitude) {
+            currentWeatherCoords = {
+                lat: data.latitude,
+                lng: data.longitude,
+                name: `Apytikslė vieta (${data.city || 'Lietuva'})`
+            };
+            updateLocationLabel();
+            fetchAgroWeatherData();
+            return;
+        }
+    } catch (e) {
+        console.warn("IP lokacijos klaida:", e);
+    }
+
+    // Atsarginis taškas (Vilnius)
+    currentWeatherCoords = { lat: 54.6872, lng: 25.2797, name: "Vilnius (numatytoji)" };
+    updateLocationLabel();
     fetchAgroWeatherData();
 }
 
@@ -212,8 +241,8 @@ function loadFieldsToSelect(currentUser, userData) {
 
                 if (item.id === 'garage') {
                     currentWeatherCoords = {
-                        lat: userData?.garageLat || 56.0593,
-                        lng: userData?.garageLon || 24.4036,
+                        lat: userData?.garageLat || 54.6872,
+                        lng: userData?.garageLon || 25.2797,
                         name: "Mano ūkio bazė (garažas)"
                     };
                 } else {
@@ -274,28 +303,39 @@ async function fetchAgroWeatherData() {
     }
 }
 
+// 2 PATAISYMAS: Tikslus einamosios valandos indeksas
 function findCurrentHourIndex(hourly) {
     if (!hourly || !hourly.time) return 0;
     const now = new Date();
+
+    // Pirmiausia ieškome tikslios šios valandos
     for (let i = 0; i < hourly.time.length; i++) {
         const itemDate = new Date(hourly.time[i]);
-        if (itemDate >= now || (itemDate.getDate() === now.getDate() && itemDate.getHours() === now.getHours())) {
+        if (itemDate.getDate() === now.getDate() && itemDate.getHours() === now.getHours()) {
             return i;
         }
     }
+
+    // Atsarginis variantas
+    for (let i = 0; i < hourly.time.length; i++) {
+        const itemDate = new Date(hourly.time[i]);
+        if (itemDate >= now) return i;
+    }
+
     return 0;
 }
 
+// 3 PATAISYMAS: Protingas lietaus ir vėjo šviesoforas
 function evaluateSprayCondition(windSpeedMs, windGustsMs, tempC, rainProb, rainMm) {
     const redReasons = [];
     const yellowReasons = [];
 
+    // RAUDONA: TIK KAI REALIAI DRAUDŽIAMA ARBA LYJA
     if (windSpeedMs > 4.5) redReasons.push(`Per stiprus vėjas (${windSpeedMs} m/s > 4.5 m/s).`);
     if (windGustsMs > 6.0) redReasons.push(`Pavojingi vėjo gūsiai (${windGustsMs} m/s > 6.0 m/s).`);
-    if (rainMm > 0) redReasons.push(`Šiuo metu krenta lietus.`);
-    if (rainProb > 40) redReasons.push(`Didelė lietaus tikimybė (${rainProb}%).`);
+    if (rainMm > 0.1) redReasons.push(`Šiuo metu krenta lietus (${rainMm} mm).`);
     if (tempC > 25) redReasons.push(`Per karšta (+${tempC}°C > 25°C).`);
-    if (tempC < 8) redReasons.push(`Per šalta (+${tempC}°C < 8°C).`);
+    if (tempC < 5) redReasons.push(`Per šalta (+${tempC}°C < 5°C).`);
 
     if (redReasons.length > 0) {
         return {
@@ -307,10 +347,11 @@ function evaluateSprayCondition(windSpeedMs, windGustsMs, tempC, rainProb, rainM
         };
     }
 
+    // GELTONA: RIZIKA (pvz. nelyja, bet artėja debesis)
+    if (rainProb > 40 && rainMm <= 0.1) yellowReasons.push(`Didelė lietaus tikimybė (${rainProb}%), nors šiuo metu nelyja.`);
     if (windSpeedMs > 3.0) yellowReasons.push(`Vėjas (${windSpeedMs} m/s) ant ribos.`);
     if (windGustsMs > 4.5) yellowReasons.push(`Vėjo gūsiai (${windGustsMs} m/s).`);
-    if (tempC > 22) yellowReasons.push(`Šilta (+${tempC}°C).`);
-    if (rainProb > 20) yellowReasons.push(`Lietaus tikimybė (${rainProb}%).`);
+    if (tempC > 22) yellowReasons.push(`Šilta (+${tempC}°C, garavimo rizika).`);
 
     if (yellowReasons.length > 0) {
         return {
@@ -327,7 +368,7 @@ function evaluateSprayCondition(windSpeedMs, windGustsMs, tempC, rainProb, rainM
         icon: '🟢',
         text: 'Tinka',
         badgeClass: 'bg-green-500/20 text-green-600 border-green-500/40',
-        warnings: []
+        reasons: []
     };
 }
 
@@ -398,7 +439,7 @@ function renderLiveSprayStatus(current, hourly, currentIdx) {
                 <div class="bg-tractorBg p-3.5 rounded-xl border border-tractorBorder space-y-1">
                     <span class="text-slate-500 text-xs block font-bold">💧 Krituliai šiuo metu</span>
                     <strong class="font-mono text-xl font-bold" style="color: var(--text-main);">${rainMm} mm</strong>
-                    <span class="text-[11px] ${currentRainProb > 30 ? 'text-red-500 font-bold' : 'text-green-600 font-bold'} block">
+                    <span class="text-[11px] ${currentRainProb > 40 ? 'text-amber-500 font-bold' : 'text-green-600 font-bold'} block">
                         Lietaus tikimybė: ${currentRainProb}%
                     </span>
                 </div>
@@ -456,7 +497,7 @@ function renderHourlyForecast(hourly, currentIdx) {
                     <div>💨 <strong>${windSpeedMs} m/s</strong></div>
                     <div class="text-[10px] text-slate-500">gūs. ${windGustsMs} m/s</div>
                     <div>🌡️ <strong>${tempC}°C</strong></div>
-                    <div class="${rainProb > 30 ? 'text-blue-500 font-bold' : 'text-slate-500'}">💧 ${rainProb}%</div>
+                    <div class="${rainProb > 40 ? 'text-amber-500 font-bold' : 'text-slate-500'}">💧 ${rainProb}%</div>
                 </div>
             </div>
         `);
