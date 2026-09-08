@@ -13,6 +13,8 @@ import { renderCoverCropCalculator } from './coverCropCalculator.js';
 import { renderCombineLossCalculator } from './combineLossCalculator.js';
 import { renderSprayerCalculator } from './sprayerCalculator.js';
 import { renderFertilizerCalculator } from './fertilizerCalculator.js';
+import { renderStorageCalculator } from './storageCalculator.js';
+import { renderNmaCalendar } from './nmaCalendar.js';
 
 document.addEventListener('DOMContentLoaded', () => {
     renderGlobalSidebar('grudai');
@@ -30,6 +32,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const combineView = document.getElementById('view-tab-combine');
     const sprayView = document.getElementById('view-tab-spray');
     const fertView = document.getElementById('view-tab-fert');
+    const storageView = document.getElementById('view-tab-storage');
+    const nmaView = document.getElementById('view-tab-nma');
 
     const openGrainBtn = document.getElementById('btn-open-grain-calc');
     const openMatifBtn = document.getElementById('btn-open-matif-calc');
@@ -39,6 +43,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const openCombineBtn = document.getElementById('btn-open-combine-calc');
     const openSprayBtn = document.getElementById('btn-open-spray-calc');
     const openFertBtn = document.getElementById('btn-open-fert-calc');
+    const openStorageBtn = document.getElementById('btn-open-storage-calc');
+    const openNmaBtn = document.getElementById('btn-open-nma-calc');
 
     const backFromGrainBtn = document.getElementById('btn-back-from-grain');
     const backFromMatifBtn = document.getElementById('btn-back-from-matif');
@@ -48,6 +54,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const backFromCombineBtn = document.getElementById('btn-back-from-combine');
     const backFromSprayBtn = document.getElementById('btn-back-from-spray');
     const backFromFertBtn = document.getElementById('btn-back-from-fert');
+    const backFromStorageBtn = document.getElementById('btn-back-from-storage');
+    const backFromNmaBtn = document.getElementById('btn-back-from-nma');
 
     const hideAllViews = () => {
         hubView.classList.add('hidden');
@@ -59,6 +67,8 @@ document.addEventListener('DOMContentLoaded', () => {
         combineView.classList.add('hidden');
         sprayView.classList.add('hidden');
         fertView.classList.add('hidden');
+        storageView?.classList.add('hidden');
+        nmaView?.classList.add('hidden');
     };
 
     openGrainBtn.onclick = () => {
@@ -117,6 +127,20 @@ document.addEventListener('DOMContentLoaded', () => {
         window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
+    if (openStorageBtn) openStorageBtn.onclick = () => {
+        hideAllViews();
+        storageView?.classList.remove('hidden');
+        renderStorageCalculator(document.getElementById('storage-calc-content'));
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    if (openNmaBtn) openNmaBtn.onclick = () => {
+        hideAllViews();
+        nmaView?.classList.remove('hidden');
+        renderNmaCalendar(document.getElementById('nma-calc-content'));
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
     const returnToHub = () => {
         hideAllViews();
         hubView.classList.remove('hidden');
@@ -131,6 +155,8 @@ document.addEventListener('DOMContentLoaded', () => {
     if (backFromCombineBtn) backFromCombineBtn.onclick = returnToHub;
     if (backFromSprayBtn) backFromSprayBtn.onclick = returnToHub;
     if (backFromFertBtn) backFromFertBtn.onclick = returnToHub;
+    if (backFromStorageBtn) backFromStorageBtn.onclick = returnToHub;
+    if (backFromNmaBtn) backFromNmaBtn.onclick = returnToHub;
 
     auth.onAuthStateChanged(async (user) => {
         const sidebarAuthBox = document.getElementById('auth-sidebar-box');
@@ -159,7 +185,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 document.getElementById('btn-logout-grain-mob')?.addEventListener('click', logoutUser);
             }
 
-            // Atnaujiname atviras skaičiuokles
             if (dieselView && !dieselView.classList.contains('hidden')) {
                 renderDieselCalculator(document.getElementById('diesel-calc-content'), currentUser, userData);
             }

@@ -20,6 +20,8 @@ import { renderCoverCropCalculator } from './coverCropCalculator.js';
 import { renderCombineLossCalculator } from './combineLossCalculator.js';
 import { renderSprayerCalculator } from './sprayerCalculator.js';
 import { renderFertilizerCalculator } from './fertilizerCalculator.js';
+import { renderStorageCalculator } from './storageCalculator.js';
+import { renderNmaCalendar } from './nmaCalendar.js';
 
 let currentUser = null;
 let userData = null;
@@ -78,50 +80,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     <div class="flex items-center gap-2">
                         <span class="text-base">💡</span>
                         <strong class="text-xs md:text-sm text-green-700 dark:text-tractorPrimaryLight uppercase tracking-wider font-extrabold">
-                            Svarbiausias žingsnis: Prisijunkite ir pažymėkite laukus!
+                            Svarbiausias žingsnis: Prisijunkite ir pažymėkite ūkio bazę!
                         </strong>
                     </div>
                     <p class="text-xs leading-relaxed text-slate-700 dark:text-slate-200">
-                        Prisijungę su „Google“ ir palydoviniame žemėlapyje apibrėžę savo laukus bei ūkio bazę, <b>visos sistemos skaičiuoklės pradeda veikti automatiškai pagal jūsų tikslią vietą ir sklypų plotus.</b>
+                        Prisijungę su „Google“ ir pažymėję ūkio bazę bei laukus, <b>visos sistemos skaičiuoklės pradeda veikti automatiškai pagal jūsų tikslią vietą ir plotus.</b>
                     </p>
-                </div>
-
-                <div class="space-y-2.5 text-xs md:text-sm">
-                    <div class="p-2.5 bg-tractorBg rounded-xl border border-tractorBorder space-y-1">
-                        <div class="font-bold flex items-center gap-1.5" style="color: var(--text-main);">
-                            <span>🌾</span> <span>1. Grūdų, MATIF ir Gazolio analizė</span>
-                        </div>
-                        <p class="text-slate-600 dark:text-slate-300 text-xs">
-                            Palyginkite visų Lietuvos elevatorių pelningumą, stebėkite MATIF biržą ir sužinokite, kas pigiausiai atveš žymėtą dyzeliną į jūsų kiemą.
-                        </p>
-                    </div>
-
-                    <div class="p-2.5 bg-tractorBg rounded-xl border border-tractorBorder space-y-1">
-                        <div class="font-bold flex items-center gap-1.5" style="color: var(--text-main);">
-                            <span>🌦️</span> <span>2. Agro-Orai ir Purškimo šviesoforas</span>
-                        </div>
-                        <p class="text-slate-600 dark:text-slate-300 text-xs">
-                            Orų prognozė, vėjo greitis 2m aukštyje ir lietaus rizika tikrinami konkrečioms jūsų pasirinkto sklypo GPS koordinatėms.
-                        </p>
-                    </div>
-
-                    <div class="p-2.5 bg-tractorBg rounded-xl border border-tractorBorder space-y-1">
-                        <div class="font-bold flex items-center gap-1.5" style="color: var(--text-main);">
-                            <span>🗺️</span> <span>3. Mano Laukai ir Darbų žurnalas</span>
-                        </div>
-                        <p class="text-slate-600 dark:text-slate-300 text-xs">
-                            Apveskite laukus palydove, registruokite sėją, purškimą, trąšas ir derlių. Programa skaičiuoja kiekvieno lauko pajamas, išlaidas ir savikainą.
-                        </p>
-                    </div>
-
-                    <div class="p-2.5 bg-tractorBg rounded-xl border border-tractorBorder space-y-1">
-                        <div class="font-bold flex items-center gap-1.5" style="color: var(--text-main);">
-                            <span>📄</span> <span>4. Oficialios NMA / ŽŪM ataskaitos</span>
-                        </div>
-                        <p class="text-slate-600 dark:text-slate-300 text-xs">
-                            Pagal jūsų įvestus darbus vienu paspaudimu sugeneruojami oficialios formos Augalų apsaugos ir Trąšų apskaitos žurnalai PDF arba Excel formatu.
-                        </p>
-                    </div>
                 </div>
             </div>
             `,
@@ -139,7 +103,6 @@ document.addEventListener('DOMContentLoaded', () => {
         initFeedTab(currentUser, userData, classifierMap);
     });
 
-    // 🌟 GYVAS PRISIJUNGIMO IR DUOMENŲ KLAUSYMASIS
     auth.onAuthStateChanged(async (user) => {
         const preloader = document.getElementById('app-preloader');
         const sidebarAuthBox = document.getElementById('auth-sidebar-box');
@@ -194,7 +157,6 @@ document.addEventListener('DOMContentLoaded', () => {
             initSettingsTab(currentUser, userData);
             initWeatherTab(currentUser, userData);
 
-            // ⚡ ŽAIBIŠKAS SKAIČIUOKLIŲ ATNAUJINIMAS SU NAUJAIS VARTOTOJO DUOMENIMIS
             refreshActiveCalculators(currentUser, userData);
 
             switchTab(requestedTab);
@@ -259,6 +221,8 @@ function setupCalculatorsHub() {
     const combineView = document.getElementById('view-tab-combine-embed');
     const sprayView = document.getElementById('view-tab-spray-embed');
     const fertView = document.getElementById('view-tab-fert-embed');
+    const storageView = document.getElementById('view-tab-storage-embed');
+    const nmaView = document.getElementById('view-tab-nma-embed');
 
     const openGrainBtn = document.getElementById('btn-open-grain-calc');
     const openMatifBtn = document.getElementById('btn-open-matif-calc');
@@ -268,6 +232,8 @@ function setupCalculatorsHub() {
     const openCombineBtn = document.getElementById('btn-open-combine-calc');
     const openSprayBtn = document.getElementById('btn-open-spray-calc');
     const openFertBtn = document.getElementById('btn-open-fert-calc');
+    const openStorageBtn = document.getElementById('btn-open-storage-calc');
+    const openNmaBtn = document.getElementById('btn-open-nma-calc');
 
     const backFromGrainBtn = document.getElementById('btn-back-from-grain');
     const backFromMatifBtn = document.getElementById('btn-back-from-matif');
@@ -277,6 +243,8 @@ function setupCalculatorsHub() {
     const backFromCombineBtn = document.getElementById('btn-back-from-combine');
     const backFromSprayBtn = document.getElementById('btn-back-from-spray');
     const backFromFertBtn = document.getElementById('btn-back-from-fert');
+    const backFromStorageBtn = document.getElementById('btn-back-from-storage');
+    const backFromNmaBtn = document.getElementById('btn-back-from-nma');
 
     const hideAll = () => {
         hubView?.classList.add('hidden');
@@ -288,6 +256,8 @@ function setupCalculatorsHub() {
         combineView?.classList.add('hidden');
         sprayView?.classList.add('hidden');
         fertView?.classList.add('hidden');
+        storageView?.classList.add('hidden');
+        nmaView?.classList.add('hidden');
     };
 
     if (openGrainBtn) openGrainBtn.onclick = () => {
@@ -346,6 +316,20 @@ function setupCalculatorsHub() {
         window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
+    if (openStorageBtn) openStorageBtn.onclick = () => {
+        hideAll();
+        storageView?.classList.remove('hidden');
+        renderStorageCalculator(document.getElementById('storage-calc-content'));
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    if (openNmaBtn) openNmaBtn.onclick = () => {
+        hideAll();
+        nmaView?.classList.remove('hidden');
+        renderNmaCalendar(document.getElementById('nma-calc-content'));
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
     const returnToHub = () => {
         hideAll();
         hubView?.classList.remove('hidden');
@@ -360,4 +344,6 @@ function setupCalculatorsHub() {
     if (backFromCombineBtn) backFromCombineBtn.onclick = returnToHub;
     if (backFromSprayBtn) backFromSprayBtn.onclick = returnToHub;
     if (backFromFertBtn) backFromFertBtn.onclick = returnToHub;
+    if (backFromStorageBtn) backFromStorageBtn.onclick = returnToHub;
+    if (backFromNmaBtn) backFromNmaBtn.onclick = returnToHub;
 }
