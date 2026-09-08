@@ -1,6 +1,6 @@
 // js/main.js
 import { auth, db } from './firebase.js';
-import { loginWithGoogle, logoutUser } from './auth.js';
+import { openAuthModal, logoutUser } from './auth.js';
 import { switchTab, showDialog } from './ui.js';
 import { initThemeToggle } from './theme.js';
 import { renderGlobalSidebar } from './sidebar.js';
@@ -35,7 +35,7 @@ document.addEventListener('DOMContentLoaded', () => {
     renderGlobalSidebar('index', requestedTab);
     initThemeToggle();
 
-    document.querySelectorAll('.login-trigger-btn').forEach(btn => btn.addEventListener('click', loginWithGoogle));
+    document.querySelectorAll('.login-trigger-btn').forEach(btn => btn.addEventListener('click', () => openAuthModal('login')));
 
     // Navigacija
     document.querySelectorAll('.nav-tab-btn').forEach(btn => {
@@ -45,9 +45,9 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!currentUser && (tabIdx === 2 || tabIdx === 3 || tabIdx === 4 || tabIdx === 6)) {
                 showDialog(
                     "Reikalingas prisijungimas",
-                    "Norėdami valdyti savo laukus, ataskaitas ar nustatymus, prisijunkite su savo „Google“ paskyra.",
+                    "Norėdami valdyti savo laukus, ataskaitas ar nustatymus, prisijunkite prie savo ūkio paskyros.",
                     "🔒",
-                    loginWithGoogle,
+                    () => openAuthModal('login'),
                     true
                 );
                 return;
@@ -84,7 +84,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         </strong>
                     </div>
                     <p class="text-xs leading-relaxed text-slate-700 dark:text-slate-200">
-                        Prisijungę su „Google“ ir pažymėję ūkio bazę bei laukus, <b>visos sistemos skaičiuoklės pradeda veikti automatiškai pagal jūsų tikslią vietą ir plotus.</b>
+                        Prisijungę prie paskyros ir pažymėję ūkio bazę bei laukus, <b>visos sistemos skaičiuoklės pradeda veikti automatiškai pagal jūsų tikslią vietą ir plotus.</b>
                     </p>
                 </div>
             </div>
@@ -111,17 +111,18 @@ document.addEventListener('DOMContentLoaded', () => {
         if (user) {
             currentUser = user;
             const userDoc = await db.collection("users").doc(user.uid).get();
+
             if (userDoc.exists) {
                 userData = userDoc.data();
             } else {
                 userData = {
                     userId: user.uid,
-                    name: user.displayName || "Ūkininkas",
+                    name: user.displayName || user.email.split('@')[0] || "Ūkininkas",
                     email: user.email || "",
                     phone: "+370",
                     ownedTech: [],
-                    garageLat: 54.8985,
-                    garageLon: 23.9036,
+                    garageLat: null,
+                    garageLon: null,
                     notificationDistance: 50,
                     isSetupComplete: false
                 };
@@ -131,7 +132,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (sidebarAuthBox) {
                 sidebarAuthBox.innerHTML = `
                     <p class="text-[10px] text-slate-500 uppercase font-bold tracking-wider">Prisijungta kaip:</p>
-                    <p class="text-xs truncate font-bold mt-0.5" style="color: var(--text-main);">${user.email}</p>
+                    <p class="text-xs truncate font-bold mt-0.5" style="color: var(--text-main);">${user.email || user.displayName || 'Ūkininkas'}</p>
                     <button id="btn-logout-main" class="w-full py-2 mt-2 bg-tractorBg hover:bg-red-500/10 text-red-500 dark:text-red-400 border border-tractorBorder hover:border-red-400 rounded-xl text-xs font-bold transition cursor-pointer flex items-center justify-center gap-1.5">
                         <span>🚪</span> <span>Atsijungti</span>
                     </button>
@@ -156,13 +157,29 @@ document.addEventListener('DOMContentLoaded', () => {
             initGarageTab(currentUser, userData);
             initSettingsTab(currentUser, userData);
             initWeatherTab(currentUser, userData);
-
             refreshActiveCalculators(currentUser, userData);
 
-            switchTab(requestedTab);
-            if (requestedTab === 2) refreshFieldsMap();
-            if (requestedTab === 1) initWeatherTab(currentUser, userData);
-            if (requestedTab === 3) initReportsTab(cachedFieldsList, userData);
+            // 🎯 PATIKRA: AR VARTOTOJAS JAU TURI PILNAI IŠSAUGOTĄ GARAŽĄ?
+            const hasValidGarage = userData && userData.isSetupComplete && userData.garageLat && userData.garageLon && userData.garageLat !== 0;
+
+            if (!hasValidGarage) {
+                // Jei vietos dar nėra – automatiškai atidarome Nustatymus (Tab 6)!
+                setTimeout(() => {
+                    switchTab(6);
+                    refreshSettingsMap();
+                    showDialog(
+                        "Sveiki atvykę į JurgisAgro! 🚜",
+                        "Nurodykite savo <strong>ūkio bazės (garažo) vietą</strong> žemėlapyje žemiau ir paspauskite „Išsaugoti nustatymus“, kad visos grūdų, kuro ir orų skaičiuoklės veiktų tiksliai jūsų kiemui.",
+                        "📍"
+                    );
+                }, 200);
+            } else {
+                switchTab(requestedTab);
+                if (requestedTab === 2) refreshFieldsMap();
+                if (requestedTab === 1) initWeatherTab(currentUser, userData);
+                if (requestedTab === 3) initReportsTab(cachedFieldsList, userData);
+            }
+
         } else {
             currentUser = null;
             userData = null;
@@ -172,17 +189,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 sidebarAuthBox.innerHTML = `
                     <p class="text-[11px] text-slate-400">Esate neprisijungęs</p>
                     <button class="login-trigger-btn w-full py-2 bg-tractorPrimary hover:bg-tractorPrimaryHover text-white text-xs font-bold rounded-lg shadow transition cursor-pointer">
-                        Prisijungti su Google
+                        Prisijungti prie ūkio
                     </button>
                 `;
-                sidebarAuthBox.querySelector('.login-trigger-btn')?.addEventListener('click', loginWithGoogle);
+                sidebarAuthBox.querySelector('.login-trigger-btn')?.addEventListener('click', () => openAuthModal('login'));
             }
 
             if (mobileAuthSlot) {
                 mobileAuthSlot.innerHTML = `
                     <button class="login-trigger-btn px-3 py-1 bg-tractorPrimary text-white rounded-lg text-xs font-bold">Prisijungti</button>
                 `;
-                mobileAuthSlot.querySelector('.login-trigger-btn')?.addEventListener('click', loginWithGoogle);
+                mobileAuthSlot.querySelector('.login-trigger-btn')?.addEventListener('click', () => openAuthModal('login'));
             }
 
             initFeedTab(null, null, classifierMap);

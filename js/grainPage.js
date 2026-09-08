@@ -1,6 +1,6 @@
 // js/grainPage.js
 import { auth, db } from './firebase.js';
-import { loginWithGoogle, logoutUser } from './auth.js';
+import { openAuthModal, logoutUser } from './auth.js';
 import { initThemeToggle } from './theme.js';
 import { renderGlobalSidebar } from './sidebar.js';
 
@@ -170,7 +170,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (sidebarAuthBox) {
                 sidebarAuthBox.innerHTML = `
                     <p class="text-[10px] text-slate-500 uppercase font-bold tracking-wider">Prisijungta kaip:</p>
-                    <p class="text-xs truncate font-bold mt-0.5" style="color: var(--text-main);">${user.email}</p>
+                    <p class="text-xs truncate font-bold mt-0.5" style="color: var(--text-main);">${user.email || user.displayName || 'Ūkininkas'}</p>
                     <button id="btn-logout-grain-side" class="w-full py-2 mt-2 bg-tractorBg hover:bg-red-500/10 text-red-500 dark:text-red-400 border border-tractorBorder hover:border-red-400 rounded-xl text-xs font-bold transition cursor-pointer flex items-center justify-center gap-1.5">
                         <span>🚪</span> <span>Atsijungti</span>
                     </button>
@@ -192,21 +192,24 @@ document.addEventListener('DOMContentLoaded', () => {
                 initGrainTab(currentUser, userData);
             }
         } else {
+            currentUser = null;
+            userData = null;
+
             if (sidebarAuthBox) {
                 sidebarAuthBox.innerHTML = `
                     <p class="text-[11px] text-slate-400">Esate neprisijungęs</p>
                     <button class="login-trigger-btn w-full py-2 bg-tractorPrimary hover:bg-tractorPrimaryHover text-white text-xs font-bold rounded-lg shadow transition cursor-pointer">
-                        Prisijungti su Google
+                        Prisijungti prie ūkio
                     </button>
                 `;
-                sidebarAuthBox.querySelector('.login-trigger-btn')?.addEventListener('click', loginWithGoogle);
+                sidebarAuthBox.querySelector('.login-trigger-btn')?.addEventListener('click', () => openAuthModal('login'));
             }
 
             if (mobileAuthSlot) {
                 mobileAuthSlot.innerHTML = `
                     <button class="login-trigger-btn px-3 py-1 bg-tractorPrimary text-white rounded-lg text-xs font-bold">Prisijungti</button>
                 `;
-                mobileAuthSlot.querySelector('.login-trigger-btn')?.addEventListener('click', loginWithGoogle);
+                mobileAuthSlot.querySelector('.login-trigger-btn')?.addEventListener('click', () => openAuthModal('login'));
             }
 
             if (dieselView && !dieselView.classList.contains('hidden')) {

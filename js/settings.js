@@ -7,8 +7,10 @@ let markerInstance = null;
 let currentCoords = { lat: 54.8985, lon: 23.9036 };
 
 export function initSettingsTab(currentUser, userData) {
-    currentCoords.lat = userData?.garageLat || 54.8985;
-    currentCoords.lon = userData?.garageLon || 23.9036;
+    const hasRealCoords = userData?.garageLat && userData?.garageLon && userData.garageLat !== 0;
+    
+    currentCoords.lat = hasRealCoords ? parseFloat(userData.garageLat) : 54.8985;
+    currentCoords.lon = hasRealCoords ? parseFloat(userData.garageLon) : 23.9036;
 
     const container = document.getElementById('view-tab-settings');
     container.innerHTML = `
@@ -46,13 +48,13 @@ export function initSettingsTab(currentUser, userData) {
 
             <div class="space-y-2">
                 <div class="flex justify-between items-center">
-                    <label class="text-[11px] font-bold text-slate-300 uppercase tracking-wider">Garažo / Ūkio vieta žemėlapyje</label>
-                    <span id="coords-text" class="text-[10px] text-slate-400 font-mono">
-                        ${currentCoords.lat.toFixed(4)}, ${currentCoords.lon.toFixed(4)}
+                    <label class="text-[11px] font-bold text-tractorPrimaryLight uppercase tracking-wider">📍 Garažo / Ūkio vieta žemėlapyje *</label>
+                    <span id="coords-text" class="text-[10px] text-green-400 font-mono font-bold">
+                        ${hasRealCoords ? `${currentCoords.lat.toFixed(4)}, ${currentCoords.lon.toFixed(4)}` : 'Paspauskite ant žemėlapio'}
                     </span>
                 </div>
                 <div id="settings-map" class="h-64 w-full rounded-xl border border-tractorBorder z-0 relative shadow-inner overflow-hidden"></div>
-                <p class="text-[11px] text-slate-500">Spauskite bet kur ant žemėlapio arba vilkite mėlyną žymeklį į savo technikos vietą.</p>
+                <p class="text-[11px] text-slate-400">Spauskite bet kur ant žemėlapio arba vilkite žymeklį į savo technikos kiemo vietą.</p>
             </div>
 
             <button id="save-settings-btn" class="w-full h-12 bg-tractorPrimary hover:bg-tractorPrimaryHover text-white font-bold rounded-xl text-xs uppercase tracking-wider shadow-lg shadow-tractorPrimary/20 flex items-center justify-center gap-2 cursor-pointer transition">
@@ -91,9 +93,10 @@ export function initSettingsTab(currentUser, userData) {
             userData.notificationDistance = dist;
             userData.garageLat = currentCoords.lat;
             userData.garageLon = currentCoords.lon;
+            userData.isSetupComplete = true;
         }
 
-        showDialog("Pavyko! ✅", "Nustatymai sėkmingai išsaugoti.", "🌾");
+        showDialog("Pavyko! ✅", "Ūkio bazės vieta ir nustatymai sėkmingai išsaugoti. Visos skaičiuoklės dabar veikia pagal jūsų kiemą!", "🌾");
     };
 
     document.getElementById('delete-account-btn').onclick = () => {
@@ -105,7 +108,6 @@ export function initSettingsTab(currentUser, userData) {
     };
 }
 
-// Funkcija, kurią iškviečiame persijungus į nustatymų tabą
 export function refreshSettingsMap() {
     const mapEl = document.getElementById('settings-map');
     if (!mapEl) return;
@@ -139,13 +141,12 @@ export function refreshSettingsMap() {
         });
     }
 
-    // Priverstinis perskaičiavimas, kad pilkai nerodytų
     setTimeout(() => {
         if (mapInstance) {
             mapInstance.invalidateSize();
             mapInstance.setView([currentCoords.lat, currentCoords.lon]);
         }
-    }, 150);
+    }, 200);
 }
 
 function updateCoordsDisplay() {
