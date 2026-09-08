@@ -2,9 +2,8 @@
 import { db } from './firebase.js';
 import { calculateDist, calculateBuyerRanking } from './grainCalculator.js';
 import { createCustomSelect } from './customSelect.js';
-import { showDialog } from './ui.js';
-import { loginWithGoogle } from './auth.js';
-import { switchTab } from './ui.js';
+import { openAuthModal } from './auth.js';
+import { showDialog, switchTab } from './ui.js';
 import { refreshSettingsMap } from './settings.js';
 
 let activeMarketData = [];
@@ -48,12 +47,12 @@ export function initGrainTab(currentUser, userData) {
     if (!container) return;
 
     const isLogged = !!currentUser;
-    const hasGarage = !!(userData?.garageLat && userData?.garageLon);
+    const hasGarage = !!(userData?.garageLat && userData?.garageLon && userData.garageLat !== 0);
 
     if (hasGarage) {
         userGarageCoords = { 
-            lat: userData.garageLat, 
-            lng: userData.garageLon,
+            lat: parseFloat(userData.garageLat), 
+            lng: parseFloat(userData.garageLon),
             sourceText: "jūsų ūkio bazės (garažo) vietos"
         };
         currentCoords = userGarageCoords;
@@ -64,7 +63,6 @@ export function initGrainTab(currentUser, userData) {
     container.innerHTML = `
         <div class="space-y-6 max-w-6xl mx-auto w-full">
             
-            <!-- HEADERIS -->
             <div class="bg-tractorSurface border border-tractorBorder rounded-2xl p-6 md:p-8 space-y-5 shadow-xl">
                 <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-tractorBorder/70 pb-4">
                     <div>
@@ -81,7 +79,7 @@ export function initGrainTab(currentUser, userData) {
                     </button>
                 </div>
 
-                <!-- 🌟 INTERAKTYVUS BANERIS NEPRISIJUNGUSIEMS ARBA BE ŪKIO BAZĖS -->
+                <!-- 🌟 BANERIS NEPRISIJUNGUSIEMS ARBA BE ŪKIO BAZĖS -->
                 ${!isLogged || !hasGarage ? `
                     <div class="p-5 md:p-6 bg-tractorBg border border-tractorPrimary rounded-2xl shadow-xl space-y-4">
                         <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
@@ -101,7 +99,7 @@ export function initGrainTab(currentUser, userData) {
                                 </p>
                             </div>
                             <button type="button" id="btn-grain-farm-prompt" class="px-5 py-3 bg-tractorPrimary hover:bg-tractorPrimaryHover text-white font-black rounded-xl text-xs md:text-sm uppercase tracking-wider shrink-0 shadow-lg cursor-pointer transition">
-                                ${!isLogged ? '🔑 Prisijungti su Google' : '📍 Nurodyti ūkio vietą Nustatymuose ➔'}
+                                ${!isLogged ? '🔑 Prisijungti prie ūkio' : '📍 Nurodyti ūkio vietą Nustatymuose ➔'}
                             </button>
                         </div>
 
@@ -122,7 +120,6 @@ export function initGrainTab(currentUser, userData) {
                     </div>
                 ` : ''}
 
-                <!-- 🌾 CUSTOM SELECT LAUKUI -->
                 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-tractorBg/80 p-4 rounded-xl border border-tractorBorder">
                     <div class="space-y-0.5">
                         <label class="text-xs font-bold text-tractorPrimaryLight uppercase tracking-wider block">
@@ -134,7 +131,6 @@ export function initGrainTab(currentUser, userData) {
                     <div id="grain-field-select-box" class="w-full sm:w-80"></div>
                 </div>
 
-                <!-- KROVINIO FORMA -->
                 <div class="space-y-4 pt-1">
                     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                         <h3 class="font-oswald text-lg font-bold text-white uppercase tracking-wider">
@@ -147,8 +143,6 @@ export function initGrainTab(currentUser, userData) {
                     </div>
 
                     <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-                        
-                        <!-- 🔍 CUSTOM SELECT KULTŪRAI -->
                         <div class="space-y-1.5">
                             <label class="text-xs font-bold text-tractorPrimaryLight uppercase tracking-wider">Kultūra</label>
                             <div id="grain-crop-select-box"></div>
@@ -175,7 +169,6 @@ export function initGrainTab(currentUser, userData) {
                 </div>
             </div>
 
-            <!-- REŽIMŲ PERJUNGĖJAS -->
             <div class="flex bg-tractorSurface p-1.5 rounded-xl border border-tractorBorder w-fit">
                 <button id="btn-mode-ranked" class="px-5 py-2.5 text-xs font-bold rounded-lg transition flex items-center gap-2 ${state.viewMode === 'ranked' ? 'bg-tractorPrimary text-white shadow' : 'text-slate-300 hover:text-white'}">
                     <span>🥇</span> Kur vežti apsimoka?
@@ -185,7 +178,6 @@ export function initGrainTab(currentUser, userData) {
                 </button>
             </div>
 
-            <!-- 1 REŽIMAS: SKAIČIUOKLĖ -->
             <div id="view-ranked-container" class="space-y-4 ${state.viewMode === 'ranked' ? '' : 'hidden'}">
                 <div class="flex items-center justify-between px-2">
                     <h3 class="font-oswald text-xl font-bold uppercase tracking-wider text-white">
@@ -196,7 +188,6 @@ export function initGrainTab(currentUser, userData) {
                 <div id="ranked-buyers-list" class="space-y-4"></div>
             </div>
 
-            <!-- 2 REŽIMAS: VISI ELEVATORIAI -->
             <div id="view-table-container" class="space-y-4 ${state.viewMode === 'table' ? '' : 'hidden'}">
                 <div id="elevators-cards-grid" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
             </div>
@@ -208,7 +199,7 @@ export function initGrainTab(currentUser, userData) {
     if (btnPrompt) {
         btnPrompt.onclick = () => {
             if (!isLogged) {
-                loginWithGoogle();
+                openAuthModal('login');
             } else {
                 navigateToSettings();
             }
@@ -295,7 +286,7 @@ export function initGrainTab(currentUser, userData) {
 
 function loadUserFieldsSelect(currentUser, userData) {
     const isLogged = !!currentUser;
-    const hasGarage = !!(userData?.garageLat && userData?.garageLon);
+    const hasGarage = !!(userData?.garageLat && userData?.garageLon && userData.garageLat !== 0);
 
     const items = [];
 
@@ -320,7 +311,7 @@ function loadUserFieldsSelect(currentUser, userData) {
                 if (!item) return;
 
                 if (item.id === 'setup_prompt') {
-                    if (!isLogged) loginWithGoogle();
+                    if (!isLogged) openAuthModal('login');
                     else navigateToSettings();
                     return;
                 }

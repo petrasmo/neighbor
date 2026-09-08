@@ -1,7 +1,7 @@
 // js/weather.js
 import { db } from './firebase.js';
 import { createCustomSelect } from './customSelect.js';
-import { loginWithGoogle } from './auth.js';
+import { openAuthModal } from './auth.js';
 import { switchTab } from './ui.js';
 import { refreshSettingsMap } from './settings.js';
 
@@ -10,7 +10,7 @@ let userFieldsList = [];
 let cachedCurrentWeather = null;
 let cachedHourlyWeather = null;
 let cachedCurrentHourIdx = 0;
-let activeHourlyMode = 'spray'; // bus nustatoma automatiškai pagal temperatūrą
+let activeHourlyMode = 'spray';
 
 function navigateToSettings() {
     if (typeof switchTab === 'function' && document.getElementById('view-tab-settings')) {
@@ -27,12 +27,12 @@ export function initWeatherTab(currentUser, userData) {
     if (!container) return;
 
     const isLogged = !!currentUser;
-    const hasGarage = !!(userData?.garageLat && userData?.garageLon);
+    const hasGarage = !!(userData?.garageLat && userData?.garageLon && userData.garageLat !== 0);
 
     if (hasGarage) {
         currentWeatherCoords = {
-            lat: userData.garageLat,
-            lng: userData.garageLon,
+            lat: parseFloat(userData.garageLat),
+            lng: parseFloat(userData.garageLon),
             name: "Mano ūkio bazė (garažas)"
         };
         updateLocationLabel();
@@ -63,7 +63,7 @@ export function initWeatherTab(currentUser, userData) {
                     </button>
                 </div>
 
-                <!-- 🌟 INTERAKTYVUS BANERIS NEPRISIJUNGUSIEMS ARBA BE ŪKIO BAZĖS -->
+                <!-- 🌟 BANERIS NEPRISIJUNGUSIEMS ARBA BE ŪKIO BAZĖS -->
                 ${!isLogged || !hasGarage ? `
                     <div class="p-5 md:p-6 bg-tractorBg border border-tractorPrimary rounded-2xl shadow-xl space-y-4">
                         <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
@@ -83,7 +83,7 @@ export function initWeatherTab(currentUser, userData) {
                                 </p>
                             </div>
                             <button type="button" id="btn-weather-farm-prompt" class="px-5 py-3 bg-tractorPrimary hover:bg-tractorPrimaryHover text-white font-black rounded-xl text-xs md:text-sm uppercase tracking-wider shrink-0 shadow-lg cursor-pointer transition">
-                                ${!isLogged ? '🔑 Prisijungti su Google' : '📍 Nurodyti ūkio vietą Nustatymuose ➔'}
+                                ${!isLogged ? '🔑 Prisijungti prie ūkio' : '📍 Nurodyti ūkio vietą Nustatymuose ➔'}
                             </button>
                         </div>
 
@@ -127,7 +127,7 @@ export function initWeatherTab(currentUser, userData) {
                 <div class="text-center py-4 text-slate-500 text-xs">Kraunamas įšalo ir sniego dangos modelis...</div>
             </div>
 
-            <!-- 3. 48 VALANDŲ PROGNOZĖ (AUTOMATIŠKAI PRISITAIKANTI PRIE SEZONO) -->
+            <!-- 3. 48 VALANDŲ PROGNOZĖ -->
             <div class="bg-tractorSurface border border-tractorBorder rounded-2xl p-6 md:p-7 shadow-xl space-y-4">
                 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-tractorBorder/70 pb-3">
                     <div>
@@ -139,7 +139,6 @@ export function initWeatherTab(currentUser, userData) {
                         </p>
                     </div>
 
-                    <!-- 🔀 REŽIMŲ PERJUNGIKLIS -->
                     <div class="flex items-center gap-1 bg-tractorBg p-1 rounded-xl border border-tractorBorder shrink-0">
                         <button type="button" id="btn-mode-spray" class="px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${activeHourlyMode === 'spray' ? 'bg-tractorPrimary text-white shadow' : 'text-slate-400 hover:text-white'}">
                             💦 Purškimo langas
@@ -174,7 +173,7 @@ export function initWeatherTab(currentUser, userData) {
     if (btnPrompt) {
         btnPrompt.onclick = () => {
             if (!isLogged) {
-                loginWithGoogle();
+                openAuthModal('login');
             } else {
                 navigateToSettings();
             }
@@ -236,7 +235,7 @@ function updateLocationLabel() {
 
 function loadFieldsToSelect(currentUser, userData) {
     const isLogged = !!currentUser;
-    const hasGarage = !!(userData?.garageLat && userData?.garageLon);
+    const hasGarage = !!(userData?.garageLat && userData?.garageLon && userData.garageLat !== 0);
 
     const selectItems = [];
 
@@ -261,15 +260,15 @@ function loadFieldsToSelect(currentUser, userData) {
                 if (!item) return;
 
                 if (item.id === 'setup_prompt') {
-                    if (!isLogged) loginWithGoogle();
+                    if (!isLogged) openAuthModal('login');
                     else navigateToSettings();
                     return;
                 }
 
                 if (item.id === 'garage') {
                     currentWeatherCoords = {
-                        lat: userData?.garageLat || 54.6872,
-                        lng: userData?.garageLon || 25.2797,
+                        lat: parseFloat(userData.garageLat),
+                        lng: parseFloat(userData.garageLon),
                         name: "Mano ūkio bazė (garažas)"
                     };
                 } else {
@@ -312,7 +311,6 @@ function loadFieldsToSelect(currentUser, userData) {
     }
 }
 
-// 🌐 GYVAS METEOROLOGINIO PALYDOVO DUOMENŲ NUSKAITYMAS
 async function fetchAgroWeatherData() {
     const { lat, lng } = currentWeatherCoords;
     const apiUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&current=temperature_2m,relative_humidity_2m,precipitation,rain,snowfall,weather_code,wind_speed_10m,wind_gusts_10m,soil_temperature_0cm,soil_temperature_6cm,soil_temperature_18cm&hourly=temperature_2m,relative_humidity_2m,precipitation_probability,rain,snowfall,snow_depth,wind_speed_10m,wind_gusts_10m,soil_temperature_0cm,soil_temperature_6cm,soil_temperature_18cm&timezone=Europe%2FVilnius&forecast_days=3`;
@@ -325,8 +323,6 @@ async function fetchAgroWeatherData() {
         cachedHourlyWeather = data.hourly;
         cachedCurrentHourIdx = findCurrentHourIndex(data.hourly);
 
-        // 🧠 AUTOMATINIS REŽIMO PARINKIMAS:
-        // Jei lauke šalta (< 5°C), minusas arba sniegas – automatiškai aktyvuojamas įšalo langas!
         const airTemp = data.current.temperature_2m;
         const soil0 = data.current.soil_temperature_0cm || 0;
         const snowM = (data.hourly.snow_depth && data.hourly.snow_depth.length > cachedCurrentHourIdx) ? data.hourly.snow_depth[cachedCurrentHourIdx] : 0;
@@ -365,7 +361,6 @@ function findCurrentHourIndex(hourly) {
     return 0;
 }
 
-// ❄️ ŽIEMKENČIŲ PERŽIEMOJIMO IR ĮŠALO RADARAS (100% GYVI DUOMENYS)
 function renderWinterFrostRadar() {
     const box = document.getElementById('winter-frost-radar-box');
     if (!box || !cachedCurrentWeather) return;
@@ -380,7 +375,6 @@ function renderWinterFrostRadar() {
         : 0;
     const snowCm = Math.max(0, Math.round((rawSnowMeters || 0) * 100));
 
-    // Įšalo gylio apskaičiavimas pagal realius dirvos sluoksnius
     let frostDepthCmText = "0 cm (Dirva atitirpusi)";
     let frostColor = "text-green-500";
 
@@ -398,7 +392,6 @@ function renderWinterFrostRadar() {
         frostColor = "text-green-500";
     }
 
-    // Žiemkenčių iššalimo grėsmės vertinimas
     let winterkillStatus = "🟢 SAUGU (Pasėliams pavojaus nėra)";
     let winterkillBadgeClass = "bg-green-500/20 text-green-600 dark:text-green-400 border-green-500/40";
     let winterkillDesc = "Temperatūra augimo mazgo gylyje (6 cm) yra teigiama arba saugi. Žieminiai kviečiai ir rapsai žiemoja stabiliai.";
@@ -431,7 +424,6 @@ function renderWinterFrostRadar() {
 
     box.className = `bg-tractorSurface border-2 ${borderColor} rounded-2xl p-6 md:p-7 shadow-xl space-y-5 transition-all`;
     box.innerHTML = `
-        <!-- BŪKLĖS ANTRAŠTĖ -->
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-tractorBorder/70 pb-4">
             <div class="space-y-1">
                 <div class="inline-flex items-center gap-1.5 ${winterkillBadgeClass} px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider border">
@@ -446,7 +438,6 @@ function renderWinterFrostRadar() {
             </div>
         </div>
 
-        <!-- 4 TIKRŲ MATAVIMŲ KORTELĖS -->
         <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs">
             <div class="bg-tractorBg p-4 rounded-xl border border-tractorBorder space-y-1">
                 <span class="text-slate-400 font-bold block text-xs">🌱 Dirva 6 cm (Mazgas)</span>
@@ -479,7 +470,6 @@ function renderWinterFrostRadar() {
     `;
 }
 
-// ⏱️ VALANDINIS TINKLELIS: AUTOMATIŠKAI PRISITAIKO PRIE ORO SĄLYGŲ
 function updateHourlyGrid() {
     const grid = document.getElementById('hourly-forecast-grid');
     const heading = document.getElementById('hourly-forecast-heading');
@@ -519,7 +509,6 @@ function updateHourlyGrid() {
         const snowCm = Math.round(rawSnow * 100);
 
         if (activeHourlyMode === 'frost') {
-            // ❄️ ŠALČIO IR ĮŠALO VERTINIMAS KIEKVIENAI VALANDAI
             let frostBadge = "";
             let frostBadgeClass = "";
 
@@ -557,7 +546,6 @@ function updateHourlyGrid() {
             `);
 
         } else {
-            // 💦 PURŠKIMO VERTINIMAS KIEKVIENAI VALANDAI
             const rainProb = cachedHourlyWeather.precipitation_probability?.[i] || 0;
             const rainMm = cachedHourlyWeather.rain ? cachedHourlyWeather.rain[i] : 0;
             const evalResult = evaluateSprayCondition(windSpeedMs, windGustsMs, tempC, rainProb, rainMm);

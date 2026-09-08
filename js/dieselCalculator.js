@@ -1,8 +1,7 @@
-// js/dieselCalculator.js
 import { db } from './firebase.js';
 import { calculateDist } from './grainCalculator.js';
 import { createCustomSelect } from './customSelect.js';
-import { loginWithGoogle } from './auth.js';
+import { openAuthModal } from './auth.js';
 import { switchTab } from './ui.js';
 import { refreshSettingsMap } from './settings.js';
 
@@ -35,12 +34,12 @@ export function renderDieselCalculator(container, currentUser, userData) {
     if (!container) return;
 
     const isLogged = !!currentUser;
-    const hasGarage = !!(userData?.garageLat && userData?.garageLon);
+    const hasGarage = !!(userData?.garageLat && userData?.garageLon && userData.garageLat !== 0);
 
     if (hasGarage) {
         userGarageCoords = {
-            lat: userData.garageLat,
-            lng: userData.garageLon,
+            lat: parseFloat(userData.garageLat),
+            lng: parseFloat(userData.garageLon),
             name: "Mano ūkio bazė (garažas)"
         };
         currentDieselCoords = userGarageCoords;
@@ -52,10 +51,8 @@ export function renderDieselCalculator(container, currentUser, userData) {
     container.innerHTML = `
         <div class="space-y-6">
             
-            <!-- PAGRINDINĖ PARAMETRŲ FORMA -->
             <div class="bg-tractorSurface border border-tractorBorder rounded-2xl p-6 md:p-8 space-y-6 shadow-xl">
                 
-                <!-- VIRŠUTINĖ EILUTĖ -->
                 <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-tractorBorder/70 pb-5">
                     <div class="space-y-1">
                         <h3 class="font-oswald text-xl md:text-2xl font-bold text-white uppercase tracking-wider flex items-center gap-2">
@@ -66,16 +63,12 @@ export function renderDieselCalculator(container, currentUser, userData) {
                         </p>
                     </div>
 
-                    <!-- VALDYMO MYGTUKAI IR VARNELĖ -->
                     <div class="flex flex-wrap items-center gap-3">
-                        
-                        <!-- 🚚 VARNELĖ: ATVEŽIMO ĮSKAIČIAVIMAS -->
                         <label class="flex items-center gap-2.5 cursor-pointer text-xs md:text-sm font-bold select-none bg-tractorBg px-3.5 py-2 rounded-xl border border-tractorBorder hover:border-tractorPrimary transition">
                             <input type="checkbox" id="diesel-opt-transport" class="accent-tractorPrimary w-4 h-4 cursor-pointer" ${dieselState.includeTransport ? 'checked' : ''}>
                             <span style="color: var(--text-main);">Įskaičiuoti atvežimą į ūkį</span>
                         </label>
 
-                        <!-- PVM PERJUNGIKLIS -->
                         <div class="flex items-center gap-1 bg-tractorBg p-1 rounded-xl border border-tractorBorder">
                             <button type="button" id="btn-vat-no" class="px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${!dieselState.includeVat ? 'bg-tractorPrimary text-white shadow' : 'text-slate-300 hover:text-white'}">Be PVM</button>
                             <button type="button" id="btn-vat-yes" class="px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${dieselState.includeVat ? 'bg-tractorPrimary text-white shadow' : 'text-slate-300 hover:text-white'}">Su PVM (21%)</button>
@@ -83,7 +76,7 @@ export function renderDieselCalculator(container, currentUser, userData) {
                     </div>
                 </div>
 
-                <!-- 🌟 INTERAKTYVUS BANERIS NEPRISIJUNGUSIEMS ARBA BE ŪKIO BAZĖS -->
+                <!-- 🌟 BANERIS NEPRISIJUNGUSIEMS ARBA BE ŪKIO BAZĖS -->
                 ${!isLogged || !hasGarage ? `
                     <div class="p-5 md:p-6 bg-tractorBg border border-tractorPrimary rounded-2xl shadow-xl space-y-4">
                         <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
@@ -103,7 +96,7 @@ export function renderDieselCalculator(container, currentUser, userData) {
                                 </p>
                             </div>
                             <button type="button" id="btn-login-diesel-prompt" class="px-5 py-3 bg-tractorPrimary hover:bg-tractorPrimaryHover text-white font-black rounded-xl text-xs md:text-sm uppercase tracking-wider shrink-0 shadow-lg cursor-pointer transition">
-                                ${!isLogged ? '🔑 Prisijungti su Google' : '📍 Nurodyti ūkio vietą Nustatymuose ➔'}
+                                ${!isLogged ? '🔑 Prisijungti prie ūkio' : '📍 Nurodyti ūkio vietą Nustatymuose ➔'}
                             </button>
                         </div>
 
@@ -125,8 +118,6 @@ export function renderDieselCalculator(container, currentUser, userData) {
                 ` : ''}
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                    
-                    <!-- KURO KIEKIS -->
                     <div class="space-y-1.5">
                         <div class="flex justify-between items-center">
                             <label class="text-xs font-bold text-tractorPrimaryLight uppercase tracking-wider">Užsakomas kuro kiekis</label>
@@ -143,15 +134,12 @@ export function renderDieselCalculator(container, currentUser, userData) {
                         </div>
                     </div>
 
-                    <!-- PRISTATYMO VIETA -->
                     <div class="space-y-1.5">
                         <label class="text-xs font-bold text-slate-200 uppercase tracking-wider">Pristatymo adresas</label>
                         <div id="diesel-location-select-box"></div>
                     </div>
-
                 </div>
 
-                <!-- POPULIARŪS TŪRIAI -->
                 <div class="flex flex-wrap items-center gap-2 pt-1 border-t border-tractorBorder/50">
                     <span class="text-xs font-bold text-slate-400">Populiarūs tūriai:</span>
                     <button type="button" class="btn-quick-vol px-3.5 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer border" data-vol="2500">2 500 l</button>
@@ -161,7 +149,6 @@ export function renderDieselCalculator(container, currentUser, userData) {
                 </div>
             </div>
 
-            <!-- REZULTATŲ SUVESTINĖ -->
             <div id="diesel-results-container" class="space-y-4">
                 <div class="text-center py-8 text-slate-500 text-xs">Kraunamos kuro bazės ir skaičiuojami atstumai...</div>
             </div>
@@ -188,7 +175,7 @@ function setupEvents(currentUser, userData) {
     if (btnLoginPrompt) {
         btnLoginPrompt.onclick = () => {
             if (!currentUser) {
-                loginWithGoogle();
+                openAuthModal('login');
             } else {
                 navigateToSettings();
             }
@@ -278,7 +265,7 @@ function updateQuickVolButtons() {
 
 function setupLocationSelect(currentUser, userData) {
     const isLogged = !!currentUser;
-    const hasGarage = !!(userData?.garageLat && userData?.garageLon);
+    const hasGarage = !!(userData?.garageLat && userData?.garageLon && userData.garageLat !== 0);
 
     const items = [];
 
@@ -318,7 +305,7 @@ function setupLocationSelect(currentUser, userData) {
 
 function initLocationCustomSelect(items, currentUser, userData) {
     const isLogged = !!currentUser;
-    const hasGarage = !!(userData?.garageLat && userData?.garageLon);
+    const hasGarage = !!(userData?.garageLat && userData?.garageLon && userData.garageLat !== 0);
     const defaultId = isLogged && hasGarage ? 'garage' : (hasGarage ? 'garage' : 'gps');
 
     createCustomSelect({
@@ -331,7 +318,7 @@ function initLocationCustomSelect(items, currentUser, userData) {
 
             if (item.id === 'login_prompt') {
                 if (!isLogged) {
-                    loginWithGoogle();
+                    openAuthModal('login');
                 } else {
                     navigateToSettings();
                 }
