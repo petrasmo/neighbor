@@ -1,6 +1,7 @@
 // js/fieldsJournal.js
 import { db } from './firebase.js';
 import { showDialog } from './ui.js';
+import { getMockNdviScore } from './fieldsMap.js';
 
 let editingOpIndex = null;
 
@@ -45,6 +46,60 @@ export function openFieldDetail(field, userFieldsList) {
         ${field.fieldBlockNumber ? ` • <span>Bloko Nr.: <strong>${field.fieldBlockNumber}</strong></span>` : ''}
         ${field.notes ? ` • <span class="italic text-slate-400">${field.notes}</span>` : ''}
     `;
+
+    // 🛰️ NDVI PALYDOVINĖ ANALIZĖ IR KINTAMO TRĘŠIMO REKOMENDACIJOS
+    const ndvi = getMockNdviScore(field);
+    const ndviBox = document.getElementById('field-ndvi-live-box');
+    if (ndviBox) {
+        ndviBox.innerHTML = `
+            <div class="${ndvi.bg} border border-green-500/40 p-5 rounded-2xl space-y-3">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-green-500/30 pb-3">
+                    <div class="flex items-center gap-2.5">
+                        <span class="text-2xl">🛰️</span>
+                        <div>
+                            <strong class="text-xs uppercase font-extrabold text-white tracking-wider block">Sentinel-2 NDVI Palydovinis Indeksas:</strong>
+                            <span class="font-mono text-base font-black ${ndvi.color}">${ndvi.score} (${ndvi.status})</span>
+                        </div>
+                    </div>
+                    <button type="button" id="btn-zoom-ndvi" class="px-4 py-2 bg-tractorPrimary hover:bg-tractorPrimaryHover text-white font-bold text-xs rounded-xl transition shrink-0 cursor-pointer shadow">
+                        🌿 Rodyti NDVI šiluminį žemėlapį
+                    </button>
+                </div>
+
+                <!-- ZONŲ PASISKIRSTYMAS -->
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5 text-xs pt-1">
+                    <div class="bg-tractorBg/80 p-3 rounded-xl border border-tractorBorder space-y-1">
+                        <span class="text-green-400 font-bold flex items-center gap-1.5">
+                            <span class="w-2.5 h-2.5 rounded-full bg-green-500"></span> Vešli zona: ${ndvi.zones.strong}%
+                        </span>
+                        <p class="text-[11px] text-slate-300">Norma -20 kg/ha N (apsauga nuo išgulimo).</p>
+                    </div>
+
+                    <div class="bg-tractorBg/80 p-3 rounded-xl border border-tractorBorder space-y-1">
+                        <span class="text-green-300 font-bold flex items-center gap-1.5">
+                            <span class="w-2.5 h-2.5 rounded-full bg-green-400"></span> Optimali zona: ${ndvi.zones.normal}%
+                        </span>
+                        <p class="text-[11px] text-slate-300">Standartinė tręšimo norma pagal planą.</p>
+                    </div>
+
+                    <div class="bg-tractorBg/80 p-3 rounded-xl border border-tractorBorder space-y-1">
+                        <span class="text-amber-400 font-bold flex items-center gap-1.5">
+                            <span class="w-2.5 h-2.5 rounded-full bg-amber-400"></span> Silpnesnė zona: ${ndvi.zones.weak}%
+                        </span>
+                        <p class="text-[11px] text-slate-300">Padidinti salietros normą +30 kg/ha.</p>
+                    </div>
+                </div>
+
+                <p class="text-xs text-slate-300 italic pt-1">💡 <strong>Agronominis verdiktas:</strong> ${ndvi.rec}</p>
+            </div>
+        `;
+
+        document.getElementById('btn-zoom-ndvi')?.addEventListener('click', () => {
+            const btnNdvi = document.getElementById('btn-layer-ndvi');
+            if (btnNdvi) btnNdvi.click();
+            document.getElementById('fields-map')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        });
+    }
     
     const dateInput = document.getElementById('op-date');
     if (dateInput) dateInput.value = getTodayDateString();
