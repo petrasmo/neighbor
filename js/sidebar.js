@@ -75,8 +75,9 @@ export function renderGlobalSidebar(activePage = 'index', activeTab = 0) {
                 </div>
 
                 <div class="border-t border-tractorBorder/70 pt-4 space-y-3">
-                    <button id="help-btn-desktop" class="w-full py-2.5 bg-tractorBg hover:bg-tractorCard border border-tractorBorder rounded-xl text-xs font-semibold flex items-center justify-center gap-2 transition cursor-pointer" style="color: var(--text-main);">
-                        <span>📖</span> <span>Naudojimosi gidas</span>
+                    <button type="button" id="btn-liming-guide" class="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-bold text-amber-400 bg-amber-500/10 border border-amber-500/30 hover:bg-amber-500/20 transition cursor-pointer">
+                        <span class="text-base">🍋</span>
+                        <span>Naujiena (Kalkinimas)</span>
                     </button>
                     
                     <div id="auth-sidebar-box" class="bg-tractorBg border border-tractorBorder/60 p-3 rounded-xl text-center space-y-2">
@@ -88,6 +89,12 @@ export function renderGlobalSidebar(activePage = 'index', activeTab = 0) {
                 </div>
             </aside>
         `;
+
+        document.getElementById('btn-liming-guide')?.addEventListener('click', () => {
+            if (typeof window.openLimingGuideModal === 'function') {
+                window.openLimingGuideModal();
+            }
+        });
     }
 
     // 2. MOBILI VIRŠUTINĖ JUOSTA

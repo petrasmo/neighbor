@@ -2,111 +2,117 @@
 import { db } from './firebase.js';
 import { showDialog } from './ui.js';
 import { getMockNdviScore } from './fieldsMap.js';
+import { initSoilTab } from './fieldsSoil.js';
 
 let editingOpIndex = null;
 
 export function getTodayDateString() {
     const today = new Date();
-    const yyyy = today.getFullYear();
-    const mm = String(today.getMonth() + 1).padStart(2, '0');
-    const dd = String(today.getDate()).padStart(2, '0');
-    return `${yyyy}-${mm}-${dd}`;
+    return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
 }
 
-export function getEditingOpIndex() {
-    return editingOpIndex;
-}
+export function getEditingOpIndex() { return editingOpIndex; }
 
 export function resetOperationForm() {
     editingOpIndex = null;
     const form = document.getElementById('add-operation-form');
     if (form) form.reset();
-    
     const dateInput = document.getElementById('op-date');
     if (dateInput) dateInput.value = getTodayDateString();
-
+    document.getElementById('btn-cancel-edit-op')?.classList.add('hidden');
     const submitBtn = document.getElementById('btn-submit-operation');
     if (submitBtn) {
         submitBtn.innerHTML = `<span>📝</span> Įrašyti darbą į lauko žurnalą`;
         submitBtn.classList.remove('bg-amber-600');
         submitBtn.classList.add('bg-tractorPrimary');
     }
-    document.getElementById('btn-cancel-edit-op')?.classList.add('hidden');
 }
 
-export function openFieldDetail(field, userFieldsList) {
+export function openFieldDetail(field, userFieldsList, initialTab = null) {
     const detailSection = document.getElementById('field-detail-section');
     if (!detailSection || !field) return;
 
     detailSection.classList.remove('hidden');
-    document.getElementById('detail-field-title').textContent = field.name;
-    document.getElementById('detail-field-meta').innerHTML = `
-        <span>Plotas: <strong class="text-green-400 font-bold">${field.areaHa} ha</strong></span> • 
-        <span>Pasėlis: <strong class="text-white">${field.crop}</strong></span>
-        ${field.fieldBlockNumber ? ` • <span>Bloko Nr.: <strong>${field.fieldBlockNumber}</strong></span>` : ''}
-        ${field.notes ? ` • <span class="italic text-slate-400">${field.notes}</span>` : ''}
+
+    // Nustatome, koks skirtukas buvo aktyvus prieš persikraunant
+    const currentActiveTab = initialTab || (document.getElementById('content-soil')?.classList.contains('hidden') === false ? 'soil' : 'journal');
+
+    // Tabų struktūra
+    detailSection.innerHTML = `
+        <div class="flex bg-tractorBg p-1 rounded-xl border border-tractorBorder mb-6">
+            <button id="tab-btn-journal" class="flex-1 py-2.5 text-xs font-bold rounded-lg transition ${
+                currentActiveTab === 'journal' ? 'bg-tractorPrimary text-white shadow' : 'text-slate-400 hover:text-white'
+            }">🌾 Pasėliai ir Žurnalas</button>
+            <button id="tab-btn-soil" class="flex-1 py-2.5 text-xs font-bold rounded-lg transition ${
+                currentActiveTab === 'soil' ? 'bg-amber-600 text-white shadow' : 'text-slate-400 hover:text-white'
+            }">🍋 Kalkinimas ir Dirvožemis</button>
+        </div>
+        
+        <div id="content-journal" class="${currentActiveTab === 'journal' ? '' : 'hidden'} space-y-6">
+            <div class="border-b border-tractorBorder/80 pb-5">
+                <h3 id="detail-field-title" class="font-oswald text-2xl md:text-3xl font-bold text-white tracking-wide">${field.name}</h3>
+                <p id="detail-field-meta" class="text-sm text-slate-300 mt-1">
+                    Plotas: <strong class="text-green-400 font-bold">${field.areaHa} ha</strong> • Pasėlis: <strong class="text-white">${field.crop}</strong>
+                </p>
+            </div>
+            <div id="field-ndvi-live-box"></div>
+            <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                <div class="bg-tractorBg border border-tractorBorder p-3.5 rounded-xl text-center">
+                    <span class="text-[10px] uppercase font-bold text-slate-400 block">Visos Išlaidos</span>
+                    <strong class="text-amber-400 text-base md:text-lg font-mono font-bold" id="detail-stat-cost">0.00 €</strong>
+                </div>
+                <div class="bg-tractorBg border border-tractorBorder p-3.5 rounded-xl text-center">
+                    <span class="text-[10px] uppercase font-bold text-slate-400 block">Gautas Derlius</span>
+                    <strong class="text-green-400 text-base md:text-lg font-mono font-bold" id="detail-stat-yield">0.00 t</strong>
+                </div>
+                <div class="bg-tractorBg border border-tractorBorder p-3.5 rounded-xl text-center col-span-2 sm:col-span-1">
+                    <span class="text-[10px] uppercase font-bold text-slate-400 block">Darbų skaičius</span>
+                    <strong class="text-white text-base md:text-lg font-mono font-bold" id="detail-stat-ops">0</strong>
+                </div>
+            </div>
+            <div class="bg-tractorBg/90 border border-tractorBorder p-5 md:p-6 rounded-2xl space-y-4">
+                <h4 class="text-sm font-bold text-white uppercase tracking-wider">Registruoti darbą</h4>
+                <form id="add-operation-form" class="space-y-4">
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <select id="op-type" class="w-full h-11 bg-tractorSurface border border-tractorBorder rounded-xl px-3 text-xs text-white">
+                            <option value="Sėja">🌱 Sėja</option><option value="Tręšimas">🧪 Tręšimas</option>
+                            <option value="Purškimas">💦 Purškimas</option><option value="Kūlimas">🚜 Kūlimas</option>
+                        </select>
+                        <input id="op-date" type="text" required class="w-full h-11 bg-tractorSurface border border-tractorBorder rounded-xl px-3 text-xs text-white font-mono">
+                        <input id="op-product" type="text" placeholder="Produktas" class="w-full h-11 bg-tractorSurface border border-tractorBorder rounded-xl px-3 text-xs text-white">
+                    </div>
+                    <button type="submit" id="btn-submit-operation" class="w-full h-11 bg-tractorPrimary text-white font-bold rounded-xl text-xs uppercase">Įrašyti darbą</button>
+                </form>
+            </div>
+            <div id="detail-operations-list" class="space-y-2.5"></div>
+        </div>
+        <div id="content-soil" class="${currentActiveTab === 'soil' ? '' : 'hidden'} space-y-6"></div>
     `;
 
-    // 🛰️ NDVI PALYDOVINĖ ANALIZĖ IR KINTAMO TRĘŠIMO REKOMENDACIJOS
-    const ndvi = getMockNdviScore(field);
-    const ndviBox = document.getElementById('field-ndvi-live-box');
-    if (ndviBox) {
-        ndviBox.innerHTML = `
-            <div class="${ndvi.bg} border border-green-500/40 p-5 rounded-2xl space-y-3">
-                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-green-500/30 pb-3">
-                    <div class="flex items-center gap-2.5">
-                        <span class="text-2xl">🛰️</span>
-                        <div>
-                            <strong class="text-xs uppercase font-extrabold text-white tracking-wider block">Sentinel-2 NDVI Palydovinis Indeksas:</strong>
-                            <span class="font-mono text-base font-black ${ndvi.color}">${ndvi.score} (${ndvi.status})</span>
-                        </div>
-                    </div>
-                    <button type="button" id="btn-zoom-ndvi" class="px-4 py-2 bg-tractorPrimary hover:bg-tractorPrimaryHover text-white font-bold text-xs rounded-xl transition shrink-0 cursor-pointer shadow">
-                        🌿 Rodyti NDVI šiluminį žemėlapį
-                    </button>
-                </div>
+    // Tabų perjungimo logika
+    document.getElementById('tab-btn-journal').onclick = () => {
+        document.getElementById('content-journal').classList.remove('hidden');
+        document.getElementById('content-soil').classList.add('hidden');
+        document.getElementById('tab-btn-journal').className = "flex-1 py-2.5 text-xs font-bold rounded-lg bg-tractorPrimary text-white shadow";
+        document.getElementById('tab-btn-soil').className = "flex-1 py-2.5 text-xs font-bold rounded-lg text-slate-400 hover:text-white";
+    };
 
-                <!-- ZONŲ PASISKIRSTYMAS -->
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5 text-xs pt-1">
-                    <div class="bg-tractorBg/80 p-3 rounded-xl border border-tractorBorder space-y-1">
-                        <span class="text-green-400 font-bold flex items-center gap-1.5">
-                            <span class="w-2.5 h-2.5 rounded-full bg-green-500"></span> Vešli zona: ${ndvi.zones.strong}%
-                        </span>
-                        <p class="text-[11px] text-slate-300">Norma -20 kg/ha N (apsauga nuo išgulimo).</p>
-                    </div>
-
-                    <div class="bg-tractorBg/80 p-3 rounded-xl border border-tractorBorder space-y-1">
-                        <span class="text-green-300 font-bold flex items-center gap-1.5">
-                            <span class="w-2.5 h-2.5 rounded-full bg-green-400"></span> Optimali zona: ${ndvi.zones.normal}%
-                        </span>
-                        <p class="text-[11px] text-slate-300">Standartinė tręšimo norma pagal planą.</p>
-                    </div>
-
-                    <div class="bg-tractorBg/80 p-3 rounded-xl border border-tractorBorder space-y-1">
-                        <span class="text-amber-400 font-bold flex items-center gap-1.5">
-                            <span class="w-2.5 h-2.5 rounded-full bg-amber-400"></span> Silpnesnė zona: ${ndvi.zones.weak}%
-                        </span>
-                        <p class="text-[11px] text-slate-300">Padidinti salietros normą +30 kg/ha.</p>
-                    </div>
-                </div>
-
-                <p class="text-xs text-slate-300 italic pt-1">💡 <strong>Agronominis verdiktas:</strong> ${ndvi.rec}</p>
-            </div>
-        `;
-
-        document.getElementById('btn-zoom-ndvi')?.addEventListener('click', () => {
-            const btnNdvi = document.getElementById('btn-layer-ndvi');
-            if (btnNdvi) btnNdvi.click();
-            document.getElementById('fields-map')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        });
-    }
-    
-    const dateInput = document.getElementById('op-date');
-    if (dateInput) dateInput.value = getTodayDateString();
-    resetOperationForm();
+    document.getElementById('tab-btn-soil').onclick = () => {
+        document.getElementById('content-journal').classList.add('hidden');
+        document.getElementById('content-soil').classList.remove('hidden');
+        document.getElementById('tab-btn-soil').className = "flex-1 py-2.5 text-xs font-bold rounded-lg bg-amber-600 text-white shadow";
+        document.getElementById('tab-btn-journal').className = "flex-1 py-2.5 text-xs font-bold rounded-lg text-slate-400 hover:text-white";
+        initSoilTab(document.getElementById('content-soil'), field);
+    };
 
     renderOperationsList(field, userFieldsList);
-    detailSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+    // Jei išsaugant buvo atvertas dirvožemis – vėl inicializuojame jį tame pačiame lange
+    if (currentActiveTab === 'soil') {
+        initSoilTab(document.getElementById('content-soil'), field);
+    } else {
+        detailSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
 }
 
 export function renderOperationsList(field, userFieldsList) {
@@ -121,106 +127,24 @@ export function renderOperationsList(field, userFieldsList) {
 
     ops.forEach(op => {
         if (op.cost) totalCost += parseFloat(op.cost);
-        if (op.type === "Kūlimas" && op.rate) {
-            const parsed = parseFloat(op.rate);
-            if (!isNaN(parsed)) totalYieldTons += parsed;
-        }
+        if (op.type === "Kūlimas" && op.rate) totalYieldTons += parseFloat(op.rate) || 0;
     });
 
     document.getElementById('detail-stat-cost').textContent = `${totalCost.toFixed(2)} €`;
-    document.getElementById('detail-stat-cost-ha').textContent = `${(totalCost / areaHa).toFixed(2)} €/ha`;
     document.getElementById('detail-stat-yield').textContent = `${totalYieldTons.toFixed(2)} t`;
-    document.getElementById('detail-stat-yield-ha').textContent = `${(totalYieldTons / areaHa).toFixed(2)} t/ha`;
     document.getElementById('detail-stat-ops').textContent = ops.length;
 
-    if (ops.length === 0) {
-        histBox.innerHTML = `<p class="text-xs md:text-sm text-slate-400 py-4 text-center">Darbų žurnalas tuščias. Užregistruokite darbą viršuje!</p>`;
-        return;
-    }
-
-    histBox.innerHTML = ops.map((op, realIdx) => {
-        const rateText = op.rate || op.details || "Nenurodyta";
-        const dateText = op.date || getTodayDateString();
-
-        return `
-            <div class="bg-tractorSurface p-4 rounded-xl border border-tractorBorder/80 space-y-2 text-xs md:text-sm hover:border-slate-500 transition">
-                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                    <span class="font-bold text-white text-sm md:text-base flex items-center gap-2">
-                        ${getOpIcon(op.type)} ${op.type} ${op.product ? `– <span class="text-tractorPrimaryLight font-bold">${op.product}</span>` : ''}
-                    </span>
-                    
-                    <div class="flex items-center gap-2 self-start sm:self-auto">
-                        <span class="text-xs text-slate-200 font-mono font-bold bg-tractorBg px-3 py-1 rounded-lg border border-tractorBorder">${dateText}</span>
-                        
-                        <button type="button" class="btn-edit-op px-2.5 py-1 bg-tractorBg hover:bg-zinc-700 text-slate-200 hover:text-white border border-tractorBorder rounded-lg text-xs font-bold transition cursor-pointer" data-idx="${realIdx}" title="Redaguoti šį įrašą">
-                            ✏️
-                        </button>
-                        
-                        <button type="button" class="btn-delete-op px-2.5 py-1 bg-red-950/40 hover:bg-red-900 text-red-300 border border-red-800/60 rounded-lg text-xs font-bold transition cursor-pointer" data-idx="${realIdx}" title="Ištrinti šį įrašą">
-                            🗑️
-                        </button>
-                    </div>
-                </div>
-
-                <div class="flex flex-wrap justify-between items-center text-slate-300 pt-1">
-                    <span>Norma / Kiekis: <strong class="text-white font-bold">${rateText}</strong></span>
-                    ${op.cost > 0 ? `<span class="text-amber-400 font-mono font-bold text-xs bg-amber-950/30 px-2.5 py-1 rounded-lg border border-amber-800/40">Išlaidos: -${parseFloat(op.cost).toFixed(2)} €</span>` : ''}
-                </div>
-                ${op.notes ? `<p class="text-xs text-slate-300 italic bg-tractorBg/60 p-2.5 rounded-lg border border-tractorBorder/40">💬 ${op.notes}</p>` : ''}
+    histBox.innerHTML = ops.map((op, realIdx) => `
+        <div class="bg-tractorSurface p-4 rounded-xl border border-tractorBorder/80 text-xs">
+            <div class="flex justify-between">
+                <span class="font-bold text-white">${getOpIcon(op.type)} ${op.type}</span>
+                <span class="font-mono text-slate-400">${op.date}</span>
             </div>
-        `;
-    }).reverse().join('');
-
-    histBox.querySelectorAll('.btn-delete-op').forEach(btn => {
-        btn.onclick = (e) => {
-            e.stopPropagation();
-            const opIdx = parseInt(btn.getAttribute('data-idx'));
-            showDialog("Trinti įrašą?", "Ar tikrai norite pašalinti šį darbą iš lauko žurnalo?", "🗑️", async () => {
-                const updatedOps = (field.operations || []).filter((_, idx) => idx !== opIdx);
-                await db.collection("user_fields").doc(field.id).update({ operations: updatedOps });
-                field.operations = updatedOps;
-                renderOperationsList(field, userFieldsList);
-            }, true);
-        };
-    });
-
-    histBox.querySelectorAll('.btn-edit-op').forEach(btn => {
-        btn.onclick = (e) => {
-            e.stopPropagation();
-            const opIdx = parseInt(btn.getAttribute('data-idx'));
-            const op = field.operations[opIdx];
-            if (!op) return;
-
-            editingOpIndex = opIdx;
-
-            document.getElementById('op-type').value = op.type || "Sėja";
-            document.getElementById('op-date').value = op.date || getTodayDateString();
-            document.getElementById('op-product').value = op.product || "";
-            document.getElementById('op-rate').value = op.rate || op.details || "";
-            document.getElementById('op-cost').value = op.cost || "";
-            document.getElementById('op-notes').value = op.notes || "";
-
-            const submitBtn = document.getElementById('btn-submit-operation');
-            if (submitBtn) {
-                submitBtn.innerHTML = `<span>💾</span> Atnaujinti įrašą žurnale`;
-                submitBtn.classList.remove('bg-tractorPrimary');
-                submitBtn.classList.add('bg-amber-600');
-            }
-
-            document.getElementById('btn-cancel-edit-op')?.classList.remove('hidden');
-            document.getElementById('add-operation-form').scrollIntoView({ behavior: 'smooth', block: 'center' });
-        };
-    });
+        </div>
+    `).reverse().join('');
 }
 
 function getOpIcon(type) {
-    switch (type) {
-        case 'Sėja': return '🌱';
-        case 'Tręšimas': return '🧪';
-        case 'Purškimas': return '💦';
-        case 'Kūlimas': return '🚜';
-        case 'Žemės dirbimas': return '🚜';
-        case 'Kalkinimas': return '⚪';
-        default: return '📝';
-    }
+    const icons = { 'Sėja': '🌱', 'Tręšimas': '🧪', 'Purškimas': '💦', 'Kūlimas': '🚜' };
+    return icons[type] || '📝';
 }
