@@ -46,7 +46,7 @@ export function closeAuthModal() {
 function createAuthModalDom() {
     const modalHtml = `
         <div id="unified-auth-modal" class="fixed inset-0 bg-black/80 flex items-center justify-center z-[130] hidden p-4 backdrop-blur-sm">
-            <div class="bg-tractorSurface border border-tractorBorder p-6 md:p-8 rounded-2xl max-w-md w-full shadow-2xl relative space-y-5">
+            <div class="bg-tractorSurface border border-tractorBorder p-6 md:p-8 rounded-2xl max-w-md w-full shadow-2xl relative space-y-5 max-h-[90vh] overflow-y-auto">
                 
                 <!-- UŽDARYTI -->
                 <button type="button" id="btn-close-auth-modal" class="absolute top-5 right-5 text-slate-400 hover:text-white text-xl font-bold transition cursor-pointer">
