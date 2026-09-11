@@ -1,6 +1,6 @@
 // js/settings.js
-import { db, auth } from './firebase.js';
-import { showDialog } from './ui.js';
+import { db, auth } from '../core/firebase.js';
+import { showDialog } from '../core/ui.js';
 
 let mapInstance = null;
 let markerInstance = null;

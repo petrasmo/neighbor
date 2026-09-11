@@ -1,10 +1,9 @@
-// js/theme.js
+// js/core/theme.js
 
 export function initThemeToggle() {
     const savedTheme = localStorage.getItem('neighbor_theme') || 'dark';
     applyTheme(savedTheme);
 
-    // Pririšame visus mygtukus su klase 'btn-theme-toggle'
     document.querySelectorAll('.btn-theme-toggle').forEach(btn => {
         btn.onclick = () => {
             const current = document.documentElement.classList.contains('light-theme') ? 'light' : 'dark';

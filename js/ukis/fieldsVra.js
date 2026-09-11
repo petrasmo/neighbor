@@ -1,6 +1,6 @@
 // js/fieldsVra.js
-import { db } from './firebase.js';
-import { showDialog } from './ui.js';
+import { db } from '../core/firebase.js';
+import { showDialog } from '../core/ui.js';
 
 // Standartinės normos pagal trąšų rūšį
 export const FERT_PRESETS = {

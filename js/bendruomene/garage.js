@@ -1,6 +1,6 @@
 // js/garage.js
-import { db } from './firebase.js';
-import { showDialog } from './ui.js';
+import { db } from '../core/firebase.js';
+import { showDialog } from '../core/ui.js';
 
 export async function initGarageTab(currentUser, userData) {
     const container = document.getElementById('view-tab-garage');

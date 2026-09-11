@@ -1,10 +1,10 @@
 // js/grain.js
-import { db } from './firebase.js';
+import { db } from '../core/firebase.js';
 import { calculateDist, calculateBuyerRanking } from './grainCalculator.js';
-import { createCustomSelect } from './customSelect.js';
-import { openAuthModal } from './auth.js';
-import { showDialog, switchTab } from './ui.js';
-import { refreshSettingsMap } from './settings.js';
+import { createCustomSelect } from '../core/customSelect.js';
+import { openAuthModal } from '../core/auth.js';
+import { showDialog, switchTab } from '../core/ui.js';
+import { refreshSettingsMap } from '../sistema/settings.js';
 
 let activeMarketData = [];
 let unsubscribeGrain = null;

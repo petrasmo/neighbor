@@ -1,4 +1,4 @@
-// js/firebase.js
+// js/core/firebase.js
 const firebaseConfig = {
   apiKey: "AIzaSyCQXoe-2gARzsK6Pk12cmYaJyggpYL_Ysg",
   authDomain: "neighborpm-b9968.firebaseapp.com",
@@ -8,7 +8,6 @@ const firebaseConfig = {
   appId: "1:227564351965:web:01757613c977ea76ee8634"
 };
 
-// Inicializuojame compat SDK
 if (!firebase.apps.length) {
     firebase.initializeApp(firebaseConfig);
 }

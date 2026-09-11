@@ -1,6 +1,6 @@
 // js/fields.js
-import { db } from './firebase.js';
-import { showDialog } from './ui.js';
+import { db } from '../core/firebase.js';
+import { showDialog } from '../core/ui.js';
 import { 
     initOrRefreshMap, drawFieldsOnMap, highlightFieldPolygon, 
     startDrawing, stopDrawing, getDrawingPoints, calculatePolygonAreaHa,

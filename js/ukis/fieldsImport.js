@@ -1,6 +1,6 @@
 // js/fieldsImport.js
-import { db } from './firebase.js';
-import { showDialog } from './ui.js';
+import { db } from '../core/firebase.js';
+import { showDialog } from '../core/ui.js';
 import { calculatePolygonAreaHa } from './fieldsMap.js';
 import { getTodayDateString } from './fieldsJournal.js';
 

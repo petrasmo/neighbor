@@ -1,27 +1,31 @@
 // js/main.js
-import { auth, db } from './firebase.js';
-import { openAuthModal, logoutUser } from './auth.js';
-import { switchTab, showDialog } from './ui.js';
-import { initThemeToggle } from './theme.js';
-import { renderGlobalSidebar } from './sidebar.js';
-import { initFeedTab } from './feed.js';
-import { initFieldsTab, refreshFieldsMap } from './fields.js';
-import { initReportsTab } from './reportsTab.js';
-import { initWeatherTab } from './weather.js';
-import { initGarageTab } from './garage.js';
-import { initSettingsTab, refreshSettingsMap } from './settings.js';
+import { auth, db } from './core/firebase.js';
+import { openAuthModal, logoutUser } from './core/auth.js';
+import { switchTab, showDialog } from './core/ui.js';
+import { initThemeToggle } from './core/theme.js';
+import { renderGlobalSidebar } from './core/sidebar.js';
+
+import { initFeedTab } from './bendruomene/feed.js';
+import { initFieldsManager, initFieldsTab, refreshFieldsMap } from './ukis/fieldsManager.js';
+import { initReportsTab } from './ukis/reportsTab.js';
+import { initWeatherTab } from './orai/weather.js';
+import { initGarageTab } from './bendruomene/garage.js';
+import { initSettingsTab, refreshSettingsMap } from './sistema/settings.js';
 
 // Skaičiuoklių moduliai
-import { initGrainTab } from './grain.js';
-import { renderMatifSection } from './matif.js';
-import { renderDieselCalculator } from './dieselCalculator.js';
-import { renderSeedCalculator } from './seedCalculator.js';
-import { renderCoverCropCalculator } from './coverCropCalculator.js';
-import { renderCombineLossCalculator } from './combineLossCalculator.js';
-import { renderSprayerCalculator } from './sprayerCalculator.js';
-import { renderFertilizerCalculator } from './fertilizerCalculator.js';
-import { renderStorageCalculator } from './storageCalculator.js';
-import { renderNmaCalendar } from './nmaCalendar.js';
+import { initGrainTab } from './skaiciuokles/grain.js';
+import { renderMatifSection } from './skaiciuokles/matif.js';
+import { renderDieselCalculator } from './skaiciuokles/dieselCalculator.js';
+import { renderSeedCalculator } from './skaiciuokles/seedCalculator.js';
+import { renderCoverCropCalculator } from './skaiciuokles/coverCropCalculator.js';
+import { renderCombineLossCalculator } from './skaiciuokles/combineLossCalculator.js';
+import { renderSprayerCalculator } from './skaiciuokles/sprayerCalculator.js';
+import { renderFertilizerCalculator } from './skaiciuokles/fertilizerCalculator.js';
+import { renderStorageCalculator } from './skaiciuokles/storageCalculator.js';
+import { renderNmaCalendar } from './skaiciuokles/nmaCalendar.js';
+import { initVraFertilizerTab } from './ukis/vraFertilizer.js';
+import { initLimingSoilTab } from './ukis/limingSoil.js';
+import { initOperationsJournalTab } from './ukis/operationsJournal.js';
 
 let currentUser = null;
 let userData = null;
@@ -37,15 +41,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
     document.querySelectorAll('.login-trigger-btn').forEach(btn => btn.addEventListener('click', () => openAuthModal('login')));
 
-    // Navigacija
+    // Navigacija su naujais 10 tab indeksų
     document.querySelectorAll('.nav-tab-btn').forEach(btn => {
         btn.addEventListener('click', () => {
             const tabIdx = parseInt(btn.getAttribute('data-tab'));
 
-            if (!currentUser && (tabIdx === 2 || tabIdx === 3 || tabIdx === 4 || tabIdx === 6)) {
+            if (!currentUser && (tabIdx >= 2 && tabIdx <= 6 || tabIdx === 8 || tabIdx === 9)) {
                 showDialog(
                     "Reikalingas prisijungimas",
-                    "Norėdami valdyti savo laukus, ataskaitas ar nustatymus, prisijunkite prie savo ūkio paskyros.",
+                    "Norėdami valdyti savo laukus, tręšimą, ataskaitas ar nustatymus, prisijunkite prie savo ūkio paskyros.",
                     "🔒",
                     () => openAuthModal('login'),
                     true
@@ -55,15 +59,24 @@ document.addEventListener('DOMContentLoaded', () => {
 
             switchTab(tabIdx);
 
-            if (tabIdx === 0) {
-                // Skaičiuoklės
-            } else if (tabIdx === 1) {
+            if (tabIdx === 1) {
                 initWeatherTab(currentUser, userData);
             } else if (tabIdx === 2) {
-                refreshFieldsMap();
+                initFieldsManager(currentUser, userData);
+                setTimeout(() => refreshFieldsMap(), 150);
             } else if (tabIdx === 3) {
-                initReportsTab(cachedFieldsList, userData);
+                initVraFertilizerTab(currentUser, userData); // 👈 VRA Tręšimo centras
+            } else if (tabIdx === 4) {
+                initLimingSoilTab(currentUser, userData); // 👈 🍋 VRA Kalkinimo centras!
+            } else if (tabIdx === 5) {
+                initOperationsJournalTab(currentUser, userData);
             } else if (tabIdx === 6) {
+                initReportsTab(cachedFieldsList, userData);
+            } else if (tabIdx === 7) {
+                initFeedTab(currentUser, userData, classifierMap);
+            } else if (tabIdx === 8) {
+                initGarageTab(currentUser, userData);
+            } else if (tabIdx === 9) {
                 refreshSettingsMap();
             }
         });
@@ -153,31 +166,30 @@ document.addEventListener('DOMContentLoaded', () => {
             });
 
             initFeedTab(currentUser, userData, classifierMap);
-            initFieldsTab(currentUser, userData);
+            initFieldsManager(currentUser, userData);
             initGarageTab(currentUser, userData);
             initSettingsTab(currentUser, userData);
             initWeatherTab(currentUser, userData);
-            refreshActiveCalculators(currentUser, userData);
+            initVraFertilizerTab(currentUser, userData);
 
-            // 🎯 PATIKRA: AR VARTOTOJAS JAU TURI PILNAI IŠSAUGOTĄ GARAŽĄ?
             const hasValidGarage = userData && userData.isSetupComplete && userData.garageLat && userData.garageLon && userData.garageLat !== 0;
 
             if (!hasValidGarage) {
-                // Jei vietos dar nėra – automatiškai atidarome Nustatymus (Tab 6)!
                 setTimeout(() => {
-                    switchTab(6);
+                    switchTab(9); // Nustatymai
                     refreshSettingsMap();
                     showDialog(
                         "Sveiki atvykę į JurgisAgro! 🚜",
-                        "Nurodykite savo <strong>ūkio bazės (garažo) vietą</strong> žemėlapyje žemiau ir paspauskite „Išsaugoti nustatymus“, kad visos grūdų, kuro ir orų skaičiuoklės veiktų tiksliai jūsų kiemui.",
+                        "Nurodykite savo <strong>ūkio bazės (garažo) vietą</strong> žemėlapyje žemiau ir paspauskite „Išsaugoti nustatymus“, kad visos skaičiuoklės veiktų tiksliai jūsų kiemui.",
                         "📍"
                     );
                 }, 200);
             } else {
                 switchTab(requestedTab);
                 if (requestedTab === 2) refreshFieldsMap();
+                if (requestedTab === 3) initVraFertilizerTab(currentUser, userData);
                 if (requestedTab === 1) initWeatherTab(currentUser, userData);
-                if (requestedTab === 3) initReportsTab(cachedFieldsList, userData);
+                if (requestedTab === 6) initReportsTab(cachedFieldsList, userData);
             }
 
         } else {
@@ -205,7 +217,6 @@ document.addEventListener('DOMContentLoaded', () => {
             initFeedTab(null, null, classifierMap);
             initWeatherTab(null, null);
 
-            refreshActiveCalculators(null, null);
             switchTab(requestedTab);
         }
 
@@ -215,18 +226,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 });
-
-function refreshActiveCalculators(user, uData) {
-    const dieselView = document.getElementById('view-tab-diesel-embed');
-    if (dieselView && !dieselView.classList.contains('hidden')) {
-        renderDieselCalculator(document.getElementById('diesel-calc-content'), user, uData);
-    }
-
-    const grainView = document.getElementById('view-tab-grain-embed');
-    if (grainView && !grainView.classList.contains('hidden')) {
-        initGrainTab(user, uData);
-    }
-}
 
 function setupCalculatorsHub() {
     const hubView = document.getElementById('view-calculators-hub');

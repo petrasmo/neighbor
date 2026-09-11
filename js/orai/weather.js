@@ -1,24 +1,24 @@
-// js/weather.js
-import { db } from './firebase.js';
-import { createCustomSelect } from './customSelect.js';
-import { openAuthModal } from './auth.js';
-import { switchTab } from './ui.js';
-import { refreshSettingsMap } from './settings.js';
+// js/orai/weather.js
+import { db } from '../core/firebase.js';
+import { createCustomSelect } from '../core/customSelect.js';
+import { openAuthModal } from '../core/auth.js';
+import { switchTab } from '../core/ui.js';
+import { refreshSettingsMap } from '../sistema/settings.js';
 
 let currentWeatherCoords = { lat: 54.6872, lng: 25.2797, name: "Nustatoma vieta..." };
 let userFieldsList = [];
 let cachedCurrentWeather = null;
 let cachedHourlyWeather = null;
 let cachedCurrentHourIdx = 0;
-let activeHourlyMode = 'spray';
+let activeHourlyMode = 'spray'; // 'spray' arba 'frost'
 
 function navigateToSettings() {
     if (typeof switchTab === 'function' && document.getElementById('view-tab-settings')) {
-        switchTab(6);
+        switchTab(9); // Nustatymai pagal naują indeksą
         if (typeof refreshSettingsMap === 'function') refreshSettingsMap();
         window.scrollTo({ top: 0, behavior: 'smooth' });
     } else {
-        window.location.href = 'index.html?tab=6';
+        window.location.href = 'index.html?tab=9';
     }
 }
 
@@ -44,10 +44,9 @@ export function initWeatherTab(currentUser, userData) {
     container.innerHTML = `
         <div class="space-y-6 max-w-6xl mx-auto w-full">
             
-            <!-- 1. VIENTISA VIRŠUTINĖ AGRO-ORŲ KORTELĖ -->
+            <!-- 1. VIENTISA VIRŠUTINĖ KORTELĖ (VIETA + REŽIMO PASIRINKIMAS) -->
             <div id="weather-top-unified-card" class="bg-tractorSurface border border-tractorBorder rounded-2xl p-6 md:p-7 shadow-xl space-y-5">
                 
-                <!-- VIRŠUTINĖ EILUTĖ: ANTRAŠTĖ IR GPS -->
                 <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-tractorBorder/70 pb-4">
                     <div>
                         <h2 class="font-oswald text-2xl md:text-3xl font-bold uppercase tracking-wider text-white flex items-center gap-2">
@@ -63,7 +62,6 @@ export function initWeatherTab(currentUser, userData) {
                     </button>
                 </div>
 
-                <!-- 🌟 BANERIS NEPRISIJUNGUSIEMS ARBA BE ŪKIO BAZĖS -->
                 ${!isLogged || !hasGarage ? `
                     <div class="p-5 md:p-6 bg-tractorBg border border-tractorPrimary rounded-2xl shadow-xl space-y-4">
                         <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
@@ -71,63 +69,51 @@ export function initWeatherTab(currentUser, userData) {
                                 <div class="flex items-center gap-2">
                                     <span class="text-2xl">${!isLogged ? '💡' : '🏠'}</span>
                                     <h4 class="text-sm md:text-base font-extrabold uppercase tracking-wider text-green-400">
-                                        ${!isLogged 
-                                            ? 'Norite 100% tikslių skaičiavimų ir prognozių savo ūkiui?' 
-                                            : 'Liko 1 žingsnis: Nurodykite savo ūkio bazės (garažo) vietą!'}
+                                        ${!isLogged ? 'Norite 100% tikslių prognozių savo ūkiui?' : 'Liko 1 žingsnis: Nurodykite ūkio bazės vietą!'}
                                     </h4>
                                 </div>
                                 <p class="text-xs md:text-sm text-slate-200 leading-relaxed">
-                                    ${!isLogged
-                                        ? 'Prisijunkite prie sistemos ir pažymėkite savo ūkio bazės (garažo) vietą – tai atrakins tikslius skaičiavimus tiesiai jūsų kiemui:'
-                                        : 'Jūs esate prisijungęs, tačiau dar nepažymėjote savo ūkio bazės (garažo) vietos žemėlapyje. Vienas taškas žemėlapyje automatiškai atrakins visą sistemos naudą:'}
+                                    Prisijunkite ir pažymėkite ūkio bazę, kad orai būtų skaičiuojami tiesiai virš jūsų laukų.
                                 </p>
                             </div>
                             <button type="button" id="btn-weather-farm-prompt" class="px-5 py-3 bg-tractorPrimary hover:bg-tractorPrimaryHover text-white font-black rounded-xl text-xs md:text-sm uppercase tracking-wider shrink-0 shadow-lg cursor-pointer transition">
-                                ${!isLogged ? '🔑 Prisijungti prie ūkio' : '📍 Nurodyti ūkio vietą Nustatymuose ➔'}
+                                ${!isLogged ? '🔑 Prisijungti' : '📍 Nurodyti vietą Nustatymuose ➔'}
                             </button>
-                        </div>
-
-                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2 border-t border-tractorBorder/60 text-xs">
-                            <div class="bg-tractorSurface p-3 rounded-xl border border-tractorBorder/70 space-y-1">
-                                <strong class="text-amber-400 flex items-center gap-1"><span>⛽</span> Gazolio atvežimas</strong>
-                                <p class="text-[11px] text-slate-300">Tiksli autocisternos kaina tiesiai į jūsų kiemą iš 36 bazių.</p>
-                            </div>
-                            <div class="bg-tractorSurface p-3 rounded-xl border border-tractorBorder/70 space-y-1">
-                                <strong class="text-green-400 flex items-center gap-1"><span>🌾</span> Grūdų logistika</strong>
-                                <p class="text-[11px] text-slate-300">Transporto kaina iki elevatoriaus ir grynasis pelnas už toną.</p>
-                            </div>
-                            <div class="bg-tractorSurface p-3 rounded-xl border border-tractorBorder/70 space-y-1">
-                                <strong class="text-blue-400 flex items-center gap-1"><span>🌦️</span> Agro-orai ir purškimas</strong>
-                                <p class="text-[11px] text-slate-300">Vėjo greitis 2m aukštyje ir lietaus langas jūsų sklypams.</p>
-                            </div>
                         </div>
                     </div>
                 ` : ''}
 
-                <!-- LAUKO PASIRINKIMAS -->
-                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-tractorBg/80 p-3.5 rounded-xl border border-tractorBorder">
-                    <div class="space-y-0.5">
+                <!-- VIETA IR REŽIMAS VIENOJE AIŠKIOJE JUOSTOJE -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 bg-tractorBg/80 p-4 rounded-xl border border-tractorBorder">
+                    <div class="space-y-1">
                         <label class="text-xs font-bold text-tractorPrimaryLight uppercase tracking-wider block">
-                            🌾 Pasirinkite lauką orų ir įšalo prognozei:
+                            🌾 Pasirinkite lauką / vietą:
                         </label>
-                        <p class="text-[11px] text-slate-400">Pasirinkite savo ūkio bazę arba konkretų sklypą tiksliam modeliui.</p>
+                        <div id="weather-field-select-box" class="w-full"></div>
                     </div>
 
-                    <div id="weather-field-select-box" class="w-full sm:w-80"></div>
+                    <div class="space-y-1">
+                        <label class="text-xs font-bold text-tractorPrimaryLight uppercase tracking-wider block">
+                            🎯 Pasirinkite norimą režimą:
+                        </label>
+                        <div class="flex items-center gap-1.5 bg-tractorSurface p-1 rounded-xl border border-tractorBorder h-12">
+                            <button type="button" id="btn-mode-spray" class="flex-1 h-full rounded-lg text-xs font-bold transition cursor-pointer flex items-center justify-center gap-1.5 ${activeHourlyMode === 'spray' ? 'bg-tractorPrimary text-white shadow' : 'text-slate-400 hover:text-white'}">
+                                <span>💦</span> <span>Purškimo langas</span>
+                            </button>
+                            <button type="button" id="btn-mode-frost" class="flex-1 h-full rounded-lg text-xs font-bold transition cursor-pointer flex items-center justify-center gap-1.5 ${activeHourlyMode === 'frost' ? 'bg-blue-600 text-white shadow' : 'text-slate-400 hover:text-white'}">
+                                <span>❄️</span> <span>Šalčio ir įšalo langas</span>
+                            </button>
+                        </div>
+                    </div>
                 </div>
 
-                <!-- ŠVIESOFORO IR VERDIKTO BLOKAS -->
+                <!-- BŪSENOS KORTELĖ (PURŠKIMAS ARBA ĮŠALAS) -->
                 <div id="live-spray-inner-box" class="pt-2">
-                    <div class="text-center py-6 text-slate-500 text-sm">Jungiamasi prie meteorologinių palydovų...</div>
+                    <div class="text-center py-6 text-slate-500 text-sm">Kraunami orų duomenys...</div>
                 </div>
             </div>
 
-            <!-- ❄️ 2. ŽIEMKENČIŲ PERŽIEMOJIMO IR ĮŠALO RADARAS -->
-            <div id="winter-frost-radar-box" class="bg-tractorSurface border border-tractorBorder rounded-2xl p-6 md:p-7 shadow-xl space-y-5">
-                <div class="text-center py-4 text-slate-500 text-xs">Kraunamas įšalo ir sniego dangos modelis...</div>
-            </div>
-
-            <!-- 3. 48 VALANDŲ PROGNOZĖ -->
+            <!-- VALANDINĖ PROGNOZĖ -->
             <div class="bg-tractorSurface border border-tractorBorder rounded-2xl p-6 md:p-7 shadow-xl space-y-4">
                 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-tractorBorder/70 pb-3">
                     <div>
@@ -135,17 +121,8 @@ export function initWeatherTab(currentUser, userData) {
                             <span>⏱️</span> Valandinė Prognozė (Artimiausios 48 val.)
                         </h3>
                         <p class="text-xs text-slate-300" id="hourly-forecast-subheading">
-                            Valandinis modelis pagal palydovo duomenis.
+                            Valandinis modelis pagal pasirinktą režimą.
                         </p>
-                    </div>
-
-                    <div class="flex items-center gap-1 bg-tractorBg p-1 rounded-xl border border-tractorBorder shrink-0">
-                        <button type="button" id="btn-mode-spray" class="px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${activeHourlyMode === 'spray' ? 'bg-tractorPrimary text-white shadow' : 'text-slate-400 hover:text-white'}">
-                            💦 Purškimo langas
-                        </button>
-                        <button type="button" id="btn-mode-frost" class="px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${activeHourlyMode === 'frost' ? 'bg-blue-600 text-white shadow' : 'text-slate-400 hover:text-white'}">
-                            ❄️ Šalčio ir įšalo langas
-                        </button>
                     </div>
                 </div>
 
@@ -154,7 +131,7 @@ export function initWeatherTab(currentUser, userData) {
                 </div>
             </div>
 
-            <!-- 4. AGRONOMINĖS TAISYKLĖS IR PATARIMAI -->
+            <!-- AGRONOMINĖS TAISYKLĖS -->
             <div class="grid grid-cols-1 md:grid-cols-3 gap-5" id="soil-and-agri-conditions"></div>
 
         </div>
@@ -162,21 +139,18 @@ export function initWeatherTab(currentUser, userData) {
 
     document.getElementById('btn-mode-spray')?.addEventListener('click', () => {
         activeHourlyMode = 'spray';
-        updateHourlyGrid();
+        updateModeUI();
     });
     document.getElementById('btn-mode-frost')?.addEventListener('click', () => {
         activeHourlyMode = 'frost';
-        updateHourlyGrid();
+        updateModeUI();
     });
 
     const btnPrompt = document.getElementById('btn-weather-farm-prompt');
     if (btnPrompt) {
         btnPrompt.onclick = () => {
-            if (!isLogged) {
-                openAuthModal('login');
-            } else {
-                navigateToSettings();
-            }
+            if (!isLogged) openAuthModal('login');
+            else navigateToSettings();
         };
     }
 
@@ -201,6 +175,28 @@ export function initWeatherTab(currentUser, userData) {
     });
 
     loadFieldsToSelect(currentUser, userData);
+}
+
+function updateModeUI() {
+    const btnSpray = document.getElementById('btn-mode-spray');
+    const btnFrost = document.getElementById('btn-mode-frost');
+
+    if (activeHourlyMode === 'spray') {
+        if (btnSpray) btnSpray.className = "flex-1 h-full rounded-lg text-xs font-bold transition cursor-pointer flex items-center justify-center gap-1.5 bg-tractorPrimary text-white shadow";
+        if (btnFrost) btnFrost.className = "flex-1 h-full rounded-lg text-xs font-bold transition cursor-pointer flex items-center justify-center gap-1.5 text-slate-400 hover:text-white";
+    } else {
+        if (btnFrost) btnFrost.className = "flex-1 h-full rounded-lg text-xs font-bold transition cursor-pointer flex items-center justify-center gap-1.5 bg-blue-600 text-white shadow";
+        if (btnSpray) btnSpray.className = "flex-1 h-full rounded-lg text-xs font-bold transition cursor-pointer flex items-center justify-center gap-1.5 text-slate-400 hover:text-white";
+    }
+
+    if (cachedCurrentWeather && cachedHourlyWeather) {
+        if (activeHourlyMode === 'frost') {
+            renderWinterFrostRadar();
+        } else {
+            renderLiveSprayStatus(cachedCurrentWeather, cachedHourlyWeather, cachedCurrentHourIdx);
+        }
+        updateHourlyGrid();
+    }
 }
 
 async function resolveAutoLocation() {
@@ -323,19 +319,7 @@ async function fetchAgroWeatherData() {
         cachedHourlyWeather = data.hourly;
         cachedCurrentHourIdx = findCurrentHourIndex(data.hourly);
 
-        const airTemp = data.current.temperature_2m;
-        const soil0 = data.current.soil_temperature_0cm || 0;
-        const snowM = (data.hourly.snow_depth && data.hourly.snow_depth.length > cachedCurrentHourIdx) ? data.hourly.snow_depth[cachedCurrentHourIdx] : 0;
-
-        if (airTemp < 5.0 || soil0 < 0 || snowM > 0.02) {
-            activeHourlyMode = 'frost';
-        } else {
-            activeHourlyMode = 'spray';
-        }
-
-        renderLiveSprayStatus(data.current, data.hourly, cachedCurrentHourIdx);
-        renderWinterFrostRadar();
-        updateHourlyGrid();
+        updateModeUI();
         renderSoilConditions(data.current, data.hourly);
     } catch (error) {
         console.error("Orų klaida:", error);
@@ -352,17 +336,11 @@ function findCurrentHourIndex(hourly) {
             return i;
         }
     }
-
-    for (let i = 0; i < hourly.time.length; i++) {
-        const itemDate = new Date(hourly.time[i]);
-        if (itemDate >= now) return i;
-    }
-
     return 0;
 }
 
 function renderWinterFrostRadar() {
-    const box = document.getElementById('winter-frost-radar-box');
+    const box = document.getElementById('live-spray-inner-box');
     if (!box || !cachedCurrentWeather) return;
 
     const airTemp = parseFloat(cachedCurrentWeather.temperature_2m.toFixed(1));
@@ -387,84 +365,64 @@ function renderWinterFrostRadar() {
     } else if (soil0cm < 0) {
         frostDepthCmText = "3 cm (Paviršinė pluta)";
         frostColor = "text-amber-500";
-    } else {
-        frostDepthCmText = "0 cm (Atitirpusi)";
-        frostColor = "text-green-500";
     }
 
     let winterkillStatus = "🟢 SAUGU (Pasėliams pavojaus nėra)";
-    let winterkillBadgeClass = "bg-green-500/20 text-green-600 dark:text-green-400 border-green-500/40";
+    let winterkillBadgeClass = "bg-green-500/20 text-green-600 border-green-500/40";
     let winterkillDesc = "Temperatūra augimo mazgo gylyje (6 cm) yra teigiama arba saugi. Žieminiai kviečiai ir rapsai žiemoja stabiliai.";
     let borderColor = "border-tractorBorder";
 
     if (soil6cm <= -9.0) {
         winterkillStatus = "🚨 KRITINIS PAVOJUS: ŽIEMKENČIŲ IŠŠALIMAS!";
         winterkillBadgeClass = "bg-red-600 text-white border-red-700 animate-pulse";
-        winterkillDesc = `Dirvos temperatūra mazgo gylyje nukrito iki ${soil6cm}°C! Rapsų augimo kūgelis žūsta prie -8°C, kviečiai prie -14°C. Prasideda negrįžtami pasėlių pažeidimai!`;
+        winterkillDesc = `Dirvos temperatūra mazgo gylyje nukrito iki ${soil6cm}°C! Rapsų augimo kūgelis žūsta prie -8°C, kviečiai prie -14°C.`;
         borderColor = "border-red-600 ring-2 ring-red-600";
     } else if (airTemp < -12.0 && snowCm < 3) {
         winterkillStatus = "🔴 PAVOJUS: PLIKŠALIS BE SNIEGO DANGOS!";
         winterkillBadgeClass = "bg-red-500/20 text-red-600 border-red-500/40";
-        winterkillDesc = `Spaudžia stiprus šaltis (${airTemp}°C), o sniego danga nesiekia 3 cm. Nėra termoizoliacijos, šaltis skverbiasi tiesiai į augalų šaknis!`;
+        winterkillDesc = `Spaudžia stiprus šaltis (${airTemp}°C), o sniego danga nesiekia 3 cm. Nėra termoizoliacijos!`;
         borderColor = "border-red-600";
-    } else if (airTemp < -7.0 && snowCm < 2) {
-        winterkillStatus = "🟡 VIDUTINĖ RIZIKA (Vėsus plikšalis)";
-        winterkillBadgeClass = "bg-amber-500/20 text-amber-600 border-amber-500/40";
-        winterkillDesc = `Neigiama oro temperatūra be sniego dangos. Stebėkite naktines orų prognozes.`;
-        borderColor = "border-amber-500";
-    } else if (snowCm >= 5 && airTemp < 0) {
-        winterkillStatus = "🟢 SAUGU: Sniego antklodė saugo pasėlius";
-        winterkillDesc = `Laukuose yra ${snowCm} cm sniego danga. Ji veikia kaip termoizoliatorius ir apsaugo pasėlius net prie -20°C šalčio.`;
     }
 
     const isManureForbidden = (soil0cm < 0 || snowCm > 0);
-    const manureStatusText = isManureForbidden 
-        ? "🔴 DRAUDŽIAMA (Dirva įšalusi / apsnigta)"
-        : "🟢 Leidžiama (Dirva neįšalusi, jei pasibaigęs kalendorinis draudimas)";
+    const manureStatusText = isManureForbidden ? "🔴 DRAUDŽIAMA (Dirva įšalusi / apsnigta)" : "🟢 Leidžiama (Dirva neįšalusi)";
 
-    box.className = `bg-tractorSurface border-2 ${borderColor} rounded-2xl p-6 md:p-7 shadow-xl space-y-5 transition-all`;
+    box.className = `bg-tractorBg border-2 ${borderColor} rounded-2xl p-5 md:p-6 shadow-lg space-y-4 transition-all`;
     box.innerHTML = `
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-tractorBorder/70 pb-4">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-tractorBorder/70 pb-3">
             <div class="space-y-1">
                 <div class="inline-flex items-center gap-1.5 ${winterkillBadgeClass} px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider border">
-                    <span>❄️</span> <span>Žiemkenčių peržiemojimo būklė</span>
+                    <span>❄️</span> <span>Žiemkenčių peržiemojimo ir įšalo būklė</span>
                 </div>
-                <h3 class="font-oswald text-2xl md:text-3xl font-bold tracking-wide" style="color: var(--text-main);">${winterkillStatus}</h3>
+                <h3 class="font-oswald text-xl md:text-2xl font-bold tracking-wide" style="color: var(--text-main);">${winterkillStatus}</h3>
                 <p class="text-xs md:text-sm text-slate-300 leading-relaxed">${winterkillDesc}</p>
             </div>
             <div class="text-left sm:text-right shrink-0">
-                <span class="text-[11px] text-slate-400 uppercase font-bold block">Sniego danga lauke</span>
-                <span class="text-3xl font-black font-mono text-blue-400">${snowCm} cm</span>
+                <span class="text-[11px] text-slate-400 uppercase font-bold block">Sniego danga</span>
+                <span class="text-2xl font-black font-mono text-blue-400">${snowCm} cm</span>
             </div>
         </div>
 
-        <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs">
-            <div class="bg-tractorBg p-4 rounded-xl border border-tractorBorder space-y-1">
-                <span class="text-slate-400 font-bold block text-xs">🌱 Dirva 6 cm (Mazgas)</span>
-                <strong class="font-mono text-2xl font-black ${soil6cm < 0 ? 'text-blue-400' : 'text-green-500'} block">
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+            <div class="bg-tractorSurface p-3 rounded-xl border border-tractorBorder space-y-1">
+                <span class="text-slate-400 font-bold block text-[11px]">🌱 Dirva 6 cm (Mazgas)</span>
+                <strong class="font-mono text-xl font-black ${soil6cm < 0 ? 'text-blue-400' : 'text-green-500'} block">
                     ${soil6cm > 0 ? '+' : ''}${soil6cm}°C
                 </strong>
-                <span class="text-[10px] text-slate-500 block">Rapsų / kviečių gyvybės centras</span>
             </div>
-
-            <div class="bg-tractorBg p-4 rounded-xl border border-tractorBorder space-y-1">
-                <span class="text-slate-400 font-bold block text-xs">❄️ Sniego danga lauke</span>
-                <strong class="font-mono text-2xl font-black text-blue-400 block">${snowCm} cm</strong>
-                <span class="text-[10px] text-slate-500 block">${snowCm >= 5 ? 'Apsauginė antklodė' : 'Neapsaugoti pasėliai'}</span>
+            <div class="bg-tractorSurface p-3 rounded-xl border border-tractorBorder space-y-1">
+                <span class="text-slate-400 font-bold block text-[11px]">❄️ Sniego danga</span>
+                <strong class="font-mono text-xl font-black text-blue-400 block">${snowCm} cm</strong>
             </div>
-
-            <div class="bg-tractorBg p-4 rounded-xl border border-tractorBorder space-y-1">
-                <span class="text-slate-400 font-bold block text-xs">🧊 Įšalo gylis lauke</span>
-                <strong class="font-mono text-xl font-black ${frostColor} block truncate">${frostDepthCmText}</strong>
-                <span class="text-[10px] text-slate-500 block">Paviršius (0 cm): ${soil0cm > 0 ? '+' : ''}${soil0cm}°C</span>
+            <div class="bg-tractorSurface p-3 rounded-xl border border-tractorBorder space-y-1">
+                <span class="text-slate-400 font-bold block text-[11px]">🧊 Įšalo gylis</span>
+                <strong class="font-mono text-base font-black ${frostColor} block truncate">${frostDepthCmText}</strong>
             </div>
-
-            <div class="bg-tractorBg p-4 rounded-xl border border-tractorBorder space-y-1">
-                <span class="text-slate-400 font-bold block text-xs">📜 Mėšlo/srutų skleidimas</span>
-                <strong class="font-bold text-xs ${isManureForbidden ? 'text-red-400' : 'text-green-500'} block leading-snug">
+            <div class="bg-tractorSurface p-3 rounded-xl border border-tractorBorder space-y-1">
+                <span class="text-slate-400 font-bold block text-[11px]">📜 Mėšlo skleidimas</span>
+                <strong class="font-bold text-[11px] ${isManureForbidden ? 'text-red-400' : 'text-green-500'} block">
                     ${manureStatusText}
                 </strong>
-                <span class="text-[10px] text-slate-500 block">Pagal GAAB taisykles</span>
             </div>
         </div>
     `;
@@ -474,21 +432,15 @@ function updateHourlyGrid() {
     const grid = document.getElementById('hourly-forecast-grid');
     const heading = document.getElementById('hourly-forecast-heading');
     const subheading = document.getElementById('hourly-forecast-subheading');
-    const btnSpray = document.getElementById('btn-mode-spray');
-    const btnFrost = document.getElementById('btn-mode-frost');
 
     if (!grid || !cachedHourlyWeather || !cachedHourlyWeather.time) return;
 
     if (activeHourlyMode === 'frost') {
         heading.innerHTML = `<span>⏱️</span> Žiemkenčių Šalčio ir Įšalo Langas (Artimiausios 48 val.)`;
-        subheading.textContent = `Valandinis modelis: tikslios valandos, kada naktį spaus naktinis šaltis, plikšalis ar žemės įšalimas.`;
-        if (btnFrost) btnFrost.className = "px-3 py-1.5 rounded-lg text-xs font-bold bg-blue-600 text-white shadow";
-        if (btnSpray) btnSpray.className = "px-3 py-1.5 rounded-lg text-xs font-bold text-slate-400 hover:text-white";
+        subheading.textContent = `Valandinis modelis: tikslios valandos, kada naktį spaus naktinis šaltis ar žemės įšalas.`;
     } else {
         heading.innerHTML = `<span>⏱️</span> Purškimo Lango Prognozė (Artimiausios 48 val.)`;
-        subheading.textContent = `Rekomenduojamos valandos purškimui pagal vėjo greitį 2 m aukštyje, gūsius ir lietaus riziką.`;
-        if (btnSpray) btnSpray.className = "px-3 py-1.5 rounded-lg text-xs font-bold bg-tractorPrimary text-white shadow";
-        if (btnFrost) btnFrost.className = "px-3 py-1.5 rounded-lg text-xs font-bold text-slate-400 hover:text-white";
+        subheading.textContent = `Rekomenduojamos valandos purškimui pagal vėjo greitį 2 m aukštyje ir lietaus riziką.`;
     }
 
     const items = [];
@@ -579,44 +531,24 @@ function evaluateSprayCondition(windSpeedMs, windGustsMs, tempC, rainProb, rainM
     const redReasons = [];
     const yellowReasons = [];
 
-    if (tempC < 5) redReasons.push(`Per šalta purškimui (+${tempC}°C < 5°C). Vegetacija nevyksta.`);
-    if (windSpeedMs > 4.5) redReasons.push(`Per stiprus vėjas (${windSpeedMs} m/s > 4.5 m/s).`);
-    if (windGustsMs > 6.0) redReasons.push(`Pavojingi vėjo gūsiai (${windGustsMs} m/s > 6.0 m/s).`);
-    if (rainMm > 0.1) redReasons.push(`Šiuo metu krenta lietus (${rainMm} mm).`);
-    if (tempC > 25) redReasons.push(`Per karšta (+${tempC}°C > 25°C).`);
+    if (tempC < 5) redReasons.push(`Per šalta purškimui.`);
+    if (windSpeedMs > 4.5) redReasons.push(`Per stiprus vėjas (${windSpeedMs} m/s).`);
+    if (windGustsMs > 6.0) redReasons.push(`Pavojingi vėjo gūsiai.`);
+    if (rainMm > 0.1) redReasons.push(`Krenta lietus.`);
+    if (tempC > 25) redReasons.push(`Per karšta.`);
 
     if (redReasons.length > 0) {
-        return {
-            status: 'red',
-            icon: '🔴',
-            text: 'Netinka',
-            badgeClass: 'bg-red-500/20 text-red-600 border-red-500/40',
-            reasons: redReasons
-        };
+        return { status: 'red', icon: '🔴', text: 'Netinka', badgeClass: 'bg-red-500/20 text-red-600 border-red-500/40' };
     }
 
-    if (rainProb > 40 && rainMm <= 0.1) yellowReasons.push(`Didelė lietaus tikimybė (${rainProb}%), nors šiuo metu nelyja.`);
-    if (windSpeedMs > 3.0) yellowReasons.push(`Vėjas (${windSpeedMs} m/s) ant ribos.`);
-    if (windGustsMs > 4.5) yellowReasons.push(`Vėjo gūsiai (${windGustsMs} m/s).`);
-    if (tempC > 22) yellowReasons.push(`Šilta (+${tempC}°C, garavimo rizika).`);
+    if (rainProb > 40 && rainMm <= 0.1) yellowReasons.push(`Lietaus tikimybė.`);
+    if (windSpeedMs > 3.0) yellowReasons.push(`Vėjas ant ribos.`);
 
     if (yellowReasons.length > 0) {
-        return {
-            status: 'yellow',
-            icon: '🟡',
-            text: 'Rizika',
-            badgeClass: 'bg-amber-500/20 text-amber-600 border-amber-500/40',
-            reasons: yellowReasons
-        };
+        return { status: 'yellow', icon: '🟡', text: 'Rizika', badgeClass: 'bg-amber-500/20 text-amber-600 border-amber-500/40' };
     }
 
-    return {
-        status: 'green',
-        icon: '🟢',
-        text: 'Tinka',
-        badgeClass: 'bg-green-500/20 text-green-600 border-green-500/40',
-        reasons: []
-    };
+    return { status: 'green', icon: '🟢', text: 'Tinka', badgeClass: 'bg-green-500/20 text-green-600 border-green-500/40' };
 }
 
 function renderLiveSprayStatus(current, hourly, currentIdx) {
@@ -632,9 +564,6 @@ function renderLiveSprayStatus(current, hourly, currentIdx) {
         ? hourly.precipitation_probability[currentIdx] 
         : 0;
 
-    const futureHours = (hourly.precipitation_probability || []).slice(currentIdx + 1, currentIdx + 6);
-    const futureRainRelIndex = futureHours.findIndex(p => p > 40);
-
     const evaluation = evaluateSprayCondition(windSpeedMs, windGustsMs, tempC, currentRainProb, rainMm);
 
     let statusTitle = "🟢 ŠIUO METU PURKŠTI GALIMA (Optimalus langas)";
@@ -646,67 +575,53 @@ function renderLiveSprayStatus(current, hourly, currentIdx) {
         statusTitle = "❄️ ŽIEMOS RAMYBĖS LAIKOTARPIS / PURŠKIMAS NEVYKDOMAS";
         borderColor = "border-blue-500";
         bgColor = "bg-blue-950/20";
-        statusDesc = `Esant žemai temperatūrai (${tempC}°C < 5°C) augalų apsaugos produktai neveikia arba nenaudojami. Laukuose stebimas žiemkenčių peržiemojimas ir įšalo būklė žemiau.`;
+        statusDesc = `Esant žemai temperatūrai (${tempC}°C < 5°C) augalų apsaugos produktai neveikia.`;
     } else if (evaluation.status === 'red') {
-        statusTitle = "🔴 ŠIUO METU PURKŠTI DRAUDŽIAMA ARBA NEREKOMENDUOJAMA";
+        statusTitle = "🔴 ŠIUO METU PURKŠTI DRAUDŽIAMA";
         borderColor = "border-red-600";
         bgColor = "bg-red-950/30";
-        statusDesc = `Priežastys: ${evaluation.reasons.join(' ')}`;
+        statusDesc = `Sąlygos netinkamos purškimui.`;
     } else if (evaluation.status === 'yellow') {
         statusTitle = "🟡 ŠIUO METU SĄLYGOS RIZIKINGOS";
         borderColor = "border-amber-500";
         bgColor = "bg-amber-950/30";
-        statusDesc = `Pastaba: ${evaluation.reasons.join(' ')} Rekomenduojama naudoti antilašinius purkštukus.`;
+        statusDesc = `Vėjo arba lietaus rizika.`;
     }
 
-    if (evaluation.status === 'green' && futureRainRelIndex !== -1 && tempC >= 5) {
-        const hoursLater = futureRainRelIndex + 1;
-        const rainProbFuture = futureHours[futureRainRelIndex];
-        statusDesc += ` <span class="text-amber-600 font-extrabold block mt-2 bg-amber-500/10 p-2.5 rounded-lg border border-amber-500/30">⚠️ Dėmesio: po ${hoursLater} val. prognozuojamas lietus (${rainProbFuture}% tikimybė). Purkškite greitai įsigeriančius preparatus!</span>`;
-    }
-
+    liveCard.className = `${bgColor} border-2 ${borderColor} rounded-2xl p-5 md:p-6 shadow-lg space-y-4 transition-all`;
     liveCard.innerHTML = `
-        <div class="${bgColor} border-2 ${borderColor} rounded-2xl p-6 md:p-7 shadow-lg space-y-5 transition-all">
-            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-tractorBorder/70 pb-4">
-                <div class="space-y-1 flex-1">
-                    <span class="text-xs uppercase font-black tracking-wider ${tempC < 5 ? 'text-blue-400' : (evaluation.status === 'green' ? 'text-green-600' : (evaluation.status === 'yellow' ? 'text-amber-600' : 'text-red-600'))}">
-                        Agrometeorologinis verdiktas
-                    </span>
-                    <h3 class="font-oswald text-2xl md:text-3xl font-bold tracking-wide" style="color: var(--text-main);">${statusTitle}</h3>
-                    <p class="text-xs md:text-sm font-medium leading-relaxed" style="color: var(--text-muted);">${statusDesc}</p>
-                </div>
-                <div class="text-right shrink-0">
-                    <span class="text-[11px] text-slate-500 block uppercase font-bold">Oro temperatūra</span>
-                    <span class="text-3xl md:text-4xl font-black font-mono" style="color: var(--text-main);">${tempC > 0 ? '+' : ''}${tempC}°C</span>
-                </div>
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-tractorBorder/70 pb-3">
+            <div class="space-y-1 flex-1">
+                <span class="text-xs uppercase font-black tracking-wider ${tempC < 5 ? 'text-blue-400' : (evaluation.status === 'green' ? 'text-green-600' : (evaluation.status === 'yellow' ? 'text-amber-600' : 'text-red-600'))}">
+                    Agrometeorologinis verdiktas
+                </span>
+                <h3 class="font-oswald text-xl md:text-2xl font-bold tracking-wide" style="color: var(--text-main);">${statusTitle}</h3>
+                <p class="text-xs md:text-sm font-medium leading-relaxed" style="color: var(--text-muted);">${statusDesc}</p>
             </div>
+            <div class="text-right shrink-0">
+                <span class="text-[11px] text-slate-500 block uppercase font-bold">Oro temperatūra</span>
+                <span class="text-2xl md:text-3xl font-black font-mono" style="color: var(--text-main);">${tempC > 0 ? '+' : ''}${tempC}°C</span>
+            </div>
+        </div>
 
-            <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs md:text-sm">
-                <div class="bg-tractorBg p-3.5 rounded-xl border border-tractorBorder space-y-1">
-                    <span class="text-slate-500 text-xs block font-bold">💨 Vėjas (2m aukštyje)</span>
-                    <strong class="font-mono text-xl font-bold ${windSpeedMs > 4.5 ? 'text-red-500' : 'text-green-600'}">${windSpeedMs} m/s</strong>
-                    <span class="text-[11px] text-slate-500 block font-medium">Gūsiai: <strong class="${windGustsMs > 6 ? 'text-red-500' : 'text-slate-700'}">${windGustsMs} m/s</strong></span>
-                </div>
-
-                <div class="bg-tractorBg p-3.5 rounded-xl border border-tractorBorder space-y-1">
-                    <span class="text-slate-500 text-xs block font-bold">💧 Krituliai šiuo metu</span>
-                    <strong class="font-mono text-xl font-bold" style="color: var(--text-main);">${rainMm} mm</strong>
-                    <span class="text-[11px] ${currentRainProb > 40 ? 'text-amber-500 font-bold' : 'text-green-600 font-bold'} block">
-                        Lietaus tikimybė: ${currentRainProb}%
-                    </span>
-                </div>
-
-                <div class="bg-tractorBg p-3.5 rounded-xl border border-tractorBorder space-y-1">
-                    <span class="text-slate-500 text-xs block font-bold">🌫️ Santykinė oro drėgmė</span>
-                    <strong class="font-mono text-xl font-bold ${humidity < 50 ? 'text-amber-500' : 'text-green-600'}">${humidity}%</strong>
-                    <span class="text-[11px] text-slate-500 block font-medium">${humidity > 50 ? 'Optimali drėgmė' : 'Sausa (garavimo rizika)'}</span>
-                </div>
-
-                <div class="bg-tractorBg p-3.5 rounded-xl border border-tractorBorder space-y-1">
-                    <span class="text-slate-500 text-xs block font-bold">🌱 Dirvos paviršius (0 cm)</span>
-                    <strong class="text-green-600 font-mono text-xl font-bold">${current.soil_temperature_0cm > 0 ? '+' : ''}${(current.soil_temperature_0cm || 0).toFixed(1)}°C</strong>
-                    <span class="text-[11px] text-slate-500 block font-medium">Paviršinė būklė</span>
-                </div>
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+            <div class="bg-tractorSurface p-3 rounded-xl border border-tractorBorder space-y-1">
+                <span class="text-slate-500 text-[11px] block font-bold">💨 Vėjas (2m)</span>
+                <strong class="font-mono text-lg font-bold ${windSpeedMs > 4.5 ? 'text-red-500' : 'text-green-600'}">${windSpeedMs} m/s</strong>
+                <span class="text-[10px] text-slate-500 block">Gūsiai: ${windGustsMs} m/s</span>
+            </div>
+            <div class="bg-tractorSurface p-3 rounded-xl border border-tractorBorder space-y-1">
+                <span class="text-slate-500 text-[11px] block font-bold">💧 Krituliai</span>
+                <strong class="font-mono text-lg font-bold" style="color: var(--text-main);">${rainMm} mm</strong>
+                <span class="text-[10px] ${currentRainProb > 40 ? 'text-amber-500 font-bold' : 'text-green-600'} block">Lietus: ${currentRainProb}%</span>
+            </div>
+            <div class="bg-tractorSurface p-3 rounded-xl border border-tractorBorder space-y-1">
+                <span class="text-slate-500 text-[11px] block font-bold">🌫️ Drėgmė</span>
+                <strong class="font-mono text-lg font-bold" style="color: var(--text-main);">${humidity}%</strong>
+            </div>
+            <div class="bg-tractorSurface p-3 rounded-xl border border-tractorBorder space-y-1">
+                <span class="text-slate-500 text-[11px] block font-bold">🌱 Dirva (0 cm)</span>
+                <strong class="text-green-600 font-mono text-lg font-bold">${current.soil_temperature_0cm > 0 ? '+' : ''}${(current.soil_temperature_0cm || 0).toFixed(1)}°C</strong>
             </div>
         </div>
     `;
@@ -717,24 +632,22 @@ function renderSoilConditions(current, hourly) {
     if (!soilBox) return;
 
     soilBox.innerHTML = `
-        <div class="bg-tractorSurface border border-tractorBorder rounded-2xl p-6 shadow-xl space-y-2">
-            <span class="text-xs uppercase font-bold text-tractorPrimaryLight tracking-wider block">🌾 Sėjos ir vegetacijos startas</span>
+        <div class="bg-tractorSurface border border-tractorBorder rounded-2xl p-5 shadow-xl space-y-1.5">
+            <span class="text-xs uppercase font-bold text-tractorPrimaryLight tracking-wider block">🌾 Sėja ir vegetacija</span>
             <p class="text-xs leading-relaxed" style="color: var(--text-muted);">
-                Pavasario sėjai dirvos temperatūra sėklos gylyje (6 cm) turi pasiekti bent <strong>+6°C</strong> (miežiams, avižoms) ir <strong>+8°C</strong> (žirniams, kukurūzams).
+                Pavasario sėjai dirva turi pasiekti bent <strong>+6°C</strong> (miežiams) ir <strong>+8°C</strong> (žirniams, kukurūzams).
             </p>
         </div>
-
-        <div class="bg-tractorSurface border border-tractorBorder rounded-2xl p-6 shadow-xl space-y-2">
-            <span class="text-xs uppercase font-bold text-amber-500 tracking-wider block">📜 Teisinis purškimo reglamentas</span>
+        <div class="bg-tractorSurface border border-tractorBorder rounded-2xl p-5 shadow-xl space-y-1.5">
+            <span class="text-xs uppercase font-bold text-amber-500 tracking-wider block">📜 Purškimo reglamentas</span>
             <p class="text-xs leading-relaxed" style="color: var(--text-muted);">
-                Pagal LR ŽŪM reikalavimus, purkšti AAP draudžiama, kai vėjo greitis <strong>> 3.0 m/s</strong> (su standartiniais plyšiniais purkštukais) arba <strong>> 4.5 m/s</strong> (su antilašiniais IDN purkštukais).
+                Pagal LR ŽŪM reikalavimus, purkšti draudžiama, kai vėjas <strong>> 3.0 m/s</strong> (su standartiniais) arba <strong>> 4.5 m/s</strong> (su antilašiniais IDN purkštukais).
             </p>
         </div>
-
-        <div class="bg-tractorSurface border border-tractorBorder rounded-2xl p-6 shadow-xl space-y-2">
-            <span class="text-xs uppercase font-bold text-blue-500 tracking-wider block">❄️ Plikšalio pavojus žiemą</span>
+        <div class="bg-tractorSurface border border-tractorBorder rounded-2xl p-6 shadow-xl space-y-1.5">
+            <span class="text-xs uppercase font-bold text-blue-500 tracking-wider block">❄️ Žiemkenčių apsauga</span>
             <p class="text-xs leading-relaxed" style="color: var(--text-muted);">
-                Žieminiai rapsai žūsta, kai augimo kūgelio gylyje (6 cm) temperatūra krenta žemiau <strong>-8°C</strong>. Žieminiai kviečiai atlaiko iki <strong>-14°C</strong>. Sniego antklodė (>5 cm) apsaugo net prie -25°C.
+                Rapsai žūsta mazgo gylyje pasiekus <strong>-8°C</strong>, kviečiai – iki <strong>-14°C</strong>. Sniego danga (>5 cm) apsaugo net prie -25°C.
             </p>
         </div>
     `;

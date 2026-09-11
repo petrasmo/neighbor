@@ -1,5 +1,5 @@
 // js/seedCalculator.js
-import { createCustomSelect } from './customSelect.js';
+import { createCustomSelect } from '../core/customSelect.js';
 
 const defaultCropPresets = {
     wheat_winter: { name: "Žieminiai kviečiai", icon: "🌾", subtext: "Norma ~4.5 mln./ha", seedsMln: 4.5, mtg: 45.0, germination: 95, purity: 99, seedPrice: 420 },

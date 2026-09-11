@@ -1,6 +1,6 @@
 // js/fieldsJournal.js
-import { db } from './firebase.js';
-import { showDialog } from './ui.js';
+import { db } from '../core/firebase.js';
+import { showDialog } from '../core/ui.js';
 import { getMockNdviScore } from './fieldsMap.js';
 import { initSoilTab } from './fieldsSoil.js';
 
@@ -34,11 +34,22 @@ export function openFieldDetail(field, userFieldsList, initialTab = null) {
 
     detailSection.classList.remove('hidden');
 
-    // Nustatome, koks skirtukas buvo aktyvus prieš persikraunant
     const currentActiveTab = initialTab || (document.getElementById('content-soil')?.classList.contains('hidden') === false ? 'soil' : 'journal');
 
-    // Tabų struktūra
     detailSection.innerHTML = `
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-tractorBorder/80 pb-5 mb-5">
+            <div>
+                <h3 id="detail-field-title" class="font-oswald text-2xl md:text-3xl font-bold text-white tracking-wide">${field.name}</h3>
+                <p id="detail-field-meta" class="text-sm text-slate-300 mt-1">
+                    Plotas: <strong class="text-green-400 font-bold">${field.areaHa} ha</strong> • Pasėlis: <strong class="text-white">${field.crop}</strong>
+                </p>
+            </div>
+            <!-- 🌟 Štai čia pridedame VRA mygtuką, kad jis niekur nedingtų -->
+            <button id="btn-open-vra-generator" class="h-10 px-4 bg-amber-500 hover:bg-amber-600 text-black font-extrabold text-xs rounded-xl flex items-center gap-1.5 shadow-lg transition cursor-pointer shrink-0">
+                <span>🚜</span> <span>VRA Tręšimo failas į USB</span>
+            </button>
+        </div>
+
         <div class="flex bg-tractorBg p-1 rounded-xl border border-tractorBorder mb-6">
             <button id="tab-btn-journal" class="flex-1 py-2.5 text-xs font-bold rounded-lg transition ${
                 currentActiveTab === 'journal' ? 'bg-tractorPrimary text-white shadow' : 'text-slate-400 hover:text-white'
@@ -49,12 +60,6 @@ export function openFieldDetail(field, userFieldsList, initialTab = null) {
         </div>
         
         <div id="content-journal" class="${currentActiveTab === 'journal' ? '' : 'hidden'} space-y-6">
-            <div class="border-b border-tractorBorder/80 pb-5">
-                <h3 id="detail-field-title" class="font-oswald text-2xl md:text-3xl font-bold text-white tracking-wide">${field.name}</h3>
-                <p id="detail-field-meta" class="text-sm text-slate-300 mt-1">
-                    Plotas: <strong class="text-green-400 font-bold">${field.areaHa} ha</strong> • Pasėlis: <strong class="text-white">${field.crop}</strong>
-                </p>
-            </div>
             <div id="field-ndvi-live-box"></div>
             <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
                 <div class="bg-tractorBg border border-tractorBorder p-3.5 rounded-xl text-center">

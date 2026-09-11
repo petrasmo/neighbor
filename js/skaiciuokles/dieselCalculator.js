@@ -1,9 +1,9 @@
-import { db } from './firebase.js';
-import { calculateDist } from './grainCalculator.js';
-import { createCustomSelect } from './customSelect.js';
-import { openAuthModal } from './auth.js';
-import { switchTab } from './ui.js';
-import { refreshSettingsMap } from './settings.js';
+import { db } from '../core/firebase.js';
+import { calculateDist } from './grainCalculator.js'; // Jei grainCalculator.js irgi perkelta į js/skaiciuokles/
+import { createCustomSelect } from '../core/customSelect.js';
+import { openAuthModal } from '../core/auth.js';
+import { switchTab } from '../core/ui.js';
+import { refreshSettingsMap } from '../sistema/settings.js';
 
 let activeDieselSuppliers = [];
 let unsubscribeDiesel = null;

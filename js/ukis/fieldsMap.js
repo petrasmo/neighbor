@@ -53,7 +53,6 @@ export function initOrRefreshMap(coords, userData) {
     const mapEl = document.getElementById('fields-map');
     if (!mapEl) return;
 
-    // 🎯 TIKRINAME AR YRA GARAŽAS:
     let initialLat = coords.lat;
     let initialLng = coords.lng;
     let initialZoom = 13;
@@ -61,73 +60,72 @@ export function initOrRefreshMap(coords, userData) {
     if (userData?.garageLat && userData?.garageLon && userData.garageLat !== 0) {
         initialLat = parseFloat(userData.garageLat);
         initialLng = parseFloat(userData.garageLon);
-        initialZoom = 14; // Puikus priartinimas ūkiui
+        initialZoom = 14;
     }
 
-    if (!fieldsMap) {
-        fieldsMap = L.map('fields-map', { 
-            zoomControl: true, 
-            maxZoom: 18,
-            minZoom: 6
-        }).setView([initialLat, initialLng], initialZoom);
-
-        // 1. ESRI aukštos raiškos bazinis fonas (maxNativeZoom: 17 apsaugo nuo pilkų kvadratų)
-        esriBaseLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-            attribution: '&copy; Esri World Imagery',
-            maxNativeZoom: 17,
-            maxZoom: 18
-        });
-
-        // 2. Tikrasis agro-NDVI WMS sluoksnis
-        sentinelNdviWmsLayer = L.tileLayer.wms(CDSE_WMS_URL, {
-            layers: 'VEGETATION_INDEX',
-            format: 'image/png',
-            transparent: true,
-            maxcc: activeMaxCloudCover,
-            time: getSentinelTimeRange(activeSatelliteDate),
-            tileSize: 512,
-            attribution: '&copy; Copernicus Sentinel-2 / ESA (JurgisAgro)'
-        });
-
-        // 3. Tikros foto spalvos
-        sentinelTrueColorWmsLayer = L.tileLayer.wms(CDSE_WMS_URL, {
-            layers: 'TRUE_COLOR',
-            format: 'image/png',
-            transparent: true,
-            maxcc: activeMaxCloudCover,
-            time: getSentinelTimeRange(activeSatelliteDate),
-            tileSize: 512,
-            attribution: '&copy; Copernicus Sentinel-2 / ESA'
-        });
-
-        // 4. Drėgmės indeksas
-        sentinelMoistureWmsLayer = L.tileLayer.wms(CDSE_WMS_URL, {
-            layers: 'MOISTURE_INDEX',
-            format: 'image/png',
-            transparent: true,
-            maxcc: activeMaxCloudCover,
-            time: getSentinelTimeRange(activeSatelliteDate),
-            tileSize: 512,
-            attribution: '&copy; Copernicus Sentinel-2 / ESA'
-        });
-
-        // 5. Kelių planas
-        streetLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '&copy; OpenStreetMap',
-            maxZoom: 18
-        });
-
-        esriBaseLayer.addTo(fieldsMap);
-
-        drawnItems = new L.FeatureGroup();
-        fieldsMap.addLayer(drawnItems);
-
-        garageMarkerLayer = new L.FeatureGroup();
-        fieldsMap.addLayer(garageMarkerLayer);
-
-        addLayerSwitchControl();
-        addNdviLegendControl();
+    // Jei žemėlapis jau egzistavo, pilnai jį išvalome, kad sukurtume iš naujo ant šviežio DOM elemento
+    if (fieldsMap) {
+        fieldsMap.remove();
+        fieldsMap = null;
     }
+
+    fieldsMap = L.map('fields-map', { 
+        zoomControl: true, 
+        maxZoom: 18,
+        minZoom: 6
+    }).setView([initialLat, initialLng], initialZoom);
+
+    esriBaseLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+        attribution: '&copy; Esri World Imagery',
+        maxNativeZoom: 17,
+        maxZoom: 18
+    });
+
+    sentinelNdviWmsLayer = L.tileLayer.wms(CDSE_WMS_URL, {
+        layers: 'VEGETATION_INDEX',
+        format: 'image/png',
+        transparent: true,
+        maxcc: activeMaxCloudCover,
+        time: getSentinelTimeRange(activeSatelliteDate),
+        tileSize: 512,
+        attribution: '&copy; Copernicus Sentinel-2 / ESA (JurgisAgro)'
+    });
+
+    sentinelTrueColorWmsLayer = L.tileLayer.wms(CDSE_WMS_URL, {
+        layers: 'TRUE_COLOR',
+        format: 'image/png',
+        transparent: true,
+        maxcc: activeMaxCloudCover,
+        time: getSentinelTimeRange(activeSatelliteDate),
+        tileSize: 512,
+        attribution: '&copy; Copernicus Sentinel-2 / ESA'
+    });
+
+    sentinelMoistureWmsLayer = L.tileLayer.wms(CDSE_WMS_URL, {
+        layers: 'MOISTURE_INDEX',
+        format: 'image/png',
+        transparent: true,
+        maxcc: activeMaxCloudCover,
+        time: getSentinelTimeRange(activeSatelliteDate),
+        tileSize: 512,
+        attribution: '&copy; Copernicus Sentinel-2 / ESA'
+    });
+
+    streetLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap',
+        maxZoom: 18
+    });
+
+    esriBaseLayer.addTo(fieldsMap);
+
+    drawnItems = new L.FeatureGroup();
+    fieldsMap.addLayer(drawnItems);
+
+    garageMarkerLayer = new L.FeatureGroup();
+    fieldsMap.addLayer(garageMarkerLayer);
+
+    addLayerSwitchControl();
+    addNdviLegendControl();
 
     setTimeout(() => {
         if (fieldsMap) {
@@ -137,7 +135,7 @@ export function initOrRefreshMap(coords, userData) {
                 renderPolygonsInternal();
             }
         }
-    }, 200);
+    }, 150);
 }
 
 function addLayerSwitchControl() {

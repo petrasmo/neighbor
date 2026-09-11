@@ -1,9 +1,9 @@
 // js/feed.js
-import { db } from './firebase.js';
-import { showDialog } from './ui.js';
-import { loginWithGoogle } from './auth.js';
-import { calculateDist } from './grainCalculator.js';
-import { createCustomSelect } from './customSelect.js';
+import { db } from '../core/firebase.js';
+import { showDialog } from '../core/ui.js';
+import { loginWithGoogle } from '../core/auth.js';
+import { calculateDist } from '../skaiciuokles/grainCalculator.js';
+import { createCustomSelect } from '../core/customSelect.js';
 
 let unsubscribePosts = null;
 let selectedTechObj = null;

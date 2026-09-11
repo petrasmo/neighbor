@@ -1,5 +1,5 @@
 // js/nmaCalendar.js
-import { db } from './firebase.js';
+import { db } from '../core/firebase.js';
 
 let liveRegulations = null;
 let unsubscribeRegs = null;

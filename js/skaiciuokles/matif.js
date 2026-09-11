@@ -1,5 +1,5 @@
 // js/matif.js
-import { db } from './firebase.js';
+import { db } from '../core/firebase.js';
 
 let matifMarketData = null;
 let activeCropId = 'rapeseed';
