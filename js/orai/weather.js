@@ -527,30 +527,33 @@ function updateHourlyGrid() {
     grid.innerHTML = items.join('');
 }
 
+// 🌟 PATAISYTA: Dabar grąžina tikslias priežastis (reasons masyvą)
 function evaluateSprayCondition(windSpeedMs, windGustsMs, tempC, rainProb, rainMm) {
     const redReasons = [];
     const yellowReasons = [];
 
-    if (tempC < 5) redReasons.push(`Per šalta purškimui.`);
-    if (windSpeedMs > 4.5) redReasons.push(`Per stiprus vėjas (${windSpeedMs} m/s).`);
-    if (windGustsMs > 6.0) redReasons.push(`Pavojingi vėjo gūsiai.`);
-    if (rainMm > 0.1) redReasons.push(`Krenta lietus.`);
-    if (tempC > 25) redReasons.push(`Per karšta.`);
+    if (tempC < 5) redReasons.push(`Per šalta (+${tempC}°C).`);
+    if (windSpeedMs > 4.5) redReasons.push(`Stiprus vėjas (${windSpeedMs} m/s).`);
+    if (windGustsMs > 6.0) redReasons.push(`Pavojingi gūsiai (${windGustsMs} m/s).`);
+    if (rainMm > 0.1) redReasons.push(`Lietus (${rainMm} mm).`);
+    if (tempC > 25) redReasons.push(`Per karšta (+${tempC}°C).`);
 
     if (redReasons.length > 0) {
-        return { status: 'red', icon: '🔴', text: 'Netinka', badgeClass: 'bg-red-500/20 text-red-600 border-red-500/40' };
+        return { status: 'red', icon: '🔴', text: 'Netinka', badgeClass: 'bg-red-500/20 text-red-600 border-red-500/40', reasons: redReasons };
     }
 
-    if (rainProb > 40 && rainMm <= 0.1) yellowReasons.push(`Lietaus tikimybė.`);
-    if (windSpeedMs > 3.0) yellowReasons.push(`Vėjas ant ribos.`);
+    if (rainProb > 40 && rainMm <= 0.1) yellowReasons.push(`Lietaus tikimybė (${rainProb}%).`);
+    if (windSpeedMs > 3.0) yellowReasons.push(`Vėjas ant ribos (${windSpeedMs} m/s).`);
+    if (tempC > 22) yellowReasons.push(`Garavimo rizika (+${tempC}°C).`);
 
     if (yellowReasons.length > 0) {
-        return { status: 'yellow', icon: '🟡', text: 'Rizika', badgeClass: 'bg-amber-500/20 text-amber-600 border-amber-500/40' };
+        return { status: 'yellow', icon: '🟡', text: 'Rizika', badgeClass: 'bg-amber-500/20 text-amber-600 border-amber-500/40', reasons: yellowReasons };
     }
 
-    return { status: 'green', icon: '🟢', text: 'Tinka', badgeClass: 'bg-green-500/20 text-green-600 border-green-500/40' };
+    return { status: 'green', icon: '🟢', text: 'Tinka', badgeClass: 'bg-green-500/20 text-green-600 border-green-500/40', reasons: [] };
 }
 
+// 🌟 PATAISYTA: Atvaizduoja tikslias priežastis ekrane
 function renderLiveSprayStatus(current, hourly, currentIdx) {
     const liveCard = document.getElementById('live-spray-inner-box');
     if (!liveCard || !current) return;
@@ -575,17 +578,17 @@ function renderLiveSprayStatus(current, hourly, currentIdx) {
         statusTitle = "❄️ ŽIEMOS RAMYBĖS LAIKOTARPIS / PURŠKIMAS NEVYKDOMAS";
         borderColor = "border-blue-500";
         bgColor = "bg-blue-950/20";
-        statusDesc = `Esant žemai temperatūrai (${tempC}°C < 5°C) augalų apsaugos produktai neveikia.`;
+        statusDesc = `Esant žemai temperatūrai (+${tempC}°C < 5°C) augalų apsaugos produktai neveikia.`;
     } else if (evaluation.status === 'red') {
         statusTitle = "🔴 ŠIUO METU PURKŠTI DRAUDŽIAMA";
         borderColor = "border-red-600";
         bgColor = "bg-red-950/30";
-        statusDesc = `Sąlygos netinkamos purškimui.`;
+        statusDesc = `Priežastys: <strong class="text-red-400">${evaluation.reasons.join(' ')}</strong>`;
     } else if (evaluation.status === 'yellow') {
         statusTitle = "🟡 ŠIUO METU SĄLYGOS RIZIKINGOS";
         borderColor = "border-amber-500";
         bgColor = "bg-amber-950/30";
-        statusDesc = `Vėjo arba lietaus rizika.`;
+        statusDesc = `Pastaba: <strong class="text-amber-400">${evaluation.reasons.join(' ')}</strong> Rekomenduojama naudoti antilašinius purkštukus.`;
     }
 
     liveCard.className = `${bgColor} border-2 ${borderColor} rounded-2xl p-5 md:p-6 shadow-lg space-y-4 transition-all`;
