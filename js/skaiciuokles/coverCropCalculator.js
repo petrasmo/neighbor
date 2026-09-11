@@ -1,4 +1,4 @@
-// js/coverCropCalculator.js
+// js/skaiciuokles/coverCropCalculator.js
 
 const availableSpecies = {
     mustard: { name: "Baltosios garstyčios", icon: "🌱", pureRate: 15, mtg: 5.5, family: "Kryžmažiedžiai", priceKg: 2.20 },
@@ -6,7 +6,7 @@ const availableSpecies = {
     oats: { name: "Sėjamosios avižos", icon: "🌾", pureRate: 160, mtg: 35.0, family: "Varpiniai", priceKg: 0.50 },
     vetch: { name: "Vasariniai vikiai", icon: "🌿", pureRate: 120, mtg: 55.0, family: "Pupiniai", priceKg: 1.40 },
     phacelia: { name: "Bitinės facelijos", icon: "🌸", pureRate: 10, mtg: 2.0, family: "Hidrofiliniai", priceKg: 4.80 },
-    peas: { name: "Pašariniai žirniai / Peluškos", icon: "🫘", pureRate: 180, mtg: 200.0, family: "Pupiniai", priceKg: 0.70 },
+    peas: { name: "Pašariniai žirniai", icon: "🫘", pureRate: 180, mtg: 200.0, family: "Pupiniai", priceKg: 0.70 },
     buckwheat: { name: "Grikiai", icon: "🌾", pureRate: 75, mtg: 28.0, family: "Rūgtiniai", priceKg: 0.90 },
     clover: { name: "Raudonieji dobilai", icon: "🍀", pureRate: 12, mtg: 1.8, family: "Pupiniai", priceKg: 3.50 }
 };
@@ -51,50 +51,58 @@ export function renderCoverCropCalculator(container) {
                 <div class="space-y-3 pt-3 border-t border-tractorBorder/60">
                     <div class="flex justify-between items-center">
                         <span class="text-xs font-bold text-slate-200 uppercase tracking-wider">🌾 Mišinio sudėtis ir dalių proporcijos (%):</span>
-                        <span id="total-share-indicator" class="text-xs font-bold font-mono px-2.5 py-1 rounded-md bg-green-500/20 text-green-400 border border-green-500/40">Viso: 100%</span>
+                        <span id="total-share-indicator" class="text-xs font-bold font-mono px-3 py-1.5 rounded-lg transition-colors">Viso: 100%</span>
                     </div>
 
                     <div id="cover-mix-rows" class="space-y-3"></div>
 
-                    <button type="button" id="btn-add-cover-species" class="h-10 px-4 bg-tractorBg hover:bg-slate-800 border border-tractorBorder rounded-xl text-xs font-bold text-slate-200 flex items-center gap-2 transition cursor-pointer">
+                    <button type="button" id="btn-add-cover-species" class="h-10 px-4 bg-tractorBg hover:bg-zinc-800 border border-tractorBorder rounded-xl text-xs font-bold text-slate-200 flex items-center gap-2 transition cursor-pointer">
                         <span>➕</span> Pridėti dar vieną augalą
                     </button>
                 </div>
             </div>
 
-            <!-- REZULTATŲ KORTELĖS -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                <div class="bg-tractorPrimary/20 border-2 border-tractorPrimary p-5 rounded-2xl space-y-1 shadow-xl">
-                    <span class="text-[11px] uppercase font-extrabold text-tractorPrimaryLight tracking-wider">Mišinio norma</span>
-                    <div class="text-3xl font-black font-mono" id="res-cover-mix-rate" style="color: var(--text-main);">94.0 kg/ha</div>
-                    <p class="text-xs text-green-400 font-semibold" id="res-cover-components-count">3 augalų mišinys</p>
-                </div>
-
-                <div class="bg-tractorSurface border border-tractorBorder p-5 rounded-2xl space-y-1">
-                    <span class="text-[11px] uppercase font-bold text-slate-400 tracking-wider">Viso sėklos laukui</span>
-                    <div class="text-2xl font-bold font-mono" id="res-cover-total-weight" style="color: var(--text-main);">2.82 t</div>
-                    <p class="text-xs text-slate-400" id="res-cover-bags-desc">~6 didmaišiai (po 500 kg)</p>
-                </div>
-
-                <div class="bg-tractorSurface border border-tractorBorder p-5 rounded-2xl space-y-1">
-                    <span class="text-[11px] uppercase font-bold text-slate-400 tracking-wider">Mišinio kaina laukui</span>
-                    <div class="text-2xl font-bold text-amber-400 font-mono" id="res-cover-total-cost">2 145.00 €</div>
-                    <p class="text-xs text-slate-400" id="res-cover-cost-ha">Savikaina: 71.50 €/ha</p>
-                </div>
-
-                <div class="bg-tractorSurface border border-tractorBorder p-5 rounded-2xl space-y-1">
-                    <span class="text-[11px] uppercase font-bold text-slate-400 tracking-wider">Vidutinė sėklos kaina</span>
-                    <div class="text-2xl font-bold text-green-400 font-mono" id="res-cover-avg-price">0.76 €/kg</div>
-                    <p class="text-xs text-slate-400">Paruošto mišinio</p>
-                </div>
+            <!-- KLAIDOS PRANEŠIMAS JEI SUMA NĖRA 100% -->
+            <div id="error-100-percent" class="hidden bg-red-950/30 border-2 border-red-600 rounded-2xl p-6 text-center shadow-lg">
+                <span class="text-4xl block mb-2">⚖️</span>
+                <h4 class="text-lg font-bold text-red-400 uppercase tracking-wider">Klaida: proporcijų suma nėra 100%</h4>
+                <p class="text-sm text-slate-300 mt-1">Sėklų mišinio proporcijų (dalių) suma privalo sudaryti lygiai 100%. Pakoreguokite procentus viršuje.</p>
             </div>
 
-            <!-- DETALUS MAIŠYMO RECEPTAS -->
-            <div class="bg-tractorSurface border border-tractorBorder rounded-2xl p-6 shadow-xl space-y-3">
-                <h4 class="text-xs font-bold uppercase tracking-wider border-b border-tractorBorder/60 pb-2" style="color: var(--text-main);">
-                    🥣 Tikslus svoris maišymui (<span id="res-cover-field-label">30 ha</span>):
-                </h4>
-                <div id="cover-recipe-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 text-xs"></div>
+            <!-- REZULTATŲ KORTELĖS -->
+            <div id="cover-results-container" class="space-y-6">
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div class="bg-tractorPrimary/20 border-2 border-tractorPrimary p-5 rounded-2xl space-y-1 shadow-xl">
+                        <span class="text-[11px] uppercase font-extrabold text-tractorPrimaryLight tracking-wider">Mišinio norma</span>
+                        <div class="text-3xl font-black font-mono" id="res-cover-mix-rate" style="color: var(--text-main);">94.0 kg/ha</div>
+                        <p class="text-xs text-green-400 font-semibold" id="res-cover-components-count">3 augalų mišinys</p>
+                    </div>
+
+                    <div class="bg-tractorSurface border border-tractorBorder p-5 rounded-2xl space-y-1">
+                        <span class="text-[11px] uppercase font-bold text-slate-400 tracking-wider">Viso sėklos laukui</span>
+                        <div class="text-2xl font-bold font-mono" id="res-cover-total-weight" style="color: var(--text-main);">2.82 t</div>
+                        <p class="text-xs text-slate-400" id="res-cover-bags-desc">~6 didmaišiai (po 500 kg)</p>
+                    </div>
+
+                    <div class="bg-tractorSurface border border-tractorBorder p-5 rounded-2xl space-y-1">
+                        <span class="text-[11px] uppercase font-bold text-slate-400 tracking-wider">Mišinio kaina laukui</span>
+                        <div class="text-2xl font-bold text-amber-400 font-mono" id="res-cover-total-cost">2 145.00 €</div>
+                        <p class="text-xs text-slate-400" id="res-cover-cost-ha">Savikaina: 71.50 €/ha</p>
+                    </div>
+
+                    <div class="bg-tractorSurface border border-tractorBorder p-5 rounded-2xl space-y-1">
+                        <span class="text-[11px] uppercase font-bold text-slate-400 tracking-wider">Vidutinė sėklos kaina</span>
+                        <div class="text-2xl font-bold text-green-400 font-mono" id="res-cover-avg-price">0.76 €/kg</div>
+                        <p class="text-xs text-slate-400">Paruošto mišinio</p>
+                    </div>
+                </div>
+
+                <div class="bg-tractorSurface border border-tractorBorder rounded-2xl p-6 shadow-xl space-y-3">
+                    <h4 class="text-xs font-bold uppercase tracking-wider border-b border-tractorBorder/60 pb-2" style="color: var(--text-main);">
+                        🥣 Tikslus svoris maišymui (<span id="res-cover-field-label">30 ha</span>):
+                    </h4>
+                    <div id="cover-recipe-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 text-xs"></div>
+                </div>
             </div>
         </div>
     `;
@@ -113,21 +121,35 @@ export function renderCoverCropCalculator(container) {
         });
 
         const shareInd = document.getElementById('total-share-indicator');
-        if (shareInd) {
-            shareInd.textContent = `Viso: ${totalShare}%`;
-            shareInd.className = totalShare === 100 
-                ? "text-xs font-bold font-mono px-2.5 py-1 rounded-md bg-green-500/20 text-green-400 border border-green-500/40"
-                : "text-xs font-bold font-mono px-2.5 py-1 rounded-md bg-amber-500/20 text-amber-400 border border-amber-500/40";
+        const resultsContainer = document.getElementById('cover-results-container');
+        const errorContainer = document.getElementById('error-100-percent');
+
+        // 🌟 TIKRINAME AR SUMA YRA LYGIAI 100%
+        if (totalShare !== 100) {
+            if (shareInd) {
+                shareInd.innerHTML = `⚠️ Viso: ${totalShare}% (Turi būti 100%)`;
+                shareInd.className = "text-xs font-bold font-mono px-3 py-1.5 rounded-lg bg-red-500/20 text-red-500 border border-red-500/40 animate-pulse";
+            }
+            if (resultsContainer) resultsContainer.classList.add('hidden');
+            if (errorContainer) errorContainer.classList.remove('hidden');
+            return; // Sustabdome skaičiavimą
+        } else {
+            if (shareInd) {
+                shareInd.innerHTML = `✓ Viso: 100%`;
+                shareInd.className = "text-xs font-bold font-mono px-3 py-1.5 rounded-lg bg-green-500/20 text-green-500 border border-green-500/40";
+            }
+            if (resultsContainer) resultsContainer.classList.remove('hidden');
+            if (errorContainer) errorContainer.classList.add('hidden');
         }
 
         const nmaBadge = document.getElementById('nma-compliance-badge');
         if (nmaBadge) {
             if (currentMix.length >= 2 && families.size >= 2) {
                 nmaBadge.textContent = `✓ Atitinka NMA (${families.size} skirtingos šeimos)`;
-                nmaBadge.className = "font-bold px-2.5 py-1 rounded-md text-[11px] bg-green-500/20 text-green-400 border border-green-500/40";
+                nmaBadge.className = "font-bold px-2.5 py-1 rounded-md text-[11px] bg-green-500/20 text-green-600 dark:text-green-400 border border-green-500/40";
             } else {
                 nmaBadge.textContent = `⚠️ Reikia bent 2 skirtingų šeimų augalų`;
-                nmaBadge.className = "font-bold px-2.5 py-1 rounded-md text-[11px] bg-red-500/20 text-red-400 border border-red-500/40";
+                nmaBadge.className = "font-bold px-2.5 py-1 rounded-md text-[11px] bg-red-500/20 text-red-600 dark:text-red-400 border border-red-500/40";
             }
         }
 
@@ -149,11 +171,11 @@ export function renderCoverCropCalculator(container) {
                 <div class="bg-tractorBg p-4 rounded-xl border border-tractorBorder space-y-1.5">
                     <div class="flex items-center justify-between">
                         <span class="font-bold text-xs" style="color: var(--text-main);">${spec.icon} ${spec.name}</span>
-                        <span class="text-[10px] text-green-400 font-bold bg-green-950/40 px-2 py-0.5 rounded border border-green-800/50">${item.share}%</span>
+                        <span class="text-[10px] text-green-600 dark:text-green-400 font-bold bg-green-500/10 px-2 py-0.5 rounded border border-green-500/30">${item.share}%</span>
                     </div>
                     <div class="text-sm font-bold font-mono" style="color: var(--text-main);">${rateKgHa.toFixed(1)} kg/ha</div>
-                    <div class="text-xs text-slate-400 pt-1 border-t border-tractorBorder/50">
-                        Visam laukui: <strong class="text-amber-400 font-mono">${(componentTotalWeightKg / 1000).toFixed(2)} t</strong> (${componentTotalWeightKg.toFixed(0)} kg)
+                    <div class="text-xs text-slate-500 dark:text-slate-400 pt-1 border-t border-tractorBorder/50">
+                        Visam laukui: <strong class="text-amber-600 dark:text-amber-400 font-mono">${(componentTotalWeightKg / 1000).toFixed(2)} t</strong> (${componentTotalWeightKg.toFixed(0)} kg)
                     </div>
                 </div>
             `);
@@ -192,7 +214,7 @@ export function renderCoverCropCalculator(container) {
                 <div class="p-3.5 bg-tractorBg rounded-xl border border-tractorBorder grid grid-cols-1 sm:grid-cols-12 gap-3 items-center" data-idx="${idx}">
                     <div class="sm:col-span-5">
                         <label class="text-[10px] uppercase font-bold text-slate-400 block mb-1">Augalas #${idx + 1}</label>
-                        <select class="mix-species-select w-full h-10 bg-tractorSurface border border-tractorBorder rounded-lg px-2.5 text-xs text-white outline-none cursor-pointer">
+                        <select class="mix-species-select w-full h-10 bg-tractorSurface border border-tractorBorder rounded-lg px-2.5 text-xs outline-none cursor-pointer" style="color: var(--text-main);">
                             ${optionsHtml}
                         </select>
                     </div>
@@ -200,19 +222,19 @@ export function renderCoverCropCalculator(container) {
                     <div class="sm:col-span-3">
                         <label class="text-[10px] uppercase font-bold text-slate-400 block mb-1">Dalis mišinyje (%)</label>
                         <div class="flex items-center gap-1.5">
-                            <input type="number" step="5" min="5" max="100" value="${item.share}" class="mix-share-input w-full h-10 bg-tractorSurface border border-tractorBorder rounded-lg px-2.5 text-xs text-white font-bold outline-none">
+                            <input type="number" step="5" min="5" max="100" value="${item.share}" class="mix-share-input w-full h-10 bg-tractorSurface border border-tractorBorder rounded-lg px-2.5 text-xs font-bold outline-none" style="color: var(--text-main);">
                             <span class="text-xs text-slate-400 font-bold">%</span>
                         </div>
                     </div>
 
                     <div class="sm:col-span-3">
                         <label class="text-[10px] uppercase font-bold text-slate-400 block mb-1">Kaina (€/kg)</label>
-                        <input type="number" step="0.1" value="${spec.priceKg}" class="mix-price-input w-full h-10 bg-tractorSurface border border-tractorBorder rounded-lg px-2.5 text-xs text-amber-300 font-mono font-bold outline-none">
+                        <input type="number" step="0.1" value="${spec.priceKg}" class="mix-price-input w-full h-10 bg-tractorSurface border border-tractorBorder rounded-lg px-2.5 text-xs text-amber-500 font-mono font-bold outline-none">
                     </div>
 
                     <div class="sm:col-span-1 flex justify-end pt-3 sm:pt-0">
                         ${currentMix.length > 2 ? `
-                            <button type="button" class="btn-remove-species w-9 h-9 rounded-lg bg-red-950/40 hover:bg-red-900 border border-red-800/60 text-red-300 text-sm font-bold flex items-center justify-center cursor-pointer transition">
+                            <button type="button" class="btn-remove-species w-9 h-9 rounded-lg bg-red-950/20 hover:bg-red-950/40 border border-red-800/40 text-red-600 dark:text-red-400 text-sm font-bold flex items-center justify-center cursor-pointer transition">
                                 ✕
                             </button>
                         ` : '<span class="text-xs text-slate-500">Min. 2</span>'}
