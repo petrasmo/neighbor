@@ -26,6 +26,7 @@ import { renderNmaCalendar } from './skaiciuokles/nmaCalendar.js';
 import { initVraFertilizerTab } from './ukis/vraFertilizer.js';
 import { initLimingSoilTab } from './ukis/limingSoil.js';
 import { initOperationsJournalTab } from './ukis/operationsJournal.js';
+import { initCropPlannerTab } from './ukis/cropPlanner.js';
 
 let currentUser = null;
 let userData = null;
@@ -41,15 +42,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
     document.querySelectorAll('.login-trigger-btn').forEach(btn => btn.addEventListener('click', () => openAuthModal('login')));
 
-    // Navigacija su naujais 10 tab indeksų
+    // Navigacija su visais tab indeksais (0 iki 10)
     document.querySelectorAll('.nav-tab-btn').forEach(btn => {
         btn.addEventListener('click', () => {
             const tabIdx = parseInt(btn.getAttribute('data-tab'));
 
-            if (!currentUser && (tabIdx >= 2 && tabIdx <= 6 || tabIdx === 8 || tabIdx === 9)) {
+            // 🌟 PATAISYTA: Apsauga neprisijungusiam vartotojui apima ir Tab 10
+            if (!currentUser && ((tabIdx >= 2 && tabIdx <= 6) || tabIdx === 10 || tabIdx === 8 || tabIdx === 9)) {
                 showDialog(
                     "Reikalingas prisijungimas",
-                    "Norėdami valdyti savo laukus, tręšimą, ataskaitas ar nustatymus, prisijunkite prie savo ūkio paskyros.",
+                    "Norėdami valdyti savo laukus, sėjomainą, tręšimą, ataskaitas ar nustatymus, prisijunkite prie savo ūkio paskyros.",
                     "🔒",
                     () => openAuthModal('login'),
                     true
@@ -64,10 +66,12 @@ document.addEventListener('DOMContentLoaded', () => {
             } else if (tabIdx === 2) {
                 initFieldsManager(currentUser, userData);
                 setTimeout(() => refreshFieldsMap(), 150);
+            } else if (tabIdx === 10) {
+                initCropPlannerTab(currentUser, userData); // 👈 Sėjomaina ir GAAB 7
             } else if (tabIdx === 3) {
-                initVraFertilizerTab(currentUser, userData); // 👈 VRA Tręšimo centras
+                initVraFertilizerTab(currentUser, userData);
             } else if (tabIdx === 4) {
-                initLimingSoilTab(currentUser, userData); // 👈 🍋 VRA Kalkinimo centras!
+                initLimingSoilTab(currentUser, userData);
             } else if (tabIdx === 5) {
                 initOperationsJournalTab(currentUser, userData);
             } else if (tabIdx === 6) {
@@ -121,108 +125,119 @@ document.addEventListener('DOMContentLoaded', () => {
         const sidebarAuthBox = document.getElementById('auth-sidebar-box');
         const mobileAuthSlot = document.getElementById('auth-status-mobile');
 
-        if (user) {
-            currentUser = user;
-            const userDoc = await db.collection("users").doc(user.uid).get();
+        try {
+            if (user) {
+                currentUser = user;
+                try {
+                    const userDoc = await db.collection("users").doc(user.uid).get();
+                    if (userDoc.exists) {
+                        userData = userDoc.data();
+                    } else {
+                        userData = {
+                            userId: user.uid,
+                            name: user.displayName || user.email.split('@')[0] || "Ūkininkas",
+                            email: user.email || "",
+                            phone: "+370",
+                            ownedTech: [],
+                            garageLat: null,
+                            garageLon: null,
+                            notificationDistance: 50,
+                            isSetupComplete: false
+                        };
+                        await db.collection("users").doc(user.uid).set(userData);
+                    }
+                } catch (dbErr) {
+                    console.warn("Offline arba tinklo klaida nuskaitant vartotoją:", dbErr);
+                    userData = { userId: user.uid, name: user.displayName || "Ūkininkas", email: user.email || "", isSetupComplete: true };
+                }
 
-            if (userDoc.exists) {
-                userData = userDoc.data();
+                if (sidebarAuthBox) {
+                    sidebarAuthBox.innerHTML = `
+                        <p class="text-[10px] text-slate-500 uppercase font-bold tracking-wider">Prisijungta kaip:</p>
+                        <p class="text-xs truncate font-bold mt-0.5" style="color: var(--text-main);">${user.email || user.displayName || 'Ūkininkas'}</p>
+                        <button id="btn-logout-main" class="w-full py-2 mt-2 bg-tractorBg hover:bg-red-500/10 text-red-500 dark:text-red-400 border border-tractorBorder hover:border-red-400 rounded-xl text-xs font-bold transition cursor-pointer flex items-center justify-center gap-1.5">
+                            <span>🚪</span> <span>Atsijungti</span>
+                        </button>
+                    `;
+                    document.getElementById('btn-logout-main')?.addEventListener('click', logoutUser);
+                }
+
+                if (mobileAuthSlot) {
+                    mobileAuthSlot.innerHTML = `
+                        <button id="btn-logout-mobile" class="px-3 py-1 bg-tractorBg border border-tractorBorder text-xs font-bold text-red-500 rounded-lg">Atsijungti</button>
+                    `;
+                    document.getElementById('btn-logout-mobile')?.addEventListener('click', logoutUser);
+                }
+
+                db.collection("user_fields").where("userId", "==", user.uid).onSnapshot(snap => {
+                    cachedFieldsList = [];
+                    snap.forEach(d => cachedFieldsList.push(d.data()));
+                }, err => console.warn("Laukų klausymosi klaida:", err));
+
+                initFeedTab(currentUser, userData, classifierMap);
+                initFieldsManager(currentUser, userData);
+                initGarageTab(currentUser, userData);
+                initSettingsTab(currentUser, userData);
+                initWeatherTab(currentUser, userData);
+                initVraFertilizerTab(currentUser, userData);
+
+                const hasValidGarage = userData && userData.isSetupComplete && userData.garageLat && userData.garageLon && userData.garageLat !== 0;
+
+                if (!hasValidGarage) {
+                    setTimeout(() => {
+                        switchTab(9);
+                        refreshSettingsMap();
+                        showDialog(
+                            "Sveiki atvykę į JurgisAgro! 🚜",
+                            "Nurodykite savo <strong>ūkio bazės (garažo) vietą</strong> žemėlapyje žemiau ir paspauskite „Išsaugoti nustatymus“, kad visos skaičiuoklės veiktų tiksliai jūsų kiemui.",
+                            "📍"
+                        );
+                    }, 200);
+                } else {
+                    switchTab(requestedTab);
+                    if (requestedTab === 2) refreshFieldsMap();
+                    if (requestedTab === 10) initCropPlannerTab(currentUser, userData); // 👈 Užsikrauna ir per URL
+                    if (requestedTab === 3) initVraFertilizerTab(currentUser, userData);
+                    if (requestedTab === 4) initLimingSoilTab(currentUser, userData);
+                    if (requestedTab === 5) initOperationsJournalTab(currentUser, userData);
+                    if (requestedTab === 1) initWeatherTab(currentUser, userData);
+                    if (requestedTab === 6) initReportsTab(cachedFieldsList, userData);
+                }
+
             } else {
-                userData = {
-                    userId: user.uid,
-                    name: user.displayName || user.email.split('@')[0] || "Ūkininkas",
-                    email: user.email || "",
-                    phone: "+370",
-                    ownedTech: [],
-                    garageLat: null,
-                    garageLon: null,
-                    notificationDistance: 50,
-                    isSetupComplete: false
-                };
-                await db.collection("users").doc(user.uid).set(userData);
-            }
-
-            if (sidebarAuthBox) {
-                sidebarAuthBox.innerHTML = `
-                    <p class="text-[10px] text-slate-500 uppercase font-bold tracking-wider">Prisijungta kaip:</p>
-                    <p class="text-xs truncate font-bold mt-0.5" style="color: var(--text-main);">${user.email || user.displayName || 'Ūkininkas'}</p>
-                    <button id="btn-logout-main" class="w-full py-2 mt-2 bg-tractorBg hover:bg-red-500/10 text-red-500 dark:text-red-400 border border-tractorBorder hover:border-red-400 rounded-xl text-xs font-bold transition cursor-pointer flex items-center justify-center gap-1.5">
-                        <span>🚪</span> <span>Atsijungti</span>
-                    </button>
-                `;
-                document.getElementById('btn-logout-main')?.addEventListener('click', logoutUser);
-            }
-
-            if (mobileAuthSlot) {
-                mobileAuthSlot.innerHTML = `
-                    <button id="btn-logout-mobile" class="px-3 py-1 bg-tractorBg border border-tractorBorder text-xs font-bold text-red-500 rounded-lg">Atsijungti</button>
-                `;
-                document.getElementById('btn-logout-mobile')?.addEventListener('click', logoutUser);
-            }
-
-            db.collection("user_fields").where("userId", "==", user.uid).onSnapshot(snap => {
+                currentUser = null;
+                userData = null;
                 cachedFieldsList = [];
-                snap.forEach(d => cachedFieldsList.push(d.data()));
-            });
 
-            initFeedTab(currentUser, userData, classifierMap);
-            initFieldsManager(currentUser, userData);
-            initGarageTab(currentUser, userData);
-            initSettingsTab(currentUser, userData);
-            initWeatherTab(currentUser, userData);
-            initVraFertilizerTab(currentUser, userData);
+                if (sidebarAuthBox) {
+                    sidebarAuthBox.innerHTML = `
+                        <p class="text-[11px] text-slate-400">Esate neprisijungęs</p>
+                        <button class="login-trigger-btn w-full py-2 bg-tractorPrimary hover:bg-tractorPrimaryHover text-white text-xs font-bold rounded-lg shadow transition cursor-pointer">
+                            Prisijungti prie ūkio
+                        </button>
+                    `;
+                    sidebarAuthBox.querySelector('.login-trigger-btn')?.addEventListener('click', () => openAuthModal('login'));
+                }
 
-            const hasValidGarage = userData && userData.isSetupComplete && userData.garageLat && userData.garageLon && userData.garageLat !== 0;
+                if (mobileAuthSlot) {
+                    mobileAuthSlot.innerHTML = `
+                        <button class="login-trigger-btn px-3 py-1 bg-tractorPrimary text-white rounded-lg text-xs font-bold">Prisijungti</button>
+                    `;
+                    mobileAuthSlot.querySelector('.login-trigger-btn')?.addEventListener('click', () => openAuthModal('login'));
+                }
 
-            if (!hasValidGarage) {
-                setTimeout(() => {
-                    switchTab(9); // Nustatymai
-                    refreshSettingsMap();
-                    showDialog(
-                        "Sveiki atvykę į JurgisAgro! 🚜",
-                        "Nurodykite savo <strong>ūkio bazės (garažo) vietą</strong> žemėlapyje žemiau ir paspauskite „Išsaugoti nustatymus“, kad visos skaičiuoklės veiktų tiksliai jūsų kiemui.",
-                        "📍"
-                    );
-                }, 200);
-            } else {
+                initFeedTab(null, null, classifierMap);
+                initWeatherTab(null, null);
+
                 switchTab(requestedTab);
-                if (requestedTab === 2) refreshFieldsMap();
-                if (requestedTab === 3) initVraFertilizerTab(currentUser, userData);
-                if (requestedTab === 1) initWeatherTab(currentUser, userData);
-                if (requestedTab === 6) initReportsTab(cachedFieldsList, userData);
             }
-
-        } else {
-            currentUser = null;
-            userData = null;
-            cachedFieldsList = [];
-
-            if (sidebarAuthBox) {
-                sidebarAuthBox.innerHTML = `
-                    <p class="text-[11px] text-slate-400">Esate neprisijungęs</p>
-                    <button class="login-trigger-btn w-full py-2 bg-tractorPrimary hover:bg-tractorPrimaryHover text-white text-xs font-bold rounded-lg shadow transition cursor-pointer">
-                        Prisijungti prie ūkio
-                    </button>
-                `;
-                sidebarAuthBox.querySelector('.login-trigger-btn')?.addEventListener('click', () => openAuthModal('login'));
+        } catch (globalErr) {
+            console.error("Auth klaida:", globalErr);
+        } finally {
+            if (preloader) {
+                preloader.classList.add('opacity-0');
+                setTimeout(() => preloader.remove(), 300);
             }
-
-            if (mobileAuthSlot) {
-                mobileAuthSlot.innerHTML = `
-                    <button class="login-trigger-btn px-3 py-1 bg-tractorPrimary text-white rounded-lg text-xs font-bold">Prisijungti</button>
-                `;
-                mobileAuthSlot.querySelector('.login-trigger-btn')?.addEventListener('click', () => openAuthModal('login'));
-            }
-
-            initFeedTab(null, null, classifierMap);
-            initWeatherTab(null, null);
-
-            switchTab(requestedTab);
-        }
-
-        if (preloader) {
-            preloader.classList.add('opacity-0');
-            setTimeout(() => preloader.remove(), 300);
         }
     });
 });
