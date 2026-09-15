@@ -27,6 +27,7 @@ import { initVraFertilizerTab } from './ukis/vraFertilizer.js';
 import { initLimingSoilTab } from './ukis/limingSoil.js';
 import { initOperationsJournalTab } from './ukis/operationsJournal.js';
 import { initCropPlannerTab } from './ukis/cropPlanner.js';
+import { renderTSumRadar } from './ukis/tsumRadar.js';
 
 let currentUser = null;
 let userData = null;

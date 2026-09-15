@@ -4,17 +4,20 @@ import { createCustomSelect } from '../core/customSelect.js';
 import { openAuthModal } from '../core/auth.js';
 import { switchTab } from '../core/ui.js';
 import { refreshSettingsMap } from '../sistema/settings.js';
+import { renderTSumRadar } from '../ukis/tsumRadar.js';
 
 let currentWeatherCoords = { lat: 54.6872, lng: 25.2797, name: "Nustatoma vieta..." };
 let userFieldsList = [];
 let cachedCurrentWeather = null;
 let cachedHourlyWeather = null;
 let cachedCurrentHourIdx = 0;
-let activeHourlyMode = 'spray'; // 'spray' arba 'frost'
+let activeHourlyMode = 'spray'; // 'spray', 'frost' arba 'tsum'
+let cachedCurrentUser = null;
+let cachedUserData = null;
 
 function navigateToSettings() {
     if (typeof switchTab === 'function' && document.getElementById('view-tab-settings')) {
-        switchTab(9); // Nustatymai pagal naują indeksą
+        switchTab(9); // Nustatymai
         if (typeof refreshSettingsMap === 'function') refreshSettingsMap();
         window.scrollTo({ top: 0, behavior: 'smooth' });
     } else {
@@ -22,13 +25,17 @@ function navigateToSettings() {
     }
 }
 
-export function initWeatherTab(currentUser, userData) {
+export async function initWeatherTab(currentUser, userData) {
     const container = document.getElementById('view-tab-weather');
     if (!container) return;
+
+    cachedCurrentUser = currentUser;
+    cachedUserData = userData;
 
     const isLogged = !!currentUser;
     const hasGarage = !!(userData?.garageLat && userData?.garageLon && userData.garageLat !== 0);
 
+    // Pradinis taškas: Garažas arba laukas
     if (hasGarage) {
         currentWeatherCoords = {
             lat: parseFloat(userData.garageLat),
@@ -44,7 +51,7 @@ export function initWeatherTab(currentUser, userData) {
     container.innerHTML = `
         <div class="space-y-6 max-w-6xl mx-auto w-full">
             
-            <!-- 1. VIENTISA VIRŠUTINĖ KORTELĖ (VIETA + REŽIMO PASIRINKIMAS) -->
+            <!-- 1. VIRŠUTINĖ KORTELĖ (VIETA + 3 REŽIMŲ MYGTUKAI) -->
             <div id="weather-top-unified-card" class="bg-tractorSurface border border-tractorBorder rounded-2xl p-6 md:p-7 shadow-xl space-y-5">
                 
                 <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-tractorBorder/70 pb-4">
@@ -73,7 +80,7 @@ export function initWeatherTab(currentUser, userData) {
                                     </h4>
                                 </div>
                                 <p class="text-xs md:text-sm text-slate-200 leading-relaxed">
-                                    Prisijunkite ir pažymėkite ūkio bazę, kad orai būtų skaičiuojami tiesiai virš jūsų laukų.
+                                    Prisijunkite ir pažymėkite ūkio bazę, kad orai ir temperatūrų sumos būtų skaičiuojami tiesiai virš jūsų laukų.
                                 </p>
                             </div>
                             <button type="button" id="btn-weather-farm-prompt" class="px-5 py-3 bg-tractorPrimary hover:bg-tractorPrimaryHover text-white font-black rounded-xl text-xs md:text-sm uppercase tracking-wider shrink-0 shadow-lg cursor-pointer transition">
@@ -83,25 +90,28 @@ export function initWeatherTab(currentUser, userData) {
                     </div>
                 ` : ''}
 
-                <!-- VIETA IR REŽIMAS VIENOJE AIŠKIOJE JUOSTOJE -->
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 bg-tractorBg/80 p-4 rounded-xl border border-tractorBorder">
-                    <div class="space-y-1">
+                <!-- VIETA IR 3 REŽIMAI -->
+                <div class="grid grid-cols-1 md:grid-cols-12 gap-4 bg-tractorBg/80 p-4 rounded-xl border border-tractorBorder items-center">
+                    <div class="md:col-span-5 space-y-1" id="weather-field-select-wrapper">
                         <label class="text-xs font-bold text-tractorPrimaryLight uppercase tracking-wider block">
                             🌾 Pasirinkite lauką / vietą:
                         </label>
                         <div id="weather-field-select-box" class="w-full"></div>
                     </div>
 
-                    <div class="space-y-1">
+                    <div class="md:col-span-7 space-y-1">
                         <label class="text-xs font-bold text-tractorPrimaryLight uppercase tracking-wider block">
                             🎯 Pasirinkite norimą režimą:
                         </label>
                         <div class="flex items-center gap-1.5 bg-tractorSurface p-1 rounded-xl border border-tractorBorder h-12">
                             <button type="button" id="btn-mode-spray" class="flex-1 h-full rounded-lg text-xs font-bold transition cursor-pointer flex items-center justify-center gap-1.5 ${activeHourlyMode === 'spray' ? 'bg-tractorPrimary text-white shadow' : 'text-slate-400 hover:text-white'}">
-                                <span>💦</span> <span>Purškimo langas</span>
+                                <span>💦</span> <span class="hidden sm:inline">Purškimo</span><span>langas</span>
                             </button>
                             <button type="button" id="btn-mode-frost" class="flex-1 h-full rounded-lg text-xs font-bold transition cursor-pointer flex items-center justify-center gap-1.5 ${activeHourlyMode === 'frost' ? 'bg-blue-600 text-white shadow' : 'text-slate-400 hover:text-white'}">
-                                <span>❄️</span> <span>Šalčio ir įšalo langas</span>
+                                <span>❄️</span> <span class="hidden sm:inline">Šalčio ir</span><span>įšalas</span>
+                            </button>
+                            <button type="button" id="btn-mode-tsum" class="flex-1 h-full rounded-lg text-xs font-bold transition cursor-pointer flex items-center justify-center gap-1.5 ${activeHourlyMode === 'tsum' ? 'bg-tractorPrimary text-white shadow' : 'text-slate-400 hover:text-white'}">
+                                <span>🌱</span> <span>Vegetacija (T-Sum)</span>
                             </button>
                         </div>
                     </div>
@@ -113,8 +123,11 @@ export function initWeatherTab(currentUser, userData) {
                 </div>
             </div>
 
-            <!-- VALANDINĖ PROGNOZĖ -->
-            <div class="bg-tractorSurface border border-tractorBorder rounded-2xl p-6 md:p-7 shadow-xl space-y-4">
+            <!-- 2. T-SUM VISŲ LAUKŲ RADARAS (RODOMAS TIK KAI REŽIMAS = TSUM) -->
+            <div id="weather-tsum-container" class="hidden space-y-6"></div>
+
+            <!-- 3. VALANDINĖ PROGNOZĖ (PURŠKIMUI IR ĮŠALUI) -->
+            <div id="weather-hourly-card" class="bg-tractorSurface border border-tractorBorder rounded-2xl p-6 md:p-7 shadow-xl space-y-4">
                 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-tractorBorder/70 pb-3">
                     <div>
                         <h3 class="font-oswald text-xl font-bold text-white uppercase tracking-wider flex items-center gap-2" id="hourly-forecast-heading">
@@ -131,7 +144,7 @@ export function initWeatherTab(currentUser, userData) {
                 </div>
             </div>
 
-            <!-- AGRONOMINĖS TAISYKLĖS -->
+            <!-- 4. AGRONOMINĖS TAISYKLĖS -->
             <div class="grid grid-cols-1 md:grid-cols-3 gap-5" id="soil-and-agri-conditions"></div>
 
         </div>
@@ -143,6 +156,10 @@ export function initWeatherTab(currentUser, userData) {
     });
     document.getElementById('btn-mode-frost')?.addEventListener('click', () => {
         activeHourlyMode = 'frost';
+        updateModeUI();
+    });
+    document.getElementById('btn-mode-tsum')?.addEventListener('click', () => {
+        activeHourlyMode = 'tsum';
         updateModeUI();
     });
 
@@ -180,22 +197,60 @@ export function initWeatherTab(currentUser, userData) {
 function updateModeUI() {
     const btnSpray = document.getElementById('btn-mode-spray');
     const btnFrost = document.getElementById('btn-mode-frost');
+    const btnTsum = document.getElementById('btn-mode-tsum');
 
-    if (activeHourlyMode === 'spray') {
-        if (btnSpray) btnSpray.className = "flex-1 h-full rounded-lg text-xs font-bold transition cursor-pointer flex items-center justify-center gap-1.5 bg-tractorPrimary text-white shadow";
-        if (btnFrost) btnFrost.className = "flex-1 h-full rounded-lg text-xs font-bold transition cursor-pointer flex items-center justify-center gap-1.5 text-slate-400 hover:text-white";
-    } else {
-        if (btnFrost) btnFrost.className = "flex-1 h-full rounded-lg text-xs font-bold transition cursor-pointer flex items-center justify-center gap-1.5 bg-blue-600 text-white shadow";
-        if (btnSpray) btnSpray.className = "flex-1 h-full rounded-lg text-xs font-bold transition cursor-pointer flex items-center justify-center gap-1.5 text-slate-400 hover:text-white";
+    const sprayBox = document.getElementById('live-spray-inner-box');
+    const tsumContainer = document.getElementById('weather-tsum-container');
+    const hourlyCard = document.getElementById('weather-hourly-card');
+    const agriConditions = document.getElementById('soil-and-agri-conditions');
+    const fieldSelectWrapper = document.getElementById('weather-field-select-wrapper');
+
+    // Mygtukų stiliai
+    if (btnSpray) {
+        btnSpray.className = `flex-1 h-full rounded-lg text-xs font-bold transition cursor-pointer flex items-center justify-center gap-1.5 ${
+            activeHourlyMode === 'spray' ? 'bg-tractorPrimary text-white shadow' : 'text-slate-400 hover:text-white'
+        }`;
+    }
+    if (btnFrost) {
+        btnFrost.className = `flex-1 h-full rounded-lg text-xs font-bold transition cursor-pointer flex items-center justify-center gap-1.5 ${
+            activeHourlyMode === 'frost' ? 'bg-blue-600 text-white shadow' : 'text-slate-400 hover:text-white'
+        }`;
+    }
+    if (btnTsum) {
+        btnTsum.className = `flex-1 h-full rounded-lg text-xs font-bold transition cursor-pointer flex items-center justify-center gap-1.5 ${
+            activeHourlyMode === 'tsum' ? 'bg-tractorPrimary text-white shadow' : 'text-slate-400 hover:text-white'
+        }`;
     }
 
-    if (cachedCurrentWeather && cachedHourlyWeather) {
-        if (activeHourlyMode === 'frost') {
-            renderWinterFrostRadar();
-        } else {
-            renderLiveSprayStatus(cachedCurrentWeather, cachedHourlyWeather, cachedCurrentHourIdx);
+    // 🌟 PATAISYMAS: Visada 100% nepermatomas (jokio opacity 0.4!)
+    if (fieldSelectWrapper) {
+        fieldSelectWrapper.style.opacity = '1';
+    }
+
+    // REŽIMŲ TURINIO VALDYMAS
+    if (activeHourlyMode === 'tsum') {
+        if (sprayBox) sprayBox.classList.add('hidden');
+        if (hourlyCard) hourlyCard.classList.add('hidden');
+        if (agriConditions) agriConditions.classList.add('hidden');
+
+        if (tsumContainer) {
+            tsumContainer.classList.remove('hidden');
+            renderTSumRadar(tsumContainer, cachedCurrentUser, cachedUserData);
         }
-        updateHourlyGrid();
+    } else {
+        if (tsumContainer) tsumContainer.classList.add('hidden');
+        if (sprayBox) sprayBox.classList.remove('hidden');
+        if (hourlyCard) hourlyCard.classList.remove('hidden');
+        if (agriConditions) agriConditions.classList.remove('hidden');
+
+        if (cachedCurrentWeather && cachedHourlyWeather) {
+            if (activeHourlyMode === 'frost') {
+                renderWinterFrostRadar();
+            } else {
+                renderLiveSprayStatus(cachedCurrentWeather, cachedHourlyWeather, cachedCurrentHourIdx);
+            }
+            updateHourlyGrid();
+        }
     }
 }
 
@@ -527,7 +582,6 @@ function updateHourlyGrid() {
     grid.innerHTML = items.join('');
 }
 
-// 🌟 PATAISYTA: Dabar grąžina tikslias priežastis (reasons masyvą)
 function evaluateSprayCondition(windSpeedMs, windGustsMs, tempC, rainProb, rainMm) {
     const redReasons = [];
     const yellowReasons = [];
@@ -553,7 +607,6 @@ function evaluateSprayCondition(windSpeedMs, windGustsMs, tempC, rainProb, rainM
     return { status: 'green', icon: '🟢', text: 'Tinka', badgeClass: 'bg-green-500/20 text-green-600 border-green-500/40', reasons: [] };
 }
 
-// 🌟 PATAISYTA: Atvaizduoja tikslias priežastis ekrane
 function renderLiveSprayStatus(current, hourly, currentIdx) {
     const liveCard = document.getElementById('live-spray-inner-box');
     if (!liveCard || !current) return;
