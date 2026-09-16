@@ -39,6 +39,7 @@ export function openAuthModal(initialTab = 'login') {
         if (panel) panel.classList.remove('translate-y-full');
     }, 15);
 }
+
 export function closeAuthModal() {
     const modal = document.getElementById('unified-auth-modal');
     const panel = document.getElementById('auth-sheet-panel');
@@ -51,14 +52,14 @@ export function closeAuthModal() {
 function createAuthModalDom() {
     const modalHtml = `
         <div id="unified-auth-modal" class="fixed inset-0 bg-black/80 flex flex-col justify-end items-center z-[250] hidden p-0 backdrop-blur-sm transition-opacity duration-300">
-            <div id="auth-sheet-panel" class="bg-tractorSurface border-t-2 border-x-2 border-b-0 border-tractorBorder rounded-t-3xl rounded-b-none p-6 md:p-8 max-w-lg w-full shadow-2xl relative space-y-5 max-h-[90vh] overflow-y-auto transform translate-y-full transition-transform duration-300">
+            <div id="auth-sheet-panel" class="bg-tractorSurface border-t-2 border-x-2 border-b-0 border-tractorBorder rounded-t-3xl rounded-b-none p-6 md:p-8 max-w-lg w-full shadow-2xl relative space-y-4 max-h-[92vh] overflow-y-auto transform translate-y-full transition-transform duration-300">
                 <button type="button" id="btn-close-auth-modal" class="absolute top-5 right-5 text-slate-400 hover:text-white text-xl font-bold transition cursor-pointer">
                     ✕
                 </button>
-                <div class="space-y-3 border-b border-tractorBorder/70 pb-4">
+                <div class="space-y-3 border-b border-tractorBorder/70 pb-3">
                     <div class="flex items-center gap-2">
                         <span class="text-2xl">🚜</span>
-                        <h3 class="font-oswald text-2xl font-bold tracking-wider uppercase text-white">JurgisAgro</h3>
+                        <h3 class="font-oswald text-2xl font-bold tracking-wider uppercase text-white">JurgisAgro Paskyra</h3>
                     </div>
                     <div class="flex bg-tractorBg p-1 rounded-xl border border-tractorBorder">
                         <button type="button" id="tab-btn-login" class="flex-1 py-2 text-xs font-bold rounded-lg transition text-white bg-tractorPrimary shadow">
@@ -69,6 +70,8 @@ function createAuthModalDom() {
                         </button>
                     </div>
                 </div>
+
+                <!-- GOOGLE OFICIALUS PRISIJUNGIMAS -->
                 <button type="button" id="btn-auth-google" class="w-full h-12 bg-white hover:bg-slate-100 text-slate-800 font-bold rounded-xl text-xs md:text-sm flex items-center justify-center gap-3 shadow transition cursor-pointer border border-slate-300">
                     <svg class="w-5 h-5" viewBox="0 0 24 24">
                         <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -78,50 +81,58 @@ function createAuthModalDom() {
                     </svg>
                     <span>Prisijungti su Google paskyra</span>
                 </button>
+
                 <div class="flex items-center gap-3">
                     <div class="flex-1 h-[1px] bg-tractorBorder/70"></div>
-                    <span class="text-[10px] uppercase font-bold text-slate-500">arba su el. paštu</span>
+                    <span class="text-[10px] uppercase font-bold text-slate-500">arba su JurgisAgro el. paštu</span>
                     <div class="flex-1 h-[1px] bg-tractorBorder/70"></div>
                 </div>
+
                 <div id="auth-error-msg" class="hidden p-3 bg-red-950/40 border border-red-800/60 rounded-xl text-xs text-red-400 font-medium"></div>
-                <form id="form-email-login" class="space-y-3.5">
+
+                <!-- 1. PRISIJUNGIMO FORMA -->
+                <form id="form-email-login" class="space-y-3.5" autocomplete="on">
                     <div class="space-y-1">
                         <label class="text-[11px] font-bold text-slate-300 uppercase block">El. pašto adresas</label>
-                        <input id="login-email-input" type="email" required placeholder="vardas@inbox.lt" 
+                        <input id="login-email-input" name="email" type="email" autocomplete="username" required placeholder="vardas@inbox.lt" 
                             class="w-full h-11 bg-tractorBg border border-tractorBorder focus:border-tractorPrimary rounded-xl px-3.5 text-xs text-white outline-none font-medium">
                     </div>
                     <div class="space-y-1">
                         <div class="flex justify-between items-center">
-                            <label class="text-[11px] font-bold text-slate-300 uppercase block">Slaptažodis</label>
+                            <label class="text-[11px] font-bold text-slate-300 uppercase block">JurgisAgro slaptažodis</label>
                             <button type="button" id="btn-forgot-password-link" class="text-[11px] text-green-400 hover:underline">Pamiršote?</button>
                         </div>
-                        <input id="login-password-input" type="password" required placeholder="••••••••" 
+                        <input id="login-password-input" name="password" type="password" autocomplete="current-password" required placeholder="••••••••" 
                             class="w-full h-11 bg-tractorBg border border-tractorBorder focus:border-tractorPrimary rounded-xl px-3.5 text-xs text-white outline-none">
                     </div>
                     <button type="submit" id="btn-submit-login" class="w-full h-11 bg-tractorPrimary hover:bg-tractorPrimaryHover text-white font-bold rounded-xl text-xs uppercase tracking-wider shadow-lg transition cursor-pointer">
                         Prisijungti prie ūkio
                     </button>
                 </form>
-                <form id="form-email-register" class="space-y-3.5 hidden">
+
+                <!-- 2. REGISTRACIJOS FORMA -->
+                <form id="form-email-register" class="space-y-3.5 hidden" autocomplete="on">
                     <div class="space-y-1">
                         <label class="text-[11px] font-bold text-slate-300 uppercase block">Vardas / Ūkio pavadinimas</label>
-                        <input id="reg-name-input" type="text" required placeholder="Pvz.: Jonas Petraitis" 
+                        <input id="reg-name-input" name="name" type="text" autocomplete="name" required placeholder="Pvz.: Jonas Petraitis" 
                             class="w-full h-11 bg-tractorBg border border-tractorBorder focus:border-tractorPrimary rounded-xl px-3.5 text-xs text-white outline-none font-medium">
                     </div>
                     <div class="space-y-1">
                         <label class="text-[11px] font-bold text-slate-300 uppercase block">El. pašto adresas</label>
-                        <input id="reg-email-input" type="email" required placeholder="vardas@inbox.lt" 
+                        <input id="reg-email-input" name="email" type="email" autocomplete="email" required placeholder="vardas@inbox.lt" 
                             class="w-full h-11 bg-tractorBg border border-tractorBorder focus:border-tractorPrimary rounded-xl px-3.5 text-xs text-white outline-none font-medium">
                     </div>
                     <div class="space-y-1">
-                        <label class="text-[11px] font-bold text-slate-300 uppercase block">Slaptažodis (bent 6 simboliai)</label>
-                        <input id="reg-password-input" type="password" minlength="6" required placeholder="••••••••" 
+                        <label class="text-[11px] font-bold text-slate-300 uppercase block">Naujas slaptažodis (bent 6 simboliai)</label>
+                        <input id="reg-password-input" name="new-password" type="password" autocomplete="new-password" minlength="6" required placeholder="••••••••" 
                             class="w-full h-11 bg-tractorBg border border-tractorBorder focus:border-tractorPrimary rounded-xl px-3.5 text-xs text-white outline-none">
                     </div>
                     <button type="submit" id="btn-submit-register" class="w-full h-11 bg-tractorPrimary hover:bg-tractorPrimaryHover text-white font-bold rounded-xl text-xs uppercase tracking-wider shadow-lg transition cursor-pointer">
                         Sukurti nemokamą paskyrą
                     </button>
                 </form>
+
+                <!-- 3. SLAPTAŽODŽIO ATSTATYMAS -->
                 <form id="form-forgot-password" class="space-y-3.5 hidden">
                     <p class="text-xs text-slate-300 leading-relaxed">
                         Įveskite savo el. paštą – atsiųsime nuorodą naujam slaptažodžiui susikurti.
@@ -138,6 +149,16 @@ function createAuthModalDom() {
                         ← Grįžti į prisijungimą
                     </button>
                 </form>
+
+                <!-- 🛡️ GOOGLE REIKALAUJAMOS SAUGUMO IR PRIVATUMO NUORODOS -->
+                <div class="pt-2 border-t border-tractorBorder/50 text-center text-[10px] text-slate-400 leading-normal">
+                    <span>Prisijungdami sutinkate su JurgisAgro </span>
+                    <a href="https://jurgisagro.com/" class="text-green-400 hover:underline font-bold">Naudojimo sąlygomis</a>
+                    <span> ir </span>
+                    <a href="https://jurgisagro.com/" class="text-green-400 hover:underline font-bold">Privatumo politika</a>.
+                    <div class="text-slate-500 mt-0.5">Duomenys saugomi šifruotame Google Firebase serveryje.</div>
+                </div>
+
             </div>
         </div>
     `;
