@@ -86,6 +86,8 @@ function setupOperationsEvents(currentUser) {
             editingFieldId = null;
             form.reset();
             document.getElementById('op-modal-date').value = new Date().toISOString().split('T')[0];
+            const iconEl = document.getElementById('op-modal-icon');
+            if (iconEl) iconEl.textContent = "📝";
             document.getElementById('op-modal-title').textContent = "Registruoti atliktą darbą";
             document.getElementById('op-save-btn-text').textContent = "Įrašyti darbą į žurnalą";
             modal.classList.remove('hidden');
@@ -261,7 +263,9 @@ function loadOperationsList(currentUser) {
                         document.getElementById('op-modal-cost').value = op.cost || '';
                         document.getElementById('op-modal-notes').value = op.notes || '';
 
-                        document.getElementById('op-modal-title').textContent = `✏️ Koreguoti darbą: ${field.name}`;
+                        const iconEl = document.getElementById('op-modal-icon');
+                        if (iconEl) iconEl.textContent = "✏️";
+                        document.getElementById('op-modal-title').textContent = `Koreguoti darbą: ${field.name}`;
                         document.getElementById('op-save-btn-text').textContent = "Išsaugoti pakeitimus";
 
                         document.getElementById('op-creator-modal').classList.remove('hidden');

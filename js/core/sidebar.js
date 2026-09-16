@@ -140,7 +140,7 @@ export function renderGlobalSidebar(activePage = 'index', activeTab = 0) {
     // 2. MOBILI VIRŠUTINĖ JUOSTA
     if (mobileHeaderContainer) {
         mobileHeaderContainer.innerHTML = `
-            <div class="bg-tractorSurface border-b border-tractorBorder w-full px-4 py-3 flex justify-between items-center z-10 shrink-0">
+            <div class="bg-tractorSurface border-b border-tractorBorder w-full px-4 py-3 flex justify-between items-center relative z-[150] shadow-sm shrink-0">
                 <a href="index.html" class="flex items-center gap-2">
                     <span class="text-xl">🚜</span>
                     <span class="font-oswald text-xl font-bold tracking-wider text-green-500">JURGISAGRO</span>
@@ -162,31 +162,36 @@ export function renderGlobalSidebar(activePage = 'index', activeTab = 0) {
         `;
     }
 
-    // 3. MOBILI APATINĖ JUOSTA + 3 IŠŠOKANTYS LAPAI
+    // 3. 🌟 MOBILI APATINĖ JUOSTA (SU TIKSLIAIS ID KIEKVIENAM MYGTUKUI)
     if (mobileNavContainer) {
         mobileNavContainer.innerHTML = `
             <nav class="fixed bottom-0 left-0 right-0 bg-tractorSurface border-t border-tractorBorder h-16 px-2 flex justify-around items-center z-50 shadow-2xl">
+                <!-- SKAIČIUOKLĖS -->
                 <button id="btn-mobile-skaiciuokles-menu" class="flex flex-col items-center justify-center py-1.5 px-2 rounded-xl transition cursor-pointer ${activeTab === 0 ? 'text-white bg-tractorPrimary shadow' : 'text-slate-300 hover:text-white'}">
                     <span class="text-base">🧮</span>
                     <span class="mt-0.5 font-bold text-[9px] leading-none">Skaičiuoklės</span>
                 </button>
 
-                <button class="nav-tab-btn flex flex-col items-center justify-center py-1.5 px-2 rounded-xl transition cursor-pointer ${activeTab === 1 ? 'text-white bg-tractorPrimary shadow' : 'text-slate-300 hover:text-white'}" ${getNavClickAction(1)}>
+                <!-- ORAI -->
+                <button id="btn-mobile-weather-nav" class="nav-tab-btn flex flex-col items-center justify-center py-1.5 px-2 rounded-xl transition cursor-pointer ${activeTab === 1 ? 'text-white bg-tractorPrimary shadow' : 'text-slate-300 hover:text-white'}" ${getNavClickAction(1)}>
                     <span class="text-base">🌦️</span>
                     <span class="mt-0.5 font-bold text-[9px] leading-none">Orai</span>
                 </button>
                 
+                <!-- LAUKAI / ŪKIS -->
                 <button id="btn-mobile-ukis-menu" class="flex flex-col items-center justify-center py-1.5 px-2 rounded-xl transition cursor-pointer ${isUkisActive ? 'text-white bg-tractorPrimary shadow' : 'text-slate-300 hover:text-white'}">
                     <span class="text-base">🚜</span>
                     <span class="mt-0.5 font-bold text-[9px] leading-none">Laukai / Ūkis</span>
                 </button>
 
+                <!-- BENDRUOMENĖ -->
                 <button id="btn-mobile-bendruomene-menu" class="flex flex-col items-center justify-center py-1.5 px-2 rounded-xl transition cursor-pointer ${isBendruomeneActive ? 'text-white bg-tractorPrimary shadow' : 'text-slate-300 hover:text-white'}">
                     <span class="text-base">🤝</span>
                     <span class="mt-0.5 font-bold text-[9px] leading-none">Bendruomenė</span>
                 </button>
 
-                <button class="nav-tab-btn flex flex-col items-center justify-center py-1.5 px-2 rounded-xl transition cursor-pointer ${activeTab === 9 ? 'text-white bg-tractorPrimary shadow' : 'text-slate-300 hover:text-white'}" ${getNavClickAction(9)}>
+                <!-- NUSTATYMAI -->
+                <button id="btn-mobile-settings-nav" class="nav-tab-btn flex flex-col items-center justify-center py-1.5 px-2 rounded-xl transition cursor-pointer ${activeTab === 9 ? 'text-white bg-tractorPrimary shadow' : 'text-slate-300 hover:text-white'}" ${getNavClickAction(9)}>
                     <span class="text-base">⚙️</span>
                     <span class="mt-0.5 font-bold text-[9px] leading-none">Nustatymai</span>
                 </button>

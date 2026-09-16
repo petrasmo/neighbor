@@ -36,26 +36,22 @@ export async function initWeatherTab(currentUser, userData) {
     const isLogged = !!currentUser;
     const hasGarage = !!(userData?.garageLat && userData?.garageLon && userData.garageLat !== 0);
 
-    // Pradinis taškas: Garažas arba laukas
     if (hasGarage) {
         currentWeatherCoords = {
             lat: parseFloat(userData.garageLat),
             lng: parseFloat(userData.garageLon),
             name: "Mano ūkio bazė (garažas)"
         };
-        updateLocationLabel();
-        fetchAgroWeatherData();
-    } else {
-        resolveAutoLocation();
     }
 
+    // 🌟 1. PIRMA ĮKELIAMAS ŠVARUS HTML TIESIAI VIRŠUJE BE JOKIŲ PAPILDOMŲ MARGINŲ
     container.innerHTML = `
-        <div class="space-y-6 max-w-6xl mx-auto w-full">
+        <div class="space-y-4 max-w-6xl mx-auto w-full">
             
             <!-- 1. VIRŠUTINĖ KORTELĖ (VIETA + 4 REŽIMŲ MYGTUKAI) -->
-            <div id="weather-top-unified-card" class="bg-tractorSurface border border-tractorBorder rounded-2xl p-6 md:p-7 shadow-xl space-y-5">
+            <div id="weather-top-unified-card" class="bg-tractorSurface border border-tractorBorder rounded-2xl p-5 md:p-6 shadow-xl space-y-4">
                 
-                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-tractorBorder/70 pb-4">
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-tractorBorder/70 pb-3.5">
                     <div>
                         <h2 class="font-oswald text-2xl md:text-3xl font-bold uppercase tracking-wider text-white flex items-center gap-2">
                             <span>🌦️</span> Agro-Orai, Purškimo ir Įšalo Radaras
@@ -65,26 +61,26 @@ export async function initWeatherTab(currentUser, userData) {
                         </p>
                     </div>
 
-                    <button id="btn-weather-gps" style="background-color: #2E7D32 !important; color: #FFFFFF !important;" class="h-11 px-4 text-xs font-bold rounded-xl flex items-center gap-2 shadow-lg transition cursor-pointer self-start md:self-auto shrink-0">
+                    <button id="btn-weather-gps" style="background-color: #2E7D32 !important; color: #FFFFFF !important;" class="h-10 px-4 text-xs font-bold rounded-xl flex items-center gap-2 shadow transition cursor-pointer self-start md:self-auto shrink-0">
                         <span>📡</span> Nustatyti dabartinę GPS vietą
                     </button>
                 </div>
 
                 ${!isLogged || !hasGarage ? `
-                    <div class="p-5 md:p-6 bg-tractorBg border border-tractorPrimary rounded-2xl shadow-xl space-y-4">
+                    <div class="p-4 md:p-5 bg-tractorBg border border-tractorPrimary rounded-2xl shadow-xl space-y-3">
                         <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
                             <div class="space-y-1">
                                 <div class="flex items-center gap-2">
-                                    <span class="text-2xl">${!isLogged ? '💡' : '🏠'}</span>
+                                    <span class="text-xl">${!isLogged ? '💡' : '🏠'}</span>
                                     <h4 class="text-sm md:text-base font-extrabold uppercase tracking-wider text-green-400">
                                         ${!isLogged ? 'Norite 100% tikslių prognozių savo ūkiui?' : 'Liko 1 žingsnis: Nurodykite ūkio bazės vietą!'}
                                     </h4>
                                 </div>
-                                <p class="text-xs md:text-sm text-slate-200 leading-relaxed">
+                                <p class="text-xs text-slate-200 leading-relaxed">
                                     Prisijunkite ir pažymėkite ūkio bazę, kad orai ir temperatūrų sumos būtų skaičiuojami tiesiai virš jūsų laukų.
                                 </p>
                             </div>
-                            <button type="button" id="btn-weather-farm-prompt" class="px-5 py-3 bg-tractorPrimary hover:bg-tractorPrimaryHover text-white font-black rounded-xl text-xs md:text-sm uppercase tracking-wider shrink-0 shadow-lg cursor-pointer transition">
+                            <button type="button" id="btn-weather-farm-prompt" class="px-4 py-2.5 bg-tractorPrimary hover:bg-tractorPrimaryHover text-white font-black rounded-xl text-xs uppercase tracking-wider shrink-0 shadow cursor-pointer transition">
                                 ${!isLogged ? '🔑 Prisijungti' : '📍 Nurodyti vietą Nustatymuose ➔'}
                             </button>
                         </div>
@@ -92,7 +88,7 @@ export async function initWeatherTab(currentUser, userData) {
                 ` : ''}
 
                 <!-- VIETA IR 4 REŽIMAI -->
-                <div class="grid grid-cols-1 md:grid-cols-12 gap-4 bg-tractorBg/80 p-4 rounded-xl border border-tractorBorder items-center">
+                <div class="grid grid-cols-1 md:grid-cols-12 gap-3.5 bg-tractorBg/80 p-3.5 rounded-xl border border-tractorBorder items-center">
                     <div class="md:col-span-4 space-y-1" id="weather-field-select-wrapper">
                         <label class="text-xs font-bold text-tractorPrimaryLight uppercase tracking-wider block">
                             🌾 Pasirinkite lauką / vietą:
@@ -104,17 +100,17 @@ export async function initWeatherTab(currentUser, userData) {
                         <label class="text-xs font-bold text-tractorPrimaryLight uppercase tracking-wider block">
                             🎯 Pasirinkite norimą režimą:
                         </label>
-                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-1.5 bg-tractorSurface p-1 rounded-xl border border-tractorBorder min-h-[48px]">
-                            <button type="button" id="btn-mode-spray" class="h-10 rounded-lg text-xs font-bold transition cursor-pointer flex items-center justify-center gap-1.5 ${activeHourlyMode === 'spray' ? 'bg-tractorPrimary text-white shadow' : 'text-slate-400 hover:text-white'}">
+                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-1.5 bg-tractorSurface p-1 rounded-xl border border-tractorBorder min-h-[44px]">
+                            <button type="button" id="btn-mode-spray" class="h-9 rounded-lg text-xs font-bold transition cursor-pointer flex items-center justify-center gap-1.5 ${activeHourlyMode === 'spray' ? 'bg-tractorPrimary text-white shadow' : 'text-slate-400 hover:text-white'}">
                                 <span>💦</span> <span class="truncate">Purškimo langas</span>
                             </button>
-                            <button type="button" id="btn-mode-frost" class="h-10 rounded-lg text-xs font-bold transition cursor-pointer flex items-center justify-center gap-1.5 ${activeHourlyMode === 'frost' ? 'bg-blue-600 text-white shadow' : 'text-slate-400 hover:text-white'}">
+                            <button type="button" id="btn-mode-frost" class="h-9 rounded-lg text-xs font-bold transition cursor-pointer flex items-center justify-center gap-1.5 ${activeHourlyMode === 'frost' ? 'bg-blue-600 text-white shadow' : 'text-slate-400 hover:text-white'}">
                                 <span>❄️</span> <span class="truncate">Šalčio ir įšalas</span>
                             </button>
-                            <button type="button" id="btn-mode-tsum" class="h-10 rounded-lg text-xs font-bold transition cursor-pointer flex items-center justify-center gap-1.5 ${activeHourlyMode === 'tsum' ? 'bg-tractorPrimary text-white shadow' : 'text-slate-400 hover:text-white'}">
+                            <button type="button" id="btn-mode-tsum" class="h-9 rounded-lg text-xs font-bold transition cursor-pointer flex items-center justify-center gap-1.5 ${activeHourlyMode === 'tsum' ? 'bg-tractorPrimary text-white shadow' : 'text-slate-400 hover:text-white'}">
                                 <span>🌱</span> <span class="truncate">Vegetacija (T-Sum)</span>
                             </button>
-                            <button type="button" id="btn-mode-mold" class="h-10 rounded-lg text-xs font-bold transition cursor-pointer flex items-center justify-center gap-1.5 ${activeHourlyMode === 'mold' ? 'bg-indigo-600 text-white shadow' : 'text-slate-400 hover:text-white'}">
+                            <button type="button" id="btn-mode-mold" class="h-9 rounded-lg text-xs font-bold transition cursor-pointer flex items-center justify-center gap-1.5 ${activeHourlyMode === 'mold' ? 'bg-indigo-600 text-white shadow' : 'text-slate-400 hover:text-white'}">
                                 <span>🧊</span> <span class="truncate">Pelėsis ir pluta</span>
                             </button>
                         </div>
@@ -122,20 +118,20 @@ export async function initWeatherTab(currentUser, userData) {
                 </div>
 
                 <!-- BŪSENOS KORTELĖ (PURŠKIMAS ARBA ĮŠALAS) -->
-                <div id="live-spray-inner-box" class="pt-2">
+                <div id="live-spray-inner-box" class="pt-1">
                     <div class="text-center py-6 text-slate-500 text-sm">Kraunami orų duomenys...</div>
                 </div>
             </div>
 
             <!-- 2. T-SUM VISŲ LAUKŲ RADARAS -->
-            <div id="weather-tsum-container" class="hidden space-y-6"></div>
+            <div id="weather-tsum-container" class="hidden space-y-5"></div>
 
             <!-- 3. SNIEGO PELĖSIO IR LEDO PLUTOS VISŲ LAUKŲ RADARAS -->
-            <div id="weather-mold-container" class="hidden space-y-6"></div>
+            <div id="weather-mold-container" class="hidden space-y-5"></div>
 
-            <!-- 4. VALANDINĖ PROGNOZĖ (PURŠKIMUI IR ĮŠALUI) -->
-            <div id="weather-hourly-card" class="bg-tractorSurface border border-tractorBorder rounded-2xl p-6 md:p-7 shadow-xl space-y-4">
-                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-tractorBorder/70 pb-3">
+            <!-- 4. VALANDINĖ PROGNOZĖ -->
+            <div id="weather-hourly-card" class="bg-tractorSurface border border-tractorBorder rounded-2xl p-5 md:p-6 shadow-xl space-y-3.5">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-tractorBorder/70 pb-3">
                     <div>
                         <h3 class="font-oswald text-xl font-bold text-white uppercase tracking-wider flex items-center gap-2" id="hourly-forecast-heading">
                             <span>⏱️</span> Valandinė Prognozė (Artimiausios 48 val.)
@@ -146,16 +142,24 @@ export async function initWeatherTab(currentUser, userData) {
                     </div>
                 </div>
 
-                <div id="hourly-forecast-grid" class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-3 pt-1">
+                <div id="hourly-forecast-grid" class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-2.5 pt-1">
                     <div class="text-center py-8 text-slate-500 text-xs col-span-full">Kraunamas valandinis grafikas...</div>
                 </div>
             </div>
 
             <!-- 5. AGRONOMINĖS TAISYKLĖS -->
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-5" id="soil-and-agri-conditions"></div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4" id="soil-and-agri-conditions"></div>
 
         </div>
     `;
+
+    // 🌟 2. PALEIDŽIAMAS DUOMENŲ GAVIMAS
+    if (hasGarage) {
+        updateLocationLabel();
+        fetchAgroWeatherData();
+    } else {
+        resolveAutoLocation();
+    }
 
     document.getElementById('btn-mode-spray')?.addEventListener('click', () => {
         activeHourlyMode = 'spray';
@@ -217,29 +221,27 @@ function updateModeUI() {
     const hourlyCard = document.getElementById('weather-hourly-card');
     const agriConditions = document.getElementById('soil-and-agri-conditions');
 
-    // Mygtukų stilių atnaujinimas
     if (btnSpray) {
-        btnSpray.className = `h-10 rounded-lg text-xs font-bold transition cursor-pointer flex items-center justify-center gap-1.5 ${
+        btnSpray.className = `h-9 rounded-lg text-xs font-bold transition cursor-pointer flex items-center justify-center gap-1.5 ${
             activeHourlyMode === 'spray' ? 'bg-tractorPrimary text-white shadow' : 'text-slate-400 hover:text-white'
         }`;
     }
     if (btnFrost) {
-        btnFrost.className = `h-10 rounded-lg text-xs font-bold transition cursor-pointer flex items-center justify-center gap-1.5 ${
+        btnFrost.className = `h-9 rounded-lg text-xs font-bold transition cursor-pointer flex items-center justify-center gap-1.5 ${
             activeHourlyMode === 'frost' ? 'bg-blue-600 text-white shadow' : 'text-slate-400 hover:text-white'
         }`;
     }
     if (btnTsum) {
-        btnTsum.className = `h-10 rounded-lg text-xs font-bold transition cursor-pointer flex items-center justify-center gap-1.5 ${
+        btnTsum.className = `h-9 rounded-lg text-xs font-bold transition cursor-pointer flex items-center justify-center gap-1.5 ${
             activeHourlyMode === 'tsum' ? 'bg-tractorPrimary text-white shadow' : 'text-slate-400 hover:text-white'
         }`;
     }
     if (btnMold) {
-        btnMold.className = `h-10 rounded-lg text-xs font-bold transition cursor-pointer flex items-center justify-center gap-1.5 ${
+        btnMold.className = `h-9 rounded-lg text-xs font-bold transition cursor-pointer flex items-center justify-center gap-1.5 ${
             activeHourlyMode === 'mold' ? 'bg-indigo-600 text-white shadow' : 'text-slate-400 hover:text-white'
         }`;
     }
 
-    // REŽIMŲ PERJUNGIMO LOGIKA
     if (activeHourlyMode === 'tsum') {
         if (sprayBox) sprayBox.classList.add('hidden');
         if (hourlyCard) hourlyCard.classList.add('hidden');

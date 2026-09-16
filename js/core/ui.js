@@ -30,6 +30,7 @@ export function switchTab(tabIndex) {
         }
     });
 
+    // 1. Šoninis meniu (desktop)
     document.querySelectorAll('.nav-tab-btn').forEach(btn => {
         const btnTab = parseInt(btn.getAttribute('data-tab'));
         if (btnTab === tabIndex) {
@@ -40,6 +41,28 @@ export function switchTab(tabIndex) {
             btn.classList.add('text-slate-300', 'hover:text-white', 'hover:bg-tractorCard');
         }
     });
+
+    // 2. 🌟 MOBILI APATINĖ JUOSTA: užtikriname, kad TIK VIENAS mygtukas būtų žalias!
+    const isUkis = (tabIndex >= 2 && tabIndex <= 6) || tabIndex === 10;
+    const isBendruomene = tabIndex === 7 || tabIndex === 8;
+
+    setMobileBtnActive('btn-mobile-skaiciuokles-menu', tabIndex === 0);
+    setMobileBtnActive('btn-mobile-weather-nav', tabIndex === 1);
+    setMobileBtnActive('btn-mobile-ukis-menu', isUkis);
+    setMobileBtnActive('btn-mobile-bendruomene-menu', isBendruomene);
+    setMobileBtnActive('btn-mobile-settings-nav', tabIndex === 9);
+}
+
+function setMobileBtnActive(id, isActive) {
+    const btn = document.getElementById(id);
+    if (!btn) return;
+    if (isActive) {
+        btn.classList.add('bg-tractorPrimary', 'text-white', 'shadow');
+        btn.classList.remove('text-slate-300', 'hover:text-white');
+    } else {
+        btn.classList.remove('bg-tractorPrimary', 'text-white', 'shadow');
+        btn.classList.add('text-slate-300', 'hover:text-white');
+    }
 }
 
 export function showBottomToast(message, type = 'success') {

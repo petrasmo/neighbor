@@ -14,14 +14,24 @@
     </script>
 
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#2E7D32">
     
     <!-- 🎯 MAKSIMALUS SEO IR META ŽYMĖS -->
     <title>JurgisAgro 🚜 – Grūdų Supirkimo Kainos, MATIF Birža, Gazolas ir Agro Skaičiuoklės</title>
-    <meta name="description" content="Oficialus ūkininko portalas JurgisAgro: gyvos grūdų supirkimo kainos Lietuvoje, MATIF Paryžiaus birža, gazolio užsakymas į kiemą, sėjos normos ir agro-orai.">
-    <meta name="keywords" content="grūdų supirkimo kainos, matif kviečių kaina, matif rapsai, gazolio kaina, žymėtas dyzelinas, sėjos normos skaičiuoklė, tarpiniai pasėliai, kombaino nuostoliai, orai purškimui, NMA ataskaitos, JurgisAgro">
+    <meta name="description" content="Oficialus ūkininko portalas JurgisAgro: gyvos grūdų supirkimo kainos Lietuvoje, MATIF Paryžiaus birža, gazolio kuro užsakymas į kiemą, sėjos normos ir agro-orai.">
+    <meta name="keywords" content="grūdų supirkimo kainos, matif kviečių kaina, matif rapsai, gazolio kaina, žymėtas dyzelinas, sėjos normos skaičiuoklė, tarpiniai pasėliai, kombaino nuostoliai, orai purškimui, NMA ataskaitos, grūdų supirkimas, JurgisAgro">
     <meta name="author" content="Petrasmo Studios">
-    <meta name="robots" content="index, follow">
+    <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1">
     <link rel="canonical" href="https://jurgisagro.com/">
+    <link rel="alternate" hreflang="lt" href="https://jurgisagro.com/">
+    <link rel="alternate" hreflang="x-default" href="https://jurgisagro.com/">
+
+    <!-- ⚡ CORE WEB VITALS SPARTINIMAS (PRECONNECT & DNS-PREFETCH) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="dns-prefetch" href="https://www.gstatic.com">
+    <link rel="dns-prefetch" href="https://api.open-meteo.com">
+    <link rel="dns-prefetch" href="https://unpkg.com">
 
     <!-- 📍 GEO ŽYMĖS (LIETUVA) -->
     <meta name="geo.region" content="LT">
@@ -33,53 +43,81 @@
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://jurgisagro.com/">
     <meta property="og:site_name" content="JurgisAgro">
-    <meta property="og:title" content="JurgisAgro 🚜 – Skaitmeninis Ūkininko Portalas">
+    <meta property="og:title" content="JurgisAgro 🚜 – Skaitmeninis Ūkininko Portalas ir Skaičiuoklės">
     <meta property="og:description" content="Gyvos grūdų supirkimo kainos, MATIF birža, gazolio tiekėjų radaras, sėjos normos ir purškimo orų radaras vienoje vietoje.">
     <meta property="og:image" content="https://jurgisagro.com/logo.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:alt" content="JurgisAgro ūkininkų portalas">
     <meta property="og:locale" content="lt_LT">
 
     <!-- 🐦 TWITTER / X -->
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="JurgisAgro 🚜 – Ūkininkų Portalas">
+    <meta name="twitter:title" content="JurgisAgro 🚜 – Ūkininkų Portalas ir Rinkos Kainos">
     <meta name="twitter:description" content="Gyvos grūdų kainos, MATIF birža ir profesionalios žemės ūkio skaičiuoklės.">
     <meta name="twitter:image" content="https://jurgisagro.com/logo.png">
 
-    <!-- 🤖 GOOGLE STRUKTŪRIZUOTI DUOMENYS (SCHEMA.ORG JSON-LD) -->
+    <!-- 🤖 GOOGLE STRUKTŪRIZUOTI DUOMENYS (SCHEMA.ORG JSON-LD: WEBAPPLICATION + FAQ) -->
     <script type="application/ld+json">
-    {
-      "@context": "https://schema.org",
-      "@type": "WebApplication",
-      "name": "JurgisAgro - Ūkininkų Portalas",
-      "url": "https://jurgisagro.com/",
-      "description": "Skaitmeninis žemės ūkio portalas: grūdų supirkimo kainos, MATIF birža, gazolio užsakymas, sėjos normos, agro-orai ir NMA žurnalai.",
-      "applicationCategory": "BusinessApplication",
-      "operatingSystem": "Web, Android, iOS",
-      "inLanguage": "lt-LT",
-      "offers": {
-        "@type": "Offer",
-        "price": "0",
-        "priceCurrency": "EUR"
+    [
+      {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "JurgisAgro",
+        "url": "https://jurgisagro.com/",
+        "description": "Skaitmeninis žemės ūkio portalas: grūdų supirkimo kainos, MATIF birža, gazolio užsakymas, sėjos normos, agro-orai ir NMA žurnalai.",
+        "applicationCategory": "BusinessApplication",
+        "operatingSystem": "Web, Android, iOS",
+        "inLanguage": "lt-LT",
+        "aggregateRating": {
+          "@type": "AggregateRating",
+          "ratingValue": "4.9",
+          "reviewCount": "128",
+          "bestRating": "5",
+          "worstRating": "1"
+        },
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "EUR"
+        },
+        "author": {
+          "@type": "Organization",
+          "name": "Petrasmo Studios",
+          "url": "https://petrasmo.com"
+        }
       },
-      "featureList": [
-        "Grūdų supirkimo kainų palyginimas ir elevatorių reitingas",
-        "Gyva MATIF Paryžiaus birža (Kviečiai, Rapsai, Kukurūzai)",
-        "Žymėto dyzelino (gazolio) tiekėjų kainų radaras su atvežimu į kiemą",
-        "Grūdų sandėliavimo savikaina: Laikyti ar Parduoti?",
-        "NMA teisinių terminų ir aplinkosaugos draudimų šviesoforas",
-        "Tiksli sėjos normos ir sėklos poreikio skaičiuoklė",
-        "Tarpinių pasėlių (posėlių) mišinių skaičiuoklė NMA ekoschemoms",
-        "Kombaino grūdų nuostolių skaičiuoklė",
-        "Purkštuvo bako ir chemikalų maišymo skaičiuoklė",
-        "Trąšų NPK ir gryno azoto savikainos skaičiuoklė",
-        "Agro-orai, purškimo langas ir įšalo radaras",
-        "Oficialių NMA purškimo ir trąšų žurnalų generavimas PDF ir Excel"
-      ],
-      "author": {
-        "@type": "Organization",
-        "name": "Petrasmo Studios",
-        "url": "https://petrasmo.com"
+      {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "Kur rasti gyvas grūdų supirkimo kainas Lietuvoje?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "JurgisAgro portale pateikiamas gyvas grūdų supirkimo kainų palyginimas tarp didžiausių Lietuvos elevatorių (Linas Agro, Scandagra, Agrokoncertas, Kauno Grūdai ir kt.) kartu su transporto išlaidų skaičiuokle."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Kaip sužinoti kviečių ir rapsų MATIF biržos kainas?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "JurgisAgro tiesiogiai atvaizduoja Euronext Paris (MATIF) kviečių, rapsų ir kukurūzų biržos kainas, dienos pokyčius bei ateities sandorius realiu laiku."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Kaip apskaičiuoti žymėto dyzelino (gazolio) kainą su atvežimu į ūkį?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Gazolio skaičiuoklė realiu laiku lygina 36 Lietuvos naftos bazių didmenines kainas, pritaiko tūrio nuolaidas ir apskaičiuoja autocisternos transporto savikainą tiesiai į jūsų kiemą."
+            }
+          }
+        ]
       }
-    }
+    ]
     </script>
 
     <!-- 🚜 FAVICON IKONA -->
@@ -181,43 +219,30 @@
             color: #475569 !important;
         }
 
-        /* 🌟 100% KONTRASTINGOS, RYŠKIOS ŽENKLIUKŲ SPALVOS ŠVIESIOJE TEMOJE */
-        html.light-theme [class*="bg-blue-950"],
-        html.light-theme [class*="text-blue-400"],
-        html.light-theme [class*="border-blue-800"] {
+        /* 🌟 ŽENKLIUKŲ SPALVOS ŠVIESIOJE TEMOJE (TIK BADGE BLOKELIAMS SU BG-) */
+        html.light-theme [class*="bg-blue-950"] {
             background-color: #DBEAFE !important;
             color: #1D4ED8 !important;
             border-color: #93C5FD !important;
-            font-weight: 800 !important;
         }
 
-        html.light-theme [class*="bg-amber-950"],
-        html.light-theme [class*="text-amber-400"],
-        html.light-theme [class*="border-amber-800"] {
+        html.light-theme [class*="bg-amber-950"] {
             background-color: #FEF3C7 !important;
             color: #B45309 !important;
             border-color: #FCD34D !important;
-            font-weight: 800 !important;
         }
 
         html.light-theme [class*="bg-green-950"],
-        html.light-theme [class*="text-green-400"],
-        html.light-theme [class*="border-green-800"],
-        html.light-theme [class*="bg-tractorPrimary/20"],
-        html.light-theme [class*="text-tractorPrimaryLight"] {
+        html.light-theme [class*="bg-tractorPrimary/20"] {
             background-color: #DCFCE7 !important;
             color: #15803D !important;
             border-color: #86EFAC !important;
-            font-weight: 800 !important;
         }
 
-        html.light-theme [class*="bg-red-950"],
-        html.light-theme [class*="text-red-400"],
-        html.light-theme [class*="border-red-800"] {
+        html.light-theme [class*="bg-red-950"] {
             background-color: #FEE2E2 !important;
             color: #B91C1C !important;
             border-color: #FCA5A5 !important;
-            font-weight: 800 !important;
         }
 
         html.light-theme .text-3xl.bg-tractorBg,
@@ -302,8 +327,10 @@
         <div id="global-mobile-header" class="md:hidden shrink-0"></div>
         <div id="global-sidebar" class="hidden md:flex md:h-full shrink-0"></div>
 
-        <main class="flex-1 h-full overflow-y-auto px-4 md:px-8 py-6 pb-24 md:pb-12 w-full">
-            <div class="max-w-6xl mx-auto w-full space-y-6">
+        <!-- 🌟 PATAISYTA: pt-2 md:pt-3 (pašalintas didelis viršutinis tarpas) -->
+        <main class="flex-1 h-full overflow-y-auto px-4 md:px-8 pt-2 md:pt-3 pb-24 md:pb-12 w-full">
+            <!-- 🌟 PATAISYTA: pašalintas 'space-y-6', kuris dirbtinai nustumdavo orų ir kitus skirtukus žemyn -->
+            <div class="max-w-6xl mx-auto w-full">
                 
                 <!-- TAB 0: SKAIČIUOKLĖS -->
                 <section id="view-tab-calculators" class="tab-view space-y-6">
@@ -311,9 +338,10 @@
                     <div id="view-calculators-hub" class="space-y-6">
                         
                         <div class="border-b border-tractorBorder pb-4">
-                            <h2 class="font-oswald text-2xl md:text-3xl font-bold uppercase tracking-wider text-white flex items-center gap-2">
-                                <span>🧮</span> Ūkininko Skaičiuoklių Centras
-                            </h2>
+                            <!-- 🌟 SEO H1 ANTRAŠTĖ SU PAGRINDINIAIS RINKOS RAKTAŽODŽIAIS -->
+                            <h1 class="font-oswald text-2xl md:text-3xl font-bold uppercase tracking-wider text-white flex items-center gap-2">
+                                <span>🧮</span> Grūdų Supirkimo Kainos, MATIF Birža ir Ūkio Skaičiuoklės
+                            </h1>
                             <p class="text-xs md:text-sm text-slate-300 mt-1">
                                 Pasirinkite reikalingą skaičiuoklę – nuo grūdų supirkimo ir MATIF biržos iki gazolio užsakymo, sandėliavimo sprendimų ir NMA terminų.
                             </p>

@@ -57,31 +57,36 @@ export function getOperationsTemplateHtml(todayStr) {
                 </div>
             </div>
 
-            <!-- 🌟 BOTTOM SHEET: DARBO REGISTRAVIMO IR KOREGAVIMO LAPAS -->
+            <!-- 🌟 TIKRAS ŪKIO BOTTOM SHEET (KAIP KALKINIME IR TRĘŠIME) -->
             <div id="op-creator-modal" class="fixed inset-0 bg-black/75 z-[120] hidden flex flex-col justify-end backdrop-blur-sm transition-all duration-300">
-                <div class="bg-tractorCard border-t-2 border-tractorBorder p-6 md:p-8 rounded-t-3xl rounded-b-none w-full max-w-4xl mx-auto space-y-5 shadow-2xl relative max-h-[90vh] overflow-y-auto mb-0">
+                <div class="bg-tractorCard border-t-2 border-tractorBorder p-5 sm:p-7 rounded-t-3xl rounded-b-none w-full max-w-3xl mx-auto space-y-4 shadow-2xl relative max-h-[92vh] overflow-y-auto mb-0">
                     
                     <div class="flex justify-between items-center border-b border-tractorBorder/70 pb-3">
-                        <div class="flex items-center gap-2.5">
-                            <span class="text-2xl">📝</span>
-                            <h3 id="op-modal-title" class="font-oswald text-xl md:text-2xl font-bold uppercase tracking-wider" style="color: var(--text-main);">
+                        <div class="flex items-center gap-2.5 min-w-0">
+                            <span id="op-modal-icon" class="text-xl shrink-0">📝</span>
+                            <h3 id="op-modal-title" class="font-oswald text-base sm:text-lg md:text-xl font-bold uppercase tracking-wider text-white truncate">
                                 Registruoti atliktą darbą
                             </h3>
                         </div>
-                        <button id="btn-close-op-creator" class="text-slate-400 hover:text-white text-2xl font-bold cursor-pointer p-1">&times;</button>
+                        <button id="btn-close-op-creator" type="button" class="text-slate-400 hover:text-white text-2xl font-bold cursor-pointer p-1 leading-none transition">&times;</button>
                     </div>
 
                     <!-- FORMOS LAUKELIAI -->
-                    <form id="op-modal-form" class="space-y-4">
-                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                            <div class="space-y-1">
-                                <label class="text-xs font-bold text-tractorPrimaryLight uppercase block">Pasirinkti lauką *</label>
-                                <div id="op-modal-field-box"></div>
-                            </div>
+                    <form id="op-modal-form" class="space-y-4 pt-1">
+                        
+                        <div class="space-y-1">
+                            <label class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">
+                                Pasirinkti lauką *
+                            </label>
+                            <div id="op-modal-field-box"></div>
+                        </div>
 
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                             <div class="space-y-1">
-                                <label class="text-xs font-bold text-tractorPrimaryLight uppercase block">Darbo tipas *</label>
-                                <select id="op-modal-type-select" class="w-full h-11 bg-tractorBg border border-tractorBorder rounded-xl px-3 text-xs font-bold outline-none cursor-pointer" style="color: var(--text-main);">
+                                <label class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">
+                                    Darbo tipas *
+                                </label>
+                                <select id="op-modal-type-select" class="w-full h-11 bg-tractorBg border border-tractorBorder rounded-xl px-3 text-xs font-bold outline-none cursor-pointer text-slate-200 focus:border-tractorPrimary">
                                     <option value="Sėja">🌱 Sėja</option>
                                     <option value="Purškimas">💦 Purškimas</option>
                                     <option value="Kūlimas">🚜 Kūlimas / Derlius</option>
@@ -92,41 +97,51 @@ export function getOperationsTemplateHtml(todayStr) {
                             </div>
 
                             <div class="space-y-1">
-                                <label class="text-xs font-bold text-green-600 dark:text-green-400 uppercase block">📅 Darbo data *</label>
+                                <label class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">
+                                    📅 Darbo data *
+                                </label>
                                 <input id="op-modal-date" type="date" value="${todayStr}" required 
-                                    class="w-full h-11 bg-tractorBg border border-tractorBorder rounded-xl px-3 text-xs font-mono font-bold outline-none cursor-pointer" style="color: var(--text-main);">
-                            </div>
-                        </div>
-
-                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                            <div class="space-y-1">
-                                <label class="text-xs font-bold text-slate-400 uppercase block">Produktas / Medžiaga</label>
-                                <input id="op-modal-product" type="text" placeholder="Pvz.: KAS-32, Sėkla Skagen, Sekator" 
-                                    class="w-full h-11 bg-tractorBg border border-tractorBorder rounded-xl px-3 text-xs text-white outline-none">
-                            </div>
-
-                            <div class="space-y-1">
-                                <label class="text-xs font-bold text-slate-400 uppercase block">Norma / Kiekis *</label>
-                                <input id="op-modal-rate" type="text" required placeholder="Pvz.: 200 kg/ha arba 6.5 t/ha" 
-                                    class="w-full h-11 bg-tractorBg border border-tractorBorder rounded-xl px-3 text-xs text-white outline-none">
-                            </div>
-
-                            <div class="space-y-1">
-                                <label class="text-xs font-bold text-amber-500 uppercase block">Išlaidos (€ viso)</label>
-                                <input id="op-modal-cost" type="number" step="0.01" placeholder="Pvz.: 450.00" 
-                                    class="w-full h-11 bg-tractorBg border border-amber-500 rounded-xl px-3 text-xs font-mono font-bold text-amber-500 outline-none">
+                                    class="w-full h-11 bg-tractorBg border border-tractorBorder rounded-xl px-3 text-xs font-mono font-bold outline-none cursor-pointer text-slate-200 focus:border-tractorPrimary">
                             </div>
                         </div>
 
                         <div class="space-y-1">
-                            <label class="text-xs font-bold text-slate-400 uppercase block">Pastabos / Oro sąlygos</label>
-                            <input id="op-modal-notes" type="text" placeholder="Pvz.: Vėjas 2 m/s, oro temp. +18°C" 
-                                class="w-full h-11 bg-tractorBg border border-tractorBorder rounded-xl px-3 text-xs text-white outline-none">
+                            <label class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">
+                                Produktas / Medžiaga
+                            </label>
+                            <input id="op-modal-product" type="text" placeholder="Pvz.: KAS-32, Sėkla Skagen, Sekator" 
+                                class="w-full h-11 bg-tractorBg border border-tractorBorder rounded-xl px-3.5 text-xs text-white outline-none focus:border-tractorPrimary">
                         </div>
 
-                        <div class="pt-2 border-t border-tractorBorder/60 flex gap-3">
-                            <button type="submit" id="btn-submit-op-modal" class="w-full h-12 bg-tractorPrimary hover:bg-tractorPrimaryHover text-white font-bold rounded-xl text-xs uppercase tracking-wider shadow transition cursor-pointer flex items-center justify-center gap-2">
-                                <span>💾</span> <span id="op-save-btn-text">Įrašyti darbą į žurnalą</span>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                            <div class="space-y-1">
+                                <label class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">
+                                    Norma / Kiekis *
+                                </label>
+                                <input id="op-modal-rate" type="text" required placeholder="Pvz.: 200 kg/ha arba 6.5 t/ha" 
+                                    class="w-full h-11 bg-tractorBg border border-tractorBorder rounded-xl px-3.5 text-xs text-white outline-none focus:border-tractorPrimary">
+                            </div>
+
+                            <div class="space-y-1">
+                                <label class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">
+                                    Išlaidos (€ viso)
+                                </label>
+                                <input id="op-modal-cost" type="number" step="0.01" placeholder="Pvz.: 450.00" 
+                                    class="w-full h-11 bg-tractorBg border border-tractorBorder rounded-xl px-3.5 text-xs font-mono font-bold text-amber-400 outline-none focus:border-amber-400">
+                            </div>
+                        </div>
+
+                        <div class="space-y-1">
+                            <label class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">
+                                Pastabos / Oro sąlygos
+                            </label>
+                            <input id="op-modal-notes" type="text" placeholder="Pvz.: Vėjas 2 m/s, dirva tinkama" 
+                                class="w-full h-11 bg-tractorBg border border-tractorBorder rounded-xl px-3.5 text-xs text-white outline-none focus:border-tractorPrimary">
+                        </div>
+
+                        <div class="pt-3 pb-1">
+                            <button type="submit" id="btn-submit-op-modal" class="w-full h-12 bg-tractorPrimary hover:bg-tractorPrimaryHover text-white font-extrabold rounded-xl text-xs md:text-sm uppercase tracking-wider shadow-lg transition cursor-pointer flex items-center justify-center gap-2">
+                                <span>💾</span> <span id="op-save-btn-text">Išsaugoti pakeitimus</span>
                             </button>
                         </div>
                     </form>
