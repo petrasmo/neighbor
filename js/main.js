@@ -43,12 +43,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     document.querySelectorAll('.login-trigger-btn').forEach(btn => btn.addEventListener('click', () => openAuthModal('login')));
 
-    // Navigacija su visais tab indeksais (0 iki 10)
+    // Navigacija su visais tab indeksais
     document.querySelectorAll('.nav-tab-btn').forEach(btn => {
         btn.addEventListener('click', () => {
             const tabIdx = parseInt(btn.getAttribute('data-tab'));
 
-            // 🌟 PATAISYTA: Apsauga neprisijungusiam vartotojui apima ir Tab 10
             if (!currentUser && ((tabIdx >= 2 && tabIdx <= 6) || tabIdx === 10 || tabIdx === 8 || tabIdx === 9)) {
                 showDialog(
                     "Reikalingas prisijungimas",
@@ -68,7 +67,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 initFieldsManager(currentUser, userData);
                 setTimeout(() => refreshFieldsMap(), 150);
             } else if (tabIdx === 10) {
-                initCropPlannerTab(currentUser, userData); // 👈 Sėjomaina ir GAAB 7
+                initCropPlannerTab(currentUser, userData); // Sėjomaina ir GAAB 7
             } else if (tabIdx === 3) {
                 initVraFertilizerTab(currentUser, userData);
             } else if (tabIdx === 4) {
@@ -197,7 +196,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 } else {
                     switchTab(requestedTab);
                     if (requestedTab === 2) refreshFieldsMap();
-                    if (requestedTab === 10) initCropPlannerTab(currentUser, userData); // 👈 Užsikrauna ir per URL
+                    if (requestedTab === 10) initCropPlannerTab(currentUser, userData);
                     if (requestedTab === 3) initVraFertilizerTab(currentUser, userData);
                     if (requestedTab === 4) initLimingSoilTab(currentUser, userData);
                     if (requestedTab === 5) initOperationsJournalTab(currentUser, userData);
@@ -351,7 +350,7 @@ function setupCalculatorsHub() {
     if (openStorageBtn) openStorageBtn.onclick = () => {
         hideAll();
         storageView?.classList.remove('hidden');
-        renderStorageCalculator(document.getElementById('storage-calc-content'));
+        renderStorageCalculator(document.getElementById('storage-calc-content'), currentUser, userData);
         window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 

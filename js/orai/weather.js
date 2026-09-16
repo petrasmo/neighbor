@@ -5,13 +5,14 @@ import { openAuthModal } from '../core/auth.js';
 import { switchTab } from '../core/ui.js';
 import { refreshSettingsMap } from '../sistema/settings.js';
 import { renderTSumRadar } from '../ukis/tsumRadar.js';
+import { renderWinterProtectionRadar } from './winterProtectionRadar.js';
 
 let currentWeatherCoords = { lat: 54.6872, lng: 25.2797, name: "Nustatoma vieta..." };
 let userFieldsList = [];
 let cachedCurrentWeather = null;
 let cachedHourlyWeather = null;
 let cachedCurrentHourIdx = 0;
-let activeHourlyMode = 'spray'; // 'spray', 'frost' arba 'tsum'
+let activeHourlyMode = 'spray'; // 'spray', 'frost', 'tsum' arba 'mold'
 let cachedCurrentUser = null;
 let cachedUserData = null;
 
@@ -51,7 +52,7 @@ export async function initWeatherTab(currentUser, userData) {
     container.innerHTML = `
         <div class="space-y-6 max-w-6xl mx-auto w-full">
             
-            <!-- 1. VIRŠUTINĖ KORTELĖ (VIETA + 3 REŽIMŲ MYGTUKAI) -->
+            <!-- 1. VIRŠUTINĖ KORTELĖ (VIETA + 4 REŽIMŲ MYGTUKAI) -->
             <div id="weather-top-unified-card" class="bg-tractorSurface border border-tractorBorder rounded-2xl p-6 md:p-7 shadow-xl space-y-5">
                 
                 <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-tractorBorder/70 pb-4">
@@ -90,28 +91,31 @@ export async function initWeatherTab(currentUser, userData) {
                     </div>
                 ` : ''}
 
-                <!-- VIETA IR 3 REŽIMAI -->
+                <!-- VIETA IR 4 REŽIMAI -->
                 <div class="grid grid-cols-1 md:grid-cols-12 gap-4 bg-tractorBg/80 p-4 rounded-xl border border-tractorBorder items-center">
-                    <div class="md:col-span-5 space-y-1" id="weather-field-select-wrapper">
+                    <div class="md:col-span-4 space-y-1" id="weather-field-select-wrapper">
                         <label class="text-xs font-bold text-tractorPrimaryLight uppercase tracking-wider block">
                             🌾 Pasirinkite lauką / vietą:
                         </label>
                         <div id="weather-field-select-box" class="w-full"></div>
                     </div>
 
-                    <div class="md:col-span-7 space-y-1">
+                    <div class="md:col-span-8 space-y-1">
                         <label class="text-xs font-bold text-tractorPrimaryLight uppercase tracking-wider block">
                             🎯 Pasirinkite norimą režimą:
                         </label>
-                        <div class="flex items-center gap-1.5 bg-tractorSurface p-1 rounded-xl border border-tractorBorder h-12">
-                            <button type="button" id="btn-mode-spray" class="flex-1 h-full rounded-lg text-xs font-bold transition cursor-pointer flex items-center justify-center gap-1.5 ${activeHourlyMode === 'spray' ? 'bg-tractorPrimary text-white shadow' : 'text-slate-400 hover:text-white'}">
-                                <span>💦</span> <span class="hidden sm:inline">Purškimo</span><span>langas</span>
+                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-1.5 bg-tractorSurface p-1 rounded-xl border border-tractorBorder min-h-[48px]">
+                            <button type="button" id="btn-mode-spray" class="h-10 rounded-lg text-xs font-bold transition cursor-pointer flex items-center justify-center gap-1.5 ${activeHourlyMode === 'spray' ? 'bg-tractorPrimary text-white shadow' : 'text-slate-400 hover:text-white'}">
+                                <span>💦</span> <span class="truncate">Purškimo langas</span>
                             </button>
-                            <button type="button" id="btn-mode-frost" class="flex-1 h-full rounded-lg text-xs font-bold transition cursor-pointer flex items-center justify-center gap-1.5 ${activeHourlyMode === 'frost' ? 'bg-blue-600 text-white shadow' : 'text-slate-400 hover:text-white'}">
-                                <span>❄️</span> <span class="hidden sm:inline">Šalčio ir</span><span>įšalas</span>
+                            <button type="button" id="btn-mode-frost" class="h-10 rounded-lg text-xs font-bold transition cursor-pointer flex items-center justify-center gap-1.5 ${activeHourlyMode === 'frost' ? 'bg-blue-600 text-white shadow' : 'text-slate-400 hover:text-white'}">
+                                <span>❄️</span> <span class="truncate">Šalčio ir įšalas</span>
                             </button>
-                            <button type="button" id="btn-mode-tsum" class="flex-1 h-full rounded-lg text-xs font-bold transition cursor-pointer flex items-center justify-center gap-1.5 ${activeHourlyMode === 'tsum' ? 'bg-tractorPrimary text-white shadow' : 'text-slate-400 hover:text-white'}">
-                                <span>🌱</span> <span>Vegetacija (T-Sum)</span>
+                            <button type="button" id="btn-mode-tsum" class="h-10 rounded-lg text-xs font-bold transition cursor-pointer flex items-center justify-center gap-1.5 ${activeHourlyMode === 'tsum' ? 'bg-tractorPrimary text-white shadow' : 'text-slate-400 hover:text-white'}">
+                                <span>🌱</span> <span class="truncate">Vegetacija (T-Sum)</span>
+                            </button>
+                            <button type="button" id="btn-mode-mold" class="h-10 rounded-lg text-xs font-bold transition cursor-pointer flex items-center justify-center gap-1.5 ${activeHourlyMode === 'mold' ? 'bg-indigo-600 text-white shadow' : 'text-slate-400 hover:text-white'}">
+                                <span>🧊</span> <span class="truncate">Pelėsis ir pluta</span>
                             </button>
                         </div>
                     </div>
@@ -123,10 +127,13 @@ export async function initWeatherTab(currentUser, userData) {
                 </div>
             </div>
 
-            <!-- 2. T-SUM VISŲ LAUKŲ RADARAS (RODOMAS TIK KAI REŽIMAS = TSUM) -->
+            <!-- 2. T-SUM VISŲ LAUKŲ RADARAS -->
             <div id="weather-tsum-container" class="hidden space-y-6"></div>
 
-            <!-- 3. VALANDINĖ PROGNOZĖ (PURŠKIMUI IR ĮŠALUI) -->
+            <!-- 3. SNIEGO PELĖSIO IR LEDO PLUTOS VISŲ LAUKŲ RADARAS -->
+            <div id="weather-mold-container" class="hidden space-y-6"></div>
+
+            <!-- 4. VALANDINĖ PROGNOZĖ (PURŠKIMUI IR ĮŠALUI) -->
             <div id="weather-hourly-card" class="bg-tractorSurface border border-tractorBorder rounded-2xl p-6 md:p-7 shadow-xl space-y-4">
                 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-tractorBorder/70 pb-3">
                     <div>
@@ -144,7 +151,7 @@ export async function initWeatherTab(currentUser, userData) {
                 </div>
             </div>
 
-            <!-- 4. AGRONOMINĖS TAISYKLĖS -->
+            <!-- 5. AGRONOMINĖS TAISYKLĖS -->
             <div class="grid grid-cols-1 md:grid-cols-3 gap-5" id="soil-and-agri-conditions"></div>
 
         </div>
@@ -160,6 +167,10 @@ export async function initWeatherTab(currentUser, userData) {
     });
     document.getElementById('btn-mode-tsum')?.addEventListener('click', () => {
         activeHourlyMode = 'tsum';
+        updateModeUI();
+    });
+    document.getElementById('btn-mode-mold')?.addEventListener('click', () => {
+        activeHourlyMode = 'mold';
         updateModeUI();
     });
 
@@ -198,47 +209,60 @@ function updateModeUI() {
     const btnSpray = document.getElementById('btn-mode-spray');
     const btnFrost = document.getElementById('btn-mode-frost');
     const btnTsum = document.getElementById('btn-mode-tsum');
+    const btnMold = document.getElementById('btn-mode-mold');
 
     const sprayBox = document.getElementById('live-spray-inner-box');
     const tsumContainer = document.getElementById('weather-tsum-container');
+    const moldContainer = document.getElementById('weather-mold-container');
     const hourlyCard = document.getElementById('weather-hourly-card');
     const agriConditions = document.getElementById('soil-and-agri-conditions');
-    const fieldSelectWrapper = document.getElementById('weather-field-select-wrapper');
 
-    // Mygtukų stiliai
+    // Mygtukų stilių atnaujinimas
     if (btnSpray) {
-        btnSpray.className = `flex-1 h-full rounded-lg text-xs font-bold transition cursor-pointer flex items-center justify-center gap-1.5 ${
+        btnSpray.className = `h-10 rounded-lg text-xs font-bold transition cursor-pointer flex items-center justify-center gap-1.5 ${
             activeHourlyMode === 'spray' ? 'bg-tractorPrimary text-white shadow' : 'text-slate-400 hover:text-white'
         }`;
     }
     if (btnFrost) {
-        btnFrost.className = `flex-1 h-full rounded-lg text-xs font-bold transition cursor-pointer flex items-center justify-center gap-1.5 ${
+        btnFrost.className = `h-10 rounded-lg text-xs font-bold transition cursor-pointer flex items-center justify-center gap-1.5 ${
             activeHourlyMode === 'frost' ? 'bg-blue-600 text-white shadow' : 'text-slate-400 hover:text-white'
         }`;
     }
     if (btnTsum) {
-        btnTsum.className = `flex-1 h-full rounded-lg text-xs font-bold transition cursor-pointer flex items-center justify-center gap-1.5 ${
+        btnTsum.className = `h-10 rounded-lg text-xs font-bold transition cursor-pointer flex items-center justify-center gap-1.5 ${
             activeHourlyMode === 'tsum' ? 'bg-tractorPrimary text-white shadow' : 'text-slate-400 hover:text-white'
         }`;
     }
-
-    // 🌟 PATAISYMAS: Visada 100% nepermatomas (jokio opacity 0.4!)
-    if (fieldSelectWrapper) {
-        fieldSelectWrapper.style.opacity = '1';
+    if (btnMold) {
+        btnMold.className = `h-10 rounded-lg text-xs font-bold transition cursor-pointer flex items-center justify-center gap-1.5 ${
+            activeHourlyMode === 'mold' ? 'bg-indigo-600 text-white shadow' : 'text-slate-400 hover:text-white'
+        }`;
     }
 
-    // REŽIMŲ TURINIO VALDYMAS
+    // REŽIMŲ PERJUNGIMO LOGIKA
     if (activeHourlyMode === 'tsum') {
         if (sprayBox) sprayBox.classList.add('hidden');
         if (hourlyCard) hourlyCard.classList.add('hidden');
         if (agriConditions) agriConditions.classList.add('hidden');
+        if (moldContainer) moldContainer.classList.add('hidden');
 
         if (tsumContainer) {
             tsumContainer.classList.remove('hidden');
             renderTSumRadar(tsumContainer, cachedCurrentUser, cachedUserData);
         }
+    } else if (activeHourlyMode === 'mold') {
+        if (sprayBox) sprayBox.classList.add('hidden');
+        if (hourlyCard) hourlyCard.classList.add('hidden');
+        if (agriConditions) agriConditions.classList.add('hidden');
+        if (tsumContainer) tsumContainer.classList.add('hidden');
+
+        if (moldContainer) {
+            moldContainer.classList.remove('hidden');
+            renderWinterProtectionRadar(moldContainer, cachedCurrentUser, cachedUserData);
+        }
     } else {
         if (tsumContainer) tsumContainer.classList.add('hidden');
+        if (moldContainer) moldContainer.classList.add('hidden');
         if (sprayBox) sprayBox.classList.remove('hidden');
         if (hourlyCard) hourlyCard.classList.remove('hidden');
         if (agriConditions) agriConditions.classList.remove('hidden');
@@ -534,7 +558,7 @@ function updateHourlyGrid() {
             }
 
             items.push(`
-                <div class="bg-tractorBg border ${isCurrentHour ? 'border-blue-500 ring-2 ring-blue-500' : 'border-tractorBorder'} rounded-xl p-3 text-center space-y-1.5 flex flex-col justify-between">
+                <div class="bg-tractorBg border ${isCurrentHour ? 'border-blue-500 ring-2 ring-blue-500' : 'border-tractorBorder'} rounded-xl p-3 text-center space-y-1.5 flex flex-col justify-between text-xs">
                     <div class="border-b border-tractorBorder/60 pb-1">
                         <span class="text-[10px] text-slate-500 uppercase block font-bold">${isCurrentHour ? 'DABAR' : dayName}</span>
                         <strong class="text-sm font-mono font-extrabold block" style="color: var(--text-main);">${String(hour).padStart(2, '0')}:00</strong>
@@ -558,7 +582,7 @@ function updateHourlyGrid() {
             const evalResult = evaluateSprayCondition(windSpeedMs, windGustsMs, tempC, rainProb, rainMm);
 
             items.push(`
-                <div class="bg-tractorBg border ${isCurrentHour ? 'border-tractorPrimary ring-2 ring-tractorPrimary' : 'border-tractorBorder'} rounded-xl p-3 text-center space-y-1.5 flex flex-col justify-between">
+                <div class="bg-tractorBg border ${isCurrentHour ? 'border-tractorPrimary ring-2 ring-tractorPrimary' : 'border-tractorBorder'} rounded-xl p-3 text-center space-y-1.5 flex flex-col justify-between text-xs">
                     <div class="border-b border-tractorBorder/60 pb-1">
                         <span class="text-[10px] text-slate-500 uppercase block font-bold">${isCurrentHour ? 'DABAR' : dayName}</span>
                         <strong class="text-sm font-mono font-extrabold block" style="color: var(--text-main);">${String(hour).padStart(2, '0')}:00</strong>

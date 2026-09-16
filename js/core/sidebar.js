@@ -212,8 +212,8 @@ export function renderGlobalSidebar(activePage = 'index', activeTab = 0) {
                             <span>⛽</span> <span>Dyzelinas / Gazolas (36 tiekėjų bazės)</span>
                         </button>
                         <button class="mobile-calc-trigger text-left p-3 rounded-xl bg-tractorBg hover:bg-tractorPrimary/20 border border-tractorBorder flex items-center gap-3 font-bold text-white transition cursor-pointer" data-target="btn-open-storage-calc">
-                            <span>💰</span> <span>Sandėliavimas („Parduoti ar laikyti?“)</span>
-                        </button>
+							<span>🌾</span> <span>Grūdų sandėlis ir bokštų ventiliavimas (EMC)</span>
+						</button>
                         <button class="mobile-calc-trigger text-left p-3 rounded-xl bg-tractorBg hover:bg-tractorPrimary/20 border border-tractorBorder flex items-center gap-3 font-bold text-white transition cursor-pointer" data-target="btn-open-nma-calc">
                             <span>📜</span> <span>NMA terminai ir draudimai</span>
                         </button>
