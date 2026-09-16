@@ -1,5 +1,7 @@
 // js/ukis/tsumRadar.js
 import { db } from '../core/firebase.js';
+import { openAuthModal } from '../core/auth.js';
+import { switchTab, showBottomToast } from '../core/ui.js';
 
 let cachedFields = [];
 let weatherCacheByCoords = {};
@@ -39,11 +41,14 @@ export async function renderTSumRadar(container, currentUser, userData) {
                 <p class="text-xs md:text-sm text-slate-300 max-w-md mx-auto">
                     Norėdami matyti savo ūkio laukų pavasario vegetacijos starto radarą („T-Sum 200 / 250“), prisijunkite prie savo paskyros.
                 </p>
-                <button onclick="window.location.reload()" class="px-6 py-2.5 bg-tractorPrimary hover:bg-tractorPrimaryHover text-white font-bold rounded-xl text-xs uppercase tracking-wider transition shadow cursor-pointer">
+                <button type="button" id="btn-tsum-login-prompt" class="px-6 py-2.5 bg-tractorPrimary hover:bg-tractorPrimaryHover text-white font-bold rounded-xl text-xs uppercase tracking-wider transition shadow cursor-pointer">
                     Prisijungti prie ūkio
                 </button>
             </div>
         `;
+        document.getElementById('btn-tsum-login-prompt')?.addEventListener('click', () => {
+            openAuthModal('login');
+        });
         return;
     }
 
@@ -72,11 +77,14 @@ export async function renderTSumRadar(container, currentUser, userData) {
                     <p class="text-xs md:text-sm text-slate-300 max-w-md mx-auto">
                         Vegetacijos radaras seka konkrečių jūsų laukų mikroklimatą. Pirmiausia nusibraižykite arba importuokite savo laukus skiltyje <strong>„Ūkis ir Laukai“</strong>.
                     </p>
-                    <a href="#fields" class="inline-flex items-center gap-2 px-6 py-2.5 bg-tractorPrimary hover:bg-tractorPrimaryHover text-white font-bold rounded-xl text-xs uppercase tracking-wider transition shadow cursor-pointer">
+                    <button type="button" id="btn-tsum-add-fields" class="inline-flex items-center gap-2 px-6 py-2.5 bg-tractorPrimary hover:bg-tractorPrimaryHover text-white font-bold rounded-xl text-xs uppercase tracking-wider transition shadow cursor-pointer">
                         <span>➕</span> <span>Pridėti laukus</span>
-                    </a>
+                    </button>
                 </div>
             `;
+            document.getElementById('btn-tsum-add-fields')?.addEventListener('click', () => {
+                switchTab(2);
+            });
             return;
         }
 
@@ -95,6 +103,7 @@ export async function renderTSumRadar(container, currentUser, userData) {
 
     } catch (err) {
         console.error("T-Sum klaida:", err);
+        showBottomToast("Nepavyko užkrauti T-Sum radaro duomenų", "error");
         container.innerHTML = `
             <div class="bg-tractorSurface border border-red-800 p-6 rounded-2xl text-center text-xs text-red-400">
                 Nepavyko užkrauti T-Sum radaro duomenų: ${err.message}

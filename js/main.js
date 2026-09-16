@@ -1,7 +1,7 @@
 // js/main.js
 import { auth, db } from './core/firebase.js';
 import { openAuthModal, logoutUser } from './core/auth.js';
-import { switchTab, showDialog } from './core/ui.js';
+import { switchTab, showDialog, showBottomToast } from './core/ui.js';
 import { initThemeToggle } from './core/theme.js';
 import { renderGlobalSidebar } from './core/sidebar.js';
 
@@ -111,6 +111,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     document.getElementById('help-btn-desktop')?.addEventListener('click', openHelp);
+    document.getElementById('help-btn-mobile')?.addEventListener('click', openHelp);
 
     db.collection("tech_classifier").get().then(classSnap => {
         classSnap.forEach(d => {

@@ -1,9 +1,9 @@
-// js/grain.js
+// js/skaiciuokles/grain.js
 import { db } from '../core/firebase.js';
 import { calculateDist, calculateBuyerRanking } from './grainCalculator.js';
 import { createCustomSelect } from '../core/customSelect.js';
 import { openAuthModal } from '../core/auth.js';
-import { showDialog, switchTab } from '../core/ui.js';
+import { showBottomToast, switchTab } from '../core/ui.js';
 import { refreshSettingsMap } from '../sistema/settings.js';
 
 let activeMarketData = [];
@@ -236,9 +236,10 @@ export function initGrainTab(currentUser, userData) {
                 updateLocationText();
                 renderRankedBuyers();
                 renderElevatorsCards();
+                showBottomToast("Tiksli GPS vieta sėkmingai nustatyta! 📍");
             }, () => {
                 btn.textContent = "📡 Nustatyti GPS";
-                showDialog("GPS klaida", "Nepavyko gauti GPS vietos.", "⚠️");
+                showBottomToast("Nepavyko nustatyti GPS vietos.", "error");
             });
         }
     });

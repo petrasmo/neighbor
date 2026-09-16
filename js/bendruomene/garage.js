@@ -1,6 +1,6 @@
-// js/garage.js
+// js/bendruomene/garage.js
 import { db } from '../core/firebase.js';
-import { showDialog } from '../core/ui.js';
+import { showBottomToast } from '../core/ui.js';
 
 export async function initGarageTab(currentUser, userData) {
     const container = document.getElementById('view-tab-garage');
@@ -162,7 +162,7 @@ export async function initGarageTab(currentUser, userData) {
             userData.ownedTech = selected;
         }
 
-        showDialog("Išsaugota! 🚜", `Sėkmingai atnaujintas technikos parkas. Pasirinkta: ${selected.length} mašinų.`, "✅");
+        showBottomToast(`Technikos parkas atnaujintas (pasirinkta: ${selected.length}) 🚜`);
     };
 
     document.getElementById('save-tech-btn-top').onclick = handleSave;

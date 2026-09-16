@@ -1,6 +1,6 @@
 // js/ukis/vraFertilizer.js
 import { db } from '../core/firebase.js';
-import { showBottomToast } from '../core/ui.js';
+import { showBottomToast, showDialog } from '../core/ui.js';
 import { createCustomSelect } from '../core/customSelect.js';
 import { getVraFertilizerHtml } from './templates/vraTemplate.js';
 
@@ -122,6 +122,12 @@ function setupVraHubEvents(currentUser) {
     }
 
     if (closeBtn) closeBtn.onclick = () => modal.classList.add('hidden');
+
+    if (modal) {
+        modal.onclick = (e) => {
+            if (e.target === modal) modal.classList.add('hidden');
+        };
+    }
 
     baseRateInput?.addEventListener('input', updateVraPreview);
     fertSelect?.addEventListener('change', updateVraPreview);
@@ -408,17 +414,26 @@ function loadSavedVraProjects(currentUser) {
                 });
 
                 listEl.querySelectorAll('.btn-delete-saved-plan').forEach(btn => {
-                    btn.onclick = async () => {
+                    btn.onclick = () => {
                         const planId = btn.getAttribute('data-plan-id');
                         const fieldId = btn.getAttribute('data-field-id');
 
                         const field = userFieldsList.find(f => f.id === fieldId);
-                        if (field && field.vraPlans) {
-                            const updated = field.vraPlans.filter(p => p.id !== planId);
-                            await db.collection("user_fields").doc(fieldId).update({ vraPlans: updated });
-                            field.vraPlans = updated;
-                            showBottomToast("Tręšimo projektas pašalintas.");
-                        }
+                        const plan = (field?.vraPlans || []).find(p => p.id === planId);
+                        if (!field || !plan) return;
+
+                        showDialog(
+                            "Trinti tręšimo projektą?",
+                            `Ar tikrai norite pašalinti lauko „${field.name}“ planą (${plan.fertilizerType}, ${plan.baseRate} kg/ha)?`,
+                            "🗑️",
+                            async () => {
+                                const updated = field.vraPlans.filter(p => p.id !== planId);
+                                await db.collection("user_fields").doc(fieldId).update({ vraPlans: updated });
+                                field.vraPlans = updated;
+                                showBottomToast("Tręšimo projektas sėkmingai pašalintas! 🗑️");
+                            },
+                            true
+                        );
                     };
                 });
             } else {

@@ -34,9 +34,14 @@ export function renderGlobalSidebar(activePage = 'index', activeTab = 0) {
                             </div>
                         </a>
 
-                        <button class="btn-theme-toggle p-2 bg-tractorBg hover:bg-tractorCard border border-tractorBorder rounded-xl text-sm transition cursor-pointer" title="Perjungti temą">
-                            <span class="theme-toggle-icon">☀️</span>
-                        </button>
+                        <div class="flex items-center gap-1.5">
+                            <button id="help-btn-desktop" class="p-2 bg-tractorBg hover:bg-tractorCard border border-tractorBorder rounded-xl text-sm transition cursor-pointer" title="Pagalba ir instrukcija">
+                                <span>📖</span>
+                            </button>
+                            <button class="btn-theme-toggle p-2 bg-tractorBg hover:bg-tractorCard border border-tractorBorder rounded-xl text-sm transition cursor-pointer" title="Perjungti temą">
+                                <span class="theme-toggle-icon">☀️</span>
+                            </button>
+                        </div>
                     </div>
                     
                     <nav class="space-y-3 text-xs">
@@ -110,8 +115,6 @@ export function renderGlobalSidebar(activePage = 'index', activeTab = 0) {
                 </div>
 
                 <div class="border-t border-tractorBorder/70 pt-4 space-y-3">
-                    
-                    
                     <div id="auth-sidebar-box" class="bg-tractorBg border border-tractorBorder/60 p-3 rounded-xl text-center space-y-2">
                         <p class="text-[11px] text-slate-400">Esate neprisijungęs</p>
                         <button class="login-trigger-btn w-full py-2 bg-tractorPrimary hover:bg-tractorPrimaryHover text-white text-xs font-bold rounded-lg shadow transition cursor-pointer">
@@ -132,8 +135,6 @@ export function renderGlobalSidebar(activePage = 'index', activeTab = 0) {
                 };
             });
         }, 50);
-
-        
     }
 
     // 2. MOBILI VIRŠUTINĖ JUOSTA
@@ -145,6 +146,9 @@ export function renderGlobalSidebar(activePage = 'index', activeTab = 0) {
                     <span class="font-oswald text-xl font-bold tracking-wider text-green-500">JURGISAGRO</span>
                 </a>
                 <div class="flex items-center gap-2">
+                    <button id="help-btn-mobile" class="px-2.5 py-1 bg-tractorBg border border-tractorBorder rounded-lg text-xs font-bold" title="Pagalba">
+                        <span>📖</span>
+                    </button>
                     <button class="btn-theme-toggle px-2.5 py-1 bg-tractorBg border border-tractorBorder rounded-lg text-xs font-bold">
                         <span class="theme-toggle-icon">☀️</span>
                     </button>
@@ -158,11 +162,10 @@ export function renderGlobalSidebar(activePage = 'index', activeTab = 0) {
         `;
     }
 
-    // 3. MOBILI APATINĖ JUOSTA + 3 IŠŠOKANTYS LAPAI (SKAIČIUOKLĖS, ŪKIS, BENDRUOMENĖ)
+    // 3. MOBILI APATINĖ JUOSTA + 3 IŠŠOKANTYS LAPAI
     if (mobileNavContainer) {
         mobileNavContainer.innerHTML = `
             <nav class="fixed bottom-0 left-0 right-0 bg-tractorSurface border-t border-tractorBorder h-16 px-2 flex justify-around items-center z-50 shadow-2xl">
-                <!-- SKAIČIUOKLIŲ MYGTUKAS APATINĖJE JUOSTOJE -->
                 <button id="btn-mobile-skaiciuokles-menu" class="flex flex-col items-center justify-center py-1.5 px-2 rounded-xl transition cursor-pointer ${activeTab === 0 ? 'text-white bg-tractorPrimary shadow' : 'text-slate-300 hover:text-white'}">
                     <span class="text-base">🧮</span>
                     <span class="mt-0.5 font-bold text-[9px] leading-none">Skaičiuoklės</span>
@@ -173,13 +176,11 @@ export function renderGlobalSidebar(activePage = 'index', activeTab = 0) {
                     <span class="mt-0.5 font-bold text-[9px] leading-none">Orai</span>
                 </button>
                 
-                <!-- ŪKIO MYGTUKAS APATINĖJE JUOSTOJE -->
                 <button id="btn-mobile-ukis-menu" class="flex flex-col items-center justify-center py-1.5 px-2 rounded-xl transition cursor-pointer ${isUkisActive ? 'text-white bg-tractorPrimary shadow' : 'text-slate-300 hover:text-white'}">
                     <span class="text-base">🚜</span>
                     <span class="mt-0.5 font-bold text-[9px] leading-none">Laukai / Ūkis</span>
                 </button>
 
-                <!-- BENDRUOMENĖS MYGTUKAS APATINĖJE JUOSTOJE -->
                 <button id="btn-mobile-bendruomene-menu" class="flex flex-col items-center justify-center py-1.5 px-2 rounded-xl transition cursor-pointer ${isBendruomeneActive ? 'text-white bg-tractorPrimary shadow' : 'text-slate-300 hover:text-white'}">
                     <span class="text-base">🤝</span>
                     <span class="mt-0.5 font-bold text-[9px] leading-none">Bendruomenė</span>
@@ -191,7 +192,6 @@ export function renderGlobalSidebar(activePage = 'index', activeTab = 0) {
                 </button>
             </nav>
 
-            <!-- SKAIČIUOKLIŲ SUB-MENIU LAPAS SU VISOMIS 10 SKAIČIUOKLIŲ -->
             <div id="mobile-skaiciuokles-sheet" class="fixed inset-0 bg-black/80 z-[150] hidden flex flex-col justify-end backdrop-blur-sm transition-all">
                 <div class="bg-tractorSurface border-t border-tractorBorder p-6 rounded-t-3xl space-y-4 max-h-[85vh] overflow-y-auto shadow-2xl">
                     <div class="flex justify-between items-center border-b border-tractorBorder/70 pb-3">
@@ -236,7 +236,6 @@ export function renderGlobalSidebar(activePage = 'index', activeTab = 0) {
                 </div>
             </div>
 
-            <!-- ŪKIO SUB-MENIU LAPAS -->
             <div id="mobile-ukis-sheet" class="fixed inset-0 bg-black/80 z-[150] hidden flex flex-col justify-end backdrop-blur-sm transition-all">
                 <div class="bg-tractorSurface border-t border-tractorBorder p-6 rounded-t-3xl space-y-4 max-h-[80vh] overflow-y-auto shadow-2xl">
                     <div class="flex justify-between items-center border-b border-tractorBorder/70 pb-3">
@@ -269,7 +268,6 @@ export function renderGlobalSidebar(activePage = 'index', activeTab = 0) {
                 </div>
             </div>
 
-            <!-- BENDRUOMENĖS SUB-MENIU LAPAS -->
             <div id="mobile-bendruomene-sheet" class="fixed inset-0 bg-black/80 z-[150] hidden flex flex-col justify-end backdrop-blur-sm transition-all">
                 <div class="bg-tractorSurface border-t border-tractorBorder p-6 rounded-t-3xl space-y-4 max-h-[80vh] overflow-y-auto shadow-2xl">
                     <div class="flex justify-between items-center border-b border-tractorBorder/70 pb-3">
@@ -306,7 +304,6 @@ export function renderGlobalSidebar(activePage = 'index', activeTab = 0) {
                 if (e.target === skaiciuoklesSheet) skaiciuoklesSheet.classList.add('hidden');
             });
 
-            // Trigger specific calculators directly from the mobile sheet
             document.querySelectorAll('.mobile-calc-trigger').forEach(btn => {
                 btn.onclick = () => {
                     skaiciuoklesSheet?.classList.add('hidden');

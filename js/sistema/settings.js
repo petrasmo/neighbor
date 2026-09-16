@@ -1,6 +1,6 @@
-// js/settings.js
+// js/sistema/settings.js
 import { db, auth } from '../core/firebase.js';
-import { showDialog } from '../core/ui.js';
+import { showDialog, showBottomToast } from '../core/ui.js';
 
 let mapInstance = null;
 let markerInstance = null;
@@ -96,7 +96,7 @@ export function initSettingsTab(currentUser, userData) {
             userData.isSetupComplete = true;
         }
 
-        showDialog("Pavyko! ✅", "Ūkio bazės vieta ir nustatymai sėkmingai išsaugoti. Visos skaičiuoklės dabar veikia pagal jūsų kiemą!", "🌾");
+        showBottomToast("Ūkio bazės vieta ir nustatymai išsaugoti! 🚜");
     };
 
     document.getElementById('delete-account-btn').onclick = () => {

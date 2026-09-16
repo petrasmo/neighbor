@@ -1,6 +1,6 @@
 // js/ukis/limingSoil.js
 import { db } from '../core/firebase.js';
-import { showBottomToast } from '../core/ui.js';
+import { showBottomToast, showDialog } from '../core/ui.js';
 import { createCustomSelect } from '../core/customSelect.js';
 import { getLimingHtml } from './templates/limingTemplate.js';
 
@@ -113,6 +113,12 @@ function setupLimingHubEvents(currentUser) {
 
     if (closeBtn) closeBtn.onclick = () => modal.classList.add('hidden');
 
+    if (modal) {
+        modal.onclick = (e) => {
+            if (e.target === modal) modal.classList.add('hidden');
+        };
+    }
+
     document.querySelectorAll('.btn-lime-density').forEach(btn => {
         btn.onclick = () => {
             document.querySelectorAll('.btn-lime-density').forEach(b => {
@@ -206,7 +212,6 @@ function setupLimingHubEvents(currentUser) {
         };
     }
 
-    // 🌟 ATSISIŲSTI TIESIAI IŠ KŪRIMO LANGELIO (SU GRIEŽTA PH APSAUGA)
     if (downloadShpBtn) {
         downloadShpBtn.onclick = async () => {
             if (!selectedField) return;
@@ -512,10 +517,18 @@ function renderSampleMarkersAndInputs() {
 }
 
 function removeSamplePoint(sampleId) {
-    currentSamples = currentSamples.filter(s => s.id !== sampleId);
-    reindexSamples();
-    renderSampleMarkersAndInputs();
-    showBottomToast("Ėminio taškas pašalintas.");
+    showDialog(
+        "Panaikinti ėminio tašką?",
+        `Ar tikrai norite pašalinti ėminio tašką #${sampleId}?`,
+        "🗑️",
+        () => {
+            currentSamples = currentSamples.filter(s => s.id !== sampleId);
+            reindexSamples();
+            renderSampleMarkersAndInputs();
+            showBottomToast("Ėminio taškas pašalintas.");
+        },
+        true
+    );
 }
 
 function reindexSamples() {
@@ -645,7 +658,6 @@ function loadSavedLimingProjects(currentUser) {
                     };
                 });
 
-                // 🌟 ATSISIUNTIMAS IŠ SĄRAŠO SU GRIEŽTA PH APSAUGA
                 listEl.querySelectorAll('.btn-download-saved-lime-shp').forEach(btn => {
                     btn.onclick = async () => {
                         const planId = btn.getAttribute('data-plan-id');
@@ -657,17 +669,26 @@ function loadSavedLimingProjects(currentUser) {
                 });
 
                 listEl.querySelectorAll('.btn-delete-saved-lime').forEach(btn => {
-                    btn.onclick = async () => {
+                    btn.onclick = () => {
                         const planId = btn.getAttribute('data-plan-id');
                         const fieldId = btn.getAttribute('data-field-id');
 
                         const field = userFieldsList.find(f => f.id === fieldId);
-                        if (field && field.limingPlans) {
-                            const updated = field.limingPlans.filter(p => p.id !== planId);
-                            await db.collection("user_fields").doc(fieldId).update({ limingPlans: updated });
-                            field.limingPlans = updated;
-                            showBottomToast("Kalkinimo projektas pašalintas.");
-                        }
+                        const plan = (field?.limingPlans || []).find(p => p.id === planId);
+                        if (!field || !plan) return;
+
+                        showDialog(
+                            "Trinti kalkinimo projektą?",
+                            `Ar tikrai norite pašalinti lauko „${field.name}“ kalkinimo planą (${plan.totalTons} t, vid. pH ${plan.avgPh})?`,
+                            "🗑️",
+                            async () => {
+                                const updated = field.limingPlans.filter(p => p.id !== planId);
+                                await db.collection("user_fields").doc(fieldId).update({ limingPlans: updated });
+                                field.limingPlans = updated;
+                                showBottomToast("Kalkinimo projektas sėkmingai pašalintas! 🗑️");
+                            },
+                            true
+                        );
                     };
                 });
             } else {
@@ -686,7 +707,6 @@ async function exportLimingShapefile(field, samples) {
         return;
     }
 
-    // 🛑 GRIEŽTA APSAUGA: TIKRINAME, AR YRA BENT VIENAS ĮVESTAS PH REZULTATAS
     const entered = (samples || []).filter(s => s.ph !== null && s.ph > 0 && !isNaN(s.ph));
     if (entered.length === 0) {
         showBottomToast("⚠️ Negalima eksportuoti: nesuvestas nė vienas laboratorijos pH rezultatas!", "error");
@@ -703,7 +723,6 @@ async function exportLimingShapefile(field, samples) {
         const ring = field.polygonCoordinates.map(p => [p.lng, p.lat]);
         ring.push(ring[0]);
 
-        // Apskaičiuojame vidutinį pH tiems taškams, kurie galbūt liko tušti
         const avgPhVal = entered.reduce((acc, s) => acc + s.ph, 0) / entered.length;
 
         const features = samples.map(s => {

@@ -1,6 +1,6 @@
 // js/ukis/operationsJournal.js
 import { db } from '../core/firebase.js';
-import { showBottomToast } from '../core/ui.js';
+import { showBottomToast, showDialog } from '../core/ui.js';
 import { createCustomSelect } from '../core/customSelect.js';
 import { getOperationsTemplateHtml } from './templates/operationsTemplate.js';
 
@@ -93,6 +93,12 @@ function setupOperationsEvents(currentUser) {
     }
 
     if (closeBtn) closeBtn.onclick = () => modal.classList.add('hidden');
+
+    if (modal) {
+        modal.onclick = (e) => {
+            if (e.target === modal) modal.classList.add('hidden');
+        };
+    }
 
     typeFilter?.addEventListener('change', (e) => {
         activeFilterType = e.target.value;
@@ -262,19 +268,28 @@ function loadOperationsList(currentUser) {
                     };
                 });
 
-                // IŠTRINTI PASPAUDIMAS
+                // IŠTRINTI PASPAUDIMAS (SU BOTTOM SHEET PATVIRTINIMU)
                 listEl.querySelectorAll('.btn-delete-op').forEach(btn => {
-                    btn.onclick = async () => {
+                    btn.onclick = () => {
                         const fieldId = btn.getAttribute('data-field-id');
                         const idx = parseInt(btn.getAttribute('data-idx'));
 
                         const field = userFieldsList.find(f => f.id === fieldId);
-                        if (field && field.operations) {
-                            const updated = field.operations.filter((_, i) => i !== idx);
-                            await db.collection("user_fields").doc(fieldId).update({ operations: updated });
-                            field.operations = updated;
-                            showBottomToast("Įrašas pašalintas iš žurnalo.");
-                        }
+                        const op = field?.operations?.[idx];
+                        if (!field || !op) return;
+
+                        showDialog(
+                            "Trinti operacijos įrašą?",
+                            `Ar tikrai norite pašalinti lauko „${field.name}“ operaciją (${op.type}, ${op.date})?`,
+                            "🗑️",
+                            async () => {
+                                const updated = field.operations.filter((_, i) => i !== idx);
+                                await db.collection("user_fields").doc(fieldId).update({ operations: updated });
+                                field.operations = updated;
+                                showBottomToast("Įrašas sėkmingai pašalintas iš žurnalo! 🗑️");
+                            },
+                            true
+                        );
                     };
                 });
             } else {

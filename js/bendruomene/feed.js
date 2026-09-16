@@ -1,6 +1,6 @@
-// js/feed.js
+// js/bendruomene/feed.js
 import { db } from '../core/firebase.js';
-import { showDialog } from '../core/ui.js';
+import { showDialog, showBottomToast } from '../core/ui.js';
 import { loginWithGoogle } from '../core/auth.js';
 import { calculateDist } from '../skaiciuokles/grainCalculator.js';
 import { createCustomSelect } from '../core/customSelect.js';
@@ -112,7 +112,6 @@ export function initFeedTab(currentUser, userData, classifierMap) {
         </div>
     `;
 
-    // 🔍 Inicijuojame CustomSelect technikai
     createCustomSelect({
         containerId: 'sos-tech-select-box',
         placeholder: '🔍 Ieškoti mašinos...',
@@ -164,7 +163,6 @@ export function initFeedTab(currentUser, userData, classifierMap) {
         radiusInput.oninput = (e) => { radiusLabel.textContent = `${e.target.value} km`; };
     }
 
-    // FORMOS PATEIKIMAS
     const form = document.getElementById('create-post-form');
     if (form) {
         form.onsubmit = async (e) => {
@@ -176,7 +174,7 @@ export function initFeedTab(currentUser, userData, classifierMap) {
             }
 
             if (!selectedTechObj) {
-                showDialog("Pasirinkite techniką", "Iš sąrašo pasirinkite konkrečią ieškomą mašiną.", "⚠️");
+                showBottomToast("Pasirinkite konkrečią ieškomą mašiną!", "warning");
                 return;
             }
 
@@ -223,11 +221,11 @@ export function initFeedTab(currentUser, userData, classifierMap) {
                 selectedTechObj = null;
                 toggleForm();
 
-                showDialog("SOS Išsiųstas! 🚨", "Jūsų pagalbos skelbimas sėkmingai paskelbtas kaimynams.", "✅");
+                showBottomToast("SOS pagalbos skelbimas sėkmingai išsiųstas kaimynams! 🚨");
 
             } catch (err) {
                 console.error("Klaida siunčiant SOS:", err);
-                showDialog("Klaida", "Nepavyko išsiųsti SOS: " + err.message, "🛑");
+                showBottomToast("Nepavyko išsiųsti SOS: " + err.message, "error");
             } finally {
                 submitBtn.disabled = false;
                 submitBtn.innerHTML = `<span>🚨</span> SIŲSTI SOS PRANEŠIMĄ KAIMYNAMS`;
@@ -269,7 +267,6 @@ function listenToFeedPosts(currentUser, userData, classifierMap) {
                 }
 
                 const matchesTech = owned.includes(post.requiredMachineId);
-
                 const shouldShow = !currentUser || isMyPost || (matchesTech && isWithinDist) || (!garageLat);
 
                 if (shouldShow) {

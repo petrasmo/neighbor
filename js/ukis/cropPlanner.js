@@ -272,15 +272,12 @@ function renderDetailedFieldCards() {
             const field = userFieldsList.find(f => f.id === fId);
             
             if (field) {
-                // 1. Pakeičiame lokaliai
                 field.cropHistory[String(planningYear)] = newCrop;
                 
-                // 2. Iškart atnaujiname vaizdą
                 renderDetailedFieldCards();
                 recalculateResourceBasket();
                 evaluateGaab7Rules();
 
-                // 3. AUTOMATINIS IŠSAUGOJIMAS Į DUOMENŲ BAZĘ (Foninis režimas)
                 try {
                     await db.collection("user_fields").doc(fId).update({
                         cropHistory: field.cropHistory
@@ -405,16 +402,13 @@ function renderPlannerMatrix() {
             const field = userFieldsList.find(f => f.id === fId);
             
             if (field) {
-                // 1. Pakeičiame lokaliai
                 field.cropHistory[String(planningYear)] = newCrop;
                 
-                // 2. Iškart atnaujiname vaizdą
                 evaluateGaab7Rules();
                 renderPlannerMatrix();
                 renderDetailedFieldCards();
                 recalculateResourceBasket();
 
-                // 3. AUTOMATINIS IŠSAUGOJIMAS Į DUOMENŲ BAZĘ
                 try {
                     await db.collection("user_fields").doc(fId).update({
                         cropHistory: field.cropHistory
@@ -572,11 +566,9 @@ function setupPlannerEvents(currentUser) {
                 return;
             }
 
-            // Paskirsto lokaliai
             runSmartAllocationAlgorithm();
             allocatorModal.classList.add('hidden');
             
-            // Atnaujina ekraną
             renderDetailedFieldCards();
             recalculateResourceBasket();
             evaluateGaab7Rules();
@@ -584,7 +576,6 @@ function setupPlannerEvents(currentUser) {
             
             showBottomToast("Skaičiuojama ir saugoma...");
 
-            // AUTOMATINIS GRUPINIS IŠSAUGOJIMAS (BATCH)
             try {
                 const batch = db.batch();
                 userFieldsList.forEach(f => {
@@ -827,7 +818,7 @@ function renderHistoryModalInputs() {
 // =========================================================================
 export function printProductionPlanPdf() {
     if (!userFieldsList || userFieldsList.length === 0) {
-        alert("Nėra suvestų laukų spausdinimui.");
+        showBottomToast("Nėra suvestų laukų spausdinimui!", "warning");
         return;
     }
 
@@ -973,7 +964,7 @@ export function printProductionPlanPdf() {
 // =========================================================================
 export function exportProductionPlanToExcel() {
     if (!userFieldsList || userFieldsList.length === 0) {
-        alert("Nėra duomenų eksportui.");
+        showBottomToast("Nėra duomenų eksportui!", "warning");
         return;
     }
 
@@ -1123,7 +1114,6 @@ export function exportNmaDeclarationGeoJson() {
             return [parseFloat(p.lng), parseFloat(p.lat)];
         });
 
-        // Uždarome poligoną (pirmas taškas turi sutapti su paskutiniu)
         ring.push(ring[0]);
 
         const plannedCrop = f.cropHistory?.[String(planningYear)] || f.crop || "Žieminiai kviečiai";

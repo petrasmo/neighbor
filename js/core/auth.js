@@ -1,17 +1,18 @@
 // js/core/auth.js
 import { auth, db } from './firebase.js';
-import { showDialog } from './ui.js';
+import { showDialog, showBottomToast } from './ui.js';
 
 export function loginWithGoogle() {
     const provider = new firebase.auth.GoogleAuthProvider();
     auth.signInWithPopup(provider)
         .then(() => {
             closeAuthModal();
+            showBottomToast("Sėkmingai prisijungta su Google! 🚜");
         })
         .catch((error) => {
             console.error("Google login klaida:", error);
             if (error.code !== 'auth/popup-closed-by-user') {
-                showDialog("Klaida", "Nepavyko prisijungti su Google: " + getFriendlyErrorMessage(error.code), "🛑");
+                showBottomToast("Nepavyko prisijungti su Google: " + getFriendlyErrorMessage(error.code), "error");
             }
         });
 }
@@ -32,17 +33,25 @@ export function openAuthModal(initialTab = 'login') {
     switchAuthTab(initialTab);
     clearAuthErrors();
     modal.classList.remove('hidden');
-}
 
+    const panel = document.getElementById('auth-sheet-panel');
+    setTimeout(() => {
+        if (panel) panel.classList.remove('translate-y-full');
+    }, 15);
+}
 export function closeAuthModal() {
     const modal = document.getElementById('unified-auth-modal');
-    if (modal) modal.classList.add('hidden');
+    const panel = document.getElementById('auth-sheet-panel');
+    if (panel) panel.classList.add('translate-y-full');
+    setTimeout(() => {
+        if (modal) modal.classList.add('hidden');
+    }, 250);
 }
 
 function createAuthModalDom() {
     const modalHtml = `
-        <div id="unified-auth-modal" class="fixed inset-0 bg-black/80 flex items-center justify-center z-[130] hidden p-4 backdrop-blur-sm">
-            <div class="bg-tractorSurface border border-tractorBorder p-6 md:p-8 rounded-2xl max-w-md w-full shadow-2xl relative space-y-5 max-h-[90vh] overflow-y-auto">
+        <div id="unified-auth-modal" class="fixed inset-0 bg-black/80 flex flex-col justify-end items-center z-[250] hidden p-0 backdrop-blur-sm transition-opacity duration-300">
+            <div id="auth-sheet-panel" class="bg-tractorSurface border-t-2 border-x-2 border-b-0 border-tractorBorder rounded-t-3xl rounded-b-none p-6 md:p-8 max-w-lg w-full shadow-2xl relative space-y-5 max-h-[90vh] overflow-y-auto transform translate-y-full transition-transform duration-300">
                 <button type="button" id="btn-close-auth-modal" class="absolute top-5 right-5 text-slate-400 hover:text-white text-xl font-bold transition cursor-pointer">
                     ✕
                 </button>
@@ -135,6 +144,11 @@ function createAuthModalDom() {
 
     document.body.insertAdjacentHTML('beforeend', modalHtml);
 
+    const modal = document.getElementById('unified-auth-modal');
+    modal.onclick = (e) => {
+        if (e.target === modal) closeAuthModal();
+    };
+
     document.getElementById('btn-close-auth-modal').onclick = closeAuthModal;
     document.getElementById('btn-auth-google').onclick = loginWithGoogle;
 
@@ -160,6 +174,7 @@ function createAuthModalDom() {
         try {
             await auth.signInWithEmailAndPassword(email, password);
             closeAuthModal();
+            showBottomToast("Sėkmingai prisijungta prie ūkio! 🚜");
         } catch (err) {
             console.error("Login error:", err);
             showAuthError(getFriendlyErrorMessage(err.code));
@@ -195,7 +210,7 @@ function createAuthModalDom() {
             });
 
             closeAuthModal();
-            showDialog("Sveiki atvykę! 🚜", `Ūkio paskyra sėkmingai sukurta.`, "🌾");
+            showBottomToast("Sveiki atvykę! Ūkio paskyra sukurta 🚜");
         } catch (err) {
             console.error("Register error:", err);
             showAuthError(getFriendlyErrorMessage(err.code));
@@ -216,7 +231,7 @@ function createAuthModalDom() {
 
         try {
             await auth.sendPasswordResetEmail(email);
-            showDialog("Laiškas išsiųstas! 📩", `Nuoroda išsiųsta į <strong>${email}</strong>. Patikrinkite pašto dėžutę.`, "✅");
+            showBottomToast(`Nuoroda išsiųsta į ${email}. Patikrinkite paštą!`);
             switchAuthTab('login');
         } catch (err) {
             console.error("Forgot error:", err);

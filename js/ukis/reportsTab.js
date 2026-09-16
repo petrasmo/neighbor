@@ -1,5 +1,6 @@
 // js/reportsTab.js
 import { generateOfficialReport, exportReportToExcel } from './fieldsReport.js';
+import { showBottomToast } from '../core/ui.js';
 
 export function initReportsTab(userFieldsList, userData) {
     const container = document.getElementById('view-tab-reports');
@@ -93,11 +94,29 @@ export function initReportsTab(userFieldsList, userData) {
         </div>
     `;
 
-    document.getElementById('tab-btn-pdf-spray').onclick = () => generateOfficialReport('spray', userFieldsList, userData);
-    document.getElementById('tab-btn-pdf-fert').onclick = () => generateOfficialReport('fertilizer', userFieldsList, userData);
-    document.getElementById('tab-btn-pdf-rot').onclick = () => generateOfficialReport('rotation', userFieldsList, userData);
+    document.getElementById('tab-btn-pdf-spray').onclick = () => {
+        showBottomToast("Generuojamas purškimo žurnalas PDF formatu... 📄");
+        generateOfficialReport('spray', userFieldsList, userData);
+    };
+    document.getElementById('tab-btn-pdf-fert').onclick = () => {
+        showBottomToast("Generuojamas trąšų žurnalas PDF formatu... 📄");
+        generateOfficialReport('fertilizer', userFieldsList, userData);
+    };
+    document.getElementById('tab-btn-pdf-rot').onclick = () => {
+        showBottomToast("Generuojama sėjomainos ataskaita PDF formatu... 📄");
+        generateOfficialReport('rotation', userFieldsList, userData);
+    };
 
-    document.getElementById('tab-btn-xls-spray').onclick = () => exportReportToExcel('spray', userFieldsList, userData);
-    document.getElementById('tab-btn-xls-fert').onclick = () => exportReportToExcel('fertilizer', userFieldsList, userData);
-    document.getElementById('tab-btn-xls-rot').onclick = () => exportReportToExcel('rotation', userFieldsList, userData);
+    document.getElementById('tab-btn-xls-spray').onclick = () => {
+        showBottomToast("Ruošiamas purškimo žurnalas Excel formatu... 📊");
+        exportReportToExcel('spray', userFieldsList, userData);
+    };
+    document.getElementById('tab-btn-xls-fert').onclick = () => {
+        showBottomToast("Ruošiamas trąšų žurnalas Excel formatu... 📊");
+        exportReportToExcel('fertilizer', userFieldsList, userData);
+    };
+    document.getElementById('tab-btn-xls-rot').onclick = () => {
+        showBottomToast("Ruošiamas sėjomainos eksportas Excel formatu... 📊");
+        exportReportToExcel('rotation', userFieldsList, userData);
+    };
 }

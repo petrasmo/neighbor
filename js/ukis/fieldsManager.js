@@ -1,6 +1,6 @@
 // js/ukis/fieldsManager.js
 import { db } from '../core/firebase.js';
-import { showDialog } from '../core/ui.js';
+import { showDialog, showBottomToast } from '../core/ui.js';
 import { 
     initOrRefreshMap, drawFieldsOnMap, highlightFieldPolygon, 
     startDrawing, stopDrawing, getDrawingPoints, calculatePolygonAreaHa,
@@ -107,7 +107,7 @@ function setupFieldEvents(currentUser) {
         });
 
         editModal.classList.add('hidden');
-        showDialog("Atnaujinta! 🌾", `Lauko „${newName}“ duomenys išsaugoti.`, "✅");
+        showBottomToast(`Lauko „${newName}“ duomenys atnaujinti! 🌾`);
     };
 
     if (btnDeleteField) {
@@ -119,7 +119,7 @@ function setupFieldEvents(currentUser) {
                 await db.collection("user_fields").doc(selectedFieldId).delete();
                 document.getElementById('field-detail-section').classList.add('hidden');
                 selectedFieldId = null;
-                showDialog("Pašalinta", "Laukas sėkmingai ištrintas.", "✅");
+                showBottomToast(`Laukas „${field.name}“ sėkmingai pašalintas.`);
             }, true);
         };
     }
@@ -185,8 +185,8 @@ function setupFieldEvents(currentUser) {
 
         document.getElementById('save-field-form').reset();
         saveModal.classList.add('hidden');
-        cancelBtn.click(); // Sėkmingai išsaugota -> grįžtam į pradinę būseną
-        showDialog("Laukas išsaugotas! 🌾", `Laukas „${name}“ (${areaHa} ha) pridėtas.`, "✅");
+        cancelBtn.click();
+        showBottomToast(`Laukas „${name}“ (${areaHa} ha) išsaugotas! 🌾`);
     };
 }
 
