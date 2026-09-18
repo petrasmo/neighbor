@@ -65,12 +65,14 @@ function setMobileBtnActive(id, isActive) {
     }
 }
 
+// 🌟 IŠGYDYTA: TOAST PRANEŠIMAS NIEKADA NEBEBLOKUOS JOKIO MYGTUKO!
 export function showBottomToast(message, type = 'success') {
     let toastContainer = document.getElementById('global-bottom-toast');
     if (!toastContainer) {
         toastContainer = document.createElement('div');
         toastContainer.id = 'global-bottom-toast';
-        toastContainer.className = 'fixed bottom-20 md:bottom-10 left-1/2 -translate-x-1/2 z-[300] pointer-events-none transition-all duration-300 opacity-0 transform translate-y-4 w-[92%] sm:w-auto max-w-md flex justify-center';
+        // z-[300] su griežtu pointer-events-none, kad niekada neblokuotų paspaudimų
+        toastContainer.className = 'fixed bottom-20 md:bottom-10 left-1/2 -translate-x-1/2 z-[300] pointer-events-none transition-all duration-300 opacity-0 transform translate-y-4 w-[92%] sm:w-auto max-w-md flex justify-center hidden';
         document.body.appendChild(toastContainer);
     }
 
@@ -94,20 +96,26 @@ export function showBottomToast(message, type = 'success') {
         </span>
     `);
 
+    // 🌟 PATAISYMAS: pašalintas 'pointer-events-auto', įdėtas 'pointer-events-none'
     toastContainer.innerHTML = `
         <div style="${bgStyle} color: #FFFFFF !important; box-shadow: 0 10px 25px -3px rgba(0, 0, 0, 0.45);" 
-             class="w-full sm:w-auto px-4 py-2.5 rounded-2xl font-bold text-xs sm:text-sm flex items-center justify-center gap-2.5 pointer-events-auto tracking-wide text-center">
+             class="w-full sm:w-auto px-4 py-2.5 rounded-2xl font-bold text-xs sm:text-sm flex items-center justify-center gap-2.5 pointer-events-none tracking-wide text-center">
             <span style="background: rgba(255, 255, 255, 0.2); color: #FFFFFF !important;" class="w-5 h-5 rounded-full flex items-center justify-center text-xs font-black shrink-0">${icon}</span>
             <span style="color: #FFFFFF !important; display: inline-flex; align-items: center; white-space: normal;">${formattedMessage}</span>
         </div>
     `;
 
+    toastContainer.classList.remove('hidden');
     setTimeout(() => {
         toastContainer.classList.remove('opacity-0', 'translate-y-4');
-    }, 10);
+    }, 15);
 
     setTimeout(() => {
         toastContainer.classList.add('opacity-0', 'translate-y-4');
+        // Po išblukimo visiškai paslepiame iš ekrano
+        setTimeout(() => {
+            toastContainer.classList.add('hidden');
+        }, 300);
     }, 3200);
 }
 
@@ -115,21 +123,24 @@ export function showBottomToast(message, type = 'success') {
  * 🌟 Tikras Bottom Sheet patvirtinimo langas (ir kompiuteryje, ir telefone)
  */
 export function showDialog(title, message, icon = "⚠️", onConfirm = null, showCancel = false) {
-    const dialog = document.getElementById('custom-dialog');
+    let dialog = document.getElementById('custom-dialog');
     if (!dialog) return;
+
+    if (dialog.parentElement !== document.body) {
+        document.body.appendChild(dialog);
+    }
 
     const titleEl = document.getElementById('dialog-title');
     const msgEl = document.getElementById('dialog-message');
     const iconEl = document.getElementById('dialog-icon');
     const confirmBtn = document.getElementById('dialog-confirm-btn');
     const cancelBtn = document.getElementById('dialog-cancel-btn');
-
     const panel = dialog.firstElementChild;
 
-    dialog.className = 'fixed inset-0 bg-black/75 flex flex-col justify-end items-center z-[250] p-0 backdrop-blur-sm transition-opacity duration-300 pointer-events-auto';
+    dialog.className = 'fixed inset-0 bg-black/75 z-[9999] flex flex-col justify-end items-center p-0 backdrop-blur-sm transition-opacity duration-300 pointer-events-auto';
     
     if (panel) {
-        panel.className = 'bg-tractorSurface border-t-2 border-x-2 border-b-0 border-tractorBorder rounded-t-3xl rounded-b-none p-6 md:p-8 max-w-2xl w-full text-center space-y-5 shadow-2xl transition-transform duration-300 transform translate-y-full pointer-events-auto relative z-10';
+        panel.className = 'bg-tractorSurface border-t-2 border-x-2 border-b-0 border-tractorBorder rounded-t-3xl rounded-b-none p-6 md:p-8 pb-12 max-w-2xl w-full text-center space-y-5 shadow-2xl transition-transform duration-300 transform translate-y-full pointer-events-auto relative z-10';
     }
 
     titleEl.textContent = title;
@@ -151,7 +162,6 @@ export function showDialog(title, message, icon = "⚠️", onConfirm = null, sh
 
     if (showCancel) {
         cancelBtn.classList.remove('hidden');
-        cancelBtn.setAttribute('type', 'button');
         cancelBtn.textContent = "Atšaukti";
         cancelBtn.className = "flex-1 h-12 bg-tractorBg hover:bg-zinc-800 border border-tractorBorder rounded-xl font-bold text-xs uppercase tracking-wider transition cursor-pointer text-slate-300 hover:text-white pointer-events-auto relative z-20";
         cancelBtn.onclick = closeSheet;
@@ -159,7 +169,7 @@ export function showDialog(title, message, icon = "⚠️", onConfirm = null, sh
         confirmBtn.textContent = "Patvirtinti";
     } else {
         cancelBtn.classList.add('hidden');
-        confirmBtn.textContent = "Supratau 👍";
+        confirmBtn.textContent = "Supratau";
     }
 
     confirmBtn.setAttribute('type', 'button');

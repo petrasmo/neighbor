@@ -111,12 +111,12 @@ export function getMainFieldsHtml(todayStr) {
                 </div>
             </div>
 
-            <!-- MODALAS: NAUJO LAUKO IŠSAUGOJIMAS -->
-            <div id="field-save-modal" class="fixed inset-0 bg-black/80 flex items-center justify-center z-[110] hidden p-4 backdrop-blur-sm">
-                <div class="bg-tractorSurface border border-tractorBorder p-6 md:p-8 rounded-2xl max-w-md w-full space-y-4 shadow-2xl">
+            <!-- MODALAS: NAUJO LAUKO IŠSAUGOJIMAS (BOTTOM SHEET) -->
+            <div id="field-save-modal" class="fixed inset-0 bg-black/80 z-[250] hidden flex flex-col justify-end items-center p-0 backdrop-blur-sm transition-all duration-300">
+                <div class="bg-tractorSurface border-t-2 border-x-2 border-b-0 border-tractorBorder rounded-t-3xl rounded-b-none p-6 md:p-8 max-w-2xl w-full space-y-4 shadow-2xl relative max-h-[90vh] overflow-y-auto mb-0 transform transition-transform duration-300">
                     <div class="flex justify-between items-center border-b border-tractorBorder pb-3">
                         <h3 class="font-oswald text-xl font-bold text-white uppercase tracking-wider">Išsaugoti naują lauką</h3>
-                        <button id="btn-close-save-modal" class="text-slate-400 hover:text-white text-xl cursor-pointer">&times;</button>
+                        <button id="btn-close-save-modal" class="text-slate-400 hover:text-white text-2xl font-bold cursor-pointer">&times;</button>
                     </div>
 
                     <form id="save-field-form" class="space-y-4">
@@ -160,12 +160,12 @@ export function getMainFieldsHtml(todayStr) {
                 </div>
             </div>
 
-            <!-- MODALAS: REDAGAVIMAS -->
-            <div id="field-edit-modal" class="fixed inset-0 bg-black/80 flex items-center justify-center z-[110] hidden p-4 backdrop-blur-sm">
-                <div class="bg-tractorSurface border border-tractorBorder p-6 md:p-8 rounded-2xl max-w-md w-full space-y-4 shadow-2xl">
+            <!-- MODALAS: REDAGAVIMAS (BOTTOM SHEET) -->
+            <div id="field-edit-modal" class="fixed inset-0 bg-black/80 z-[250] hidden flex flex-col justify-end items-center p-0 backdrop-blur-sm transition-all duration-300">
+                <div class="bg-tractorSurface border-t-2 border-x-2 border-b-0 border-tractorBorder rounded-t-3xl rounded-b-none p-6 md:p-8 max-w-2xl w-full space-y-4 shadow-2xl relative max-h-[90vh] overflow-y-auto mb-0 transform transition-transform duration-300">
                     <div class="flex justify-between items-center border-b border-tractorBorder pb-3">
                         <h3 class="font-oswald text-xl font-bold text-white uppercase tracking-wider">Redaguoti lauką</h3>
-                        <button id="btn-close-edit-modal" class="text-slate-400 hover:text-white text-xl">&times;</button>
+                        <button id="btn-close-edit-modal" class="text-slate-400 hover:text-white text-2xl font-bold cursor-pointer">&times;</button>
                     </div>
 
                     <form id="edit-field-form" class="space-y-4">
@@ -199,12 +199,12 @@ export function getMainFieldsHtml(todayStr) {
                 </div>
             </div>
 
-            <!-- MODALAS: NMA IMPORTAS -->
-            <div id="nma-import-modal" class="fixed inset-0 bg-black/80 flex items-center justify-center z-[115] hidden p-4 backdrop-blur-sm">
-                <div class="bg-tractorSurface border border-tractorBorder p-6 md:p-8 rounded-2xl max-w-lg w-full space-y-5 shadow-2xl">
+            <!-- MODALAS: NMA IMPORTAS (BOTTOM SHEET) -->
+            <div id="nma-import-modal" class="fixed inset-0 bg-black/80 z-[250] hidden flex flex-col justify-end items-center p-0 backdrop-blur-sm transition-all duration-300">
+                <div class="bg-tractorSurface border-t-2 border-x-2 border-b-0 border-tractorBorder rounded-t-3xl rounded-b-none p-6 md:p-8 max-w-2xl w-full space-y-5 shadow-2xl relative max-h-[90vh] overflow-y-auto mb-0 transform transition-transform duration-300">
                     <div class="flex justify-between items-center border-b border-tractorBorder pb-3">
                         <h3 class="font-oswald text-xl font-bold text-white uppercase tracking-wider">📁 Įkelti NMA Laukus</h3>
-                        <button id="btn-close-nma-import" class="text-slate-400 hover:text-white text-xl cursor-pointer">&times;</button>
+                        <button id="btn-close-nma-import" class="text-slate-400 hover:text-white text-2xl font-bold cursor-pointer">&times;</button>
                     </div>
                     <p class="text-xs text-slate-300">
                         Įkelkite deklaracijos failą (<strong>.geojson</strong> arba <strong>.json</strong>), atsisiųstą iš NMA / PPIS sistemos.

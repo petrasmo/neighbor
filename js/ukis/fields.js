@@ -183,7 +183,12 @@ function setupFieldEvents(currentUser, userData) {
         }
         const areaHa = calculatePolygonAreaHa(points);
         document.getElementById('field-area-input').value = `${areaHa} ha`;
-        saveModal.classList.remove('hidden');
+        const panel = saveModal.querySelector('div');
+		saveModal.classList.remove('hidden');
+		if (panel) {
+			panel.classList.add('translate-y-full');
+			setTimeout(() => panel.classList.remove('translate-y-full'), 15);
+		}
     };
 
     closeSaveModalBtn.onclick = () => saveModal.classList.add('hidden');

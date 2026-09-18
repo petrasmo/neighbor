@@ -1,11 +1,11 @@
 // js/fieldsReport.js
-
+import { showBottomToast } from '../core/ui.js';
 /**
  * 🖨️ OFICIALUS PDF / A4 SPAUSDINIMAS
  */
 export function generateOfficialReport(reportType, userFieldsList, userData) {
     if (!userFieldsList || userFieldsList.length === 0) {
-        alert("Pirmiausia pridėkite bent vieną lauką su darbais.");
+        showBottomToast("Pirmiausia pridėkite bent vieną lauką su darbais.", "warning"); // 👈 Pakeista
         return;
     }
 
@@ -214,7 +214,7 @@ export function generateOfficialReport(reportType, userFieldsList, userData) {
  */
 export function exportReportToExcel(reportType, userFieldsList, userData) {
     if (!userFieldsList || userFieldsList.length === 0) {
-        alert("Nėra duomenų eksportui.");
+        showBottomToast("Nėra duomenų eksportui.", "warning"); // 👈 Pakeista
         return;
     }
 

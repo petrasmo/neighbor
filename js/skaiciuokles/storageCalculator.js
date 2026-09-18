@@ -5,6 +5,7 @@ let activeTab = 'econ'; // 'econ' arba 'vent'
 let storageTypeMode = 'own'; // 'own' arba 'elevator'
 let cachedWeatherData = null;
 let cachedUserData = null;
+let selectedVentLocation = { lat: 55.2885, lng: 23.9745, name: "Ūkio bazė" };
 
 // ASABE Chung-Pfost termodinaminiai koeficientai grūdų EMC skaičiavimui
 const CROP_EMC_PARAMS = {
@@ -18,7 +19,6 @@ const CROP_EMC_PARAMS = {
 export async function renderStorageCalculator(container, currentUser, userData) {
     if (!container) return;
 
-    // 🌟 Paimame šviežius vartotojo duomenis tiesiai iš bazės (kaip Agro-Oruose)
     let activeUserData = userData;
     const realAuthUser = currentUser || auth.currentUser;
 
@@ -35,14 +35,17 @@ export async function renderStorageCalculator(container, currentUser, userData) 
     cachedUserData = activeUserData;
 
     const hasGarage = !!(activeUserData?.garageLat && activeUserData?.garageLon && activeUserData.garageLat !== 0);
-    const locText = hasGarage 
-        ? `🏠 Mano ūkio bazė (garažas) (${parseFloat(activeUserData.garageLat).toFixed(4)}, ${parseFloat(activeUserData.garageLon).toFixed(4)})`
-        : `📍 Apytikslė vieta (Lietuva)`;
+    if (hasGarage) {
+        selectedVentLocation = {
+            lat: parseFloat(activeUserData.garageLat),
+            lng: parseFloat(activeUserData.garageLon),
+            name: "🏠 Mano ūkio bazė (garažas)"
+        };
+    }
 
     container.innerHTML = `
         <div class="space-y-6">
             
-            <!-- PAGRINDINIS LANGAS -->
             <div class="bg-tractorSurface border border-tractorBorder rounded-2xl p-6 md:p-8 space-y-6 shadow-xl">
                 
                 <!-- HEADERIS IR TABŲ PERJUNGIKLIS -->
@@ -56,7 +59,6 @@ export async function renderStorageCalculator(container, currentUser, userData) 
                         </h3>
                     </div>
 
-                    <!-- 2 TABAI VIRŠUJE -->
                     <div class="flex items-center gap-1.5 bg-tractorBg p-1.5 rounded-2xl border border-tractorBorder shrink-0">
                         <button type="button" id="tab-storage-econ" class="px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer ${activeTab === 'econ' ? 'bg-tractorPrimary text-white shadow' : 'text-slate-400 hover:text-white'}">
                             💰 Ekonomika: Laikyti ar Parduoti?
@@ -67,9 +69,8 @@ export async function renderStorageCalculator(container, currentUser, userData) 
                     </div>
                 </div>
 
-                <!-- 1 TABAS: EKONOMIKA („LAIKYTI AR PARDUOTI?“) -->
+                <!-- 1 TABAS: EKONOMIKA -->
                 <div id="view-storage-econ" class="space-y-6 ${activeTab === 'econ' ? '' : 'hidden'}">
-                    
                     <div class="flex justify-between items-center bg-tractorBg p-3 rounded-xl border border-tractorBorder">
                         <span class="text-xs text-slate-300 font-semibold" style="color: var(--text-main);">Pasirinkite saugojimo tipą:</span>
                         <div class="flex items-center gap-1 bg-tractorSurface p-1 rounded-lg border border-tractorBorder">
@@ -170,7 +171,7 @@ export async function renderStorageCalculator(container, currentUser, userData) 
                     </div>
                 </div>
 
-                <!-- 2 TABAS: PROTINGAS VENTILIAVIMAS (EMC BALANSAS) -->
+                <!-- 2 TABAS: PROTINGAS VENTILIAVIMAS (EMC) -->
                 <div id="view-storage-vent" class="space-y-6 ${activeTab === 'vent' ? '' : 'hidden'}">
                     
                     <div class="bg-gradient-to-r from-tractorBg to-tractorSurface border border-tractorBorder rounded-2xl p-5 space-y-2">
@@ -183,17 +184,18 @@ export async function renderStorageCalculator(container, currentUser, userData) 
                         </p>
                     </div>
 
-                    <!-- 🌟 AIŠKI ŪKIO VIETOS INDIKACIJA -->
-                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 bg-tractorBg p-3.5 rounded-xl border border-tractorBorder text-xs">
-                        <div class="flex items-center gap-2">
-                            <span class="text-base">📍</span>
-                            <span style="color: var(--text-main);">
-                                Lauko orai ir santykinė drėgmė (RH) imami: <strong class="text-green-600 dark:text-green-400 font-bold" id="vent-location-name">${locText}</strong>
-                            </span>
+                    <!-- BOKŠTO / SAUGYKLOS PASIRINKIMAS -->
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-tractorBg p-4 rounded-xl border border-tractorBorder text-xs">
+                        <div class="space-y-0.5">
+                            <span class="font-bold text-tractorPrimaryLight uppercase tracking-wider block">Pasirinkite saugyklą (Bokštą):</span>
+                            <p class="text-[11px] text-slate-400">Orai ir santykinė drėgmė (RH) bus skaičiuojami tiesiai virš pasirinktos vietos</p>
                         </div>
-                        <span class="text-[11px] font-semibold" style="color: var(--text-muted);">
-                            ${hasGarage ? '✓ Naudojama jūsų ūkio vieta iš Nustatymų' : '⚠️ Garažas nenurodytas (Nustatymuose pažymėkite ūkio bazę)'}
-                        </span>
+                        <select id="vent-storage-select" class="w-full sm:w-80 h-11 bg-tractorSurface border border-tractorBorder rounded-xl px-3 font-bold text-white outline-none cursor-pointer">
+                            <option value="garage">🏠 Mano ūkio bazė (garažas)</option>
+                            ${(activeUserData?.silos || []).map(s => `
+                                <option value="${s.id}">🛢️ ${s.name} (${s.lat.toFixed(3)}, ${s.lng.toFixed(3)})</option>
+                            `).join('')}
+                        </select>
                     </div>
 
                     <!-- ĮVEDIMO PARAMETRAI -->
@@ -220,24 +222,25 @@ export async function renderStorageCalculator(container, currentUser, userData) 
                         </div>
                     </div>
 
-                    <!-- GYVAS VERDIKTAS ŠIĄ VALANDĄ -->
+                    <!-- GYVAS VERDIKTAS (SU 4 LANGELIAIS) -->
                     <div id="vent-live-verdict-card" class="p-6 rounded-2xl border-2 space-y-3 shadow-xl transition-all">
                         <div class="text-center py-4 text-slate-400 text-xs">Skaičiuojamos lauko oro sąlygos iš Open-Meteo...</div>
                     </div>
 
-                    <!-- 48 VALANDŲ PROGNOZĖS GRAFIKAS -->
-                    <div class="bg-tractorBg border border-tractorBorder rounded-2xl p-5 md:p-6 space-y-4 shadow-lg">
-                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-tractorBorder/70 pb-3">
+                    <!-- 48 VALANDŲ PROGNOZĖS LENTELĖ (3 Į EILUTĘ TELEFONE) -->
+                    <div class="bg-tractorBg border border-tractorBorder rounded-2xl p-3.5 sm:p-5 space-y-3 shadow-lg">
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1 border-b border-tractorBorder/70 pb-2.5">
                             <div>
-                                <h4 class="font-oswald text-lg font-bold uppercase tracking-wider flex items-center gap-2" style="color: var(--text-main);">
+                                <h4 class="font-oswald text-base sm:text-lg font-bold uppercase tracking-wider flex items-center gap-2" style="color: var(--text-main);">
                                     <span>⏱️</span> Saugios Ventiliavimo Valandos (Artimiausios 48 val.)
                                 </h4>
-                                <p class="text-xs" style="color: var(--text-muted);">Žalia = vėsina be drėkinimo • Raudona = ventiliatorius įpūs drėgmę (išjungti!)</p>
+                                <p class="text-[10px] sm:text-xs text-slate-400">Žalia = vėsina be drėkinimo • Raudona = ventiliatorius įpūs drėgmę (išjungti!)</p>
                             </div>
-                            <span class="text-xs font-mono font-bold" id="vent-safe-hours-counter" style="color: #15803D;">...</span>
+                            <span class="text-xs font-mono font-bold text-green-500" id="vent-safe-hours-counter">...</span>
                         </div>
 
-                        <div id="vent-hourly-grid" class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-3">
+                        <!-- 3 Į EILUTĘ TELEFONE, IKI 12 KOMPIUTERYJE -->
+                        <div id="vent-hourly-grid" class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 2xl:grid-cols-12 gap-2 sm:gap-2.5 pt-1">
                             <div class="col-span-full py-8 text-center text-slate-500 text-xs">Kraunamas valandinis modelis...</div>
                         </div>
                     </div>
@@ -281,10 +284,6 @@ function setupTabEvents() {
         };
     }
 }
-
-// =========================================================================
-// 1 DALIS: EKONOMIKA
-// =========================================================================
 
 function setupEconEvents() {
     const btnOwn = document.getElementById('btn-storage-own');
@@ -426,14 +425,11 @@ function calculateStorageDecision() {
     }
 }
 
-// =========================================================================
-// 2 DALIS: PROTINGAS VENTILIAVIMAS (EMC BALANSAS)
-// =========================================================================
-
 function setupVentEvents(userData) {
     const cropSel = document.getElementById('vent-crop-select');
     const moistInp = document.getElementById('vent-grain-moisture');
     const tempInp = document.getElementById('vent-grain-temp');
+    const storageSel = document.getElementById('vent-storage-select');
 
     cropSel?.addEventListener('change', () => {
         const cropKey = cropSel.value;
@@ -445,34 +441,35 @@ function setupVentEvents(userData) {
     moistInp?.addEventListener('input', calculateVentilationDecision);
     tempInp?.addEventListener('input', calculateVentilationDecision);
 
-    fetchHourlyWeatherForVentilation(userData);
+    storageSel?.addEventListener('change', () => {
+        const val = storageSel.value;
+        if (val === 'garage') {
+            if (userData?.garageLat && userData?.garageLon) {
+                selectedVentLocation = {
+                    lat: parseFloat(userData.garageLat),
+                    lng: parseFloat(userData.garageLon),
+                    name: "🏠 Mano ūkio bazė (garažas)"
+                };
+            }
+        } else {
+            const silo = (userData?.silos || []).find(s => s.id === val);
+            if (silo) {
+                selectedVentLocation = {
+                    lat: parseFloat(silo.lat),
+                    lng: parseFloat(silo.lng),
+                    name: `🛢️ ${silo.name}`
+                };
+            }
+        }
+        fetchHourlyWeatherForVentilation(selectedVentLocation);
+    });
+
+    fetchHourlyWeatherForVentilation(selectedVentLocation);
 }
 
-async function fetchHourlyWeatherForVentilation(userData) {
-    let lat = 55.2885, lng = 23.9745;
-    
-    // 🌟 100% TIKSLUMAS (Lygiai kaip Agro-Oruose): Tikriname šviežius duomenis iš bazės pagal realaus vartotojo UID
-    const activeData = userData || cachedUserData;
-    const realAuthUser = auth.currentUser;
-
-    if (activeData?.garageLat && activeData?.garageLon && activeData.garageLat !== 0) {
-        lat = parseFloat(activeData.garageLat);
-        lng = parseFloat(activeData.garageLon);
-    } else if (realAuthUser) {
-        try {
-            const userDoc = await db.collection("users").doc(realAuthUser.uid).get();
-            if (userDoc.exists) {
-                const d = userDoc.data();
-                if (d.garageLat && d.garageLon) {
-                    lat = parseFloat(d.garageLat);
-                    lng = parseFloat(d.garageLon);
-                }
-            }
-        } catch (e) {}
-    }
-
+async function fetchHourlyWeatherForVentilation(loc) {
     try {
-        const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&current=temperature_2m,relative_humidity_2m&hourly=temperature_2m,relative_humidity_2m,dew_point_2m&timezone=Europe%2FVilnius&forecast_days=3`;
+        const url = `https://api.open-meteo.com/v1/forecast?latitude=${loc.lat}&longitude=${loc.lng}&current=temperature_2m,relative_humidity_2m&hourly=temperature_2m,relative_humidity_2m&timezone=Europe%2FVilnius&forecast_days=3`;
         const res = await fetch(url);
         cachedWeatherData = await res.json();
         calculateVentilationDecision();
@@ -481,9 +478,6 @@ async function fetchHourlyWeatherForVentilation(userData) {
     }
 }
 
-/**
- * Apskaičiuoja grūdų pusiausvyrinę drėgmę (EMC) pagal ASABE Chung-Pfost formulę
- */
 function calculateEMC(cropKey, airTempC, rhPercent) {
     const params = CROP_EMC_PARAMS[cropKey] || CROP_EMC_PARAMS.wheat;
     const rh = Math.max(0.05, Math.min(0.98, rhPercent / 100));
@@ -583,7 +577,7 @@ function calculateVentilationDecision() {
         </div>
     `;
 
-    // 48 VALANDŲ PROGNOZĖ
+    // 🌟 3 STULPELIAI TELEFONE IR ŠVIEČIANTI BALTA SPALVA VALANDOMS TAMSIAI TEMAI
     const hourly = cachedWeatherData.hourly;
     const now = new Date();
     let currentHourIdx = 0;
@@ -633,22 +627,25 @@ function calculateVentilationDecision() {
             badgeStyle = "background-color: rgba(148, 163, 184, 0.15); color: var(--text-main); border: 1px solid rgba(148, 163, 184, 0.4);";
         }
 
+        // 🌟 DIENA IR LAIKAS VIENOJE EILUTĖJE SU ŠVIEČIANČIA TEKSTO SPALVA
         items.push(`
-            <div class="bg-tractorSurface border ${isNow ? 'border-tractorPrimary ring-2 ring-tractorPrimary' : 'border-tractorBorder'} rounded-xl p-2.5 text-center space-y-1.5 flex flex-col justify-between text-xs">
-                <div class="border-b border-tractorBorder/60 pb-1">
-                    <span class="text-[9px] uppercase block font-bold" style="color: var(--text-muted);">${isNow ? 'DABAR' : dayName}</span>
-                    <strong class="text-xs font-mono font-bold block" style="color: var(--text-main);">${String(hour).padStart(2, '0')}:00</strong>
+            <div class="bg-tractorSurface border ${isNow ? 'border-tractorPrimary ring-2 ring-tractorPrimary' : 'border-tractorBorder'} rounded-xl p-2 sm:p-2.5 text-center space-y-1 sm:space-y-1.5 flex flex-col justify-between text-xs select-none transition hover:border-slate-400">
+                
+                <div class="flex items-center justify-between border-b border-tractorBorder/60 pb-1 text-[10px] sm:text-xs font-bold leading-none">
+                    <span class="text-slate-400 uppercase font-black tracking-wider truncate">${isNow ? 'Dabar' : dayName}</span>
+                    <strong class="font-mono font-black" style="color: var(--text-main);">${String(hour).padStart(2, '0')}:00</strong>
                 </div>
 
-                <div class="text-[10px] font-extrabold py-0.5 px-1 rounded" style="${badgeStyle}">
+                <div class="text-[10px] sm:text-xs font-bold py-0.5 px-1 rounded flex items-center justify-center leading-none truncate" style="${badgeStyle}">
                     ${badge}
                 </div>
 
-                <div class="text-[10px] space-y-0.5 pt-0.5">
-                    <div class="font-mono font-bold text-xs" style="color: var(--text-main);">${tAir > 0 ? '+' : ''}${Math.round(tAir)}°C</div>
-                    <div style="color: var(--text-muted);">RH: ${Math.round(rhAir)}%</div>
-                    <div class="text-[10px] font-mono font-bold" style="color: #15803D;">EMC: ${emcVal.toFixed(1)}%</div>
+                <div class="space-y-0.5 pt-0.5 text-[10px] sm:text-xs font-mono leading-tight">
+                    <div class="font-black" style="color: var(--text-main);">${tAir > 0 ? '+' : ''}${Math.round(tAir)}°C</div>
+                    <div class="text-slate-400 font-medium">RH: ${Math.round(rhAir)}%</div>
+                    <div class="font-bold text-green-600 dark:text-green-400">EMC: ${emcVal.toFixed(1)}%</div>
                 </div>
+
             </div>
         `);
     }

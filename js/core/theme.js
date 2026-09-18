@@ -1,7 +1,7 @@
 // js/core/theme.js
 
 export function initThemeToggle() {
-    const savedTheme = localStorage.getItem('neighbor_theme') || 'dark';
+    const savedTheme = localStorage.getItem('neighbor_theme') || 'light';
     applyTheme(savedTheme);
 
     document.querySelectorAll('.btn-theme-toggle').forEach(btn => {
