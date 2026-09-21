@@ -71,26 +71,14 @@ function setupFieldEvents(currentUser) {
 
     const editModal = document.getElementById('field-edit-modal');
     const closeEditModalBtn = document.getElementById('btn-close-edit-modal');
-    const btnEditField = document.getElementById('btn-edit-field-info');
-    const btnDeleteField = document.getElementById('btn-delete-field-entirely');
+    const btnDeleteModal = document.getElementById('btn-delete-field-modal');
 
-    if (btnEditField) {
-        btnEditField.onclick = () => {
-            const field = userFieldsList.find(f => f.id === selectedFieldId);
-            if (!field) return;
-
-            document.getElementById('edit-field-name').value = field.name || '';
-            document.getElementById('edit-field-block').value = field.fieldBlockNumber || '';
-            document.getElementById('edit-field-crop').value = field.crop || 'Žieminiai kviečiai';
-            document.getElementById('edit-field-notes').value = field.notes || '';
-
-            editModal.classList.remove('hidden');
-        };
+    if (closeEditModalBtn) {
+        closeEditModalBtn.onclick = () => editModal?.classList.add('hidden');
     }
 
-    if (closeEditModalBtn) closeEditModalBtn.onclick = () => editModal.classList.add('hidden');
-
-    document.getElementById('edit-field-form').onsubmit = async (e) => {
+    // Išsaugoti pakeitimus iš Bottom Sheet
+    document.getElementById('edit-field-form')?.addEventListener('submit', async (e) => {
         e.preventDefault();
         if (!selectedFieldId) return;
 
@@ -108,23 +96,23 @@ function setupFieldEvents(currentUser) {
 
         editModal.classList.add('hidden');
         showBottomToast(`Lauko „${newName}“ duomenys atnaujinti! 🌾`);
-    };
+    });
 
-    if (btnDeleteField) {
-        btnDeleteField.onclick = () => {
+    // 🌟 Ištrinti lauką tiesiai iš Bottom Sheet
+    if (btnDeleteModal) {
+        btnDeleteModal.onclick = () => {
             const field = userFieldsList.find(f => f.id === selectedFieldId);
             if (!field) return;
 
             showDialog("Trinti lauką?", `Ar tikrai norite pašalinti lauką „${field.name}“?`, "🗑️", async () => {
                 await db.collection("user_fields").doc(selectedFieldId).delete();
-                document.getElementById('field-detail-section').classList.add('hidden');
+                editModal.classList.add('hidden');
                 selectedFieldId = null;
                 showBottomToast(`Laukas „${field.name}“ sėkmingai pašalintas.`);
             }, true);
         };
     }
 
-    // Braižymo mygtuko paspaudimas
     drawBtn.onclick = () => {
         if (!currentUser) {
             showDialog("Reikalingas prisijungimas", "Prisijunkite, kad galėtumėte braižyti laukus.", "🔒");
@@ -137,7 +125,6 @@ function setupFieldEvents(currentUser) {
         helperBanner.classList.remove('hidden');
     };
 
-    // Atšaukti braižymą
     cancelBtn.onclick = () => {
         stopDrawing();
         drawBtn.classList.remove('hidden');
@@ -146,7 +133,6 @@ function setupFieldEvents(currentUser) {
         helperBanner.classList.add('hidden');
     };
 
-    // Baigti ir išsaugoti (viršutinis mygtukas)
     saveToolbarBtn.onclick = () => {
         const points = getDrawingPoints();
         if (points.length < 3) {
@@ -160,7 +146,7 @@ function setupFieldEvents(currentUser) {
 
     closeSaveModalBtn.onclick = () => saveModal.classList.add('hidden');
 
-    document.getElementById('save-field-form').onsubmit = async (e) => {
+    document.getElementById('save-field-form')?.addEventListener('submit', async (e) => {
         e.preventDefault();
         const name = document.getElementById('field-name-input').value.trim();
         const blockNumber = document.getElementById('field-block-input')?.value?.trim() || '';
@@ -187,7 +173,7 @@ function setupFieldEvents(currentUser) {
         saveModal.classList.add('hidden');
         cancelBtn.click();
         showBottomToast(`Laukas „${name}“ (${areaHa} ha) išsaugotas! 🌾`);
-    };
+    });
 }
 
 function listenToUserFields(currentUser) {
@@ -232,18 +218,33 @@ function renderFieldsTableRows() {
     }).join('');
 }
 
+// 🌟 IŠ KARTO ATIDAROMAS BOTTOM SHEET BE JOKIŲ TARPINIŲ ŽINGSNIŲ!
 window.selectAndFocusField = function(fieldId) {
     selectedFieldId = fieldId;
     const field = userFieldsList.find(f => f.id === fieldId);
     if (!field) return;
 
-    const detailSection = document.getElementById('field-detail-section');
-    if (detailSection) detailSection.classList.remove('hidden');
-
-    document.getElementById('detail-field-title').textContent = field.name;
-    document.getElementById('detail-field-meta').innerHTML = `Plotas: <strong class="text-green-400 font-bold">${field.areaHa} ha</strong> • Pasėlis: <strong class="text-white">${field.crop}</strong>`;
-
     highlightFieldPolygon(fieldId);
     renderFieldsTableRows();
+
+    // Užpildome formą lauko duomenimis
+    const nameInp = document.getElementById('edit-field-name');
+    const blockInp = document.getElementById('edit-field-block');
+    const cropSel = document.getElementById('edit-field-crop');
+    const notesInp = document.getElementById('edit-field-notes');
+    const titleEl = document.getElementById('edit-modal-title');
+
+    if (nameInp) nameInp.value = field.name || '';
+    if (blockInp) blockInp.value = field.fieldBlockNumber || '';
+    if (cropSel) cropSel.value = field.crop || 'Žieminiai kviečiai';
+    if (notesInp) notesInp.value = field.notes || '';
+    if (titleEl) titleEl.textContent = `Lauko pasas: ${field.name} (${field.areaHa} ha)`;
+
+    // Iškart parodome Bottom Sheet
+    const editModal = document.getElementById('field-edit-modal');
+    if (editModal) {
+        editModal.classList.remove('hidden');
+    }
 };
+
 export const initFieldsTab = initFieldsManager;

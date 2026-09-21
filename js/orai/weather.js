@@ -523,7 +523,7 @@ function updateHourlyGrid() {
                     
                     <div class="flex items-center justify-between border-b border-tractorBorder/60 pb-1 text-[10px] sm:text-xs font-bold leading-none">
                         <span class="text-slate-400 uppercase font-black truncate">${isCurrentHour ? 'DABAR' : dayName}</span>
-                        <strong class="font-mono font-black text-slate-800 dark:text-white">${String(hour).padStart(2, '0')}:00</strong>
+                        <strong class="font-mono font-black" style="color: var(--text-main);">${String(hour).padStart(2, '0')}:00</strong>
                     </div>
 
                     <div class="text-[10px] sm:text-xs font-bold ${frostBadgeClass} py-0.5 sm:py-1 px-1 rounded-md border flex items-center justify-center leading-none truncate">
@@ -558,7 +558,7 @@ function updateHourlyGrid() {
                     
                     <div class="flex items-center justify-between border-b border-tractorBorder/60 pb-1 text-[10px] sm:text-xs font-bold leading-none">
                         <span class="text-slate-400 uppercase font-black truncate">${isCurrentHour ? 'DABAR' : dayName}</span>
-                        <strong class="font-mono font-black text-slate-800 dark:text-white">${String(hour).padStart(2, '0')}:00</strong>
+                        <strong class="font-mono font-black" style="color: var(--text-main);">${String(hour).padStart(2, '0')}:00</strong>
                     </div>
 
                     <div class="text-[10px] sm:text-xs font-bold ${evalResult.badgeClass} py-0.5 sm:py-1 px-1 rounded-md border flex items-center justify-center gap-1 leading-none truncate">

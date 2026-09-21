@@ -14,7 +14,7 @@ export function getMainFieldsHtml(todayStr) {
                 </p>
             </div>
 
-            <!-- BRAIŽYMO BANERIS (Tik informacinis tekstas) -->
+            <!-- BRAIŽYMO BANERIS -->
             <div id="draw-helper-banner" class="hidden bg-tractorPrimary/20 border border-tractorPrimary text-tractorPrimaryLight p-3.5 rounded-xl text-xs font-semibold">
                 📍 Spauskite ant žemėlapio taškus aplink lauko ribas. Baigę spauskite „Išsaugoti lauką“ viršuje.
             </div>
@@ -47,17 +47,14 @@ export function getMainFieldsHtml(todayStr) {
                         </button>
                         <input type="file" id="nma-file-hidden-input" accept=".geojson,.json" class="hidden">
 
-                        <!-- Brėžimo mygtukas (pradinis) -->
                         <button id="btn-start-draw" class="px-3.5 py-1.5 bg-tractorPrimary hover:bg-tractorPrimaryHover text-white font-bold rounded-lg flex items-center gap-1.5 shadow transition cursor-pointer">
                             <span>✏️</span> Brėžti lauką
                         </button>
 
-                        <!-- Išsaugoti lauką (atsiranda viršuje braižymo metu) -->
                         <button id="btn-save-draw-toolbar" class="px-3.5 py-1.5 bg-green-600 hover:bg-green-700 text-white font-bold rounded-lg shadow hidden transition cursor-pointer">
-                            💾 Išsaugoti lauką
+                            Išsaugoti lauką
                         </button>
                         
-                        <!-- Atšaukti (stilingas tamsiai raudonas atšaukimo mygtukas) -->
                         <button id="btn-cancel-draw" class="px-3.5 py-1.5 bg-red-950/40 hover:bg-red-900 border border-red-800/60 text-red-300 rounded-lg font-bold hidden transition cursor-pointer">
                             ✕ Atšaukti
                         </button>
@@ -72,38 +69,13 @@ export function getMainFieldsHtml(todayStr) {
                 </div>
             </div>
 
-            <!-- 2. PASIRINKTO LAUKO PASAS / VALDYMAS -->
-            <div id="field-detail-section" class="hidden bg-tractorSurface border-2 border-tractorPrimary rounded-2xl p-6 md:p-8 shadow-2xl space-y-5">
-                <div class="flex flex-col md:flex-row md:items-start justify-between gap-4 border-b border-tractorBorder/80 pb-5">
-                    <div class="space-y-1.5 flex-1">
-                        <span class="inline-flex items-center gap-1 bg-tractorPrimary/20 text-tractorPrimaryLight px-3 py-0.5 rounded-full text-xs font-extrabold uppercase tracking-wider">
-                            🌾 Pasirinktas laukas
-                        </span>
-                        <h3 id="detail-field-title" class="font-oswald text-2xl md:text-3xl font-bold text-white tracking-wide">Kraunasi...</h3>
-                        <p id="detail-field-meta" class="text-sm text-slate-300 mt-1"></p>
-                    </div>
-
-                    <div class="flex flex-wrap items-center gap-2.5 shrink-0">
-                        <button id="btn-edit-field-info" class="h-10 px-4 bg-tractorBg hover:bg-zinc-800 text-slate-200 border border-tractorBorder hover:border-tractorPrimary text-xs font-bold rounded-xl flex items-center gap-1.5 transition cursor-pointer">
-                            <span>✏️</span> Redaguoti
-                        </button>
-                        <button id="btn-delete-field-entirely" class="h-10 px-4 bg-red-950/40 hover:bg-red-900 text-red-300 border border-red-800/60 text-xs font-bold rounded-xl flex items-center gap-1.5 transition cursor-pointer">
-                            <span>🗑️</span> Ištrinti
-                        </button>
-                    </div>
-                </div>
-
-                <!-- PALYDOVINIS NDVI BLOKAS -->
-                <div id="field-ndvi-live-box"></div>
-            </div>
-
-            <!-- 3. LAUKŲ SĄRAŠAS EILUTĖMIS -->
+            <!-- 2. LAUKŲ SĄRAŠAS EILUTĖMIS -->
             <div class="bg-tractorSurface border border-tractorBorder rounded-2xl p-6 md:p-8 shadow-xl space-y-4">
                 <div class="flex justify-between items-center border-b border-tractorBorder/70 pb-3">
-                    <h3 class="font-oswald text-xl md:text-2xl font-bold text-white uppercase tracking-wider flex items-center gap-2">
+                    <h3 class="font-oswald text-xl md:text-2xl font-bold uppercase tracking-wider flex items-center gap-2" style="color: var(--text-main);">
                         <span>📋</span> Visi ūkio laukai (<span id="fields-count-badge">0</span>)
                     </h3>
-                    <span class="text-xs text-slate-400">Paspauskite ant eilutės, kad žemėlapis prisiartintų.</span>
+                    <span class="text-xs text-slate-400">Paspauskite „Atverti pasą →“ redagavimui ar trynimui.</span>
                 </div>
 
                 <div id="fields-table-list" class="space-y-3 pt-1">
@@ -112,17 +84,17 @@ export function getMainFieldsHtml(todayStr) {
             </div>
 
             <!-- MODALAS: NAUJO LAUKO IŠSAUGOJIMAS (BOTTOM SHEET) -->
-            <div id="field-save-modal" class="fixed inset-0 bg-black/80 z-[250] hidden flex flex-col justify-end items-center p-0 backdrop-blur-sm transition-all duration-300">
-                <div class="bg-tractorSurface border-t-2 border-x-2 border-b-0 border-tractorBorder rounded-t-3xl rounded-b-none p-6 md:p-8 max-w-2xl w-full space-y-4 shadow-2xl relative max-h-[90vh] overflow-y-auto mb-0 transform transition-transform duration-300">
+            <div id="field-save-modal" class="fixed inset-0 bg-black/80 z-[9999] hidden flex flex-col justify-end items-center p-0 backdrop-blur-sm transition-all duration-300">
+                <div class="bg-tractorSurface border-t-2 border-x-2 border-b-0 border-tractorBorder rounded-t-3xl rounded-b-none p-6 md:p-8 pb-12 max-h-[90vh] overflow-y-auto max-w-xl w-full space-y-4 shadow-2xl relative transform transition-transform duration-300">
                     <div class="flex justify-between items-center border-b border-tractorBorder pb-3">
                         <h3 class="font-oswald text-xl font-bold text-white uppercase tracking-wider">Išsaugoti naują lauką</h3>
-                        <button id="btn-close-save-modal" class="text-slate-400 hover:text-white text-2xl font-bold cursor-pointer">&times;</button>
+                        <button type="button" id="btn-close-save-modal" class="text-slate-400 hover:text-white text-2xl font-bold cursor-pointer">&times;</button>
                     </div>
 
                     <form id="save-field-form" class="space-y-4">
                         <div class="space-y-1">
                             <label class="text-xs font-bold text-slate-300 uppercase">Lauko pavadinimas *</label>
-                            <input id="field-name-input" type="text" required placeholder="Pvz.: Prie miško" 
+                            <input id="field-name-input" type="text" required autocomplete="off" placeholder="Pvz.: Prie miško" 
                                 class="w-full h-11 bg-tractorBg border border-tractorBorder rounded-xl px-3.5 text-xs text-white outline-none">
                         </div>
 
@@ -133,7 +105,7 @@ export function getMainFieldsHtml(todayStr) {
                             </div>
                             <div class="space-y-1">
                                 <label class="text-xs font-bold text-slate-300 uppercase">Bloko Nr.</label>
-                                <input id="field-block-input" type="text" placeholder="Pvz.: 123-01" class="w-full h-11 bg-tractorBg border border-tractorBorder rounded-xl px-3.5 text-xs text-white outline-none">
+                                <input id="field-block-input" type="text" autocomplete="off" placeholder="Pvz.: 123-01" class="w-full h-11 bg-tractorBg border border-tractorBorder rounded-xl px-3.5 text-xs text-white outline-none">
                             </div>
                         </div>
 
@@ -150,61 +122,72 @@ export function getMainFieldsHtml(todayStr) {
 
                         <div class="space-y-1">
                             <label class="text-xs font-bold text-slate-300 uppercase">Pastabos</label>
-                            <input id="field-notes-input" type="text" placeholder="Pastabos" class="w-full h-11 bg-tractorBg border border-tractorBorder rounded-xl px-3 text-xs text-white outline-none">
+                            <input id="field-notes-input" type="text" autocomplete="off" placeholder="Pastabos" class="w-full h-11 bg-tractorBg border border-tractorBorder rounded-xl px-3 text-xs text-white outline-none">
                         </div>
 
-                        <button type="submit" class="w-full h-12 bg-tractorPrimary hover:bg-tractorPrimaryHover text-white font-bold rounded-xl text-xs uppercase tracking-wider shadow transition cursor-pointer">
-                            💾 Išsaugoti lauką
+                        <button type="submit" class="w-full h-12 bg-tractorPrimary hover:bg-tractorPrimaryHover text-white font-extrabold rounded-xl text-xs uppercase tracking-wider shadow transition cursor-pointer flex items-center justify-center">
+                            Išsaugoti lauką
                         </button>
                     </form>
                 </div>
             </div>
 
-            <!-- MODALAS: REDAGAVIMAS (BOTTOM SHEET) -->
-            <div id="field-edit-modal" class="fixed inset-0 bg-black/80 z-[250] hidden flex flex-col justify-end items-center p-0 backdrop-blur-sm transition-all duration-300">
-                <div class="bg-tractorSurface border-t-2 border-x-2 border-b-0 border-tractorBorder rounded-t-3xl rounded-b-none p-6 md:p-8 max-w-2xl w-full space-y-4 shadow-2xl relative max-h-[90vh] overflow-y-auto mb-0 transform transition-transform duration-300">
+            <!-- 🌟 MODALAS: REDAGAVIMAS + TRYNIMAS (TIKRAS BOTTOM SHEET SU IŠSAUGOTI IR IŠTRINTI) -->
+            <div id="field-edit-modal" class="fixed inset-0 bg-black/80 z-[9999] hidden flex flex-col justify-end items-center p-0 backdrop-blur-sm transition-all duration-300">
+                <div class="bg-tractorSurface border-t-2 border-x-2 border-b-0 border-tractorBorder rounded-t-3xl rounded-b-none p-6 md:p-8 pb-12 max-h-[90vh] overflow-y-auto max-w-xl w-full space-y-4 shadow-2xl relative transform transition-transform duration-300">
                     <div class="flex justify-between items-center border-b border-tractorBorder pb-3">
-                        <h3 class="font-oswald text-xl font-bold text-white uppercase tracking-wider">Redaguoti lauką</h3>
-                        <button id="btn-close-edit-modal" class="text-slate-400 hover:text-white text-2xl font-bold cursor-pointer">&times;</button>
+                        <div class="flex items-center gap-2">
+                            <span class="text-xl">🌾</span>
+                            <h3 id="edit-modal-title" class="font-oswald text-xl font-bold uppercase tracking-wider" style="color: var(--text-main);">Lauko pasas ir redagavimas</h3>
+                        </div>
+                        <button type="button" id="btn-close-edit-modal" class="text-slate-400 hover:text-white text-2xl font-bold cursor-pointer">&times;</button>
                     </div>
 
                     <form id="edit-field-form" class="space-y-4">
                         <div class="space-y-1">
                             <label class="text-xs font-bold text-slate-300 uppercase">Lauko pavadinimas *</label>
-                            <input id="edit-field-name" type="text" required class="w-full h-11 bg-tractorBg border border-tractorBorder rounded-xl px-3.5 text-xs text-white font-bold outline-none">
+                            <input id="edit-field-name" type="text" required autocomplete="off" class="w-full h-11 bg-tractorBg border border-tractorBorder rounded-xl px-3.5 text-xs font-bold outline-none" style="color: var(--text-main);">
                         </div>
                         <div class="grid grid-cols-2 gap-3">
                             <div class="space-y-1">
                                 <label class="text-xs font-bold text-slate-300 uppercase">Bloko Nr.</label>
-                                <input id="edit-field-block" type="text" class="w-full h-11 bg-tractorBg border border-tractorBorder rounded-xl px-3.5 text-xs text-white outline-none">
+                                <input id="edit-field-block" type="text" autocomplete="off" class="w-full h-11 bg-tractorBg border border-tractorBorder rounded-xl px-3.5 text-xs outline-none" style="color: var(--text-main);">
                             </div>
                             <div class="space-y-1">
                                 <label class="text-xs font-bold text-tractorPrimaryLight uppercase">Pasėlis</label>
-                                <select id="edit-field-crop" class="w-full h-11 bg-tractorBg border border-tractorBorder rounded-xl px-3 text-xs text-white outline-none cursor-pointer">
+                                <select id="edit-field-crop" class="w-full h-11 bg-tractorBg border border-tractorBorder rounded-xl px-3 text-xs outline-none cursor-pointer" style="color: var(--text-main);">
                                     <option value="Žieminiai kviečiai">🌾 Žieminiai kviečiai</option>
                                     <option value="Žieminiai rapsai">🌱 Žieminiai rapsai</option>
                                     <option value="Vasariniai miežiai">🌾 Vasariniai miežiai</option>
                                     <option value="Žirniai / Pupos">🫘 Žirniai / Pupos</option>
+                                    <option value="Kukurūzai">🌽 Kukurūzai</option>
                                 </select>
                             </div>
                         </div>
                         <div class="space-y-1">
                             <label class="text-xs font-bold text-slate-300 uppercase">Pastabos</label>
-                            <input id="edit-field-notes" type="text" class="w-full h-11 bg-tractorBg border border-tractorBorder rounded-xl px-3 text-xs text-white outline-none">
+                            <input id="edit-field-notes" type="text" autocomplete="off" class="w-full h-11 bg-tractorBg border border-tractorBorder rounded-xl px-3 text-xs outline-none" style="color: var(--text-main);">
                         </div>
-                        <button type="submit" class="w-full h-12 bg-tractorPrimary text-white font-bold rounded-xl text-xs uppercase tracking-wider shadow transition cursor-pointer">
-                            💾 Išsaugoti pakeitimus
-                        </button>
+                        
+                        <!-- 🌟 DU MYGTUKAI: IŠSAUGOTI IR IŠTRINTI -->
+                        <div class="flex gap-3 pt-2">
+                            <button type="submit" class="flex-1 h-12 bg-tractorPrimary hover:bg-tractorPrimaryHover text-white font-extrabold rounded-xl text-xs uppercase tracking-wider shadow transition cursor-pointer flex items-center justify-center">
+                                Išsaugoti pakeitimus
+                            </button>
+                            <button type="button" id="btn-delete-field-modal" class="px-5 h-12 bg-red-950/40 hover:bg-red-900 text-red-400 border border-red-800/60 font-bold rounded-xl text-xs uppercase tracking-wider transition cursor-pointer flex items-center justify-center gap-1.5">
+                                <span>🗑️</span> <span>Ištrinti</span>
+                            </button>
+                        </div>
                     </form>
                 </div>
             </div>
 
             <!-- MODALAS: NMA IMPORTAS (BOTTOM SHEET) -->
-            <div id="nma-import-modal" class="fixed inset-0 bg-black/80 z-[250] hidden flex flex-col justify-end items-center p-0 backdrop-blur-sm transition-all duration-300">
-                <div class="bg-tractorSurface border-t-2 border-x-2 border-b-0 border-tractorBorder rounded-t-3xl rounded-b-none p-6 md:p-8 max-w-2xl w-full space-y-5 shadow-2xl relative max-h-[90vh] overflow-y-auto mb-0 transform transition-transform duration-300">
+            <div id="nma-import-modal" class="fixed inset-0 bg-black/80 z-[9999] hidden flex flex-col justify-end items-center p-0 backdrop-blur-sm transition-all duration-300">
+                <div class="bg-tractorSurface border-t-2 border-x-2 border-b-0 border-tractorBorder rounded-t-3xl rounded-b-none p-6 md:p-8 pb-12 max-h-[90vh] overflow-y-auto max-w-xl w-full space-y-5 shadow-2xl relative transform transition-transform duration-300">
                     <div class="flex justify-between items-center border-b border-tractorBorder pb-3">
                         <h3 class="font-oswald text-xl font-bold text-white uppercase tracking-wider">📁 Įkelti NMA Laukus</h3>
-                        <button id="btn-close-nma-import" class="text-slate-400 hover:text-white text-2xl font-bold cursor-pointer">&times;</button>
+                        <button type="button" id="btn-close-nma-import" class="text-slate-400 hover:text-white text-2xl font-bold cursor-pointer">&times;</button>
                     </div>
                     <p class="text-xs text-slate-300">
                         Įkelkite deklaracijos failą (<strong>.geojson</strong> arba <strong>.json</strong>), atsisiųstą iš NMA / PPIS sistemos.
@@ -229,29 +212,29 @@ export function getEmptyListHtml() {
 
 export function getFieldRowHtml(f, idx, isSelected, ndvi) {
     return `
-        <div id="field-row-${f.id}" class="field-item-row p-5 rounded-2xl border transition cursor-pointer flex flex-col sm:flex-row sm:items-center justify-between gap-4 ${
+        <div id="field-row-${f.id}" class="field-item-row p-4 sm:p-5 rounded-2xl border transition cursor-pointer flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${
             isSelected 
-            ? 'bg-myPostBg border-tractorPrimary ring-2 ring-tractorPrimary shadow-2xl' 
+            ? 'bg-myPostBg border-tractorPrimary ring-2 ring-tractorPrimary shadow-xl' 
             : 'bg-tractorBg border-tractorBorder hover:border-tractorPrimary'
         }" onclick="window.selectAndFocusField('${f.id}')">
             
             <div class="space-y-1">
-                <div class="flex items-center gap-2.5">
+                <div class="flex flex-wrap items-center gap-2">
                     <span class="text-xs text-slate-400 font-mono font-bold bg-tractorSurface px-2 py-0.5 rounded border border-tractorBorder">#${idx + 1}</span>
-                    <h4 class="font-bold text-white text-base md:text-lg">${f.name}</h4>
-                    ${f.fieldBlockNumber ? `<span class="text-xs text-slate-400">(${f.fieldBlockNumber})</span>` : ''}
-                    <span class="text-xs bg-tractorPrimary/20 text-tractorPrimaryLight px-3 py-1 rounded-lg font-bold border border-tractorPrimary/40">${f.areaHa} ha</span>
+                    <h4 class="font-bold text-base md:text-lg" style="color: var(--text-main);">${f.name}</h4>
+                    ${f.fieldBlockNumber ? `<span class="text-xs text-slate-400 font-mono">(${f.fieldBlockNumber})</span>` : ''}
+                    <span class="text-xs bg-tractorPrimary/20 text-tractorPrimaryLight px-2.5 py-0.5 rounded-lg font-bold border border-tractorPrimary/40">${f.areaHa} ha</span>
                     <span class="text-xs bg-green-950/40 text-green-400 px-2.5 py-0.5 rounded-md font-bold font-mono border border-green-800/50">🛰️ NDVI: ${ndvi.score}</span>
                 </div>
                 <p class="text-xs md:text-sm text-slate-300">
-                    🌱 Pasėlis: <strong class="text-white">${f.crop}</strong> ${f.notes ? `• <span class="text-slate-400 italic">${f.notes}</span>` : ''}
+                    🌱 Pasėlis: <strong class="text-slate-200">${f.crop}</strong> ${f.notes ? `• <span class="text-slate-400 italic">${f.notes}</span>` : ''}
                 </p>
             </div>
 
-            <div class="flex items-center justify-between sm:justify-end gap-5 pt-2 sm:pt-0 border-t sm:border-t-0 border-tractorBorder/60">
-                <span class="h-10 px-4 bg-tractorSurface hover:bg-tractorPrimary hover:text-white border border-tractorBorder rounded-xl text-xs font-bold text-slate-200 flex items-center gap-1 transition">
-                    ${isSelected ? 'Pasirinktas ✓' : 'Atverti pasą →'}
-                </span>
+            <div class="flex items-center justify-end shrink-0 pt-1 sm:pt-0">
+                <button type="button" class="h-10 px-4 bg-tractorSurface hover:bg-tractorPrimary hover:text-white border border-tractorBorder rounded-xl text-xs font-bold text-slate-200 flex items-center gap-1.5 transition cursor-pointer shadow-sm">
+                    <span>Atverti pasą</span> <span>→</span>
+                </button>
             </div>
         </div>
     `;
