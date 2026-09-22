@@ -1,6 +1,7 @@
 // js/sistema/settings.js
 import { db, auth } from '../core/firebase.js';
 import { showDialog, showBottomToast } from '../core/ui.js';
+import { autoRegisterFcmToken } from '../core/notifications.js';
 
 let mapInstance = null;
 let markerInstance = null;
@@ -11,72 +12,113 @@ let isAddingSiloMode = false;
 let pendingSiloCoords = null;
 let editingSiloId = null;
 let cachedCurrentUser = null;
+let cachedUserData = null;
+
+// Saugosime ūkio laukų statistiką
+let hasAnyField = false;
+let hasWinterField = false;
+let hasGarageBase = false; // 🌟 Nauja apsauga krušai
 
 export function initSettingsTab(currentUser, userData) {
     cachedCurrentUser = currentUser;
-    const hasRealCoords = userData?.garageLat && userData?.garageLon && userData.garageLat !== 0;
+    cachedUserData = userData;
     
-    currentCoords.lat = hasRealCoords ? parseFloat(userData.garageLat) : 54.8985;
-    currentCoords.lon = hasRealCoords ? parseFloat(userData.garageLon) : 23.9036;
+    hasGarageBase = !!(userData?.garageLat && userData?.garageLon && userData.garageLat !== 0);
+    
+    currentCoords.lat = hasGarageBase ? parseFloat(userData.garageLat) : 54.8985;
+    currentCoords.lon = hasGarageBase ? parseFloat(userData.garageLon) : 23.9036;
     userSilos = userData?.silos ? [...userData.silos] : [];
     isAddingSiloMode = false;
     editingSiloId = null;
+    hasAnyField = false;
+    hasWinterField = false;
+
+    const notifPrefs = userData?.notificationPreferences || {
+        enabled: false,
+        satPass: false,
+        matifPrice: false,
+        dieselDrop: false,
+        nmaDeadlines: false,
+        winterDanger: false,
+        tSumStart: false,
+        hailWarning: false
+    };
 
     const container = document.getElementById('view-tab-settings');
     container.innerHTML = `
         <div class="space-y-6 max-w-5xl mx-auto w-full">
             <div class="bg-tractorSurface border border-tractorBorder p-6 md:p-8 rounded-2xl space-y-6 shadow-xl">
                 <div class="border-b border-tractorBorder/70 pb-4">
-                    <h2 class="font-oswald text-2xl font-bold uppercase tracking-wider text-white">Paskyros nustatymai</h2>
-                    <p class="text-xs text-slate-400 mt-1">Nurodykite savo ūkio kontaktus, pagrindinę bazę ir grūdų laikymo bokštų vietas žemėlapyje.</p>
+                    <h2 class="font-oswald text-2xl font-bold uppercase tracking-wider" style="color: var(--text-main);">Paskyros nustatymai</h2>
+                    <p class="text-xs mt-1" style="color: var(--text-muted);">Nurodykite savo ūkio kontaktus, pagrindinę bazę ir pranešimų temas.</p>
                 </div>
                 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                     <div class="space-y-1.5">
-                        <label class="text-[11px] font-bold text-slate-300 uppercase tracking-wider">Vardas / Ūkio pavadinimas</label>
+                        <label class="text-[11px] font-bold uppercase tracking-wider" style="color: var(--text-muted);">Vardas / Ūkio pavadinimas</label>
                         <input id="set-name-input" type="text" value="${userData?.name || ''}" 
-                            class="w-full h-11 bg-tractorBg border border-tractorBorder focus:border-tractorPrimary rounded-xl px-4 text-xs text-white outline-none transition">
+                            class="w-full h-11 bg-tractorBg border border-tractorBorder focus:border-tractorPrimary rounded-xl px-4 text-xs outline-none transition" style="color: var(--text-main);">
                     </div>
 
                     <div class="space-y-1.5">
-                        <label class="text-[11px] font-bold text-slate-300 uppercase tracking-wider">Telefono numeris</label>
+                        <label class="text-[11px] font-bold uppercase tracking-wider" style="color: var(--text-muted);">Telefono numeris</label>
                         <input id="set-phone-input" type="text" value="${userData?.phone || '+370'}" 
-                            class="w-full h-11 bg-tractorBg border border-tractorBorder focus:border-tractorPrimary rounded-xl px-4 text-xs text-white outline-none transition">
+                            class="w-full h-11 bg-tractorBg border border-tractorBorder focus:border-tractorPrimary rounded-xl px-4 text-xs outline-none transition" style="color: var(--text-main);">
                     </div>
                 </div>
 
                 <div class="space-y-2 bg-tractorBg/60 p-4 rounded-xl border border-tractorBorder/60">
                     <div class="flex justify-between items-center text-xs">
-                        <span class="text-[11px] font-bold text-slate-300 uppercase tracking-wider">Pranešimų gavimo spindulys</span>
+                        <span class="text-[11px] font-bold uppercase tracking-wider" style="color: var(--text-muted);">SOS Pagalbos spindulys kaimynams</span>
                         <span id="set-dist-label" class="font-bold text-tractorPrimaryLight bg-tractorPrimary/20 px-3 py-1 rounded-lg border border-tractorPrimary/40">
                             ${userData?.notificationDistance || 20} km
                         </span>
                     </div>
                     <input id="set-dist-input" type="range" min="5" max="100" value="${userData?.notificationDistance || 20}" 
                         class="w-full accent-tractorPrimary cursor-pointer">
-                    <p class="text-[11px] text-slate-500">Gausite SOS pranešimus iš kaimynų, kurie yra šiuo atstumu nuo jūsų garažo.</p>
+                    <p class="text-[11px]" style="color: var(--text-muted);">Gausite SOS pagalbos pranešimus iš kaimynų, kurie yra šiuo atstumu nuo jūsų garažo.</p>
+                </div>
+
+                <!-- PRANEŠIMŲ JUOSTA -->
+                <div class="bg-tractorBg/60 p-4 md:p-5 rounded-xl border border-tractorBorder/60 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div class="space-y-0.5">
+                        <div class="flex items-center gap-2">
+                            <span class="text-base">🔔</span>
+                            <span class="text-xs font-bold text-tractorPrimaryLight uppercase tracking-wider">Išmanieji pranešimai (Push)</span>
+                        </div>
+                        <p class="text-[11px]" style="color: var(--text-muted);">Gaukite skubius įspėjimus tiesiai į telefono arba kompiuterio ekraną.</p>
+                    </div>
+                    
+                    <div class="flex items-center gap-3 shrink-0">
+                        <label class="flex items-center gap-2 cursor-pointer select-none">
+                            <input type="checkbox" id="set-notif-enabled" class="w-4 h-4 accent-tractorPrimary cursor-pointer" ${notifPrefs.enabled ? 'checked' : ''}>
+                            <span class="text-xs font-bold" style="color: var(--text-main);">Gauti pranešimus</span>
+                        </label>
+                        <button type="button" id="btn-open-notif-topics-modal" class="px-3.5 py-2 bg-tractorSurface border border-tractorBorder hover:border-tractorPrimary text-xs font-bold rounded-xl transition cursor-pointer flex items-center gap-1.5 shadow-sm" style="color: var(--text-main);">
+                            <span>⚙️</span> <span>Pasirinkti temas ➔</span>
+                        </button>
+                    </div>
                 </div>
 
                 <div class="space-y-2">
                     <div class="flex justify-between items-center">
                         <label class="text-[11px] font-bold text-tractorPrimaryLight uppercase tracking-wider">📍 Ūkio bazė (garažas) ir grūdų bokštai žemėlapyje *</label>
                         <span id="coords-text" class="text-[10px] text-green-400 font-mono font-bold">
-                            Garažas: ${hasRealCoords ? `${currentCoords.lat.toFixed(4)}, ${currentCoords.lon.toFixed(4)}` : 'Nenustatytas'}
+                            Garažas: ${hasGarageBase ? `${currentCoords.lat.toFixed(4)}, ${currentCoords.lon.toFixed(4)}` : 'Nenustatytas'}
                         </span>
                     </div>
                     
-                    <!-- ŽEMĖLAPIS -->
                     <div id="settings-map" class="h-80 w-full rounded-xl border border-tractorBorder z-0 relative shadow-inner overflow-hidden"></div>
-                    <p class="text-[11px] text-slate-400">Vilkite garažo žymeklį (🏠) arba žemėlapio kampe spauskite <strong>„🛢️ Pridėti bokštą“</strong> ir spustelėkite žemėlapyje.</p>
+                    <p class="text-[11px]" style="color: var(--text-muted);">Vilkite garažo žymeklį (🏠) arba žemėlapio kampe spauskite <strong>„🛢️ Pridėti bokštą“</strong> ir spustelėkite žemėlapyje.</p>
                 </div>
 
-                <button id="save-settings-btn" class="w-full h-12 bg-tractorPrimary hover:bg-tractorPrimaryHover text-white font-bold rounded-xl text-xs uppercase tracking-wider shadow-lg shadow-tractorPrimary/20 flex items-center justify-center gap-2 cursor-pointer transition">
-                    <span>💾</span> Išsaugoti nustatymus
+                <button id="save-settings-btn" class="w-full h-12 bg-tractorPrimary hover:bg-tractorPrimaryHover text-white font-bold rounded-xl text-xs uppercase tracking-wider shadow-lg shadow-tractorPrimary/20 flex items-center justify-center gap-2 cursor-pointer transition relative z-20 pointer-events-auto">
+                    Išsaugoti nustatymus
                 </button>
 
                 <div class="border-t border-tractorBorder/70 pt-4 mt-6">
                     <button id="delete-account-btn" class="w-full h-10 border border-red-900/50 hover:bg-red-950/40 text-red-400 font-bold rounded-xl text-xs transition flex items-center justify-center gap-2">
-                        <span>⚠️</span> Ištrinti paskyrą ir visus duomenis
+                        Ištrinti paskyrą ir visus duomenis
                     </button>
                 </div>
             </div>
@@ -87,10 +129,25 @@ export function initSettingsTab(currentUser, userData) {
         document.getElementById('set-dist-label').textContent = `${e.target.value} km`;
     };
 
-    document.getElementById('save-settings-btn').onclick = async () => {
+    const notifToggle = document.getElementById('set-notif-enabled');
+    if (notifToggle) {
+        notifToggle.onchange = (e) => {
+            if (e.target.checked) {
+                // 🌟 Perduodame true: vartotojas pats paspaudė, klausiame leidimo!
+                autoRegisterFcmToken(currentUser, userData, true);
+            }
+        };
+    }
+
+    document.getElementById('save-settings-btn').onclick = async (e) => {
+        e.preventDefault();
         const name = document.getElementById('set-name-input').value.trim();
         const phone = document.getElementById('set-phone-input').value.trim();
         const dist = parseInt(document.getElementById('set-dist-input').value);
+        const notifEnabled = document.getElementById('set-notif-enabled')?.checked ?? false;
+
+        const currentPrefs = cachedUserData?.notificationPreferences || {};
+        currentPrefs.enabled = notifEnabled;
 
         await db.collection("users").doc(currentUser.uid).update({
             name: name,
@@ -99,8 +156,11 @@ export function initSettingsTab(currentUser, userData) {
             garageLat: currentCoords.lat,
             garageLon: currentCoords.lon,
             silos: userSilos,
+            notificationPreferences: currentPrefs,
             isSetupComplete: true
         });
+
+        hasGarageBase = true; // Jau išsaugota
 
         if (userData) {
             userData.name = name;
@@ -109,10 +169,11 @@ export function initSettingsTab(currentUser, userData) {
             userData.garageLat = currentCoords.lat;
             userData.garageLon = currentCoords.lon;
             userData.silos = userSilos;
+            userData.notificationPreferences = currentPrefs;
             userData.isSetupComplete = true;
         }
 
-        showBottomToast("Ūkio bazė ir grūdų bokštai sėkmingai išsaugoti! 🚜");
+        showBottomToast("Ūkio nustatymai išsaugoti! 🚜");
     };
 
     document.getElementById('delete-account-btn').onclick = () => {
@@ -123,56 +184,225 @@ export function initSettingsTab(currentUser, userData) {
         }, true);
     };
 
-    // Sukuriame modalą tiesiai body viršūnėje
-    ensureSiloModalInBody();
+    db.collection("user_fields").where("userId", "==", currentUser.uid).get().then(snap => {
+        snap.forEach(doc => {
+            hasAnyField = true;
+            const crop = (doc.data().crop || "").toLowerCase();
+            if (crop.includes("žiemin") || crop.includes("raps")) {
+                hasWinterField = true;
+            }
+        });
+        ensureModalsInBody(notifPrefs);
+    });
 
     setTimeout(() => {
         refreshSettingsMap();
     }, 150);
 }
 
-// 🌟 Iškeliame modalą TIESIAI Į DOCUMENT.BODY, kad <main> niekada jo neužklotų!
-function ensureSiloModalInBody() {
-    let modal = document.getElementById('silo-name-modal');
-    if (modal) {
-        if (modal.parentElement !== document.body) {
-            document.body.appendChild(modal);
-        }
-        return;
+// ==========================================
+// 🌟 MODALAI TIESIAI DOCUMENT.BODY
+// ==========================================
+function ensureModalsInBody(notifPrefs) {
+    if (!document.getElementById('silo-name-modal')) {
+        const siloModalHtml = `
+            <div id="silo-name-modal" class="fixed inset-0 bg-black/80 z-[9999] hidden flex flex-col justify-end items-center p-0 backdrop-blur-sm transition-all duration-300">
+                <div class="bg-tractorSurface border-t-2 border-x-2 border-b-0 border-tractorBorder rounded-t-3xl rounded-b-none p-6 md:p-8 pb-12 max-w-xl w-full space-y-4 shadow-2xl relative">
+                    <div class="flex justify-between items-center border-b border-tractorBorder pb-3">
+                        <div class="flex items-center gap-2">
+                            <span class="text-xl">🛢️</span>
+                            <h3 id="silo-modal-title" class="font-oswald text-xl font-bold uppercase tracking-wider" style="color: var(--text-main);">Grūdų bokšto valdymas</h3>
+                        </div>
+                        <button type="button" id="btn-close-silo-modal" class="text-2xl font-bold cursor-pointer" style="color: var(--text-muted);">&times;</button>
+                    </div>
+
+                    <form id="silo-form" class="space-y-4 pt-1">
+                        <div class="space-y-1">
+                            <label class="text-xs font-bold uppercase" style="color: var(--text-muted);">Bokšto pavadinimas *</label>
+                            <input id="silo-name-input" type="text" required autocomplete="off" placeholder="Pvz.: Pietinis bokštas" 
+                                class="w-full h-11 bg-tractorBg border border-tractorBorder focus:border-tractorPrimary rounded-xl px-3.5 text-xs outline-none" style="color: var(--text-main);">
+                        </div>
+                        
+                        <div class="flex gap-3 pt-2">
+                            <button type="submit" id="btn-confirm-silo-save" class="flex-1 h-12 bg-tractorPrimary hover:bg-tractorPrimaryHover text-white font-extrabold rounded-xl text-xs md:text-sm uppercase tracking-wider shadow transition cursor-pointer flex items-center justify-center relative z-20 pointer-events-auto">
+                                Išsaugoti
+                            </button>
+                            <button type="button" id="btn-delete-silo-modal" class="hidden px-6 h-12 bg-red-950/40 hover:bg-red-900 text-red-400 border border-red-800/60 font-bold rounded-xl text-xs md:text-sm uppercase tracking-wider transition cursor-pointer flex items-center justify-center relative z-20 pointer-events-auto">
+                                Ištrinti
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        `;
+        document.body.insertAdjacentHTML('beforeend', siloModalHtml);
+        setupSiloModalEvents();
     }
 
-    const modalHtml = `
-        <div id="silo-name-modal" class="fixed inset-0 bg-black/80 z-[9999] hidden flex flex-col justify-end items-center p-0 backdrop-blur-sm transition-all duration-300">
-            <div class="bg-tractorSurface border-t-2 border-x-2 border-b-0 border-tractorBorder rounded-t-3xl rounded-b-none p-6 md:p-8 pb-12 max-w-xl w-full space-y-4 shadow-2xl relative">
-                <div class="flex justify-between items-center border-b border-tractorBorder pb-3">
-                    <div class="flex items-center gap-2">
-                        <span class="text-xl">🛢️</span>
-                        <h3 id="silo-modal-title" class="font-oswald text-xl font-bold text-white uppercase tracking-wider">Grūdų bokšto valdymas</h3>
-                    </div>
-                    <button type="button" id="btn-close-silo-modal" class="text-slate-400 hover:text-white text-2xl font-bold cursor-pointer">&times;</button>
-                </div>
+    if (!document.getElementById('notif-topics-modal')) {
+        const anyFieldClass = hasAnyField ? '' : 'opacity-40';
+        const winterFieldClass = hasWinterField ? '' : 'opacity-40';
+        const garageClass = hasGarageBase ? '' : 'opacity-40'; // 🌟 Krušai reikia garažo!
 
-                <form id="silo-form" class="space-y-4 pt-1">
-                    <div class="space-y-1">
-                        <label class="text-xs font-bold text-slate-300 uppercase">Bokšto pavadinimas *</label>
-                        <input id="silo-name-input" type="text" required autocomplete="off" placeholder="Pvz.: Pietinis bokštas / Angaras Nr. 2" 
-                            class="w-full h-11 bg-tractorBg border border-tractorBorder focus:border-tractorPrimary rounded-xl px-3.5 text-xs text-white outline-none">
+        const notifModalHtml = `
+            <div id="notif-topics-modal" class="fixed inset-0 bg-black/80 z-[9999] hidden flex flex-col justify-end items-center p-0 backdrop-blur-sm transition-all duration-300">
+                <div class="bg-tractorSurface border-t-2 border-x-2 border-b-0 border-tractorBorder rounded-t-3xl rounded-b-none p-6 md:p-8 pb-12 max-h-[85vh] overflow-y-auto max-w-2xl w-full space-y-4 shadow-2xl relative">
+                    <div class="flex justify-between items-center border-b border-tractorBorder pb-3">
+                        <div class="flex items-center gap-2">
+                            <span class="text-xl">🔔</span>
+                            <h3 class="font-oswald text-xl font-bold uppercase tracking-wider" style="color: var(--text-main);">Pranešimų temos</h3>
+                        </div>
+                        <button type="button" id="btn-close-notif-topics-modal" class="text-2xl font-bold cursor-pointer" style="color: var(--text-muted);">&times;</button>
                     </div>
-                    
-                    <div class="flex gap-3 pt-2">
-                        <button type="submit" id="btn-confirm-silo-save" class="flex-1 h-12 bg-tractorPrimary hover:bg-tractorPrimaryHover text-white font-extrabold rounded-xl text-xs md:text-sm uppercase tracking-wider shadow transition cursor-pointer flex items-center justify-center">
-                            Išsaugoti
-                        </button>
-                        <button type="button" id="btn-delete-silo-modal" class="hidden px-6 h-12 bg-red-950/40 hover:bg-red-900 text-red-400 border border-red-800/60 font-bold rounded-xl text-xs md:text-sm uppercase tracking-wider transition cursor-pointer flex items-center justify-center">
-                            Ištrinti
-                        </button>
+
+                    <div class="space-y-3 pt-1">
+                        <p class="text-xs" style="color: var(--text-muted);">Pažymėkite, apie kokius įvykius norite gauti skubius pranešimus:</p>
+
+                        <div class="topic-row flex items-start gap-3 p-3.5 bg-tractorBg rounded-xl border border-tractorBorder cursor-pointer transition select-none" data-type="matif">
+                            <input type="checkbox" id="modal-notif-matif" class="w-4 h-4 mt-0.5 accent-tractorPrimary cursor-pointer pointer-events-none">
+                            <div>
+                                <strong class="text-xs block" style="color: var(--text-main);">📈 MATIF biržos šuoliai (virš ±2%)</strong>
+                                <span class="text-[11px] block mt-0.5" style="color: var(--text-muted);">Pranešti, kai kviečių, rapsų ar kukurūzų biržos kaina per dieną pakyla arba nukrenta daugiau nei 2%.</span>
+                            </div>
+                        </div>
+
+                        <div class="topic-row flex items-start gap-3 p-3.5 bg-tractorBg rounded-xl border border-tractorBorder cursor-pointer transition select-none" data-type="diesel">
+                            <input type="checkbox" id="modal-notif-diesel" class="w-4 h-4 mt-0.5 accent-tractorPrimary cursor-pointer pointer-events-none">
+                            <div>
+                                <strong class="text-xs block" style="color: var(--text-main);">⛽ Gazolio kainos šuoliai (virš ±2%)</strong>
+                                <span class="text-[11px] block mt-0.5" style="color: var(--text-muted);">Pranešti, kai didmeninė žymėto dyzelino kaina Lietuvoje per dieną staigiai atpinga arba pabrangsta daugiau nei 2%.</span>
+                            </div>
+                        </div>
+
+                        <div class="topic-row flex items-start gap-3 p-3.5 bg-tractorBg rounded-xl border border-tractorBorder cursor-pointer transition select-none" data-type="nma">
+                            <input type="checkbox" id="modal-notif-nma" class="w-4 h-4 mt-0.5 accent-tractorPrimary cursor-pointer pointer-events-none">
+                            <div>
+                                <strong class="text-xs block" style="color: var(--text-main);">📜 NMA terminų priminiklis</strong>
+                                <span class="text-[11px] block mt-0.5" style="color: var(--text-muted);">Likus 5 dienoms priminti apie artėjančius draudimus (mėšlo skleidimo, posėlių suarimo).</span>
+                            </div>
+                        </div>
+
+                        <!-- 🌟 KRUŠAI REIKIA ŪKIO BAZĖS -->
+                        <div class="topic-row flex items-start gap-3 p-3.5 bg-tractorBg rounded-xl border border-tractorBorder cursor-pointer transition select-none ${garageClass}" data-req="garageBase" data-type="hail">
+                            <input type="checkbox" id="modal-notif-hail" class="w-4 h-4 mt-0.5 accent-tractorPrimary cursor-pointer pointer-events-none">
+                            <div>
+                                <strong class="text-xs block" style="color: var(--text-main);">🧊 Krušos pavojus ūkio bazėje arba laukuose</strong>
+                                <span class="text-[11px] block mt-0.5" style="color: var(--text-muted);">Skubus įspėjimas, jei orų modelis prognozuoja krušą jūsų kieme ar sklypuose. Apsaugokite techniką!</span>
+                            </div>
+                        </div>
+
+                        <div class="topic-row flex items-start gap-3 p-3.5 bg-tractorBg rounded-xl border border-tractorBorder cursor-pointer transition select-none ${anyFieldClass}" data-req="anyField" data-type="sat">
+                            <input type="checkbox" id="modal-notif-sat" class="w-4 h-4 mt-0.5 accent-tractorPrimary cursor-pointer pointer-events-none">
+                            <div>
+                                <strong class="text-xs block" style="color: var(--text-main);">🛰️ Naujas palydovo Sentinel-2 kadras</strong>
+                                <span class="text-[11px] block mt-0.5" style="color: var(--text-muted);">Pranešti, kai virš jūsų laukų atnaujinama NDVI biomasės analizė.</span>
+                            </div>
+                        </div>
+
+                        <div class="topic-row flex items-start gap-3 p-3.5 bg-tractorBg rounded-xl border border-tractorBorder cursor-pointer transition select-none ${winterFieldClass}" data-req="winterField" data-type="winter">
+                            <input type="checkbox" id="modal-notif-winter" class="w-4 h-4 mt-0.5 accent-tractorPrimary cursor-pointer pointer-events-none">
+                            <div>
+                                <strong class="text-xs block" style="color: var(--text-main);">❄️ Žiemkenčių pavojaus signalai</strong>
+                                <span class="text-[11px] block mt-0.5" style="color: var(--text-muted);">Įspėti apie plikšalį, sniego pelėsį ar ledo plutą jūsų laukuose.</span>
+                            </div>
+                        </div>
+
+                        <div class="topic-row flex items-start gap-3 p-3.5 bg-tractorBg rounded-xl border border-tractorBorder cursor-pointer transition select-none ${winterFieldClass}" data-req="winterField" data-type="tsum">
+                            <input type="checkbox" id="modal-notif-tsum" class="w-4 h-4 mt-0.5 accent-tractorPrimary cursor-pointer pointer-events-none">
+                            <div>
+                                <strong class="text-xs block" style="color: var(--text-main);">🌱 Pavasario vegetacijos startas (T-Sum)</strong>
+                                <span class="text-[11px] block mt-0.5" style="color: var(--text-muted);">Pranešti, kai šilumos suma pasiekia normą pavasariniam N1 tręšimui.</span>
+                            </div>
+                        </div>
+
+                        <div class="pt-2">
+                            <button type="button" id="btn-save-notif-topics" class="w-full h-12 bg-tractorPrimary hover:bg-tractorPrimaryHover text-white font-extrabold rounded-xl text-xs uppercase tracking-wider shadow transition cursor-pointer flex items-center justify-center relative z-20 pointer-events-auto">
+                                Išsaugoti temas
+                            </button>
+                        </div>
                     </div>
-                </form>
+                </div>
             </div>
-        </div>
-    `;
-    document.body.insertAdjacentHTML('beforeend', modalHtml);
-    setupSiloModalEvents();
+        `;
+        document.body.insertAdjacentHTML('beforeend', notifModalHtml);
+        setupNotifTopicsModalEvents();
+    }
+}
+
+function setupNotifTopicsModalEvents() {
+    const openBtn = document.getElementById('btn-open-notif-topics-modal');
+    const modal = document.getElementById('notif-topics-modal');
+    const closeBtn = document.getElementById('btn-close-notif-topics-modal');
+    const saveBtn = document.getElementById('btn-save-notif-topics');
+
+    if (openBtn && modal) {
+        openBtn.onclick = () => {
+            const prefs = cachedUserData?.notificationPreferences || {};
+            document.getElementById('modal-notif-matif').checked = !!prefs.matifPrice;
+            document.getElementById('modal-notif-diesel').checked = !!prefs.dieselDrop;
+            document.getElementById('modal-notif-nma').checked = !!prefs.nmaDeadlines;
+            document.getElementById('modal-notif-sat').checked = !!prefs.satPass;
+            document.getElementById('modal-notif-hail').checked = !!prefs.hailWarning;
+            document.getElementById('modal-notif-winter').checked = !!prefs.winterDanger;
+            document.getElementById('modal-notif-tsum').checked = !!prefs.tSumStart;
+            modal.classList.remove('hidden');
+        };
+    }
+
+    if (closeBtn && modal) closeBtn.onclick = () => modal.classList.add('hidden');
+    if (modal) modal.onclick = (e) => { if (e.target === modal) modal.classList.add('hidden'); };
+
+    document.querySelectorAll('.topic-row').forEach(row => {
+        row.onclick = () => {
+            const req = row.getAttribute('data-req');
+            
+            if (req === 'anyField' && !hasAnyField) {
+                showBottomToast("Pirmiausia „Mano Laukai“ skiltyje pridėkite bent vieną savo lauką.", "warning");
+                return;
+            }
+            if (req === 'winterField' && !hasWinterField) {
+                showBottomToast("Norėdami gauti šiuos pranešimus, pridėkite bent vieną žiemkenčių lauką.", "warning");
+                return;
+            }
+            if (req === 'garageBase' && !hasGarageBase) {
+                showBottomToast("Pirmiausia išsaugokite savo Ūkio bazę (garažą) nustatymų žemėlapyje!", "warning");
+                return;
+            }
+
+            const cb = row.querySelector('input[type="checkbox"]');
+            cb.checked = !cb.checked;
+        };
+    });
+
+    if (saveBtn) {
+        saveBtn.onclick = async (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            if (!cachedCurrentUser) return;
+
+            const isEnabled = document.getElementById('set-notif-enabled')?.checked ?? false;
+
+            const updatedPrefs = {
+                enabled: isEnabled,
+                matifPrice: document.getElementById('modal-notif-matif').checked,
+                dieselDrop: document.getElementById('modal-notif-diesel').checked,
+                nmaDeadlines: document.getElementById('modal-notif-nma').checked,
+                satPass: document.getElementById('modal-notif-sat').checked,
+                hailWarning: document.getElementById('modal-notif-hail').checked,
+                winterDanger: document.getElementById('modal-notif-winter').checked,
+                tSumStart: document.getElementById('modal-notif-tsum').checked
+            };
+
+            await db.collection("users").doc(cachedCurrentUser.uid).update({
+                notificationPreferences: updatedPrefs
+            });
+
+            if (cachedUserData) cachedUserData.notificationPreferences = updatedPrefs;
+
+            modal.classList.add('hidden');
+            showBottomToast("Pranešimų temos sėkmingai išsaugotos! 🔔");
+        };
+    }
 }
 
 async function autoSaveSilosToFirebase() {
@@ -283,13 +513,14 @@ function renderSiloMarkersOnMap() {
         m.bindTooltip(`<b>🛢️ ${silo.name}</b> (Spauskite redagavimui)`, { permanent: false, direction: 'top' });
 
         m.on('click', () => {
+            ensureModalsInBody();
             openSiloModal(silo);
         });
     });
 }
 
 function openSiloModal(silo = null) {
-    ensureSiloModalInBody();
+    ensureModalsInBody();
     const modal = document.getElementById('silo-name-modal');
     const input = document.getElementById('silo-name-input');
     const titleEl = document.getElementById('silo-modal-title');
@@ -333,15 +564,12 @@ function setupSiloModalEvents() {
     if (form) {
         form.onsubmit = async (e) => {
             e.preventDefault();
+            e.stopPropagation();
             const name = input.value.trim();
-            if (!name) {
-                showBottomToast("Įveskite bokšto pavadinimą!", "warning");
-                return;
-            }
+            if (!name) return;
 
             if (editingSiloId) {
                 userSilos = userSilos.map(s => s.id === editingSiloId ? { ...s, name } : s);
-                showBottomToast("Grūdų bokštas atnaujintas! 🛢️");
             } else if (pendingSiloCoords) {
                 userSilos.push({
                     id: 'silo_' + Date.now(),
@@ -350,7 +578,6 @@ function setupSiloModalEvents() {
                     lng: pendingSiloCoords.lng
                 });
                 pendingSiloCoords = null;
-                showBottomToast("Grūdų bokštas sėkmingai pridėtas! 🛢️");
             }
 
             renderSiloMarkersOnMap();
@@ -367,7 +594,6 @@ function setupSiloModalEvents() {
             if (editingSiloId) {
                 userSilos = userSilos.filter(s => s.id !== editingSiloId);
                 renderSiloMarkersOnMap();
-                showBottomToast("Grūdų bokštas pašalintas.");
                 await autoSaveSilosToFirebase();
                 closeSiloModal();
             }

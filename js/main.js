@@ -28,6 +28,7 @@ import { initLimingSoilTab } from './ukis/limingSoil.js';
 import { initOperationsJournalTab } from './ukis/operationsJournal.js';
 import { initCropPlannerTab } from './ukis/cropPlanner.js';
 import { renderTSumRadar } from './ukis/tsumRadar.js';
+import { autoRegisterFcmToken } from './core/notifications.js';
 
 let currentUser = null;
 let userData = null;
@@ -151,7 +152,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     console.warn("Offline arba tinklo klaida nuskaitant vartotoją:", dbErr);
                     userData = { userId: user.uid, name: user.displayName || "Ūkininkas", email: user.email || "", isSetupComplete: true };
                 }
-
+				
+				autoRegisterFcmToken(currentUser, userData);
+				
                 if (sidebarAuthBox) {
                     sidebarAuthBox.innerHTML = `
                         <p class="text-[10px] text-slate-500 uppercase font-bold tracking-wider">Prisijungta kaip:</p>
