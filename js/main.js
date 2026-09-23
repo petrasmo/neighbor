@@ -29,6 +29,7 @@ import { initOperationsJournalTab } from './ukis/operationsJournal.js';
 import { initCropPlannerTab } from './ukis/cropPlanner.js';
 import { renderTSumRadar } from './ukis/tsumRadar.js';
 import { autoRegisterFcmToken } from './core/notifications.js';
+import { renderFertilizerBarometer } from './skaiciuokles/fertilizerBarometer.js';
 
 let currentUser = null;
 let userData = null;
@@ -256,6 +257,9 @@ function setupCalculatorsHub() {
     const combineView = document.getElementById('view-tab-combine-embed');
     const sprayView = document.getElementById('view-tab-spray-embed');
     const fertView = document.getElementById('view-tab-fert-embed');
+	const barometerView = document.getElementById('view-tab-barometer-embed');
+	const openBarometerBtn = document.getElementById('btn-open-barometer-calc');
+	const backFromBarometerBtn = document.getElementById('btn-back-from-barometer');
     const storageView = document.getElementById('view-tab-storage-embed');
     const nmaView = document.getElementById('view-tab-nma-embed');
 
@@ -293,6 +297,7 @@ function setupCalculatorsHub() {
         fertView?.classList.add('hidden');
         storageView?.classList.add('hidden');
         nmaView?.classList.add('hidden');
+		barometerView?.classList.add('hidden');
     };
 
     if (openGrainBtn) openGrainBtn.onclick = () => {
@@ -364,6 +369,13 @@ function setupCalculatorsHub() {
         renderNmaCalendar(document.getElementById('nma-calc-content'));
         window.scrollTo({ top: 0, behavior: 'smooth' });
     };
+	if (openBarometerBtn) openBarometerBtn.onclick = () => {
+		hideAll();
+		barometerView?.classList.remove('hidden');
+		renderFertilizerBarometer(document.getElementById('barometer-calc-content'));
+		window.scrollTo({ top: 0, behavior: 'smooth' });
+	};
+
 
     const returnToHub = () => {
         hideAll();
@@ -381,4 +393,5 @@ function setupCalculatorsHub() {
     if (backFromFertBtn) backFromFertBtn.onclick = returnToHub;
     if (backFromStorageBtn) backFromStorageBtn.onclick = returnToHub;
     if (backFromNmaBtn) backFromNmaBtn.onclick = returnToHub;
+	if (backFromBarometerBtn) backFromBarometerBtn.onclick = returnToHub;
 }

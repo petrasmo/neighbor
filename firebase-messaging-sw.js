@@ -7,16 +7,11 @@ self.addEventListener('push', function(event) {
   if (event.data) {
     try {
       const payload = event.data.json();
-      
-      // 🌟 Dabar skaitome TIESIOGIAI iš to JSON struktūros, kurią matėte nuotraukoje:
-      // Jei yra "notification" objektas, paimame jį
       const dataObj = payload.notification || payload.data;
-      
       if (dataObj) {
           title = dataObj.title || title;
           body = dataObj.body || body;
       } else {
-          // Jei tai senas geras tekstinis pranešimas
           body = event.data.text();
       }
     } catch (e) {
@@ -24,17 +19,31 @@ self.addEventListener('push', function(event) {
     }
   }
 
+  // 🌟 „Nothing Phone“ ir Android telefonams BŪTINAS PNG formatas ir vibravimas
   event.waitUntil(
     self.registration.showNotification(title, {
       body: body,
-      icon: '/logo.svg',
-      badge: '/logo.svg',
-      requireInteraction: true
+      icon: '/logo.png',   // 👈 PAKEISTA IŠ .svg Į .png (Android nepalaiko SVG!)
+      badge: '/logo.png',  // 👈 PAKEISTA IŠ .svg Į .png
+      vibrate: [200, 100, 200],
+      requireInteraction: false
     })
   );
 });
 
 self.addEventListener('notificationclick', function(event) {
   event.notification.close();
-  event.waitUntil(clients.openWindow('http://localhost:5000/'));
+  // Telefone atidaro pagrindinį langą, o ne localhost
+  event.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then(windowClients => {
+      for (let client of windowClients) {
+        if ('focus' in client) {
+          return client.focus();
+        }
+      }
+      if (clients.openWindow) {
+        return clients.openWindow('/');
+      }
+    })
+  );
 });

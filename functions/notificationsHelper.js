@@ -126,6 +126,26 @@ async function checkAndSendSatAlert(db, admin, userId, fieldName) {
 }
 
 /**
+ * 8. TRĄŠŲ RINKOS BAROMETRO SIGNALAI (PIRKTI ARBA BRANGIMO RIZIKA)
+ */
+async function checkAndSendFertilizerAlerts(db, admin, fertilizerData) {
+    if (!fertilizerData || !fertilizerData.barometer) return;
+    const baro = fertilizerData.barometer;
+
+    if (baro.verdict === "BUY") {
+        await sendToSubscribers(db, admin, "fertBarometer", [{
+            title: "🟢 TRĄŠŲ SIGNALAS: Palankus metas pirkti! 🧪",
+            body: "Žemos dujų kainos ir palankus valiutos kursas rodo pigų pirkimo langą. Fiksuokite kainas!"
+        }]);
+    } else if (baro.verdict === "DANGER") {
+        await sendToSubscribers(db, admin, "fertBarometer", [{
+            title: "🔴 TRĄŠŲ RINKA: Brangimo rizika! 📈",
+            body: "Dujų šuolis biržoje didina azoto gamybos savikainą. Tikėtinas trąšų brangimas per 2-3 savaites."
+        }]);
+    }
+}
+
+/**
  * BENDRA FUNKCIJA (IŠSIUNTIMAS)
  */
 async function sendToSubscribers(db, admin, topicKey, messagesArray, userIds = null) {
@@ -154,7 +174,27 @@ async function sendToSubscribers(db, admin, topicKey, messagesArray, userIds = n
         try {
             await admin.messaging().sendEachForMulticast({
                 tokens: targetTokens,
-                data: { title: msg.title, body: msg.body }
+                notification: {
+                    title: msg.title,
+                    body: msg.body
+                },
+                data: { 
+                    title: msg.title, 
+                    body: msg.body 
+                },
+                // 🌟 BŪTINAS WEBPUSH BLOKAS, KAD TELEFONAI GAUTŲ VISUS SISTEMOS PRANEŠIMUS:
+                webpush: {
+                    notification: {
+                        title: msg.title,
+                        body: msg.body,
+                        icon: "https://jurgisagro.com/logo.png",
+                        badge: "https://jurgisagro.com/logo.png",
+                        vibrate: [200, 100, 200]
+                    },
+                    fcmOptions: {
+                        link: "https://jurgisagro.com/"
+                    }
+                }
             });
         } catch (err) {
             console.error(`❌ FCM klaida [${topicKey}]:`, err);
@@ -169,5 +209,6 @@ module.exports = {
     checkAndSendWinterDanger, 
     checkAndSendTsumAlert, 
     checkAndSendHailAlerts, 
-    checkAndSendSatAlert 
+    checkAndSendSatAlert
+	//checkAndSendFertilizerAlerts	
 };

@@ -10,13 +10,13 @@ const db = admin.firestore();
 const { executeElevatorsSync } = require("./grainSync");
 const { executeMatifSync } = require("./matifSync");
 const { executeDieselSync } = require("./dieselSync");
+const { executeFertilizerSync } = require("./fertilizerSync");
 
-// Importuojame Išmaniųjų Pranešimų pagalbininką su visomis temomis
+// Importuojame Išmaniųjų Pranešimų pagalbininką su veikiančiomis temomis
 const { 
   checkAndSendMatifAlerts, 
   checkAndSendDieselAlerts, 
-  checkAndSendNmaAlerts,
-  checkAndSendFieldAndWeatherAlerts
+  checkAndSendNmaAlerts
 } = require("./notificationsHelper");
 
 // 🔄 BENDRAS VISŲ DUOMENŲ ATNAUJINIMAS IR PRANEŠIMŲ TIKRINIMAS
@@ -26,47 +26,46 @@ async function syncAllAgroData(isManual = false) {
   const elevatorsCount = await executeElevatorsSync(db, admin);
   const matifCount = await executeMatifSync(db, admin, false);
   const dieselDataArray = await executeDieselSync(db, admin);
+  const fertilizerData = await executeFertilizerSync(db, admin);
 
-  // Nustatome, kokia dabar valanda Lietuvoje (12 ar 18)
   const vilniusHour = parseInt(new Date().toLocaleTimeString("en-GB", { timeZone: "Europe/Vilnius", hour: "2-digit" }));
   console.log(`🕒 Dabartinė valanda Lietuvoje: ${vilniusHour}:00`);
 
   // 🌟 PRANEŠIMŲ TIKRINIMO BLOKAS:
   try {
-    // 1. Tikriname MATIF šuolius (±2%) – ir 12:00, ir 18:00
+    // 1. MATIF šuoliai (±2%) – ir 12:00, ir 18:00
     const matifDoc = await db.collection("matif_prices").doc("market_data").get();
     if (matifDoc.exists) {
       await checkAndSendMatifAlerts(db, admin, matifDoc.data().crops);
     }
 
-    // 2. Tikriname Gazolio kainų pokyčius (±2%) – ir 12:00, ir 18:00
+    // 2. Gazolio kainų pokyčiai (±2%) – ir 12:00, ir 18:00
     if (dieselDataArray && dieselDataArray.length > 0) {
       await checkAndSendDieselAlerts(db, admin, dieselDataArray);
     }
 
-    // 3. NMA oficialūs 7 terminai – tikrinami TIK 12:00 per pietus (kad nesidubliuotų vakare)
+    // 3. NMA oficialūs terminai – tik 12:00 per pietus
     if (vilniusHour < 15 || isManual) {
       await checkAndSendNmaAlerts(db, admin);
-    }
-
-    // 4. Kruša, Žiemkenčių šaltis ir naktiniai pavojai – tikrinami TIK 18:00 vakare prieš naktį!
-    if (vilniusHour >= 16 || isManual) {
-      console.log("🌙 Vakarinis patikrinimas: analizuojamas nakties šaltis ir grėsmės...");
-      await checkAndSendFieldAndWeatherAlerts(db, admin);
     }
 
   } catch (e) {
     console.error("❌ Klaida tikrinant Išmaniuosius Pranešimus (Push):", e);
   }
 
-  return { elevators: elevatorsCount, matif: matifCount, diesel: (dieselDataArray ? dieselDataArray.length : 0) };
+  return { 
+    elevators: elevatorsCount, 
+    matif: matifCount, 
+    diesel: (dieselDataArray ? dieselDataArray.length : 0),
+    fertilizerBarometer: fertilizerData?.barometer?.statusText || "OK"
+  };
 }
 
-// ⏰ 1. AUTOMATINIS GRAFIKAS: KELIASI TIK 12:00 IR 18:00 VAL. (LIETUVOS LAIKU)
+// ⏰ 1. AUTOMATINIS GRAFIKAS: KELIASI 12:00 IR 18:00 VAL. (LIETUVOS LAIKU)
 exports.scrapeAllAgroData = onSchedule(
   { schedule: "0 12,18 * * *", timeZone: "Europe/Vilnius" },
   async (event) => {
-    console.log("⏰ Vykdomas 12:00 / 18:00 suplanuotas visų duomenų atnaujinimas ir pranešimų siuntimas...");
+    console.log("⏰ Vykdomas 12:00 / 18:00 suplanuotas visų duomenų atnaujinimas...");
     await syncAllAgroData(false);
   }
 );
@@ -78,8 +77,7 @@ exports.seedMatifHistory = onRequest(
     try {
       console.log("Pradedamas vienkartinis 1 metų istorijos parsiuntimas iš biržos...");
       const count = await executeMatifSync(db, admin, true);
-      res.send(`✅ SĖKMINGAI UŽKRAUTA 1 METŲ BIRŽOS ISTORIJA (${count} kultūros)! 📈
-Kainos ir 365 dienų grafikai paruošti. Dabar sistema atnaujins tik einamosios dienos kainą.`);
+      res.send(`✅ SĖKMINGAI UŽKRAUTA 1 METŲ BIRŽOS ISTORIJA (${count} kultūros)! 📈`);
     } catch (err) {
       res.status(500).send("Klaida: " + err.message);
     }
@@ -92,10 +90,11 @@ exports.manualTriggerAllSync = onRequest(
   async (req, res) => {
     try {
       const stats = await syncAllAgroData(true);
-      res.send(`✅ SĖKMINGAI ATNAUJINTA:
-- 🌾 Elevatoriai: ${stats.elevators} taškai
-- 📈 MATIF birža: ${stats.matif} kultūros
-- ⛽ Gazolio rinka: ${stats.diesel} kuro bazės visoje Lietuvoje!
+      res.send(`✅ SĖKMINGAI ĮVYKDYTAS DUOMENŲ IR PRANEŠIMŲ CIKLAS:
+- 🌾 Elevatoriai: ${stats.elevators}
+- 📈 MATIF birža: ${stats.matif}
+- ⛽ Gazolio rinka: ${stats.diesel}
+- 🧪 Trąšų barometras: ${stats.fertilizerBarometer}
 - 🔔 Pranešimai patikrinti ir išsiųsti įrenginiams!`);
     } catch (err) {
       res.status(500).send("Klaida: " + err.message);
@@ -142,8 +141,41 @@ exports.manualTriggerDieselScrape = onRequest(
   }
 );
 
+// 🚀 7. TIK TRĄŠŲ RINKOS IR 5 TAISYKLIŲ BAROMETRO RANKINIS PALEIDĖJAS
+exports.manualTriggerFertilizerSync = onRequest(
+  { cors: true, invoker: "public" },
+  async (req, res) => {
+    try {
+      const data = await executeFertilizerSync(db, admin);
+      res.send(`✅ TRĄŠŲ RINKOS BAROMETRAS ATNAUJINTAS:
+- ⚡ TTF Gamtinės dujos: ${data.gasTTF.priceMWh} €/MWh
+- 💶 EUR/USD kursas: ${data.currency.rate}
+- 🧪 Pasaulinis Karbamidas: ${data.ureaFOB.priceTon} $/t
+- 📊 VERDIKTAS: ${data.barometer.statusText} (${data.barometer.totalScore > 0 ? '+' : ''}${data.barometer.totalScore} balai)`);
+    } catch (err) {
+      res.status(500).send("Klaida: " + err.message);
+    }
+  }
+);
+
+// 🌟 8. VIENKARTINIS 1 METŲ TRĄŠŲ ISTORIJOS UŽPILDYMAS (SEED)
+exports.seedFertilizerHistory = onRequest(
+  { cors: true, invoker: "public" },
+  async (req, res) => {
+    try {
+      const data = await executeFertilizerSync(db, admin);
+      res.send(`✅ SĖKMINGAI UŽKRAUTA 1 METŲ TRĄŠŲ RINKOS ISTORIJA!
+- TTF taškų: ${data.history.gasTTF.length} d. (${data.gasTTF.priceMWh} €/MWh)
+- EUR/USD taškų: ${data.history.currency.length} d. (${data.currency.rate})
+- Karbamido taškų: ${data.history.ureaFOB.length} d. (${data.ureaFOB.priceTon} $/t)`);
+    } catch (err) {
+      res.status(500).send("Klaida: " + err.message);
+    }
+  }
+);
+
 // ========================================================
-// 🔔 BANDOMIEJI TESTINIAI SIMULIATORIAI (VISI 7 TESTAI)
+// 🔔 BANDOMIEJI TESTINIAI SIMULIATORIAI
 // ========================================================
 
 // TESTAS 1: MATIF Šuolis (+3.4%)
@@ -173,14 +205,14 @@ exports.testDieselNotification = onRequest(
       const mockDieselArray = [{ basePriceNoVat: 0.85 }];
       await checkAndSendDieselAlerts(db, admin, mockDieselArray);
 
-      res.send("✅ Testinis Gazolio pranešimas išsiųstas! (Jei turite Nustatymuose varnelę) ⛽");
+      res.send("✅ Testinis Gazolio pranešimas išsiųstas! ⛽");
     } catch (err) {
       res.status(500).send("Klaida: " + err.message);
     }
   }
 );
 
-// TESTAS 3: NMA Termino priminimas (Simuliuojame, kad po 5 d. baigiasi draudimas)
+// TESTAS 3: NMA Termino priminimas (5 d.)
 exports.testNmaNotification = onRequest(
   { cors: true, invoker: "public" },
   async (req, res) => {
@@ -196,113 +228,45 @@ exports.testNmaNotification = onRequest(
       }, { merge: true });
 
       await checkAndSendNmaAlerts(db, admin);
-      res.send(`✅ Testinis NMA pranešimas išsiųstas (Mėšlo draudimo pabaiga ${targetDateStr})! 📜`);
+      res.send(`✅ Testinis NMA pranešimas išsiųstas (${targetDateStr})! 📜`);
     } catch (err) {
       res.status(500).send("Klaida: " + err.message);
     }
   }
 );
 
-// TESTAS 4: Krušos pavojus (Simuliacija)
-exports.testHailNotification = onRequest(
+// TESTAS 4: TIESIOGINIS PRANEŠIMAS Į JŪSŲ NOTHING PHONE (2A)
+exports.testPhoneNotification = onRequest(
   { cors: true, invoker: "public" },
   async (req, res) => {
-    try {
-      const usersSnap = await db.collection("users").get();
-      for (const doc of usersSnap.docs) {
-        const user = doc.data();
-        const tokens = user.fcmTokens || (user.fcmToken ? [user.fcmToken] : []);
-        if (tokens.length > 0 && user.notificationPreferences?.hailWarning) {
-          await admin.messaging().sendEachForMulticast({
-            tokens: tokens,
-            data: { 
-              title: "🧊 KRUŠOS PAVOJUS!", 
-              body: "Rytoj ties jūsų ūkio baze prognozuojama kruša. Apsaugokite techniką ir automobilius!" 
-            }
-          });
-        }
-      }
-      res.send("✅ Testinis Krušos pranešimas išsiųstas! 🧊");
-    } catch (err) {
-      res.status(500).send("Klaida: " + err.message);
-    }
-  }
-);
+    const userPhoneToken = "drhZICOZliHlRbABJwryTJ:APA91bHGqRTOaky0UMIkyALXNDAgIC34y4DsrKK_SWokMOu2hDlNSG6Z7CfIWL8SoNjmi57DkRkzdS9wmi5UVh5IibpmoRQi-QBr4XJR1BvxgwPRDTzPwXY";
 
-// TESTAS 5: Žiemkenčių plikšalis / iššalimas (Simuliacija)
-exports.testWinterDangerNotification = onRequest(
-  { cors: true, invoker: "public" },
-  async (req, res) => {
-    try {
-      const usersSnap = await db.collection("users").get();
-      for (const doc of usersSnap.docs) {
-        const user = doc.data();
-        const tokens = user.fcmTokens || (user.fcmToken ? [user.fcmToken] : []);
-        if (tokens.length > 0 && user.notificationPreferences?.winterDanger) {
-          await admin.messaging().sendEachForMulticast({
-            tokens: tokens,
-            data: { 
-              title: "🚨 Kritinis iššalimas: Laukas prie miško", 
-              body: "Augimo mazge temperatūra pasiekė -9.5°C! Sniego danga per plona, gresia pasėlių žūtis." 
-            }
-          });
+    const payload = {
+      token: userPhoneToken,
+      notification: {
+        title: "🚜 JurgisAgro: Testas į Nothing Phone",
+        body: "Valio! Pranešimai jūsų telefone veikia 100%!"
+      },
+      webpush: {
+        notification: {
+          title: "🚜 JurgisAgro: Testas į Nothing Phone",
+          body: "Valio! Pranešimai jūsų telefone veikia 100%!",
+          icon: "https://jurgisagro.com/logo.png",
+          badge: "https://jurgisagro.com/logo.png",
+          vibrate: [200, 100, 200],
+          requireInteraction: false
+        },
+        fcmOptions: {
+          link: "https://jurgisagro.com/"
         }
       }
-      res.send("✅ Testinis Žiemkenčių pavojaus pranešimas išsiųstas! ❄️");
-    } catch (err) {
-      res.status(500).send("Klaida: " + err.message);
-    }
-  }
-);
+    };
 
-// TESTAS 6: Pavasario T-Sum startas (Simuliacija)
-exports.testTsumNotification = onRequest(
-  { cors: true, invoker: "public" },
-  async (req, res) => {
     try {
-      const usersSnap = await db.collection("users").get();
-      for (const doc of usersSnap.docs) {
-        const user = doc.data();
-        const tokens = user.fcmTokens || (user.fcmToken ? [user.fcmToken] : []);
-        if (tokens.length > 0 && user.notificationPreferences?.tSumStart) {
-          await admin.messaging().sendEachForMulticast({
-            tokens: tokens,
-            data: { 
-              title: "🌱 Pavasario N1 startas: Paežeriai", 
-              body: "Sukaupta 195°C šilumos suma. Kviečių šaknys nubudo – laikas pirmajam salietros tręšimui!" 
-            }
-          });
-        }
-      }
-      res.send("✅ Testinis T-Sum vegetacijos starto pranešimas išsiųstas! 🌱");
+      const response = await admin.messaging().send(payload);
+      res.send(`✅ SĖKMINGAI IŠSIŲSTA Į TELEFONĄ!<br>ID: ${response}`);
     } catch (err) {
-      res.status(500).send("Klaida: " + err.message);
-    }
-  }
-);
-
-// TESTAS 7: Sentinel-2 palydovo kadras (Simuliacija)
-exports.testSatNotification = onRequest(
-  { cors: true, invoker: "public" },
-  async (req, res) => {
-    try {
-      const usersSnap = await db.collection("users").get();
-      for (const doc of usersSnap.docs) {
-        const user = doc.data();
-        const tokens = user.fcmTokens || (user.fcmToken ? [user.fcmToken] : []);
-        if (tokens.length > 0 && user.notificationPreferences?.satPass) {
-          await admin.messaging().sendEachForMulticast({
-            tokens: tokens,
-            data: { 
-              title: "🛰️ Naujas palydovo kadras: Didysis laukas", 
-              body: "Virš jūsų laukų ką tik praskrido Sentinel-2! Šviežia NDVI biomasės analizė jau paruošta." 
-            }
-          });
-        }
-      }
-      res.send("✅ Testinis Palydovo pranešimas išsiųstas! 🛰️");
-    } catch (err) {
-      res.status(500).send("Klaida: " + err.message);
+      res.status(500).send(`❌ Klaida: ${err.message}`);
     }
   }
 );

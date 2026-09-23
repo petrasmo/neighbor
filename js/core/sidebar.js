@@ -237,6 +237,9 @@ export function renderGlobalSidebar(activePage = 'index', activeTab = 0) {
                         <button class="mobile-calc-trigger text-left p-3 rounded-xl bg-tractorBg hover:bg-tractorPrimary/20 border border-tractorBorder flex items-center gap-3 font-bold text-white transition cursor-pointer" data-target="btn-open-fert-calc">
                             <span>🧪</span> <span>NPK ir azoto savikaina</span>
                         </button>
+						<button class="mobile-calc-trigger text-left p-3 rounded-xl bg-tractorBg hover:bg-tractorPrimary/20 border border-tractorBorder flex items-center gap-3 font-bold text-white transition cursor-pointer" data-target="btn-open-barometer-calc">
+                            <span>🧭</span> <span>Trąšų kainų radaras ir barometras</span>
+                        </button>
                     </div>
                 </div>
             </div>
