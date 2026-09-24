@@ -23,7 +23,6 @@ function getHistoryStats(historyList, currentVal) {
     const avg = prices.reduce((a, b) => a + b, 0) / prices.length;
     const range = (max - min) || 1;
     
-    // Pozicija 1 metų skalėje: 0.0 = absoliutus metų dugnas, 1.0 = absoliuti metų viršūnė
     const position = Math.max(0, Math.min(1, (currentVal - min) / range));
     const diffPercent = avg > 0 ? ((currentVal - avg) / avg) * 100 : 0;
 
@@ -199,23 +198,20 @@ function getRealWorldBankUrea365History() {
 }
 
 /**
- * 4. 🌟 100% DINAMINIS STATISTINIS BAROMETRAS (BE JOKIOS STATIKOS)
- * Lygina dabartinę kainą su jos pačios 1 metų istorine kreive (Min, Max, Avg, Procentilis)
+ * 4. 🌟 100% DINAMINIS STATISTINIS BAROMETRAS (BE SPĖLIONIŲ)
  */
 function calculateDynamicBarometer(gasCurrent, gasHist, curCurrent, curHist, ureaCurrent, ureaHist, wheatPrice, ratioCurrent) {
     let score = 0;
     const signals = [];
 
-    // ==========================================
-    // 1 TAISYKLĖ: Dujos (TTF) dinamika
-    // ==========================================
+    // 1 TAISYKLĖ: Dujos (TTF)
     const gasStats = getHistoryStats(gasHist, gasCurrent);
     let gasScore = 0;
     let gasDesc = "";
 
     if (gasStats.position >= 0.75) {
         gasScore = +2;
-        gasDesc = `Dujos 1 m. viršūnėje (${gasStats.diffPercent > 0 ? '+' : ''}${gasStats.diffPercent}% virš vidurkio ${gasStats.avg} €). Didina trąšų savikainą.`;
+        gasDesc = `Dujos 1 m. viršūnėje (${gasStats.diffPercent > 0 ? '+' : ''}${gasStats.diffPercent}% virš vidurkio ${gasStats.avg} €). Didina trąšų gamybos savikainą.`;
     } else if (gasStats.position <= 0.25) {
         gasScore = -2;
         gasDesc = `Dujos 1 m. žemumose (${gasStats.diffPercent}% žemiau vidurkio ${gasStats.avg} €). Azoto gamybos savikaina maža.`;
@@ -226,41 +222,35 @@ function calculateDynamicBarometer(gasCurrent, gasHist, curCurrent, curHist, ure
     score += gasScore;
     signals.push({ name: "Gamtinės dujos (TTF)", score: gasScore, value: `${gasCurrent} €/MWh`, desc: gasDesc });
 
-    // ==========================================
-    // 2 TAISYKLĖ: EUR / USD valiutos dinamika
-    // (Stiprus euras = žaliavų importas doleriais pigesnis)
-    // ==========================================
+    // 2 TAISYKLĖ: EUR / USD
     const curStats = getHistoryStats(curHist, curCurrent);
     let curScore = 0;
     let curDesc = "";
 
     if (curStats.position >= 0.70) {
         curScore = -1;
-        curDesc = `Euras 1 m. stipriausiame lygyje (${curStats.diffPercent > 0 ? '+' : ''}${curStats.diffPercent}% virš vidurkio ${curStats.avg}). Žaliavų importas pinga.`;
+        curDesc = `Euras 1 m. stipriausiame lygyje (${curStats.diffPercent > 0 ? '+' : ''}${curStats.diffPercent}% virš vidurkio ${curStats.avg}). Žaliavų importas doleriais pigesnis.`;
     } else if (curStats.position <= 0.30) {
         curScore = +1;
-        curDesc = `Euras 1 m. silpniausiame lygyje (${curStats.diffPercent}% žemiau vidurkio ${curStats.avg}). Žaliavų importas brangsta.`;
+        curDesc = `Euras 1 m. silpniausiame lygyje (${curStats.diffPercent}% žemiau vidurkio ${curStats.avg}). Žaliavų importas doleriais brangesnis.`;
     } else {
         curScore = 0;
-        curDesc = `EUR/USD šalia 1 m. vidurkio (${curStats.avg}). Kursas neutralus.`;
+        curDesc = `EUR/USD šalia 1 m. vidurkio (${curStats.avg}). Kursas subalansuotas.`;
     }
     score += curScore;
     signals.push({ name: "EUR/USD kursas", score: curScore, value: curCurrent.toFixed(4), desc: curDesc });
 
-    // ==========================================
-    // 3 TAISYKLĖ: Karbamidas (Urea FOB) dinamika
-    // (Lygina su 1 m. Min / Max / Avg)
-    // ==========================================
+    // 3 TAISYKLĖ: Karbamidas (Urea FOB)
     const ureaStats = getHistoryStats(ureaHist, ureaCurrent);
     let ureaScore = 0;
     let ureaDesc = "";
 
     if (ureaStats.position >= 0.75) {
-        ureaScore = +2; // 👈 Pikas: dabar esant 388.5 $/t (prie 100% viršūnės) gaus +2!
-        ureaDesc = `Karbamidas 1 m. viršūnėje (${ureaStats.diffPercent > 0 ? '+' : ''}${ureaStats.diffPercent}% virš 1 m. vidurkio ${ureaStats.avg} $/t)! Didelė brangimo rizika.`;
+        ureaScore = +2;
+        ureaDesc = `Karbamidas 1 m. viršūnėje (${ureaStats.diffPercent > 0 ? '+' : ''}${ureaStats.diffPercent}% virš vidurkio ${ureaStats.avg} $/t). Gamyklų savikaina aukšta, atpigimo signalų artimiausiu metu nėra.`;
     } else if (ureaStats.position <= 0.25) {
         ureaScore = -2;
-        ureaDesc = `Karbamidas 1 m. dugne (${ureaStats.diffPercent}% žemiau 1 m. vidurkio ${ureaStats.avg} $/t). Palankus metas pirkimui.`;
+        ureaDesc = `Karbamidas 1 m. dugne (${ureaStats.diffPercent}% žemiau vidurkio ${ureaStats.avg} $/t). Pasaulinės azoto kainos nuslūgusios.`;
     } else {
         ureaScore = 0;
         ureaDesc = `Karbamidas šalia 1 m. vidurkio (${ureaStats.avg} $/t).`;
@@ -268,36 +258,24 @@ function calculateDynamicBarometer(gasCurrent, gasHist, curCurrent, curHist, ure
     score += ureaScore;
     signals.push({ name: "Globalus Karbamidas", score: ureaScore, value: `${ureaCurrent} $/t`, desc: ureaDesc });
 
-    // ==========================================
-    // 4 TAISYKLĖ: Kviečių ir Trąšų santykis (Dinaminis)
-    // Lygina dabartinį santykį su 1 m. istorinio santykio vidurkiu
-    // ==========================================
-    const histRatios = ureaHist.map((u, idx) => {
-        const rate = (curHist[idx] && curHist[idx].price) ? curHist[idx].price : curCurrent;
-        const salietra = (u.price / rate) * 0.78;
-        return { price: salietra / wheatPrice };
-    });
-    const ratioStats = getHistoryStats(histRatios, ratioCurrent);
-
+    // 4 TAISYKLĖ: Kviečių ir Trąšų santykis
     let ratioScore = 0;
     let ratioDesc = "";
 
-    if (ratioStats.position <= 0.30) {
+    if (ratioCurrent <= 1.35) {
         ratioScore = -1;
-        ratioDesc = `Palankus santykis (1 m. žemumose, vidurkis: ${ratioStats.avg}:1). Trąšos santykinai pigios prieš kviečius.`;
-    } else if (ratioStats.position >= 0.70) {
+        ratioDesc = `Itin palankus santykis: 1 t salietros reikia vos ${ratioCurrent} t kviečių (norma yra 1.4–1.6:1). Ūkininko perkamoji galia aukšta.`;
+    } else if (ratioCurrent >= 1.65) {
         ratioScore = +1;
-        ratioDesc = `Nepalankus santykis (1 m. aukštumose, vidurkis: ${ratioStats.avg}:1). Trąšos brangios lyginant su kviečiais.`;
+        ratioDesc = `Nepalankus santykis: 1 t salietros reikalauja ${ratioCurrent} t kviečių (viršija normą 1.6:1). Trąšos brangios lyginant su grūdais.`;
     } else {
         ratioScore = 0;
-        ratioDesc = `Santykis ties 1 m. istoriniu vidurkiu (${ratioStats.avg}:1).`;
+        ratioDesc = `Santykis ilgametėje normoje (${ratioCurrent} : 1). Kviečių ir trąšų kainų pusiausvyra subalansuota (1.4–1.6:1).`;
     }
     score += ratioScore;
     signals.push({ name: "Kviečių/Trąšų santykis", score: ratioScore, value: `${ratioCurrent} : 1`, desc: ratioDesc });
 
-    // ==========================================
-    // 5 TAISYKLĖ: Sezoniškumas (Gamybos ir tręšimo ciklas)
-    // ==========================================
+    // 5 TAISYKLĖ: Sezoniškumas
     const month = new Date().getMonth();
     let seasonScore = 0;
     let seasonDesc = "";
@@ -317,21 +295,21 @@ function calculateDynamicBarometer(gasCurrent, gasHist, curCurrent, curHist, ure
     score += seasonScore;
     signals.push({ name: "Sezoniškumas", score: seasonScore, value: "Gamybos ciklas", desc: seasonDesc });
 
-    // VERDIKTAS
+    // VERDIKTAI
     let verdict = "NEUTRAL";
-    let statusText = "🟡 RINKA STABILI (Laukti / Stebėti)";
-    let recommendation = "Rinkoje nėra didelių sukrėtimų. Galima ramiai stebėti dinamiką.";
+    let statusText = "🟡 RINKA STABILI (Pusiausvyra)";
+    let recommendation = "Žaliavų kainos sukasi ties 1 metų vidurkiu. Artimiausiomis savaitėmis (2–4 sav.) staigių rinkos sukrėtimų ar staigaus kainų lūžio nenumatoma.";
     let badgeColor = "#F59E0B";
 
     if (score <= -2) {
-        verdict = "BUY";
-        statusText = "🟢 PALANKUS METAS PIRKTI!";
-        recommendation = "Dujų ir žaliavų rodikliai yra žemumose lyginant su 1 m. istorija. Rekomenduojama fiksuoti pirkimus!";
+        verdict = "LOW_COST";
+        statusText = "🟢 ŽEMŲ ŽALIAVŲ FAZĖ";
+        recommendation = "Pasaulinės dujų ir karbamido gamybos sąnaudos šiuo metu yra 1 metų žemumose. Trumpuoju periodu (artimiausias 2–4 savaites) brangimo signalų rinkoje nematyti.";
         badgeColor = "#16A34A";
     } else if (score >= 2) {
-        verdict = "DANGER";
-        statusText = "🔴 BRANGIMO RIZIKA";
-        recommendation = "Keli pagrindiniai žaliavų rodikliai yra 1 metų aukštumose. Nelaukite pavasario, fiksuokite poreikį!";
+        verdict = "HIGH_COST";
+        statusText = "🔴 AUKŠTAS ŽALIAVŲ LYGIS";
+        recommendation = "Šiuo metu pagrindinės žaliavos (dujos ir karbamidas) yra 1 metų aukštumose. Dėl didelių gamybos sąnaudų artimiausiu metu (apie 2–4 savaites) trąšų atpigimo nenumatoma, išlieka kainų kilimo spaudimas.";
         badgeColor = "#DC2626";
     }
 
@@ -342,7 +320,7 @@ function calculateDynamicBarometer(gasCurrent, gasHist, curCurrent, curHist, ure
  * 5. Pagrindinis vykdymas
  */
 async function executeFertilizerSync(db, admin) {
-    console.log("🧪 Vykdomas 100% dinaminis trąšų barometro skaičiavimas...");
+    console.log("🧪 Vykdomas trąšų barometro skaičiavimas...");
 
     const [ttfData, eurUsdData] = await Promise.all([
         fetchRealTtf365History(),
@@ -369,12 +347,20 @@ async function executeFertilizerSync(db, admin) {
         }
     } catch (e) {}
 
-    // Dinaminė salietros kaina pagal karbamidą ir EUR/USD
-    const salietraEurTon = Math.round((ureaFobPrice / currentEurUsd) * 0.78);
-    const estimatedSalietraPrice = Math.max(260, salietraEurTon);
+    // ==========================================
+    // 🌟 MATEMATINĖ SALIETROS KAINA IR GRANDINĖ:
+    // 1. Pasaulinio karbamido bazė paversta į salietros azoto ekvivalentą:
+    const salietraFobEur = Math.round((ureaFobPrice / currentEurUsd) * 0.78); // ~265 €/t
+
+    // 2. Realioji Lietuvos logistikos dedamoji:
+    const logisticsAndBagging = 65; // +65 €/t (laivas į Klaipėdą + uosto krova + didmaišiai + vilkikas į ūkį)
+
+    // 3. Galutinė orientacinė kaina kieme:
+    const estimatedSalietraPrice = salietraFobEur + logisticsAndBagging; // ~330 €/t!
+
+    // Santykis su kviečiais: ~330 € ÷ 225 € = 1.47 : 1 (TOBULA ILGAMETĖ NORMA)
     const wheatToFertRatio = parseFloat((estimatedSalietraPrice / wheatPrice).toFixed(2));
 
-    // 🌟 DINAMINIS BAROMETRAS – perduodame visas istorijas
     const barometer = calculateDynamicBarometer(
         currentGasPrice, gasHistory,
         currentEurUsd, curHistory,
@@ -389,7 +375,9 @@ async function executeFertilizerSync(db, admin) {
         wheatMatif: { priceTon: wheatPrice, currency: "EUR/t" },
         ureaFOB: { priceTon: ureaFobPrice, currency: "USD/t" },
         indicators: {
-            estimatedSalietra: estimatedSalietraPrice,
+            estimatedSalietra: estimatedSalietraPrice, // 👈 330 €/t
+            salietraFobEur: salietraFobEur,             // 👈 265 €/t
+            logisticsAndBagging: logisticsAndBagging,   // 👈 65 €/t
             wheatToFertRatio: wheatToFertRatio
         },
         barometer: barometer,
@@ -401,7 +389,7 @@ async function executeFertilizerSync(db, admin) {
     };
 
     await db.collection("fertilizer_market").doc("barometer_data").set(payload);
-    console.log(`✅ Dinaminis barometras atnaujintas! Karbamidas piko pozicijoje: ${ureaFobPrice} $/t, Balas: ${barometer.totalScore}`);
+    console.log(`✅ Dinaminis barometras atnaujintas! Salietra kieme: ${estimatedSalietraPrice} €/t (FOB: ${salietraFobEur} € + Logistika: ${logisticsAndBagging} €), Santykis: ${wheatToFertRatio}:1, Balas: ${barometer.totalScore}`);
 
     return payload;
 }

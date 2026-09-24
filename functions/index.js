@@ -31,26 +31,33 @@ async function syncAllAgroData(isManual = false) {
   const vilniusHour = parseInt(new Date().toLocaleTimeString("en-GB", { timeZone: "Europe/Vilnius", hour: "2-digit" }));
   console.log(`🕒 Dabartinė valanda Lietuvoje: ${vilniusHour}:00`);
 
-  // 🌟 PRANEŠIMŲ TIKRINIMO BLOKAS:
-  try {
-    // 1. MATIF šuoliai (±2%) – ir 12:00, ir 18:00
-    const matifDoc = await db.collection("matif_prices").doc("market_data").get();
-    if (matifDoc.exists) {
-      await checkAndSendMatifAlerts(db, admin, matifDoc.data().crops);
-    }
+  // 🌟 PRANEŠIMŲ TIKRINIMO BLOKAS (SIUNČIAMA TIK 12:00 IR 18:00):
+  const shouldSendAlerts = isManual || vilniusHour === 12 || vilniusHour === 18;
 
-    // 2. Gazolio kainų pokyčiai (±2%) – ir 12:00, ir 18:00
-    if (dieselDataArray && dieselDataArray.length > 0) {
-      await checkAndSendDieselAlerts(db, admin, dieselDataArray);
-    }
+  if (shouldSendAlerts) {
+    console.log(`🔔 Vykdomas pranešimų siuntimas įrenginiams (${vilniusHour}:00)...`);
+    try {
+      // 1. MATIF šuoliai (±2%) – ir 12:00, ir 18:00
+      const matifDoc = await db.collection("matif_prices").doc("market_data").get();
+      if (matifDoc.exists) {
+        await checkAndSendMatifAlerts(db, admin, matifDoc.data().crops);
+      }
 
-    // 3. NMA oficialūs terminai – tik 12:00 per pietus
-    if (vilniusHour < 15 || isManual) {
-      await checkAndSendNmaAlerts(db, admin);
-    }
+      // 2. Gazolio kainų pokyčiai (±2%) – ir 12:00, ir 18:00
+      if (dieselDataArray && dieselDataArray.length > 0) {
+        await checkAndSendDieselAlerts(db, admin, dieselDataArray);
+      }
 
-  } catch (e) {
-    console.error("❌ Klaida tikrinant Išmaniuosius Pranešimus (Push):", e);
+      // 3. NMA oficialūs terminai – tik 12:00 per pietus
+      if (vilniusHour === 12 || isManual) {
+        await checkAndSendNmaAlerts(db, admin);
+      }
+
+    } catch (e) {
+      console.error("❌ Klaida tikrinant Išmaniuosius Pranešimus (Push):", e);
+    }
+  } else {
+    console.log(`🌙 Tylusis atnaujinimas (${vilniusHour}:00): kainos atnaujintos, pranešimai nesiunčiami.`);
   }
 
   return { 
@@ -61,11 +68,11 @@ async function syncAllAgroData(isManual = false) {
   };
 }
 
-// ⏰ 1. AUTOMATINIS GRAFIKAS: KELIASI 12:00 IR 18:00 VAL. (LIETUVOS LAIKU)
+// ⏰ 1. AUTOMATINIS GRAFIKAS: KELIASI 4 KARTUS PER PARĄ (00:00, 06:00, 12:00, 18:00)
 exports.scrapeAllAgroData = onSchedule(
-  { schedule: "0 12,18 * * *", timeZone: "Europe/Vilnius" },
+  { schedule: "0 0,6,12,18 * * *", timeZone: "Europe/Vilnius" },
   async (event) => {
-    console.log("⏰ Vykdomas 12:00 / 18:00 suplanuotas visų duomenų atnaujinimas...");
+    console.log("⏰ Vykdomas suplanuotas 4 kartų per parą duomenų atnaujinimas...");
     await syncAllAgroData(false);
   }
 );

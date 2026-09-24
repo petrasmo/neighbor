@@ -195,8 +195,8 @@ function createSpeedometerGaugeSvg(score) {
     const angle = (-clampedScore / 7) * 75;
 
     let scoreColor = "#22C55E";
-    if (score >= 3) scoreColor = "#EF4444";
-    else if (score >= -2 && score <= 2) scoreColor = "#F59E0B";
+    if (score >= 2) scoreColor = "#EF4444";
+    else if (score >= -1 && score <= 1) scoreColor = "#F59E0B";
 
     return `
         <div class="flex flex-col items-center justify-center select-none shrink-0">
@@ -251,10 +251,19 @@ function listenToBarometerData() {
         }
 
         let borderColor = "border-green-500 bg-green-950/20";
-        if (score >= 3) borderColor = "border-red-500 bg-red-950/30";
-        else if (score >= -2 && score <= 2) borderColor = "border-amber-500 bg-amber-950/20";
+        if (score >= 2) borderColor = "border-red-500 bg-red-950/30";
+        else if (score >= -1 && score <= 1) borderColor = "border-amber-500 bg-amber-950/20";
 
         const gaugeHtml = createSpeedometerGaugeSvg(score);
+
+        // Tikslūs skaičiai formulei:
+        const salietraFinal = data.indicators?.estimatedSalietra || 330;
+        const salietraFob = data.indicators?.salietraFobEur || 265;
+        const logist = data.indicators?.logisticsAndBagging || 65;
+        const ureaUsd = data.ureaFOB?.priceTon || 388.5;
+        const eurRate = data.currency?.rate ? Number(data.currency.rate).toFixed(4) : "1.1418";
+        const ureaEur = (ureaUsd / (data.currency?.rate || 1.1418)).toFixed(1);
+        const wheatRatio = data.indicators?.wheatToFertRatio || 1.47;
 
         card.className = `rounded-2xl p-6 md:p-8 border-2 ${borderColor} shadow-2xl space-y-4 transition-all`;
         card.innerHTML = `
@@ -276,22 +285,66 @@ function listenToBarometerData() {
                 </div>
             </div>
 
+            <!-- 4 PAGRINDINĖS KORTELĖS -->
             <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs pt-1">
-                <div class="bg-tractorBg p-3 rounded-xl border border-tractorBorder">
-                    <span class="text-[10px] block" style="color: var(--text-muted);">Orientacinė salietra kieme</span>
-                    <strong class="font-mono text-base font-bold text-green-500">~${data.indicators?.estimatedSalietra || 310} €/t</strong>
+                <div class="bg-tractorBg p-3 rounded-xl border border-tractorBorder space-y-0.5">
+                    <span class="text-[10px] block font-bold" style="color: var(--text-muted);">Amonio salietra kieme (34.4% N)</span>
+                    <strong class="font-mono text-base font-black text-green-500 block">~${salietraFinal} €/t</strong>
+                    <span class="text-[9px] text-slate-400 block leading-tight">(su atvežimu didmaišiuose)</span>
                 </div>
-                <div class="bg-tractorBg p-3 rounded-xl border border-tractorBorder">
-                    <span class="text-[10px] block" style="color: var(--text-muted);">TTF Gamtinės dujos</span>
-                    <strong class="font-mono text-base font-bold" style="color: var(--text-main);">${data.gasTTF?.priceMWh || 34.5} €/MWh</strong>
+                <div class="bg-tractorBg p-3 rounded-xl border border-tractorBorder space-y-0.5">
+                    <span class="text-[10px] block font-bold" style="color: var(--text-muted);">TTF Gamtinės dujos</span>
+                    <strong class="font-mono text-base font-bold" style="color: var(--text-main);">${data.gasTTF?.priceMWh || 73.88} €/MWh</strong>
+                    <span class="text-[9px] text-slate-400 block leading-tight">Biržos kaina</span>
                 </div>
-                <div class="bg-tractorBg p-3 rounded-xl border border-tractorBorder">
-                    <span class="text-[10px] block" style="color: var(--text-muted);">EUR / USD kursas</span>
-                    <strong class="font-mono text-base font-bold" style="color: var(--text-main);">${data.currency?.rate || 1.085}</strong>
+                <div class="bg-tractorBg p-3 rounded-xl border border-tractorBorder space-y-0.5">
+                    <span class="text-[10px] block font-bold" style="color: var(--text-muted);">EUR / USD kursas</span>
+                    <strong class="font-mono text-base font-bold" style="color: var(--text-main);">${eurRate}</strong>
+                    <span class="text-[9px] text-slate-400 block leading-tight">Forex rinka</span>
                 </div>
-                <div class="bg-tractorBg p-3 rounded-xl border border-tractorBorder">
-                    <span class="text-[10px] block" style="color: var(--text-muted);">Kviečių/Salietros santykis</span>
-                    <strong class="font-mono text-base font-bold text-amber-500">${data.indicators?.wheatToFertRatio || 1.45} : 1</strong>
+                <div class="bg-tractorBg p-3 rounded-xl border border-tractorBorder space-y-0.5">
+                    <span class="text-[10px] block font-bold" style="color: var(--text-muted);">Kviečių/Salietros santykis</span>
+                    <strong class="font-mono text-base font-bold text-amber-500">${wheatRatio} : 1</strong>
+                    <span class="text-[9px] text-slate-400 block leading-tight">Norma (1.4–1.6 : 1)</span>
+                </div>
+            </div>
+
+            <!-- 🌟 SKAIDRUS FORMULĖS SKAIDYMAS: KAIP GAUNASI 265 € IR 330 € -->
+            <div class="bg-tractorBg/90 border border-tractorBorder rounded-xl p-3.5 sm:p-4 space-y-2 text-xs">
+                <div class="flex items-center justify-between border-b border-tractorBorder/60 pb-1.5">
+                    <span class="font-bold flex items-center gap-1.5" style="color: var(--text-main);">
+                        <span>🔍</span> <span>Kaip apskaičiuota ši kaina kieme (~${salietraFinal} €/t)?</span>
+                    </span>
+                    <span class="text-[10px] text-slate-400 font-mono">Pilna skaičiavimo grandinė</span>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-2.5 pt-0.5">
+                    <!-- 1 Žingsnis -->
+                    <div class="bg-tractorSurface p-2.5 rounded-lg border border-tractorBorder/70 space-y-1">
+                        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">1. Karbamidas į eurus</span>
+                        <div class="font-mono text-xs font-bold" style="color: var(--text-main);">
+                            <strong>${ureaUsd} $</strong> ÷ <strong>${eurRate}</strong> = <span class="text-amber-500 font-bold">${ureaEur} €/t</span>
+                        </div>
+                        <p class="text-[10px] text-slate-400 leading-tight">Pasaulinė žaliava konvertuota dienos kursu</p>
+                    </div>
+
+                    <!-- 2 Žingsnis: KAIP GAUNASI 265 € -->
+                    <div class="bg-tractorSurface p-2.5 rounded-lg border border-tractorBorder/70 space-y-1">
+                        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">2. Salietros bazė (FOB uostas)</span>
+                        <div class="font-mono text-xs font-bold" style="color: var(--text-main);">
+                            ${ureaEur} € × <strong>0.78</strong> = <span class="text-blue-400 font-bold">~${salietraFob} €/t</span>
+                        </div>
+                        <p class="text-[10px] text-slate-400 leading-tight">Azoto kiekio santykis (34.4% N prieš 46% N)</p>
+                    </div>
+
+                    <!-- 3 Žingsnis: KAIP GAUNASI 330 € -->
+                    <div class="bg-tractorSurface p-2.5 rounded-lg border border-tractorBorder/70 space-y-1">
+                        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">3. Lietuvos logistika į ūkį</span>
+                        <div class="font-mono text-xs font-bold" style="color: var(--text-main);">
+                            ${salietraFob} € + <strong>${logist} €</strong> = <span class="text-green-500 font-black">~${salietraFinal} €/t</span>
+                        </div>
+                        <p class="text-[10px] text-slate-400 leading-tight">Laivas į Klaipėdą + 500kg didmaišiai + vilkikas į ūkį</p>
+                    </div>
                 </div>
             </div>
         `;
