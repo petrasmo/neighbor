@@ -1,0 +1,132 @@
+{
+  "type": "FeatureCollection",
+  "name": "NMA_Maisiagala_Deklaracija",
+  "crs": {
+    "type": "name",
+    "properties": {
+      "name": "urn:ogc:def:crs:OGC:1.3:CRS84"
+    }
+  },
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "maisiagala_field_1",
+        "name": "Didysis kviečių sklypas (Maišiagala Šiaurė)",
+        "fieldBlockNumber": "742-01",
+        "crop": "Žieminiai kviečiai",
+        "areaHa": 26.40,
+        "region": "Vilniaus r., Maišiagalos sen.",
+        "notes": "Veislė 'Skagen', gera dirva"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [25.0420, 54.8720],
+            [25.0515, 54.8735],
+            [25.0490, 54.8785],
+            [25.0395, 54.8770],
+            [25.0420, 54.8720]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "maisiagala_field_2",
+        "name": "Kviečių laukas prie Dūkštų kelio",
+        "fieldBlockNumber": "742-02",
+        "crop": "Žieminiai kviečiai",
+        "areaHa": 19.80,
+        "region": "Vilniaus r., Maišiagalos sen.",
+        "notes": "Priešsėlis - žirniai"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [25.0280, 54.8580],
+            [25.0370, 54.8595],
+            [25.0345, 54.8645],
+            [25.0255, 54.8630],
+            [25.0280, 54.8580]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "maisiagala_field_3",
+        "name": "Rapsų masyvas (Melkio pusė)",
+        "fieldBlockNumber": "742-03",
+        "crop": "Žieminiai rapsai",
+        "areaHa": 31.50,
+        "region": "Vilniaus r., Maišiagalos sen.",
+        "notes": "Hibridas 'LG Auckland'"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [25.0800, 54.8670],
+            [25.0920, 54.8690],
+            [25.0890, 54.8750],
+            [25.0770, 54.8730],
+            [25.0800, 54.8670]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "maisiagala_field_4",
+        "name": "Pietinis rapsų sklypas (prie A2)",
+        "fieldBlockNumber": "742-04",
+        "crop": "Žieminiai rapsai",
+        "areaHa": 22.75,
+        "region": "Vilniaus r., Maišiagalos sen.",
+        "notes": "Patręšta NPK rudenį"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [25.0650, 54.8490],
+            [25.0750, 54.8505],
+            [25.0720, 54.8560],
+            [25.0620, 54.8545],
+            [25.0650, 54.8490]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "maisiagala_field_5",
+        "name": "Kiemelių dirva (Arimas / Pavasario sėjai)",
+        "fieldBlockNumber": "742-05",
+        "crop": "Nėra (Arimas)",
+        "areaHa": 15.20,
+        "region": "Vilniaus r., Maišiagalos sen.",
+        "notes": "Gilus rudeninis arimas, numatomi vasariniai miežiai"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [25.0600, 54.8820],
+            [25.0690, 54.8835],
+            [25.0665, 54.8885],
+            [25.0575, 54.8870],
+            [25.0600, 54.8820]
+          ]
+        ]
+      }
+    }
+  ]
+}

@@ -1,4 +1,7 @@
 // functions/notificationsHelper.js
+const axios = require("axios");
+
+const CDSE_INSTANCE_ID = "2ecdf3ed-4338-4577-a502-11dd5b2df254";
 
 /**
  * 1. MATIF KAINŲ ŠUOLIAI (virš ±2%)
@@ -56,7 +59,7 @@ async function checkAndSendDieselAlerts(db, admin, dieselDataArray) {
 }
 
 /**
- * 3. NMA TERMINŲ PRIMINIKLIS
+ * 3. NMA TERMINŲ PRIMINIKLIS (likus 5 d.)
  */
 async function checkAndSendNmaAlerts(db, admin) {
     const doc = await db.collection("nma_regulations").doc("current_season").get();
@@ -77,19 +80,23 @@ async function checkAndSendNmaAlerts(db, admin) {
 }
 
 /**
- * 4. ŽIEMKENČIŲ PAVOJUS (Plikšalis, Pelėsis, Ledo pluta)
+ * 4. ŽIEMKENČIŲ PAVOJUS (Šaltis, Antarktida, Plikšalis, Pelėsis, Ledo pluta)
  */
 async function checkAndSendWinterDanger(db, admin, user, fieldData) {
     if (!user.notificationPreferences?.winterDanger) return;
 
     let alertTitle = "";
     let alertBody = "";
-    if (fieldData.isIceRisk) {
-        alertTitle = "🔴 Ledo plutos pavojus";
-        alertBody = `Lauke „${fieldData.name}“ susidarė ledo pluta, gresia pasėlių uždusimas!`;
+
+    if (fieldData.airTemp <= -12.0 || fieldData.soilTemp <= -8.0) {
+        alertTitle = `🚨 ŽIEMKENČIŲ PAVOJUS: „${fieldData.name}“!`;
+        alertBody = `Užfiksuotas kritinis šaltis: oras ${fieldData.airTemp}°C, dirva ${fieldData.soilTemp}°C! Gresia pasėlių žūtis.`;
+    } else if (fieldData.isIceRisk) {
+        alertTitle = `🔴 Ledo plutos pavojus: „${fieldData.name}“`;
+        alertBody = `Lauke susidarė ledo pluta, gresia pasėlių uždusimas!`;
     } else if (fieldData.moldDays >= 45) {
-        alertTitle = "⚠️ Sniego pelėsio rizika";
-        alertBody = `Lauke „${fieldData.name}“ sniegas stovi per ilgai, didėja pelėsio grėsmė.`;
+        alertTitle = `⚠️ Sniego pelėsio rizika: „${fieldData.name}“`;
+        alertBody = `Sniegas stovi per ilgai ant neatšalusios dirvos, didėja pelėsio grėsmė.`;
     }
 
     if (alertTitle) {
@@ -101,10 +108,13 @@ async function checkAndSendWinterDanger(db, admin, user, fieldData) {
  * 5. T-SUM STARTAS (Pavasario vegetacija)
  */
 async function checkAndSendTsumAlert(db, admin, user, fieldData) {
-    if (user.notificationPreferences?.tSumStart && fieldData.currentSum >= fieldData.targetTemp) {
+    if (!user.notificationPreferences?.tSumStart) return;
+
+    const target = (fieldData.crop || "").toLowerCase().includes("raps") ? 250 : 200;
+    if (fieldData.currentSum >= target && fieldData.currentSum < (target + 15)) {
         await sendToSubscribers(db, admin, "tSumStart", [{ 
-            title: "🌱 Pavasario vegetacijos startas", 
-            body: `Lauke „${fieldData.name}“ pasiekta N1 tręšimo riba (${fieldData.currentSum}°C)!` 
+            title: `🌱 Pavasario vegetacijos startas: „${fieldData.name}“`, 
+            body: `Pasiekta N1 tręšimo riba (${Math.round(fieldData.currentSum)}°C)! Laikas pirmajam salietros tręšimui.` 
         }], [user.userId]);
     }
 }
@@ -114,39 +124,134 @@ async function checkAndSendTsumAlert(db, admin, user, fieldData) {
  */
 async function checkAndSendHailAlerts(db, admin, user, weatherCode) {
     if ((weatherCode === 96 || weatherCode === 99) && user.notificationPreferences?.hailWarning) {
-        await sendToSubscribers(db, admin, "hailWarning", [{ title: "🧊 KRUŠOS PAVOJUS!", body: "Prognozuojama kruša ūkio bazėje. Apsaugokite techniką!" }], [user.userId]);
+        await sendToSubscribers(db, admin, "hailWarning", [{ 
+            title: "🧊 KRUŠOS PAVOJUS!", 
+            body: "Prognozuojama kruša jūsų ūkio zonoje. Apsaugokite techniką ir automobilius!" 
+        }], [user.userId]);
     }
 }
 
 /**
- * 7. SENTINEL PALYDOVO KADRAS
+ * 🌟 7. SENTINEL-2 PALYDOVO KADRAS (Automatinis patikrinimas per ESA katalogą)
  */
-async function checkAndSendSatAlert(db, admin, userId, fieldName) {
-    await sendToSubscribers(db, admin, "satPass", [{ title: "🛰️ Naujas palydovo kadras", body: `Lauke „${fieldName}“ atnaujinti NDVI duomenys.` }], [userId]);
-}
+async function checkAndSendSatAlert(db, admin, user, field) {
+    if (!user.notificationPreferences?.satPass) return;
+    const coords = field.polygonCoordinates || [];
+    if (coords.length < 3) return;
 
-/**
- * 8. TRĄŠŲ RINKOS BAROMETRO SIGNALAI (PIRKTI ARBA BRANGIMO RIZIKA)
- */
-async function checkAndSendFertilizerAlerts(db, admin, fertilizerData) {
-    if (!fertilizerData || !fertilizerData.barometer) return;
-    const baro = fertilizerData.barometer;
+    const lat = Array.isArray(coords[0]) ? parseFloat(coords[0][0]) : parseFloat(coords[0].lat);
+    const lng = Array.isArray(coords[0]) ? parseFloat(coords[0][1]) : parseFloat(coords[0].lng);
 
-    if (baro.verdict === "BUY") {
-        await sendToSubscribers(db, admin, "fertBarometer", [{
-            title: "🟢 TRĄŠŲ SIGNALAS: Palankus metas pirkti! 🧪",
-            body: "Žemos dujų kainos ir palankus valiutos kursas rodo pigų pirkimo langą. Fiksuokite kainas!"
-        }]);
-    } else if (baro.verdict === "DANGER") {
-        await sendToSubscribers(db, admin, "fertBarometer", [{
-            title: "🔴 TRĄŠŲ RINKA: Brangimo rizika! 📈",
-            body: "Dujų šuolis biržoje didina azoto gamybos savikainą. Tikėtinas trąšų brangimas per 2-3 savaites."
-        }]);
+    try {
+        const now = new Date();
+        const past2Days = new Date(now.getTime() - 48 * 60 * 60 * 1000).toISOString().split('T')[0];
+        const todayStr = now.toISOString().split('T')[0];
+
+        // Kreipiamės į oficialią Sentinel-2 WFS tarnybą pagal lauko koordinates
+        const wfsUrl = `https://sh.dataspace.copernicus.eu/ogc/wfs/${CDSE_INSTANCE_ID}?REQUEST=GetFeature&TYPENAME=DSS2&BBOX=${lng - 0.02},${lat - 0.02},${lng + 0.02},${lat + 0.02}&TIME=${past2Days}/${todayStr}&MAXCC=35&OUTPUTFORMAT=application/json`;
+        const res = await axios.get(wfsUrl, { timeout: 6000 });
+
+        const features = res.data?.features || [];
+        if (features.length === 0) return;
+
+        const latestFeature = features[0];
+        const passDate = latestFeature.properties?.date || todayStr;
+
+        // Apsauga nuo dubliavimo: tikriname ar apie šį kadrą jau buvo pranešta
+        const trackerRef = db.collection("system_state").doc(`sat_${field.id}`);
+        const trackerDoc = await trackerRef.get();
+        if (trackerDoc.exists && trackerDoc.data().lastPassDate === passDate) {
+            return; // Jau pranešta, nespaminame
+        }
+
+        // Siunčiame pranešimą į telefoną
+        await sendToSubscribers(db, admin, "satPass", [{
+            title: `🛰️ Naujas palydovo kadras: „${field.name}“`,
+            body: `Virš jūsų lauko ką tik užfiksuotas naujas Sentinel-2 kadras (${passDate}). Paruošta šviežia NDVI biomasės analizė!`
+        }], [user.userId]);
+
+        // Įrašome, kad šis kadras jau apdorotas
+        await trackerRef.set({ 
+            lastPassDate: passDate, 
+            updatedAt: admin.firestore.FieldValue.serverTimestamp() 
+        }, { merge: true });
+
+    } catch (err) {
+        console.warn(`Sentinel patikros klaida laukui ${field.name}:`, err.message);
     }
 }
 
 /**
- * BENDRA FUNKCIJA (IŠSIUNTIMAS)
+ * 🌟 8. BENDROSIOS LAUKŲ, ORŲ IR PALYDOVŲ STEBĖSENOS VARIKLIS (Visos temos vienoje vietoje)
+ */
+async function checkAndSendFieldAndWeatherAlerts(db, admin) {
+    console.log("🌾 Vykdomas visų ūkio laukų, orų ir palydovų skenavimas...");
+
+    const usersSnap = await db.collection("users").get();
+
+    for (const uDoc of usersSnap.docs) {
+        const user = uDoc.data();
+        user.userId = user.userId || uDoc.id;
+        const prefs = user.notificationPreferences || {};
+        if (prefs.enabled === false) continue;
+
+        const fieldsSnap = await db.collection("user_fields").where("userId", "==", user.userId).get();
+
+        for (const fDoc of fieldsSnap.docs) {
+            const field = fDoc.data();
+            field.id = field.id || fDoc.id;
+            const coords = field.polygonCoordinates || [];
+            if (coords.length < 3) continue;
+
+            const lat = Array.isArray(coords[0]) ? parseFloat(coords[0][0]) : parseFloat(coords[0].lat);
+            const lng = Array.isArray(coords[0]) ? parseFloat(coords[0][1]) : parseFloat(coords[0].lng);
+
+            try {
+                // 1. Orų patikra per Open-Meteo
+                const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&current=temperature_2m,soil_temperature_6cm,weather_code&hourly=snow_depth,soil_temperature_6cm,temperature_2m&timezone=auto`;
+                const wRes = await axios.get(url, { timeout: 6000 });
+                const current = wRes.data?.current || {};
+                const hourly = wRes.data?.hourly || {};
+
+                const airTemp = current.temperature_2m ?? 0;
+                const soilTemp = current.soil_temperature_6cm ?? 0;
+                const weatherCode = current.weather_code ?? 0;
+
+                const rawSnow = hourly.snow_depth?.[0] || 0;
+                const snowCm = Math.round(rawSnow * 100);
+
+                let sumTemp = 0;
+                const temps = hourly.temperature_2m || [];
+                temps.forEach(t => { if (t > 0) sumTemp += (t / 24); });
+
+                const fieldData = {
+                    name: field.name,
+                    crop: field.crop,
+                    airTemp: airTemp,
+                    soilTemp: soilTemp,
+                    snowCm: snowCm,
+                    currentSum: sumTemp,
+                    isIceRisk: (soilTemp < 0 && snowCm > 2),
+                    moldDays: (snowCm >= 10 && soilTemp >= -1.0) ? 50 : 5
+                };
+
+                // IŠKVIEČIAMI ORŲ PAVOJAI:
+                await checkAndSendWinterDanger(db, admin, user, fieldData);
+                await checkAndSendHailAlerts(db, admin, user, weatherCode);
+                await checkAndSendTsumAlert(db, admin, user, fieldData);
+
+            } catch (err) {
+                console.warn(`Nepavyko gauti orų laukui ${field.name}:`, err.message);
+            }
+
+            // 2. 🌟 IŠKVIEČIAMAS PALYDOVO KADRO TIKRINIMAS:
+            await checkAndSendSatAlert(db, admin, user, field);
+        }
+    }
+}
+
+/**
+ * 🌟 BENDRA SIUNTIMO FUNKCIJA (Su WebPush palaikymu telefonams)
  */
 async function sendToSubscribers(db, admin, topicKey, messagesArray, userIds = null) {
     let usersSnap;
@@ -182,14 +287,13 @@ async function sendToSubscribers(db, admin, topicKey, messagesArray, userIds = n
                     title: msg.title, 
                     body: msg.body 
                 },
-                // 🌟 BŪTINAS WEBPUSH BLOKAS, KAD TELEFONAI GAUTŲ VISUS SISTEMOS PRANEŠIMUS:
                 webpush: {
                     notification: {
                         title: msg.title,
                         body: msg.body,
                         icon: "https://jurgisagro.com/logo.png",
                         badge: "https://jurgisagro.com/logo.png",
-                        vibrate: [200, 100, 200]
+                        vibrate: [300, 100, 300, 100, 300]
                     },
                     fcmOptions: {
                         link: "https://jurgisagro.com/"
@@ -209,6 +313,6 @@ module.exports = {
     checkAndSendWinterDanger, 
     checkAndSendTsumAlert, 
     checkAndSendHailAlerts, 
-    checkAndSendSatAlert
-	//checkAndSendFertilizerAlerts	
+    checkAndSendSatAlert,
+    checkAndSendFieldAndWeatherAlerts
 };

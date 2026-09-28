@@ -112,11 +112,14 @@ export function getMainFieldsHtml(todayStr) {
                         <div class="space-y-1">
                             <label class="text-xs font-bold text-tractorPrimaryLight uppercase">Pasėlis</label>
                             <select id="field-crop-select" class="w-full h-11 bg-tractorBg border border-tractorBorder rounded-xl px-3 text-xs text-white outline-none cursor-pointer">
+                                <option value="Nėra (Arimas)" selected>🚜 Nėra pasėlio (Arimas / Pūdymas)</option>
                                 <option value="Žieminiai kviečiai">🌾 Žieminiai kviečiai</option>
                                 <option value="Žieminiai rapsai">🌱 Žieminiai rapsai</option>
                                 <option value="Vasariniai miežiai">🌾 Vasariniai miežiai</option>
+                                <option value="Vasariniai kviečiai">🌾 Vasariniai kviečiai</option>
                                 <option value="Žirniai / Pupos">🫘 Žirniai / Pupos</option>
                                 <option value="Kukurūzai">🌽 Kukurūzai</option>
+                                <option value="Kita / Nenurodyta">⚪ Kita / Nenurodyta</option>
                             </select>
                         </div>
 
@@ -132,7 +135,7 @@ export function getMainFieldsHtml(todayStr) {
                 </div>
             </div>
 
-            <!-- 🌟 MODALAS: REDAGAVIMAS + TRYNIMAS (TIKRAS BOTTOM SHEET SU IŠSAUGOTI IR IŠTRINTI) -->
+            <!-- 🌟 MODALAS: REDAGAVIMAS + TRYNIMAS (LAUKO PASAS) -->
             <div id="field-edit-modal" class="fixed inset-0 bg-black/80 z-[9999] hidden flex flex-col justify-end items-center p-0 backdrop-blur-sm transition-all duration-300">
                 <div class="bg-tractorSurface border-t-2 border-x-2 border-b-0 border-tractorBorder rounded-t-3xl rounded-b-none p-6 md:p-8 pb-12 max-h-[90vh] overflow-y-auto max-w-xl w-full space-y-4 shadow-2xl relative transform transition-transform duration-300">
                     <div class="flex justify-between items-center border-b border-tractorBorder pb-3">
@@ -156,11 +159,14 @@ export function getMainFieldsHtml(todayStr) {
                             <div class="space-y-1">
                                 <label class="text-xs font-bold text-tractorPrimaryLight uppercase">Pasėlis</label>
                                 <select id="edit-field-crop" class="w-full h-11 bg-tractorBg border border-tractorBorder rounded-xl px-3 text-xs outline-none cursor-pointer" style="color: var(--text-main);">
+                                    <option value="Nėra (Arimas)">🚜 Nėra pasėlio (Arimas / Pūdymas)</option>
                                     <option value="Žieminiai kviečiai">🌾 Žieminiai kviečiai</option>
                                     <option value="Žieminiai rapsai">🌱 Žieminiai rapsai</option>
                                     <option value="Vasariniai miežiai">🌾 Vasariniai miežiai</option>
+                                    <option value="Vasariniai kviečiai">🌾 Vasariniai kviečiai</option>
                                     <option value="Žirniai / Pupos">🫘 Žirniai / Pupos</option>
                                     <option value="Kukurūzai">🌽 Kukurūzai</option>
+                                    <option value="Kita / Nenurodyta">⚪ Kita / Nenurodyta</option>
                                 </select>
                             </div>
                         </div>
@@ -169,7 +175,7 @@ export function getMainFieldsHtml(todayStr) {
                             <input id="edit-field-notes" type="text" autocomplete="off" class="w-full h-11 bg-tractorBg border border-tractorBorder rounded-xl px-3 text-xs outline-none" style="color: var(--text-main);">
                         </div>
                         
-                        <!-- 🌟 DU MYGTUKAI: IŠSAUGOTI IR IŠTRINTI -->
+                        <!-- DU MYGTUKAI: IŠSAUGOTI IR IŠTRINTI -->
                         <div class="flex gap-3 pt-2">
                             <button type="submit" class="flex-1 h-12 bg-tractorPrimary hover:bg-tractorPrimaryHover text-white font-extrabold rounded-xl text-xs uppercase tracking-wider shadow transition cursor-pointer flex items-center justify-center">
                                 Išsaugoti pakeitimus
@@ -211,6 +217,8 @@ export function getEmptyListHtml() {
 }
 
 export function getFieldRowHtml(f, idx, isSelected, ndvi) {
+    const cropText = f.crop || 'Nėra (Arimas)';
+
     return `
         <div id="field-row-${f.id}" class="field-item-row p-4 sm:p-5 rounded-2xl border transition cursor-pointer flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${
             isSelected 
@@ -227,7 +235,7 @@ export function getFieldRowHtml(f, idx, isSelected, ndvi) {
                     <span class="text-xs bg-green-950/40 text-green-400 px-2.5 py-0.5 rounded-md font-bold font-mono border border-green-800/50">🛰️ NDVI: ${ndvi.score}</span>
                 </div>
                 <p class="text-xs md:text-sm text-slate-300">
-                    🌱 Pasėlis: <strong class="text-slate-200">${f.crop}</strong> ${f.notes ? `• <span class="text-slate-400 italic">${f.notes}</span>` : ''}
+                    🌱 Pasėlis: <strong class="text-slate-200">${cropText}</strong> ${f.notes ? `• <span class="text-slate-400 italic">${f.notes}</span>` : ''}
                 </p>
             </div>
 

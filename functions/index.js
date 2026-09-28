@@ -12,11 +12,12 @@ const { executeMatifSync } = require("./matifSync");
 const { executeDieselSync } = require("./dieselSync");
 const { executeFertilizerSync } = require("./fertilizerSync");
 
-// Importuojame Išmaniųjų Pranešimų pagalbininką su veikiančiomis temomis
+// Importuojame Išmaniųjų Pranešimų pagalbininką su visomis temomis
 const { 
   checkAndSendMatifAlerts, 
   checkAndSendDieselAlerts, 
-  checkAndSendNmaAlerts
+  checkAndSendNmaAlerts,
+  checkAndSendFieldAndWeatherAlerts
 } = require("./notificationsHelper");
 
 // 🔄 BENDRAS VISŲ DUOMENŲ ATNAUJINIMAS IR PRANEŠIMŲ TIKRINIMAS
@@ -37,21 +38,24 @@ async function syncAllAgroData(isManual = false) {
   if (shouldSendAlerts) {
     console.log(`🔔 Vykdomas pranešimų siuntimas įrenginiams (${vilniusHour}:00)...`);
     try {
-      // 1. MATIF šuoliai (±2%) – ir 12:00, ir 18:00
+      // 1. MATIF šuoliai (±2%)
       const matifDoc = await db.collection("matif_prices").doc("market_data").get();
       if (matifDoc.exists) {
         await checkAndSendMatifAlerts(db, admin, matifDoc.data().crops);
       }
 
-      // 2. Gazolio kainų pokyčiai (±2%) – ir 12:00, ir 18:00
+      // 2. Gazolio kainų pokyčiai (±2%)
       if (dieselDataArray && dieselDataArray.length > 0) {
         await checkAndSendDieselAlerts(db, admin, dieselDataArray);
       }
 
-      // 3. NMA oficialūs terminai – tik 12:00 per pietus
+      // 3. NMA oficialūs terminai (tik 12:00)
       if (vilniusHour === 12 || isManual) {
         await checkAndSendNmaAlerts(db, admin);
       }
+
+      // 4. Laukų orai (Šaltis, Antarktida, Kruša, T-Sum ir Sentinel palydovas)
+      await checkAndSendFieldAndWeatherAlerts(db, admin);
 
     } catch (e) {
       console.error("❌ Klaida tikrinant Išmaniuosius Pranešimus (Push):", e);
@@ -274,6 +278,20 @@ exports.testPhoneNotification = onRequest(
       res.send(`✅ SĖKMINGAI IŠSIŲSTA Į TELEFONĄ!<br>ID: ${response}`);
     } catch (err) {
       res.status(500).send(`❌ Klaida: ${err.message}`);
+    }
+  }
+);
+
+// 🌟 TESTAS 5: LAUKŲ ORŲ, ŠALČIO (ANTARKTIDOS) IR PALYDOVO SKENAVIMAS
+exports.testFieldWeatherAlerts = onRequest(
+  { cors: true, invoker: "public" },
+  async (req, res) => {
+    try {
+      console.log("🌾 Rankinis laukų orų ir palydovų skenavimas...");
+      await checkAndSendFieldAndWeatherAlerts(db, admin);
+      res.send("✅ Visi laukai patikrinti per Open-Meteo ir Sentinel-2! Jei aptiktas pavojus ar naujas kadras, pranešimas jau išsiųstas į jūsų telefoną! 📲❄️🛰️");
+    } catch (err) {
+      res.status(500).send("Klaida: " + err.message);
     }
   }
 );

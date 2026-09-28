@@ -77,7 +77,7 @@ function setupFieldEvents(currentUser) {
         closeEditModalBtn.onclick = () => editModal?.classList.add('hidden');
     }
 
-    // Išsaugoti pakeitimus iš Bottom Sheet
+    // Išsaugoti pakeitimus iš Bottom Sheet (Lauko paso)
     document.getElementById('edit-field-form')?.addEventListener('submit', async (e) => {
         e.preventDefault();
         if (!selectedFieldId) return;
@@ -98,7 +98,7 @@ function setupFieldEvents(currentUser) {
         showBottomToast(`Lauko „${newName}“ duomenys atnaujinti! 🌾`);
     });
 
-    // 🌟 Ištrinti lauką tiesiai iš Bottom Sheet
+    // Ištrinti lauką tiesiai iš Bottom Sheet
     if (btnDeleteModal) {
         btnDeleteModal.onclick = () => {
             const field = userFieldsList.find(f => f.id === selectedFieldId);
@@ -218,7 +218,7 @@ function renderFieldsTableRows() {
     }).join('');
 }
 
-// 🌟 IŠ KARTO ATIDAROMAS BOTTOM SHEET BE JOKIŲ TARPINIŲ ŽINGSNIŲ!
+// ATIDAROMAS LAUKO PASAS (BOTTOM SHEET)
 window.selectAndFocusField = function(fieldId) {
     selectedFieldId = fieldId;
     const field = userFieldsList.find(f => f.id === fieldId);
@@ -227,7 +227,6 @@ window.selectAndFocusField = function(fieldId) {
     highlightFieldPolygon(fieldId);
     renderFieldsTableRows();
 
-    // Užpildome formą lauko duomenimis
     const nameInp = document.getElementById('edit-field-name');
     const blockInp = document.getElementById('edit-field-block');
     const cropSel = document.getElementById('edit-field-crop');
@@ -236,11 +235,13 @@ window.selectAndFocusField = function(fieldId) {
 
     if (nameInp) nameInp.value = field.name || '';
     if (blockInp) blockInp.value = field.fieldBlockNumber || '';
-    if (cropSel) cropSel.value = field.crop || 'Žieminiai kviečiai';
+    
+    // 🌟 NEBEVERČIA RINKTIS KVIEČIŲ – JEI BUVO ARIMAS ARBA TUŠČIA, IR PARODYS ARIMĄ:
+    if (cropSel) cropSel.value = field.crop || 'Nėra (Arimas)';
+    
     if (notesInp) notesInp.value = field.notes || '';
     if (titleEl) titleEl.textContent = `Lauko pasas: ${field.name} (${field.areaHa} ha)`;
 
-    // Iškart parodome Bottom Sheet
     const editModal = document.getElementById('field-edit-modal');
     if (editModal) {
         editModal.classList.remove('hidden');
