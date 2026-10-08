@@ -38,66 +38,63 @@ export function renderFertilizerBarometer(container) {
     if (!container) return;
 
     container.innerHTML = `
-        <div class="space-y-6 max-w-6xl mx-auto w-full">
+        <div class="space-y-4 max-w-6xl mx-auto w-full">
             
             <!-- HEADERIS -->
-            <div class="bg-tractorSurface border border-tractorBorder rounded-2xl p-6 md:p-8 space-y-6 shadow-xl">
+            <div class="bg-tractorSurface border border-tractorBorder rounded-2xl p-3.5 sm:p-5 md:p-6 space-y-3.5 shadow-xl">
                 
-                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-tractorBorder/70 pb-4">
-                    <div class="space-y-1">
-                        <div class="inline-flex items-center gap-2 bg-green-500/10 border border-green-500/30 text-green-600 dark:text-green-400 text-xs px-3 py-1 rounded-full font-bold uppercase tracking-wider">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-tractorBorder/70 pb-2.5">
+                    <div class="space-y-0.5">
+                        <div class="inline-flex items-center gap-2 bg-green-500/10 border border-green-500/30 text-green-600 dark:text-green-400 text-xs px-2.5 py-0.5 rounded-full font-bold uppercase tracking-wider">
                             <span class="w-2 h-2 rounded-full bg-green-500 animate-ping"></span>
                             <span>Gyva rinka • 5 Piliastrų Analitika</span>
                         </div>
-                        <h2 class="font-oswald text-2xl md:text-3xl font-bold tracking-wide" style="color: var(--text-main);">
+                        <h2 class="font-oswald text-lg sm:text-xl md:text-2xl font-bold tracking-wide" style="color: var(--text-main);">
                             🧭 Trąšų Kainų Radaras ir Barometras
                         </h2>
-                        <p class="text-xs md:text-sm mt-0.5" style="color: var(--text-muted);">
-                            Išankstinė azoto ir NPK trąšų kainų kryptis pagal dujas, valiutas, pasaulinį karbamidą ir pirkimo galios santykį.
-                        </p>
                     </div>
 
-                    <div class="flex items-center gap-2 self-start sm:self-auto text-xs text-slate-500 dark:text-slate-400">
+                    <div class="flex items-center gap-2 self-start sm:self-auto text-[11px] sm:text-xs text-slate-500 dark:text-slate-400">
                         <span id="baro-sync-time">Kraunama iš biržos...</span>
                     </div>
                 </div>
 
-                <!-- 1. SPIDOMETRO IR VERDIKTO KORTELĖ -->
-                <div id="baro-verdict-card" class="rounded-2xl p-6 md:p-8 border-2 space-y-4 shadow-2xl transition-all">
-                    <div class="text-center py-6 text-slate-400 text-xs">Kraunamas rinkos spidometras...</div>
+                <!-- 1. SPIDOMETRO IR VERDIKTO KORTELĖ (KOMPAKTIŠKA, VISKAS ŠALIA) -->
+                <div id="baro-verdict-card" class="rounded-2xl p-3.5 sm:p-5 border-2 space-y-3 shadow-xl transition-all">
+                    <div class="text-center py-4 text-slate-400 text-xs">Kraunamas rinkos spidometras...</div>
                 </div>
 
-                <!-- 2. GRAFIKO BLOKAS SU 3 MYGTUKAIS -->
-                <div class="space-y-4 bg-tractorBg/90 border border-tractorBorder p-5 md:p-6 rounded-2xl">
+                <!-- 2. GRAFIKO BLOKAS -->
+                <div class="space-y-3 bg-tractorBg/90 border border-tractorBorder p-3 sm:p-4 md:p-5 rounded-2xl">
                     
-                    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-3 border-b border-tractorBorder/60 pb-4">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-tractorBorder/60 pb-2.5">
                         <!-- 3 ŽALIAVŲ PERJUNGIKLIS -->
-                        <div class="flex items-center gap-1.5 bg-tractorSurface p-1.5 rounded-xl border border-tractorBorder">
-                            <button type="button" class="btn-baro-comm px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer" data-comm="gasTTF">
-                                <span>⚡</span> <span>TTF Dujos</span>
+                        <div class="flex items-center gap-1 bg-tractorSurface p-1 rounded-xl border border-tractorBorder">
+                            <button type="button" class="btn-baro-comm px-2.5 sm:px-3 py-1 rounded-lg text-[10px] sm:text-xs font-bold transition cursor-pointer" data-comm="gasTTF">
+                                <span>⚡</span> <span>Dujos</span>
                             </button>
-                            <button type="button" class="btn-baro-comm px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer" data-comm="currency">
-                                <span>💶</span> <span>EUR / USD</span>
+                            <button type="button" class="btn-baro-comm px-2.5 sm:px-3 py-1 rounded-lg text-[10px] sm:text-xs font-bold transition cursor-pointer" data-comm="currency">
+                                <span>💶</span> <span>EUR/USD</span>
                             </button>
-                            <button type="button" class="btn-baro-comm px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer" data-comm="ureaFOB">
+                            <button type="button" class="btn-baro-comm px-2.5 sm:px-3 py-1 rounded-lg text-[10px] sm:text-xs font-bold transition cursor-pointer" data-comm="ureaFOB">
                                 <span>🧪</span> <span>Karbamidas</span>
                             </button>
                         </div>
 
                         <!-- PERIODŲ MYGTUKAI -->
-                        <div class="flex items-center gap-1 bg-tractorSurface p-1 rounded-xl border border-tractorBorder self-start lg:self-auto">
-                            <button type="button" class="btn-baro-range px-2.5 py-1 rounded-lg text-xs font-bold transition cursor-pointer" data-range="1W">1 sav.</button>
-                            <button type="button" class="btn-baro-range px-2.5 py-1 rounded-lg text-xs font-bold transition cursor-pointer" data-range="1M">1 mėn.</button>
-                            <button type="button" class="btn-baro-range px-2.5 py-1 rounded-lg text-xs font-bold transition cursor-pointer" data-range="3M">3 mėn.</button>
-                            <button type="button" class="btn-baro-range px-2.5 py-1 rounded-lg text-xs font-bold transition cursor-pointer" data-range="6M">6 mėn.</button>
-                            <button type="button" class="btn-baro-range px-2.5 py-1 rounded-lg text-xs font-bold transition cursor-pointer" data-range="1Y">1 m.</button>
+                        <div class="flex items-center gap-0.5 sm:gap-1 bg-tractorSurface p-1 rounded-xl border border-tractorBorder self-start sm:self-auto">
+                            <button type="button" class="btn-baro-range px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-lg text-[10px] sm:text-xs font-bold transition cursor-pointer" data-range="1W">1 sav.</button>
+                            <button type="button" class="btn-baro-range px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-lg text-[10px] sm:text-xs font-bold transition cursor-pointer" data-range="1M">1 mėn.</button>
+                            <button type="button" class="btn-baro-range px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-lg text-[10px] sm:text-xs font-bold transition cursor-pointer" data-range="3M">3 mėn.</button>
+                            <button type="button" class="btn-baro-range px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-lg text-[10px] sm:text-xs font-bold transition cursor-pointer" data-range="6M">6 mėn.</button>
+                            <button type="button" class="btn-baro-range px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-lg text-[10px] sm:text-xs font-bold transition cursor-pointer" data-range="1Y">1 m.</button>
                         </div>
                     </div>
 
                     <!-- GRAFIKO ANTRAŠTĖ IR UŽVEDIMO REIKŠMĖ -->
                     <div class="flex justify-between items-center px-1">
                         <div class="flex items-center gap-2">
-                            <strong id="baro-chart-title" class="text-sm font-bold" style="color: var(--text-main);">
+                            <strong id="baro-chart-title" class="text-xs sm:text-sm font-bold" style="color: var(--text-main);">
                                 ⚡ Olandijos TTF Gamtinės Dujos
                             </strong>
                             <span class="text-xs font-mono font-bold" id="baro-chart-hover-val" style="color: #16A34A;"></span>
@@ -108,22 +105,23 @@ export function renderFertilizerBarometer(container) {
                     </div>
 
                     <!-- CANVAS GRAFIKAS -->
-                    <div class="relative w-full h-64 sm:h-72 select-none cursor-crosshair">
+                    <div class="relative w-full h-56 sm:h-64 select-none cursor-crosshair">
                         <canvas id="baro-canvas" class="w-full h-full block"></canvas>
                     </div>
                 </div>
 
-                <!-- 3. 5 RINKOS PILIASTRŲ KORTELĖS -->
-                <div class="space-y-3">
+                <!-- 3. 5 RINKOS PILIASTRAI (TELEFONE PO DU Į EILUTĘ) -->
+                <div class="space-y-2">
                     <div class="flex justify-between items-center px-1">
-                        <h4 class="font-oswald text-base sm:text-lg font-bold uppercase tracking-wider" style="color: var(--text-main);">
+                        <h4 class="font-oswald text-xs sm:text-sm font-bold uppercase tracking-wider" style="color: var(--text-main);">
                             5 Rinkos Piliastrai (Išankstiniai signalai):
                         </h4>
-                        <span class="text-xs text-slate-400">Atnaujinama kasdien 12:00 ir 18:00</span>
+                        <span class="text-[10px] text-slate-400">Atnaujinama kas 6 val.</span>
                     </div>
 
-                    <div id="baro-signals-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5 text-xs">
-                        <div class="col-span-full py-8 text-center text-slate-500 text-xs">Kraunamos taisyklės...</div>
+                    <!-- 2 STULPELIAI TELEFONE -->
+                    <div id="baro-signals-grid" class="grid grid-cols-2 lg:grid-cols-5 gap-2 text-xs">
+                        <div class="col-span-full py-6 text-center text-slate-500 text-xs">Kraunamos taisyklės...</div>
                     </div>
                 </div>
 
@@ -154,9 +152,9 @@ function updateCommodityButtonsUI() {
     document.querySelectorAll('.btn-baro-comm').forEach(btn => {
         const c = btn.getAttribute('data-comm');
         if (c === activeCommodity) {
-            btn.className = "btn-baro-comm px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer bg-tractorPrimary text-white shadow";
+            btn.className = "btn-baro-comm px-2.5 sm:px-3 py-1 rounded-lg text-[10px] sm:text-xs font-bold transition cursor-pointer bg-tractorPrimary text-white shadow";
         } else {
-            btn.className = "btn-baro-comm px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer text-slate-400 hover:text-white";
+            btn.className = "btn-baro-comm px-2.5 sm:px-3 py-1 rounded-lg text-[10px] sm:text-xs font-bold transition cursor-pointer text-slate-400 hover:text-white";
         }
     });
 
@@ -183,13 +181,14 @@ function updateRangeButtonsUI() {
     document.querySelectorAll('.btn-baro-range').forEach(btn => {
         const r = btn.getAttribute('data-range');
         if (r === activeRange) {
-            btn.className = "btn-baro-range px-2.5 py-1 rounded-lg text-xs font-bold bg-tractorPrimary text-white shadow";
+            btn.className = "btn-baro-range px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-lg text-[10px] sm:text-xs font-bold bg-tractorPrimary text-white shadow";
         } else {
-            btn.className = "btn-baro-range px-2.5 py-1 rounded-lg text-xs font-bold text-slate-400 hover:text-white";
+            btn.className = "btn-baro-range px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-lg text-[10px] sm:text-xs font-bold text-slate-400 hover:text-white";
         }
     });
 }
 
+// 🌟 KOMPAKTIŠKAS SPIDOMETRAS (TELPA ŠALIA TEKSTO NET TELEFONE)
 function createSpeedometerGaugeSvg(score) {
     const clampedScore = Math.max(-7, Math.min(7, score));
     const angle = (-clampedScore / 7) * 75;
@@ -200,7 +199,7 @@ function createSpeedometerGaugeSvg(score) {
 
     return `
         <div class="flex flex-col items-center justify-center select-none shrink-0">
-            <svg viewBox="0 0 170 100" class="w-36 sm:w-44 overflow-visible">
+            <svg viewBox="0 0 170 100" class="w-24 sm:w-36 overflow-visible">
                 <path d="M 22 88 A 62 62 0 0 1 65 30" fill="none" stroke="#EF4444" stroke-width="12" stroke-linecap="round"/>
                 <path d="M 67 29 A 62 62 0 0 1 103 29" fill="none" stroke="#F59E0B" stroke-width="12"/>
                 <path d="M 105 30 A 62 62 0 0 1 148 88" fill="none" stroke="#22C55E" stroke-width="12" stroke-linecap="round"/>
@@ -215,11 +214,11 @@ function createSpeedometerGaugeSvg(score) {
                     <circle cx="0" cy="0" r="3" fill="#181C18"/>
                 </g>
             </svg>
-            <div class="text-center -mt-1">
-                <strong class="font-mono text-2xl font-black block" style="color: ${scoreColor};">
+            <div class="text-center -mt-0.5">
+                <strong class="font-mono text-lg sm:text-2xl font-black block leading-none" style="color: ${scoreColor};">
                     ${score > 0 ? '+' : ''}${score}
                 </strong>
-                <span class="text-[9px] uppercase font-bold tracking-wider block" style="color: var(--text-muted);">Rinkos balas</span>
+                <span class="text-[8px] uppercase font-bold tracking-wider block" style="color: var(--text-muted);">Balas</span>
             </div>
         </div>
     `;
@@ -235,7 +234,7 @@ function listenToBarometerData() {
         if (!card || !grid) return;
 
         if (!doc.exists) {
-            card.innerHTML = `<div class="text-center py-6 text-slate-400 text-xs">Laukiama rinkos duomenų...</div>`;
+            card.innerHTML = `<div class="text-center py-4 text-slate-400 text-xs">Laukiama rinkos duomenų...</div>`;
             return;
         }
 
@@ -247,16 +246,15 @@ function listenToBarometerData() {
 
         if (data.updatedAt && timeEl) {
             const date = data.updatedAt.toDate ? data.updatedAt.toDate() : new Date(data.updatedAt);
-            timeEl.innerHTML = `🕒 Atnaujinta: <strong>${date.toLocaleTimeString('lt-LT', { hour: '2-digit', minute: '2-digit' })}</strong> (kas 6 val.)`;
+            timeEl.innerHTML = `🕒 Atnaujinta: <strong>${date.toLocaleTimeString('lt-LT', { hour: '2-digit', minute: '2-digit' })}</strong>`;
         }
 
         let borderColor = "border-green-500 bg-green-950/20";
-        if (score >= 2) borderColor = "border-red-500 bg-red-950/30";
+        if (score >= 2) borderColor = "border-red-500 bg-red-950/20";
         else if (score >= -1 && score <= 1) borderColor = "border-amber-500 bg-amber-950/20";
 
         const gaugeHtml = createSpeedometerGaugeSvg(score);
 
-        // Tikslūs skaičiai formulei:
         const salietraFinal = data.indicators?.estimatedSalietra || 330;
         const salietraFob = data.indicators?.salietraFobEur || 265;
         const logist = data.indicators?.logisticsAndBagging || 65;
@@ -265,107 +263,115 @@ function listenToBarometerData() {
         const ureaEur = (ureaUsd / (data.currency?.rate || 1.1418)).toFixed(1);
         const wheatRatio = data.indicators?.wheatToFertRatio || 1.47;
 
-        card.className = `rounded-2xl p-6 md:p-8 border-2 ${borderColor} shadow-2xl space-y-4 transition-all`;
+        card.className = `rounded-2xl p-3.5 sm:p-5 border-2 ${borderColor} shadow-xl space-y-3 transition-all`;
+        
+        // 🌟 VERDIKTAS IR SPIDOMETRAS ŠALIA VIENAS KITO (BE VERTIKALAUS STŪMIMO)
         card.innerHTML = `
-            <div class="flex flex-col md:flex-row md:items-center justify-between gap-5 border-b border-tractorBorder/70 pb-4">
-                <div class="space-y-1.5 flex-1">
-                    <span class="text-[11px] uppercase font-black tracking-wider text-tractorPrimaryLight block">
-                        5 Piliastrų Rinkos Verdiktas:
+            <div class="flex items-center justify-between gap-3 border-b border-tractorBorder/70 pb-3">
+                <div class="space-y-1 flex-1 min-w-0">
+                    <span class="text-[10px] uppercase font-black tracking-wider text-tractorPrimaryLight block">
+                        5 Piliastrų Verdiktas:
                     </span>
-                    <h3 class="font-oswald text-2xl md:text-3xl font-black uppercase tracking-wide" style="color: var(--text-main);">
+                    <h3 class="font-oswald text-base sm:text-2xl font-black uppercase tracking-wide leading-tight" style="color: var(--text-main);">
                         ${baro.statusText || '🟡 RINKA STABILI'}
                     </h3>
-                    <p class="text-xs md:text-sm leading-relaxed" style="color: var(--text-main);">
+                    <p class="text-[11px] sm:text-xs leading-relaxed text-slate-300" style="color: var(--text-main);">
                         ${baro.recommendation || 'Rinka veikia subalansuotai.'}
                     </p>
                 </div>
 
-                <div class="shrink-0 flex items-center justify-center pt-2 md:pt-0">
+                <div class="shrink-0">
                     ${gaugeHtml}
                 </div>
             </div>
 
-            <!-- 4 PAGRINDINĖS KORTELĖS -->
-            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs pt-1">
-                <div class="bg-tractorBg p-3 rounded-xl border border-tractorBorder space-y-0.5">
-                    <span class="text-[10px] block font-bold" style="color: var(--text-muted);">Amonio salietra kieme (34.4% N)</span>
-                    <strong class="font-mono text-base font-black text-green-500 block">~${salietraFinal} €/t</strong>
-                    <span class="text-[9px] text-slate-400 block leading-tight">(su atvežimu didmaišiuose)</span>
+            <!-- 4 PAGRINDINIAI RODIKLIAI (2x2 TINKLELIS TELEFONE) -->
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs pt-0.5">
+                <div class="bg-tractorBg p-2 sm:p-2.5 rounded-xl border border-tractorBorder space-y-0.5">
+                    <span class="text-[9px] sm:text-[10px] block font-bold truncate" style="color: var(--text-muted);">Salietra kieme (34.4% N)</span>
+                    <strong class="font-mono text-sm sm:text-base font-black text-green-500 block">~${salietraFinal} €/t</strong>
+                    <span class="text-[8px] sm:text-[9px] text-slate-400 block truncate leading-tight">didmaišiuose</span>
                 </div>
-                <div class="bg-tractorBg p-3 rounded-xl border border-tractorBorder space-y-0.5">
-                    <span class="text-[10px] block font-bold" style="color: var(--text-muted);">TTF Gamtinės dujos</span>
-                    <strong class="font-mono text-base font-bold" style="color: var(--text-main);">${data.gasTTF?.priceMWh || 73.88} €/MWh</strong>
-                    <span class="text-[9px] text-slate-400 block leading-tight">Biržos kaina</span>
+                <div class="bg-tractorBg p-2 sm:p-2.5 rounded-xl border border-tractorBorder space-y-0.5">
+                    <span class="text-[9px] sm:text-[10px] block font-bold truncate" style="color: var(--text-muted);">TTF Dujos</span>
+                    <strong class="font-mono text-sm sm:text-base font-bold block" style="color: var(--text-main);">${data.gasTTF?.priceMWh || 73.88} €/MWh</strong>
+                    <span class="text-[8px] sm:text-[9px] text-slate-400 block truncate leading-tight">Biržos kaina</span>
                 </div>
-                <div class="bg-tractorBg p-3 rounded-xl border border-tractorBorder space-y-0.5">
-                    <span class="text-[10px] block font-bold" style="color: var(--text-muted);">EUR / USD kursas</span>
-                    <strong class="font-mono text-base font-bold" style="color: var(--text-main);">${eurRate}</strong>
-                    <span class="text-[9px] text-slate-400 block leading-tight">Forex rinka</span>
+                <div class="bg-tractorBg p-2 sm:p-2.5 rounded-xl border border-tractorBorder space-y-0.5">
+                    <span class="text-[9px] sm:text-[10px] block font-bold truncate" style="color: var(--text-muted);">EUR / USD</span>
+                    <strong class="font-mono text-sm sm:text-base font-bold block" style="color: var(--text-main);">${eurRate}</strong>
+                    <span class="text-[8px] sm:text-[9px] text-slate-400 block truncate leading-tight">Forex rinka</span>
                 </div>
-                <div class="bg-tractorBg p-3 rounded-xl border border-tractorBorder space-y-0.5">
-                    <span class="text-[10px] block font-bold" style="color: var(--text-muted);">Kviečių/Salietros santykis</span>
-                    <strong class="font-mono text-base font-bold text-amber-500">${wheatRatio} : 1</strong>
-                    <span class="text-[9px] text-slate-400 block leading-tight">Norma (1.4–1.6 : 1)</span>
+                <div class="bg-tractorBg p-2 sm:p-2.5 rounded-xl border border-tractorBorder space-y-0.5">
+                    <span class="text-[9px] sm:text-[10px] block font-bold truncate" style="color: var(--text-muted);">Kviečių/Salietros</span>
+                    <strong class="font-mono text-sm sm:text-base font-bold text-amber-500">${wheatRatio} : 1</strong>
+                    <span class="text-[8px] sm:text-[9px] text-slate-400 block truncate leading-tight">Norma (1.4–1.6)</span>
                 </div>
             </div>
 
-            <!-- 🌟 SKAIDRUS FORMULĖS SKAIDYMAS: KAIP GAUNASI 265 € IR 330 € -->
-            <div class="bg-tractorBg/90 border border-tractorBorder rounded-xl p-3.5 sm:p-4 space-y-2 text-xs">
-                <div class="flex items-center justify-between border-b border-tractorBorder/60 pb-1.5">
-                    <span class="font-bold flex items-center gap-1.5" style="color: var(--text-main);">
-                        <span>🔍</span> <span>Kaip apskaičiuota ši kaina kieme (~${salietraFinal} €/t)?</span>
+            <!-- 🌟 SUSKLEIDŽIAMAS FORMULĖS PAAIŠKINIMAS (NEBEUŽIMA VIETOS!) -->
+            <div class="border border-tractorBorder/70 rounded-xl p-2 sm:p-3 bg-tractorBg/60 text-xs">
+                <button type="button" id="btn-toggle-baro-formula" class="w-full flex items-center justify-between font-bold text-slate-300 hover:text-white transition cursor-pointer text-[11px] sm:text-xs">
+                    <span class="flex items-center gap-1.5">
+                        <span>🔍</span> <span>Kaip apskaičiuota kaina kieme (~${salietraFinal} €/t)?</span>
                     </span>
-                    <span class="text-[10px] text-slate-400 font-mono">Pilna skaičiavimo grandinė</span>
-                </div>
+                    <span id="baro-formula-arrow" class="text-xs transform transition-transform">▼</span>
+                </button>
 
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-2.5 pt-0.5">
-                    <!-- 1 Žingsnis -->
-                    <div class="bg-tractorSurface p-2.5 rounded-lg border border-tractorBorder/70 space-y-1">
-                        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">1. Karbamidas į eurus</span>
-                        <div class="font-mono text-xs font-bold" style="color: var(--text-main);">
-                            <strong>${ureaUsd} $</strong> ÷ <strong>${eurRate}</strong> = <span class="text-amber-500 font-bold">${ureaEur} €/t</span>
+                <div id="baro-formula-content" class="hidden mt-2 pt-2 border-t border-tractorBorder/50 space-y-2">
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                        <div class="bg-tractorSurface p-2 rounded-lg border border-tractorBorder/70 text-[10px]">
+                            <span class="font-bold text-slate-400 block">1. Karbamidas į eurus</span>
+                            <div class="font-mono font-bold mt-0.5">${ureaUsd} $ ÷ ${eurRate} = <span class="text-amber-500">${ureaEur} €/t</span></div>
                         </div>
-                        <p class="text-[10px] text-slate-400 leading-tight">Pasaulinė žaliava konvertuota dienos kursu</p>
-                    </div>
-
-                    <!-- 2 Žingsnis: KAIP GAUNASI 265 € -->
-                    <div class="bg-tractorSurface p-2.5 rounded-lg border border-tractorBorder/70 space-y-1">
-                        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">2. Salietros bazė (FOB uostas)</span>
-                        <div class="font-mono text-xs font-bold" style="color: var(--text-main);">
-                            ${ureaEur} € × <strong>0.78</strong> = <span class="text-blue-400 font-bold">~${salietraFob} €/t</span>
+                        <div class="bg-tractorSurface p-2 rounded-lg border border-tractorBorder/70 text-[10px]">
+                            <span class="font-bold text-slate-400 block">2. Salietros bazė (FOB)</span>
+                            <div class="font-mono font-bold mt-0.5">${ureaEur} € × 0.78 = <span class="text-blue-400">~${salietraFob} €/t</span></div>
                         </div>
-                        <p class="text-[10px] text-slate-400 leading-tight">Azoto kiekio santykis (34.4% N prieš 46% N)</p>
-                    </div>
-
-                    <!-- 3 Žingsnis: KAIP GAUNASI 330 € -->
-                    <div class="bg-tractorSurface p-2.5 rounded-lg border border-tractorBorder/70 space-y-1">
-                        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">3. Lietuvos logistika į ūkį</span>
-                        <div class="font-mono text-xs font-bold" style="color: var(--text-main);">
-                            ${salietraFob} € + <strong>${logist} €</strong> = <span class="text-green-500 font-black">~${salietraFinal} €/t</span>
+                        <div class="bg-tractorSurface p-2 rounded-lg border border-tractorBorder/70 text-[10px]">
+                            <span class="font-bold text-slate-400 block">3. Logistika į ūkį</span>
+                            <div class="font-mono font-bold mt-0.5">${salietraFob} € + ${logist} € = <span class="text-green-500 font-black">~${salietraFinal} €/t</span></div>
                         </div>
-                        <p class="text-[10px] text-slate-400 leading-tight">Laivas į Klaipėdą + 500kg didmaišiai + vilkikas į ūkį</p>
                     </div>
                 </div>
             </div>
         `;
 
+        // Pririšame formulės išskleidimo mygtuką
+        const toggleBtn = document.getElementById('btn-toggle-baro-formula');
+        const contentEl = document.getElementById('baro-formula-content');
+        const arrowEl = document.getElementById('baro-formula-arrow');
+        if (toggleBtn && contentEl && arrowEl) {
+            toggleBtn.onclick = () => {
+                const isHidden = contentEl.classList.contains('hidden');
+                if (isHidden) {
+                    contentEl.classList.remove('hidden');
+                    arrowEl.style.transform = 'rotate(180deg)';
+                } else {
+                    contentEl.classList.add('hidden');
+                    arrowEl.style.transform = 'rotate(0deg)';
+                }
+            };
+        }
+
+        // 🌟 5 PILIASTRAI (TELEFONE SUDĖTI PO DU Į EILUTĘ)
         grid.innerHTML = signals.map(sig => {
             let sigColor = "text-green-500 border-green-500/40 bg-green-500/10";
             if (sig.score > 0) sigColor = "text-red-500 border-red-500/40 bg-red-500/10";
             else if (sig.score === 0) sigColor = "text-amber-500 border-amber-500/40 bg-amber-500/10";
 
             return `
-                <div class="bg-tractorSurface border border-tractorBorder rounded-xl p-3.5 space-y-1.5 flex flex-col justify-between">
+                <div class="bg-tractorSurface border border-tractorBorder rounded-xl p-2.5 space-y-1 flex flex-col justify-between">
                     <div>
                         <div class="flex justify-between items-start gap-1">
-                            <strong class="text-xs font-bold leading-tight" style="color: var(--text-main);">${sig.name}</strong>
-                            <span class="font-mono text-[10px] font-bold px-1.5 py-0.5 rounded border ${sigColor}">
+                            <strong class="text-[10px] sm:text-xs font-bold leading-tight truncate" style="color: var(--text-main);">${sig.name}</strong>
+                            <span class="font-mono text-[9px] sm:text-[10px] font-bold px-1.5 py-0.2 rounded border ${sigColor}">
                                 ${sig.score > 0 ? '+' : ''}${sig.score}
                             </span>
                         </div>
-                        <div class="font-mono text-sm font-black mt-1" style="color: var(--text-main);">${sig.value}</div>
+                        <div class="font-mono text-xs sm:text-sm font-black mt-0.5" style="color: var(--text-main);">${sig.value}</div>
                     </div>
-                    <p class="text-[10px] leading-relaxed pt-1 border-t border-tractorBorder/50" style="color: var(--text-muted);">
+                    <p class="text-[9px] sm:text-[10px] leading-tight pt-1 border-t border-tractorBorder/50 truncate" title="${sig.desc}" style="color: var(--text-muted);">
                         ${sig.desc}
                     </p>
                 </div>
@@ -440,7 +446,7 @@ function drawChart() {
     const minPrice = minP - paddingVal;
     const maxPrice = maxP + paddingVal;
 
-    const padTop = 20, padBottom = 30, padLeft = 45, padRight = 15;
+    const padTop = 15, padBottom = 25, padLeft = 40, padRight = 10;
     const chartW = width - padLeft - padRight;
     const chartH = height - padTop - padBottom;
 
@@ -452,7 +458,6 @@ function drawChart() {
     ctx.fillStyle = textColor;
     ctx.textAlign = 'right';
 
-    // Tinklelis ir Y ašis
     const steps = 4;
     for (let i = 0; i <= steps; i++) {
         const p = minPrice + ((maxPrice - minPrice) * (i / steps));
@@ -474,7 +479,6 @@ function drawChart() {
         return { x, y, ...d };
     });
 
-    // Gradientinis plotas
     const grad = ctx.createLinearGradient(0, padTop, 0, height - padBottom);
     grad.addColorStop(0, "rgba(22, 163, 74, 0.30)");
     grad.addColorStop(1, "rgba(22, 163, 74, 0.0)");
@@ -488,7 +492,6 @@ function drawChart() {
     ctx.fillStyle = grad;
     ctx.fill();
 
-    // Kreivė
     ctx.strokeStyle = cfg.color || "#16A34A";
     ctx.lineWidth = 2.5;
     ctx.lineJoin = 'round';
@@ -497,15 +500,13 @@ function drawChart() {
     for (let i = 1; i < points.length; i++) ctx.lineTo(points[i].x, points[i].y);
     ctx.stroke();
 
-    // X ašies datos
     ctx.textAlign = 'center';
     const dateSteps = Math.min(5, data.length);
     for (let i = 0; i < dateSteps; i++) {
         const idx = Math.floor((i / (dateSteps - 1)) * (data.length - 1));
-        ctx.fillText(data[idx].shortDate, points[idx].x, height - 8);
+        ctx.fillText(data[idx].shortDate, points[idx].x, height - 6);
     }
 
-    // Užvedimo linija
     if (hoveredPoint) {
         const pt = points.find(p => p.date === hoveredPoint.date) || points[points.length - 1];
         ctx.strokeStyle = isLight ? '#0F172A' : '#FFFFFF';
@@ -519,7 +520,7 @@ function drawChart() {
 
         ctx.fillStyle = cfg.color || "#16A34A";
         ctx.beginPath();
-        ctx.arc(pt.x, pt.y, 5, 0, Math.PI * 2);
+        ctx.arc(pt.x, pt.y, 4.5, 0, Math.PI * 2);
         ctx.fill();
         ctx.strokeStyle = '#FFFFFF';
         ctx.lineWidth = 2;

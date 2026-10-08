@@ -1,4 +1,4 @@
-// js/matif.js
+// js/skaiciuokles/matif.js
 import { db } from '../core/firebase.js';
 
 let matifMarketData = null;
@@ -11,68 +11,68 @@ export function renderMatifSection(container) {
     if (!container) return;
 
     container.innerHTML = `
-        <div class="bg-tractorSurface border border-tractorBorder rounded-2xl p-5 md:p-7 shadow-xl space-y-5">
+        <div class="bg-tractorSurface border border-tractorBorder rounded-2xl p-3.5 sm:p-5 md:p-6 shadow-xl space-y-4">
             
-            <!-- ANTRAŠTĖ -->
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-tractorBorder/70 pb-4">
+            <!-- ANTRAŠTĖ SU ATSTATYTU PULSUOJANČIU „GYVA RINKA“ ŽENKLIUKU -->
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-tractorBorder/70 pb-3">
                 <div class="space-y-1">
                     <div class="inline-flex items-center gap-2 bg-green-500/10 border border-green-500/30 text-green-600 dark:text-green-400 text-xs px-3 py-1 rounded-full font-bold uppercase tracking-wider">
                         <span class="w-2 h-2 rounded-full bg-green-500 animate-ping"></span>
                         <span>Gyva rinka • Euronext MATIF birža</span>
                     </div>
-                    <h3 class="font-oswald text-xl md:text-2xl font-bold tracking-wide" style="color: var(--text-main);">
+                    <h3 class="font-oswald text-lg sm:text-xl md:text-2xl font-bold tracking-wide" style="color: var(--text-main);">
                         📈 MATIF Grūdų ir Žaliavų Biržos Kainos
                     </h3>
                 </div>
 
-                <div class="flex items-center gap-2 self-start sm:self-auto text-xs text-slate-500 dark:text-slate-400">
+                <div class="flex items-center gap-2 self-start sm:self-auto text-[11px] sm:text-xs text-slate-500 dark:text-slate-400">
                     <span id="matif-sync-time">Kraunama iš biržos...</span>
                 </div>
             </div>
 
-            <!-- 3 BIRŽOS KORTELĖS (IDEALIAI SUBALANSUOTOS) -->
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4" id="matif-cards-grid">
-                <div class="text-center py-6 text-slate-500 text-xs col-span-full">Kraunami biržos duomenys...</div>
+            <!-- 3 BIRŽOS KORTELĖS VIENOJE EILUTĖJE (KOMPAKTIŠKOS) -->
+            <div class="grid grid-cols-3 gap-1.5 sm:gap-3" id="matif-cards-grid">
+                <div class="text-center py-4 text-slate-500 text-xs col-span-full">Kraunami biržos duomenys...</div>
             </div>
 
             <!-- GRAFIKO BLOKAS -->
-            <div class="space-y-3 bg-tractorBg/90 border border-tractorBorder p-4 md:p-5 rounded-2xl">
-                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-tractorBorder/60 pb-3">
+            <div class="space-y-2.5 bg-tractorBg/90 border border-tractorBorder p-3 sm:p-4 md:p-5 rounded-2xl">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-tractorBorder/60 pb-2.5">
                     <div class="flex items-center gap-2">
-                        <span class="text-sm font-bold" id="matif-chart-title" style="color: var(--text-main);">
+                        <span class="text-xs sm:text-sm font-bold" id="matif-chart-title" style="color: var(--text-main);">
                             🌱 Rapsai (Euronext MATIF)
                         </span>
                         <span class="text-xs text-slate-400 font-mono" id="matif-chart-hover-val"></span>
                     </div>
 
                     <!-- PERIODŲ MYGTUKAI -->
-                    <div class="flex items-center gap-1 bg-tractorSurface p-1 rounded-xl border border-tractorBorder">
-                        <button type="button" class="btn-range px-2.5 py-1 rounded-lg text-xs font-bold transition cursor-pointer" data-range="1W">1 sav.</button>
-                        <button type="button" class="btn-range px-2.5 py-1 rounded-lg text-xs font-bold transition cursor-pointer" data-range="1M">1 mėn.</button>
-                        <button type="button" class="btn-range px-2.5 py-1 rounded-lg text-xs font-bold transition cursor-pointer" data-range="3M">3 mėn.</button>
-                        <button type="button" class="btn-range px-2.5 py-1 rounded-lg text-xs font-bold transition cursor-pointer" data-range="6M">6 mėn.</button>
-                        <button type="button" class="btn-range px-2.5 py-1 rounded-lg text-xs font-bold transition cursor-pointer" data-range="1Y">1 metai</button>
+                    <div class="flex items-center gap-1 bg-tractorSurface p-1 rounded-xl border border-tractorBorder self-start sm:self-auto">
+                        <button type="button" class="btn-range px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-lg text-[10px] sm:text-xs font-bold transition cursor-pointer" data-range="1W">1 sav.</button>
+                        <button type="button" class="btn-range px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-lg text-[10px] sm:text-xs font-bold transition cursor-pointer" data-range="1M">1 mėn.</button>
+                        <button type="button" class="btn-range px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-lg text-[10px] sm:text-xs font-bold transition cursor-pointer" data-range="3M">3 mėn.</button>
+                        <button type="button" class="btn-range px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-lg text-[10px] sm:text-xs font-bold transition cursor-pointer" data-range="6M">6 mėn.</button>
+                        <button type="button" class="btn-range px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-lg text-[10px] sm:text-xs font-bold transition cursor-pointer" data-range="1Y">1 metai</button>
                     </div>
                 </div>
 
                 <!-- CANVAS GRAFIKAS -->
-                <div class="relative w-full h-64 select-none cursor-crosshair">
+                <div class="relative w-full h-56 sm:h-64 select-none cursor-crosshair">
                     <canvas id="matif-canvas" class="w-full h-full block"></canvas>
                 </div>
             </div>
 
             <!-- ATEITIES SANDORIAI -->
-            <div class="bg-tractorBg p-4 rounded-xl border border-tractorBorder space-y-2">
-                <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block" id="matif-contracts-label">
+            <div class="bg-tractorBg p-3 sm:p-4 rounded-xl border border-tractorBorder space-y-1.5">
+                <span class="text-[10px] sm:text-[11px] font-bold text-slate-400 uppercase tracking-wider block" id="matif-contracts-label">
                     🌱 Rapsų būsimo derliaus fiksuoti sandoriai:
                 </span>
-                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs" id="matif-contracts-grid"></div>
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs" id="matif-contracts-grid"></div>
             </div>
 
             <!-- INFORMACIJA -->
-            <div class="text-[11px] text-slate-400 dark:text-slate-500 flex items-center gap-1.5 pt-1 border-t border-tractorBorder/40">
+            <div class="text-[10px] sm:text-[11px] text-slate-400 dark:text-slate-500 flex items-center gap-1.5 pt-0.5 border-t border-tractorBorder/40">
                 <span>ℹ️</span> 
-                <span>Rapsų, kviečių ir kukurūzų duomenys tiesiogiai iš <strong>Euronext Paris (MATIF)</strong> biržos srauto. 100% tikros dienos uždarymo kainos ir gyvi biržos sandoriai.</span>
+                <span>Tiesioginiai Euronext Paris (MATIF) biržos duomenys. Dienos uždarymo kainos ir biržos sandoriai.</span>
             </div>
 
         </div>
@@ -118,7 +118,6 @@ function renderCropCards() {
     const grid = document.getElementById('matif-cards-grid');
     if (!grid || !matifMarketData) return;
 
-    // RODO TIK 3 TIKRAS OFICIALIAS EURONEXT BIRŽOS KULTŪRAS:
     const allowedCrops = ['rapeseed', 'wheat', 'corn'];
     const cropsList = allowedCrops.map(id => matifMarketData[id]).filter(Boolean);
 
@@ -127,19 +126,25 @@ function renderCropCards() {
         const changeClass = crop.isPositive ? 'text-green-600 dark:text-green-400' : 'text-red-500';
 
         return `
-            <div class="matif-card p-4 rounded-xl border-2 transition cursor-pointer ${
+            <div class="matif-card p-2 sm:p-3 rounded-xl border-2 transition cursor-pointer select-none ${
                 isSelected 
                 ? 'bg-tractorPrimary/15 border-tractorPrimary ring-1 ring-tractorPrimary shadow-md' 
                 : 'bg-tractorBg border-tractorBorder hover:border-slate-400'
             }" data-crop="${crop.id}">
-                <div class="flex justify-between items-start">
-                    <span class="text-sm font-bold uppercase truncate" style="color: var(--text-main);">${crop.icon} ${crop.name.split(' ')[0]}</span>
-                    <span class="text-[10px] text-slate-400 font-mono">MATIF</span>
+                <div class="flex justify-between items-center leading-none">
+                    <span class="text-[11px] sm:text-xs font-bold uppercase truncate" style="color: var(--text-main);">
+                        ${crop.icon} ${crop.name.split(' ')[0]}
+                    </span>
+                    <span class="hidden sm:inline text-[9px] text-slate-400 font-mono">MATIF</span>
                 </div>
-                <div class="text-2xl sm:text-3xl font-black font-mono mt-2" style="color: var(--text-main);">${crop.currentPrice.toFixed(2)} €</div>
-                <div class="flex justify-between items-center text-xs mt-1.5 font-bold ${changeClass}">
+                
+                <div class="text-base sm:text-2xl md:text-3xl font-black font-mono mt-1 sm:mt-2 leading-tight" style="color: var(--text-main);">
+                    ${crop.currentPrice.toFixed(2)} €
+                </div>
+                
+                <div class="flex justify-between items-center text-[10px] sm:text-xs mt-0.5 sm:mt-1 font-bold ${changeClass} leading-none">
                     <span>${crop.change}</span>
-                    <span class="text-[10px] text-slate-400 font-normal">Gyva</span>
+                    <span class="hidden sm:inline text-[9px] text-slate-400 font-normal">Gyva</span>
                 </div>
             </div>
         `;
@@ -163,14 +168,14 @@ function renderContracts() {
     const grid = document.getElementById('matif-contracts-grid');
     const chartTitle = document.getElementById('matif-chart-title');
 
-    if (lbl) lbl.textContent = `${crop.icon} ${crop.name} būsimo derliaus fiksuoti sandoriai:`;
+    if (lbl) lbl.textContent = `${crop.icon} ${crop.name.split(' ')[0]} būsimo derliaus fiksuoti sandoriai:`;
     if (chartTitle) chartTitle.innerHTML = `${crop.icon} ${crop.name} <span class="text-xs font-normal text-slate-400">(${crop.ticker})</span>`;
 
     if (grid && crop.contracts) {
         grid.innerHTML = crop.contracts.map(c => `
-            <div class="p-2.5 bg-tractorSurface rounded-lg border border-tractorBorder space-y-0.5">
-                <span class="text-slate-400 block text-[10px] uppercase font-semibold truncate">${c.month}</span>
-                <strong class="text-sm font-mono font-bold block" style="color: var(--text-main);">${c.price}</strong>
+            <div class="p-2 sm:p-2.5 bg-tractorSurface rounded-lg border border-tractorBorder space-y-0.5">
+                <span class="text-slate-400 block text-[9px] sm:text-[10px] uppercase font-semibold truncate">${c.month}</span>
+                <strong class="text-xs sm:text-sm font-mono font-bold block" style="color: var(--text-main);">${c.price}</strong>
             </div>
         `).join('');
     }
@@ -180,9 +185,9 @@ function updateRangeButtons() {
     document.querySelectorAll('.btn-range').forEach(btn => {
         const r = btn.getAttribute('data-range');
         if (r === activeRange) {
-            btn.className = "btn-range px-2.5 py-1 rounded-lg text-xs font-bold bg-tractorPrimary text-white shadow";
+            btn.className = "btn-range px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-lg text-[10px] sm:text-xs font-bold bg-tractorPrimary text-white shadow";
         } else {
-            btn.className = "btn-range px-2.5 py-1 rounded-lg text-xs font-bold text-slate-400 hover:text-white";
+            btn.className = "btn-range px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-lg text-[10px] sm:text-xs font-bold text-slate-400 hover:text-white";
         }
     });
 }
@@ -252,10 +257,10 @@ function drawChart() {
     const minPrice = Math.floor(Math.min(...prices) - 5);
     const maxPrice = Math.ceil(Math.max(...prices) + 5);
 
-    const padTop = 20;
-    const padBottom = 30;
-    const padLeft = 45;
-    const padRight = 15;
+    const padTop = 15;
+    const padBottom = 25;
+    const padLeft = 40;
+    const padRight = 10;
 
     const chartW = width - padLeft - padRight;
     const chartH = height - padTop - padBottom;
@@ -290,7 +295,7 @@ function drawChart() {
     });
 
     const grad = ctx.createLinearGradient(0, padTop, 0, height - padBottom);
-    grad.addColorStop(0, "rgba(22, 163, 74, 0.35)");
+    grad.addColorStop(0, "rgba(22, 163, 74, 0.30)");
     grad.addColorStop(1, "rgba(22, 163, 74, 0.0)");
 
     ctx.beginPath();
@@ -319,7 +324,7 @@ function drawChart() {
     for (let i = 0; i < dateSteps; i++) {
         const idx = Math.floor((i / (dateSteps - 1)) * (data.length - 1));
         const pt = points[idx];
-        ctx.fillText(data[idx].shortDate, pt.x, height - 8);
+        ctx.fillText(data[idx].shortDate, pt.x, height - 6);
     }
 
     if (hoveredPoint) {
@@ -336,7 +341,7 @@ function drawChart() {
 
         ctx.fillStyle = crop.color || "#16A34A";
         ctx.beginPath();
-        ctx.arc(hoveredPt.x, hoveredPt.y, 5, 0, Math.PI * 2);
+        ctx.arc(hoveredPt.x, hoveredPt.y, 4.5, 0, Math.PI * 2);
         ctx.fill();
 
         ctx.strokeStyle = '#FFFFFF';

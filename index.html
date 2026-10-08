@@ -327,8 +327,8 @@
         <div id="global-mobile-header" class="md:hidden shrink-0"></div>
         <div id="global-sidebar" class="hidden md:flex md:h-full shrink-0"></div>
 
-        <main class="flex-1 h-full overflow-y-auto px-4 md:px-8 pt-2 md:pt-3 pb-24 md:pb-12 w-full">
-            <div class="max-w-6xl mx-auto w-full">
+        <main class="flex-1 h-full overflow-y-auto p-2 sm:p-3 md:p-3 pb-20 md:pb-8 w-full">
+				<div class="w-full">
                 
                 <!-- TAB 0: SKAIČIUOKLĖS -->
                 <section id="view-tab-calculators" class="tab-view space-y-6">
@@ -516,81 +516,47 @@
                     </div>
 
                     <!-- VIDINIAI SKAIČIUOKLIŲ BLOKAI -->
-                    <div id="view-tab-grain-embed" class="hidden space-y-4">
-                        <button id="btn-back-from-grain" class="px-4 py-2 bg-tractorSurface hover:bg-zinc-800 border border-tractorBorder rounded-xl text-xs font-bold text-slate-300 flex items-center gap-1.5 transition cursor-pointer">
-                            <span>←</span> Grįžti į visas skaičiuokles
-                        </button>
+                    <div id="view-tab-grain-embed" class="hidden !mt-0">
                         <div id="grain-calc-content"></div>
                     </div>
 
-                    <div id="view-tab-matif-embed" class="hidden space-y-4">
-                        <button id="btn-back-from-matif" class="px-4 py-2 bg-tractorSurface hover:bg-zinc-800 border border-tractorBorder rounded-xl text-xs font-bold text-slate-300 flex items-center gap-1.5 transition cursor-pointer">
-                            <span>←</span> Grįžti į visas skaičiuokles
-                        </button>
+                    <div id="view-tab-matif-embed" class="hidden !mt-0">
                         <div id="matif-calc-content"></div>
                     </div>
 
-                    <div id="view-tab-diesel-embed" class="hidden space-y-4">
-                        <button id="btn-back-from-diesel" class="px-4 py-2 bg-tractorSurface hover:bg-zinc-800 border border-tractorBorder rounded-xl text-xs font-bold text-slate-300 flex items-center gap-1.5 transition cursor-pointer">
-                            <span>←</span> Grįžti į visas skaičiuokles
-                        </button>
+                    <div id="view-tab-diesel-embed" class="hidden !mt-0">
                         <div id="diesel-calc-content"></div>
                     </div>
 
-                    <div id="view-tab-storage-embed" class="hidden space-y-4">
-                        <button id="btn-back-from-storage" class="px-4 py-2 bg-tractorSurface hover:bg-zinc-800 border border-tractorBorder rounded-xl text-xs font-bold text-slate-300 flex items-center gap-1.5 transition cursor-pointer">
-                            <span>←</span> Grįžti į visas skaičiuokles
-                        </button>
+                    <div id="view-tab-storage-embed" class="hidden !mt-0">
                         <div id="storage-calc-content"></div>
                     </div>
 
-                    <div id="view-tab-nma-embed" class="hidden space-y-4">
-                        <button id="btn-back-from-nma" class="px-4 py-2 bg-tractorSurface hover:bg-zinc-800 border border-tractorBorder rounded-xl text-xs font-bold text-slate-300 flex items-center gap-1.5 transition cursor-pointer">
-                            <span>←</span> Grįžti į visas skaičiuokles
-                        </button>
+                    <div id="view-tab-nma-embed" class="hidden !mt-0">
                         <div id="nma-calc-content"></div>
                     </div>
 
-                    <div id="view-tab-seed-embed" class="hidden space-y-4">
-                        <button id="btn-back-from-seed" class="px-4 py-2 bg-tractorSurface hover:bg-zinc-800 border border-tractorBorder rounded-xl text-xs font-bold text-slate-300 flex items-center gap-1.5 transition cursor-pointer">
-                            <span>←</span> Grįžti į visas skaičiuokles
-                        </button>
+                    <div id="view-tab-seed-embed" class="hidden !mt-0">
                         <div id="seed-calc-content"></div>
                     </div>
 
-                    <div id="view-tab-cover-embed" class="hidden space-y-4">
-                        <button id="btn-back-from-cover" class="px-4 py-2 bg-tractorSurface hover:bg-zinc-800 border border-tractorBorder rounded-xl text-xs font-bold text-slate-300 flex items-center gap-1.5 transition cursor-pointer">
-                            <span>←</span> Grįžti į visas skaičiuokles
-                        </button>
+                    <div id="view-tab-cover-embed" class="hidden !mt-0">
                         <div id="cover-calc-content"></div>
                     </div>
 
-                    <div id="view-tab-combine-embed" class="hidden space-y-4">
-                        <button id="btn-back-from-combine" class="px-4 py-2 bg-tractorSurface hover:bg-zinc-800 border border-tractorBorder rounded-xl text-xs font-bold text-slate-300 flex items-center gap-1.5 transition cursor-pointer">
-                            <span>←</span> Grįžti į visas skaičiuokles
-                        </button>
+                    <div id="view-tab-combine-embed" class="hidden !mt-0">
                         <div id="combine-calc-content"></div>
                     </div>
 
-                    <div id="view-tab-spray-embed" class="hidden space-y-4">
-                        <button id="btn-back-from-spray" class="px-4 py-2 bg-tractorSurface hover:bg-zinc-800 border border-tractorBorder rounded-xl text-xs font-bold text-slate-300 flex items-center gap-1.5 transition cursor-pointer">
-                            <span>←</span> Grįžti į visas skaičiuokles
-                        </button>
+                    <div id="view-tab-spray-embed" class="hidden !mt-0">
                         <div id="spray-calc-content"></div>
                     </div>
 
-                    <div id="view-tab-fert-embed" class="hidden space-y-4">
-                        <button id="btn-back-from-fert" class="px-4 py-2 bg-tractorSurface hover:bg-zinc-800 border border-tractorBorder rounded-xl text-xs font-bold text-slate-300 flex items-center gap-1.5 transition cursor-pointer">
-                            <span>←</span> Grįžti į visas skaičiuokles
-                        </button>
+                    <div id="view-tab-fert-embed" class="hidden !mt-0">
                         <div id="fert-calc-content"></div>
                     </div>
 
-                    <!-- 🌟 11 VIDINIS BLOKAS: BAROMETRAS (KURIAME TRŪKO) -->
-                    <div id="view-tab-barometer-embed" class="hidden space-y-4">
-                        <button id="btn-back-from-barometer" class="px-4 py-2 bg-tractorSurface hover:bg-zinc-800 border border-tractorBorder rounded-xl text-xs font-bold text-slate-300 flex items-center gap-1.5 transition cursor-pointer">
-                            <span>←</span> Grįžti į visas skaičiuokles
-                        </button>
+                    <div id="view-tab-barometer-embed" class="hidden !mt-0">
                         <div id="barometer-calc-content"></div>
                     </div>
 
@@ -603,6 +569,7 @@
                 <section id="view-tab-garage" class="tab-view space-y-6 hidden"></section>
                 <section id="view-tab-feed" class="tab-view space-y-6 hidden"></section>
                 <section id="view-tab-settings" class="tab-view space-y-6 hidden"></section>
+				<section id="view-tab-league" class="tab-view space-y-6 hidden"></section>
 
                 <footer class="text-center text-xs text-slate-400 pt-8 pb-4 border-t border-tractorBorder/50 mt-12">
                     <p>&copy; 2026 JurgisAgro.com • Sukurta: <a href="https://petrasmo.com" target="_blank" class="hover:text-green-600 font-bold underline decoration-slate-400">Petrasmo Studios</a></p>

@@ -16,9 +16,9 @@ export function renderGlobalSidebar(activePage = 'index', activeTab = 0) {
     };
 
     const isUkisActive = (activeTab >= 2 && activeTab <= 6) || activeTab === 10;
-    const isBendruomeneActive = activeTab >= 7 && activeTab <= 8;
+    const isBendruomeneActive = (activeTab >= 7 && activeTab <= 8) || activeTab === 11;
 
-    // 1. DESKTOP ŠONINIS MENIU (SU SUSISKLEIDIMU)
+    // 1. DESKTOP ŠONINIS MENIU
     if (sidebarContainer) {
         sidebarContainer.innerHTML = `
             <aside class="flex flex-col justify-between w-72 bg-tractorSurface border-r border-tractorBorder p-5 h-full shrink-0 overflow-y-auto">
@@ -95,6 +95,10 @@ export function renderGlobalSidebar(activePage = 'index', activeTab = 0) {
                                 <span class="cat-arrow text-[10px] transform transition-transform duration-200 ${isBendruomeneActive ? 'rotate-180' : ''}">▼</span>
                             </div>
                             <div class="sidebar-cat-body space-y-1 ${isBendruomeneActive ? '' : 'hidden'}">
+                                <!-- 🌟 ŠTAI NAUJAS LYGOS MYGTUKAS: -->
+                                <button class="nav-tab-btn w-full text-left px-3 py-2 rounded-lg font-semibold transition flex items-center gap-2.5 cursor-pointer ${activeTab === 11 ? 'bg-tractorPrimary text-white shadow' : 'text-amber-400 hover:text-white hover:bg-tractorCard'}" ${getNavClickAction(11)}>
+                                    <span>🏆</span> <span>Pasėlių Lyga (TOP 10)</span>
+                                </button>
                                 <button class="nav-tab-btn w-full text-left px-3 py-2 rounded-lg font-semibold transition flex items-center gap-2.5 cursor-pointer ${activeTab === 7 ? 'bg-tractorPrimary text-white shadow' : 'text-slate-300 hover:text-white hover:bg-tractorCard'}" ${getNavClickAction(7)}>
                                     <span>🚨</span> <span>SOS Pagalba kaimynams</span>
                                 </button>
@@ -162,35 +166,30 @@ export function renderGlobalSidebar(activePage = 'index', activeTab = 0) {
         `;
     }
 
-    // 3. 🌟 MOBILI APATINĖ JUOSTA (SU TIKSLIAIS ID KIEKVIENAM MYGTUKUI)
+    // 3. MOBILI APATINĖ JUOSTA
     if (mobileNavContainer) {
         mobileNavContainer.innerHTML = `
             <nav class="fixed bottom-0 left-0 right-0 bg-tractorSurface border-t border-tractorBorder h-16 px-2 flex justify-around items-center z-50 shadow-2xl">
-                <!-- SKAIČIUOKLĖS -->
                 <button id="btn-mobile-skaiciuokles-menu" class="flex flex-col items-center justify-center py-1.5 px-2 rounded-xl transition cursor-pointer ${activeTab === 0 ? 'text-white bg-tractorPrimary shadow' : 'text-slate-300 hover:text-white'}">
                     <span class="text-base">🧮</span>
                     <span class="mt-0.5 font-bold text-[9px] leading-none">Skaičiuoklės</span>
                 </button>
 
-                <!-- ORAI -->
                 <button id="btn-mobile-weather-nav" class="nav-tab-btn flex flex-col items-center justify-center py-1.5 px-2 rounded-xl transition cursor-pointer ${activeTab === 1 ? 'text-white bg-tractorPrimary shadow' : 'text-slate-300 hover:text-white'}" ${getNavClickAction(1)}>
                     <span class="text-base">🌦️</span>
                     <span class="mt-0.5 font-bold text-[9px] leading-none">Orai</span>
                 </button>
                 
-                <!-- LAUKAI / ŪKIS -->
                 <button id="btn-mobile-ukis-menu" class="flex flex-col items-center justify-center py-1.5 px-2 rounded-xl transition cursor-pointer ${isUkisActive ? 'text-white bg-tractorPrimary shadow' : 'text-slate-300 hover:text-white'}">
                     <span class="text-base">🚜</span>
                     <span class="mt-0.5 font-bold text-[9px] leading-none">Laukai / Ūkis</span>
                 </button>
 
-                <!-- BENDRUOMENĖ -->
                 <button id="btn-mobile-bendruomene-menu" class="flex flex-col items-center justify-center py-1.5 px-2 rounded-xl transition cursor-pointer ${isBendruomeneActive ? 'text-white bg-tractorPrimary shadow' : 'text-slate-300 hover:text-white'}">
                     <span class="text-base">🤝</span>
                     <span class="mt-0.5 font-bold text-[9px] leading-none">Bendruomenė</span>
                 </button>
 
-                <!-- NUSTATYMAI -->
                 <button id="btn-mobile-settings-nav" class="nav-tab-btn flex flex-col items-center justify-center py-1.5 px-2 rounded-xl transition cursor-pointer ${activeTab === 9 ? 'text-white bg-tractorPrimary shadow' : 'text-slate-300 hover:text-white'}" ${getNavClickAction(9)}>
                     <span class="text-base">⚙️</span>
                     <span class="mt-0.5 font-bold text-[9px] leading-none">Nustatymai</span>
@@ -286,6 +285,10 @@ export function renderGlobalSidebar(activePage = 'index', activeTab = 0) {
                         <button id="btn-close-bendruomene-sheet" class="text-slate-400 hover:text-white text-xl font-bold cursor-pointer">✕</button>
                     </div>
                     <div class="grid grid-cols-1 gap-2.5 text-xs">
+                        <!-- 🌟 ŠTAI NAUJAS LYGOS MYGTUKAS TELEFONAMS: -->
+                        <button class="nav-tab-btn text-left p-3.5 rounded-xl bg-tractorBg hover:bg-tractorPrimary/20 border border-tractorBorder flex items-center gap-3 font-bold text-amber-400 transition cursor-pointer ${activeTab === 11 ? 'border-tractorPrimary bg-tractorPrimary/20 text-green-400' : ''}" ${getNavClickAction(11)}>
+                            <span class="text-base">🏆</span> <span>Pasėlių Lyga (TOP 10)</span>
+                        </button>
                         <button class="nav-tab-btn text-left p-3.5 rounded-xl bg-tractorBg hover:bg-tractorPrimary/20 border border-tractorBorder flex items-center gap-3 font-bold text-white transition cursor-pointer ${activeTab === 7 ? 'border-tractorPrimary bg-tractorPrimary/20 text-green-400' : ''}" ${getNavClickAction(7)}>
                             <span class="text-base">🚨</span> <span>SOS Pagalba kaimynams</span>
                         </button>

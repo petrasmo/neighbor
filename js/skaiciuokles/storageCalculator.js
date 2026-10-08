@@ -6,8 +6,9 @@ let storageTypeMode = 'own'; // 'own' arba 'elevator'
 let cachedWeatherData = null;
 let cachedUserData = null;
 let selectedVentLocation = { lat: 55.2885, lng: 23.9745, name: "Ūkio bazė" };
+let selectedHourIdx = null; // Seka, kuri valanda pasirinkta
 
-// ASABE Chung-Pfost termodinaminiai koeficientai grūdų EMC skaičiavimui
+// ASABE Chung-Pfost termodinaminiai koeficientai grūdų EMC skaičiavimui (NEKEIČIAMA)
 const CROP_EMC_PARAMS = {
     wheat: { name: "Kviečiai (Milling Wheat)", icon: "🌾", A: 512.4, B: 30.0, C: 0.25, safeMoisture: 14.0 },
     rapeseed: { name: "Rapsai (Rapeseed)", icon: "🌱", A: 398.2, B: 25.0, C: 0.38, safeMoisture: 9.0 },
@@ -44,211 +45,236 @@ export async function renderStorageCalculator(container, currentUser, userData) 
     }
 
     container.innerHTML = `
-        <div class="space-y-6">
+        <div class="space-y-4">
             
-            <div class="bg-tractorSurface border border-tractorBorder rounded-2xl p-6 md:p-8 space-y-6 shadow-xl">
+            <div class="bg-tractorSurface border border-tractorBorder rounded-2xl p-3.5 sm:p-5 md:p-6 space-y-4 shadow-xl">
                 
                 <!-- HEADERIS IR TABŲ PERJUNGIKLIS -->
-                <div class="border-b border-tractorBorder/70 pb-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
-                    <div class="space-y-1">
-                        <div class="inline-flex items-center gap-1.5 bg-amber-500/15 border border-amber-500/30 text-amber-500 text-xs px-3 py-1 rounded-full font-bold uppercase tracking-wider">
-                            <span>🌾</span> Sandėliavimo ir Bokštų Valdymo Centras
-                        </div>
-                        <h3 class="font-oswald text-xl md:text-2xl font-bold uppercase tracking-wider text-white" id="storage-main-title">
-                            Grūdų Sandėliavimas: Ekonomika ir Protingas Ventiliavimas
+                <div class="border-b border-tractorBorder/70 pb-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div class="space-y-1">                        
+                        <h3 class="font-oswald text-lg sm:text-xl md:text-2xl font-bold uppercase tracking-wider text-white" id="storage-main-title">
+                            Grūdų Sandėlis ir Ventiliavimas
                         </h3>
                     </div>
 
-                    <div class="flex items-center gap-1.5 bg-tractorBg p-1.5 rounded-2xl border border-tractorBorder shrink-0">
-                        <button type="button" id="tab-storage-econ" class="px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer ${activeTab === 'econ' ? 'bg-tractorPrimary text-white shadow' : 'text-slate-400 hover:text-white'}">
-                            💰 Ekonomika: Laikyti ar Parduoti?
+                    <div class="flex items-center gap-1 bg-tractorBg p-1 rounded-xl border border-tractorBorder shrink-0">
+                        <button type="button" id="tab-storage-econ" class="px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${activeTab === 'econ' ? 'bg-tractorPrimary text-white shadow' : 'text-slate-400 hover:text-white'}">
+                            💰 Laikyti ar Parduoti?
                         </button>
-                        <button type="button" id="tab-storage-vent" class="px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer ${activeTab === 'vent' ? 'bg-tractorPrimary text-white shadow' : 'text-slate-400 hover:text-white'}">
-                            🌬️ Ventiliavimo asistentas (EMC)
+                        <button type="button" id="tab-storage-vent" class="px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${activeTab === 'vent' ? 'bg-tractorPrimary text-white shadow' : 'text-slate-400 hover:text-white'}">
+                            🌬️ Ventiliavimas (EMC)
                         </button>
                     </div>
                 </div>
 
                 <!-- 1 TABAS: EKONOMIKA -->
-                <div id="view-storage-econ" class="space-y-6 ${activeTab === 'econ' ? '' : 'hidden'}">
-                    <div class="flex justify-between items-center bg-tractorBg p-3 rounded-xl border border-tractorBorder">
-                        <span class="text-xs text-slate-300 font-semibold" style="color: var(--text-main);">Pasirinkite saugojimo tipą:</span>
+                <div id="view-storage-econ" class="space-y-4 ${activeTab === 'econ' ? '' : 'hidden'}">
+                    <div class="flex justify-between items-center bg-tractorBg p-2.5 rounded-xl border border-tractorBorder">
+                        <span class="text-xs font-semibold" style="color: var(--text-main);">Saugojimo tipas:</span>
                         <div class="flex items-center gap-1 bg-tractorSurface p-1 rounded-lg border border-tractorBorder">
-                            <button type="button" id="btn-storage-own" class="px-3 py-1 rounded-md text-xs font-bold transition cursor-pointer ${storageTypeMode === 'own' ? 'bg-tractorPrimary text-white' : 'text-slate-400 hover:text-white'}">
-                                🏠 Nuosavas bokštas / angaras
+                            <button type="button" id="btn-storage-own" class="px-2.5 py-1 rounded-md text-xs font-bold transition cursor-pointer ${storageTypeMode === 'own' ? 'bg-tractorPrimary text-white' : 'text-slate-400 hover:text-white'}">
+                                🏠 Nuosavas bokštas
                             </button>
-                            <button type="button" id="btn-storage-elevator" class="px-3 py-1 rounded-md text-xs font-bold transition cursor-pointer ${storageTypeMode === 'elevator' ? 'bg-tractorPrimary text-white' : 'text-slate-400 hover:text-white'}">
-                                🏢 Samdomas elevatorius
+                            <button type="button" id="btn-storage-elevator" class="px-2.5 py-1 rounded-md text-xs font-bold transition cursor-pointer ${storageTypeMode === 'elevator' ? 'bg-tractorPrimary text-white' : 'text-slate-400 hover:text-white'}">
+                                🏢 Elevatorius
                             </button>
                         </div>
                     </div>
 
-                    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-                        <div class="space-y-1.5">
-                            <label class="text-xs font-bold text-tractorPrimaryLight uppercase tracking-wider">Grūdų kiekis (t)</label>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-2.5 sm:gap-3">
+                        <div class="space-y-1">
+                            <label class="text-[10px] sm:text-[11px] font-bold text-tractorPrimaryLight uppercase tracking-wider block truncate">Kiekis (t)</label>
                             <input id="store-weight" type="number" step="10" value="200" 
-                                class="w-full h-12 bg-tractorBg border border-tractorBorder focus:border-tractorPrimary rounded-xl px-4 text-base font-bold font-mono outline-none" style="color: var(--text-main);">
+                                class="w-full h-10 sm:h-11 bg-tractorBg border border-tractorBorder focus:border-tractorPrimary rounded-xl px-3 text-xs sm:text-sm font-bold font-mono outline-none" style="color: var(--text-main);">
                         </div>
 
-                        <div class="space-y-1.5">
-                            <label class="text-xs font-bold text-slate-300 uppercase tracking-wider" style="color: var(--text-main);">Kaina šiandien (€/t)</label>
+                        <div class="space-y-1">
+                            <label class="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider block truncate" style="color: var(--text-main);">Kaina šiandien (€/t)</label>
                             <input id="store-price-now" type="number" step="1" value="225" 
-                                class="w-full h-12 bg-tractorBg border border-tractorBorder focus:border-tractorPrimary rounded-xl px-4 text-base font-bold font-mono text-green-500 outline-none">
+                                class="w-full h-10 sm:h-11 bg-tractorBg border border-tractorBorder focus:border-tractorPrimary rounded-xl px-3 text-xs sm:text-sm font-bold font-mono text-green-500 outline-none">
                         </div>
 
-                        <div class="space-y-1.5">
-                            <label class="text-xs font-bold text-slate-300 uppercase tracking-wider" style="color: var(--text-main);">Tikėtina kaina pavasarį (€/t)</label>
+                        <div class="space-y-1">
+                            <label class="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider block truncate" style="color: var(--text-main);">Kaina pavasarį (€/t)</label>
                             <input id="store-price-future" type="number" step="1" value="240" 
-                                class="w-full h-12 bg-tractorBg border border-tractorBorder focus:border-tractorPrimary rounded-xl px-4 text-base font-bold font-mono text-amber-500 outline-none">
+                                class="w-full h-10 sm:h-11 bg-tractorBg border border-tractorBorder focus:border-tractorPrimary rounded-xl px-3 text-xs sm:text-sm font-bold font-mono text-amber-500 outline-none">
                         </div>
 
-                        <div class="space-y-1.5">
-                            <label class="text-xs font-bold text-slate-300 uppercase tracking-wider" style="color: var(--text-main);">Planuojama laikyti (mėn.)</label>
+                        <div class="space-y-1">
+                            <label class="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider block truncate" style="color: var(--text-main);">Laikymas (mėn.)</label>
                             <input id="store-months" type="number" min="1" max="12" value="4" 
-                                class="w-full h-12 bg-tractorBg border border-tractorBorder focus:border-tractorPrimary rounded-xl px-4 text-base font-bold font-mono outline-none" style="color: var(--text-main);">
+                                class="w-full h-10 sm:h-11 bg-tractorBg border border-tractorBorder focus:border-tractorPrimary rounded-xl px-3 text-xs sm:text-sm font-bold font-mono outline-none" style="color: var(--text-main);">
                         </div>
                     </div>
 
-                    <div class="bg-tractorBg/90 border border-tractorBorder p-5 rounded-2xl space-y-4">
-                        <span class="text-xs font-bold uppercase tracking-wider block border-b border-tractorBorder/60 pb-2" style="color: var(--text-main);">
+                    <div class="bg-tractorBg/80 border border-tractorBorder p-3.5 sm:p-4 rounded-xl space-y-2.5">
+                        <span class="text-xs font-bold uppercase tracking-wider block border-b border-tractorBorder/60 pb-1.5" style="color: var(--text-main);">
                             🌾 Paslėptos sąnaudos ir kapitalo kaina:
                         </span>
 
-                        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 text-xs">
+                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-xs">
                             <div id="box-param-electric" class="space-y-1 ${storageTypeMode === 'own' ? '' : 'hidden'}">
-                                <label class="text-slate-400 font-bold block" style="color: var(--text-muted);">⚡ Ventiliavimo elektra (€/t/mėn.)</label>
-                                <input id="store-cost-electric" type="number" step="0.05" value="0.45" class="w-full h-10 bg-tractorSurface border border-tractorBorder rounded-xl px-3 font-bold font-mono outline-none" style="color: var(--text-main);">
+                                <label class="text-slate-400 font-bold block text-[10px]" style="color: var(--text-muted);">⚡ Elektra (€/t/mėn.)</label>
+                                <input id="store-cost-electric" type="number" step="0.05" value="0.45" class="w-full h-9 bg-tractorSurface border border-tractorBorder rounded-lg px-2.5 font-bold font-mono outline-none" style="color: var(--text-main);">
                             </div>
 
                             <div id="box-param-elevator" class="space-y-1 ${storageTypeMode === 'elevator' ? '' : 'hidden'}">
-                                <label class="text-slate-400 font-bold block" style="color: var(--text-muted);">🏢 Elevatoriaus mokestis (€/t/mėn.)</label>
-                                <input id="store-cost-elevator-rate" type="number" step="0.10" value="1.80" class="w-full h-10 bg-tractorSurface border border-tractorBorder rounded-xl px-3 font-bold font-mono text-amber-500 outline-none">
+                                <label class="text-slate-400 font-bold block text-[10px]" style="color: var(--text-muted);">🏢 Mokestis (€/t/mėn.)</label>
+                                <input id="store-cost-elevator-rate" type="number" step="0.10" value="1.80" class="w-full h-9 bg-tractorSurface border border-tractorBorder rounded-lg px-2.5 font-bold font-mono text-amber-500 outline-none">
                             </div>
 
                             <div class="space-y-1">
-                                <label class="text-slate-400 font-bold block" style="color: var(--text-muted);">📉 Svorio netektis (% per mėn.)</label>
-                                <input id="store-shrinkage-rate" type="number" step="0.05" value="0.15" class="w-full h-10 bg-tractorSurface border border-tractorBorder rounded-xl px-3 font-bold font-mono outline-none" style="color: var(--text-main);">
+                                <label class="text-slate-400 font-bold block text-[10px]" style="color: var(--text-muted);">📉 Netektis (%/mėn.)</label>
+                                <input id="store-shrinkage-rate" type="number" step="0.05" value="0.15" class="w-full h-9 bg-tractorSurface border border-tractorBorder rounded-lg px-2.5 font-bold font-mono outline-none" style="color: var(--text-main);">
                             </div>
 
                             <div class="space-y-1">
-                                <label class="text-slate-400 font-bold block" style="color: var(--text-muted);">🏦 Kredito palūkanos (%)</label>
-                                <input id="store-interest-rate" type="number" step="0.5" value="6.0" class="w-full h-10 bg-tractorSurface border border-tractorBorder rounded-xl px-3 font-bold font-mono outline-none" style="color: var(--text-main);">
+                                <label class="text-slate-400 font-bold block text-[10px]" style="color: var(--text-muted);">🏦 Palūkanos (%)</label>
+                                <input id="store-interest-rate" type="number" step="0.5" value="6.0" class="w-full h-9 bg-tractorSurface border border-tractorBorder rounded-lg px-2.5 font-bold font-mono outline-none" style="color: var(--text-main);">
                             </div>
 
                             <div class="space-y-1">
-                                <label class="text-slate-400 font-bold block" style="color: var(--text-muted);">🛡️ Priežiūra (€/t/mėn.)</label>
-                                <input id="store-cost-labor" type="number" step="0.05" value="0.20" class="w-full h-10 bg-tractorSurface border border-tractorBorder rounded-xl px-3 font-bold font-mono outline-none" style="color: var(--text-main);">
+                                <label class="text-slate-400 font-bold block text-[10px]" style="color: var(--text-muted);">🛡️ Priežiūra (€/t/mėn.)</label>
+                                <input id="store-cost-labor" type="number" step="0.05" value="0.20" class="w-full h-9 bg-tractorSurface border border-tractorBorder rounded-lg px-2.5 font-bold font-mono outline-none" style="color: var(--text-main);">
                             </div>
                         </div>
                     </div>
 
-                    <div id="storage-decision-card" class="rounded-2xl p-6 md:p-8 border-2 space-y-4 shadow-2xl transition-all"></div>
+                    <div id="storage-decision-card" class="rounded-xl p-4 sm:p-5 border-2 space-y-2.5 shadow-xl transition-all"></div>
 
-                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs">
-                        <div class="bg-tractorBg border border-tractorBorder p-4 rounded-xl space-y-1">
-                            <span class="text-slate-400 uppercase font-bold text-[10px] block" style="color: var(--text-muted);">Saugojimo savikaina (1 t)</span>
-                            <strong id="res-monthly-cost-per-ton" class="text-xl font-black font-mono text-amber-500 block">0.00 €/t</strong>
-                            <span id="res-total-cost-per-ton" class="text-[10px] text-slate-500 block">Viso periodui: 0.00 €/t</span>
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+                        <div class="bg-tractorBg border border-tractorBorder p-2.5 sm:p-3 rounded-xl space-y-0.5">
+                            <span class="text-slate-400 uppercase font-bold text-[9px] sm:text-[10px] block" style="color: var(--text-muted);">Savikaina (1 t)</span>
+                            <strong id="res-monthly-cost-per-ton" class="text-base sm:text-lg font-black font-mono text-amber-500 block">0.00 €/t</strong>
+                            <span id="res-total-cost-per-ton" class="text-[9px] sm:text-[10px] text-slate-500 block truncate">Periodui: 0.00 €/t</span>
                         </div>
 
-                        <div class="bg-tractorBg border border-tractorBorder p-4 rounded-xl space-y-1">
-                            <span class="text-slate-400 uppercase font-bold text-[10px] block" style="color: var(--text-muted);">Nenuostolinga kaina</span>
-                            <strong id="res-breakeven-price" class="text-xl font-black font-mono block" style="color: var(--text-main);">0.00 €/t</strong>
-                            <span class="text-[10px] text-slate-500 block">Minimali pavasarį</span>
+                        <div class="bg-tractorBg border border-tractorBorder p-2.5 sm:p-3 rounded-xl space-y-0.5">
+                            <span class="text-slate-400 uppercase font-bold text-[9px] sm:text-[10px] block" style="color: var(--text-muted);">Nenuostolinga kaina</span>
+                            <strong id="res-breakeven-price" class="text-base sm:text-lg font-black font-mono block" style="color: var(--text-main);">0.00 €/t</strong>
+                            <span class="text-[9px] sm:text-[10px] text-slate-500 block truncate">Minimali pavasarį</span>
                         </div>
 
-                        <div class="bg-tractorBg border border-tractorBorder p-4 rounded-xl space-y-1">
-                            <span class="text-slate-400 uppercase font-bold text-[10px] block" style="color: var(--text-muted);">Svorio nuostolis</span>
-                            <strong id="res-lost-weight" class="text-xl font-black font-mono text-red-500 block">0.00 t</strong>
-                            <span id="res-lost-weight-money" class="text-[10px] text-slate-500 block">Nuostolis: 0 €</span>
+                        <div class="bg-tractorBg border border-tractorBorder p-2.5 sm:p-3 rounded-xl space-y-0.5">
+                            <span class="text-slate-400 uppercase font-bold text-[9px] sm:text-[10px] block" style="color: var(--text-muted);">Svorio nuostolis</span>
+                            <strong id="res-lost-weight" class="text-base sm:text-lg font-black font-mono text-red-500 block">0.00 t</strong>
+                            <span id="res-lost-weight-money" class="text-[9px] sm:text-[10px] text-slate-500 block truncate">Nuostolis: 0 €</span>
                         </div>
 
-                        <div class="bg-tractorBg border border-tractorBorder p-4 rounded-xl space-y-1">
-                            <span class="text-slate-400 uppercase font-bold text-[10px] block" style="color: var(--text-muted);">Apyvartinių lėšų vertė</span>
-                            <strong id="res-capital-value-now" class="text-xl font-black font-mono text-green-500 block">0 €</strong>
-                            <span id="res-capital-interest-cost" class="text-[10px] text-slate-500 block">Palūkanos: 0 €</span>
+                        <div class="bg-tractorBg border border-tractorBorder p-2.5 sm:p-3 rounded-xl space-y-0.5">
+                            <span class="text-slate-400 uppercase font-bold text-[9px] sm:text-[10px] block" style="color: var(--text-muted);">Apyvartinės lėšos</span>
+                            <strong id="res-capital-value-now" class="text-base sm:text-lg font-black font-mono text-green-500 block">0 €</strong>
+                            <span id="res-capital-interest-cost" class="text-[9px] sm:text-[10px] text-slate-500 block truncate">Palūkanos: 0 €</span>
                         </div>
                     </div>
                 </div>
 
                 <!-- 2 TABAS: PROTINGAS VENTILIAVIMAS (EMC) -->
-                <div id="view-storage-vent" class="space-y-6 ${activeTab === 'vent' ? '' : 'hidden'}">
+                <div id="view-storage-vent" class="space-y-4 ${activeTab === 'vent' ? '' : 'hidden'}">
                     
-                    <div class="bg-gradient-to-r from-tractorBg to-tractorSurface border border-tractorBorder rounded-2xl p-5 space-y-2">
-                        <div class="flex items-center gap-2">
-                            <span class="text-2xl">🌬️</span>
-                            <h4 class="font-bold text-base" style="color: var(--text-main);">Kaip veikia EMC ventiliavimo taisyklė?</h4>
-                        </div>
-                        <p class="text-xs leading-relaxed" style="color: var(--text-muted);">
-                            Grūdai veikia kaip kempinė: jei pučiamo lauko oro santykinė drėgmė per didelė (naktį kyla rūkas virš 85–90%), ventiliatorius <strong>įpučia drėgmę į bokštą</strong> vietoj to, kad vėsintų. Sistema lygina jūsų grūdų drėgmę su termodinamine pusiausvyra (EMC) ir nurodo saugias valandas.
-                        </p>
-                    </div>
-
-                    <!-- BOKŠTO / SAUGYKLOS PASIRINKIMAS -->
-                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-tractorBg p-4 rounded-xl border border-tractorBorder text-xs">
-                        <div class="space-y-0.5">
-                            <span class="font-bold text-tractorPrimaryLight uppercase tracking-wider block">Pasirinkite saugyklą (Bokštą):</span>
-                            <p class="text-[11px] text-slate-400">Orai ir santykinė drėgmė (RH) bus skaičiuojami tiesiai virš pasirinktos vietos</p>
-                        </div>
-                        <select id="vent-storage-select" class="w-full sm:w-80 h-11 bg-tractorSurface border border-tractorBorder rounded-xl px-3 font-bold text-white outline-none cursor-pointer">
-                            <option value="garage">🏠 Mano ūkio bazė (garažas)</option>
-                            ${(activeUserData?.silos || []).map(s => `
-                                <option value="${s.id}">🛢️ ${s.name} (${s.lat.toFixed(3)}, ${s.lng.toFixed(3)})</option>
-                            `).join('')}
-                        </select>
-                    </div>
-
-                    <!-- ĮVEDIMO PARAMETRAI -->
-                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                        <div class="space-y-1.5">
-                            <label class="text-xs font-bold text-tractorPrimaryLight uppercase tracking-wider">Laikoma kultūra</label>
-                            <select id="vent-crop-select" class="w-full h-12 bg-tractorBg border border-tractorBorder focus:border-tractorPrimary rounded-xl px-3 text-xs font-bold outline-none cursor-pointer" style="color: var(--text-main);">
-                                ${Object.entries(CROP_EMC_PARAMS).map(([k, c]) => `
-                                    <option value="${k}">${c.icon} ${c.name}</option>
+                    <!-- 🌟 4 PARAMETRAI: TELEFONE PO DU Į EILUTĘ, KOMPIUTERYJE VISI 4 VIENOJE EILUTĖJE -->
+                    <div class="grid grid-cols-2 lg:grid-cols-4 gap-2.5">
+                        <div class="space-y-1">
+                            <label class="text-[10px] sm:text-[11px] font-bold text-tractorPrimaryLight uppercase tracking-wider block truncate">
+                                Bokštas
+                            </label>
+                            <select id="vent-storage-select" class="w-full h-10 bg-tractorBg border border-tractorBorder focus:border-tractorPrimary rounded-xl px-2.5 font-bold text-white text-xs outline-none cursor-pointer truncate">
+                                <option value="garage">🏠 Mano ūkio bazė (garažas)</option>
+                                ${(activeUserData?.silos || []).map(s => `
+                                    <option value="${s.id}">🛢️ ${s.name} (${s.lat.toFixed(3)}, ${s.lng.toFixed(3)})</option>
                                 `).join('')}
                             </select>
                         </div>
 
-                        <div class="space-y-1.5">
-                            <label class="text-xs font-bold uppercase tracking-wider" style="color: var(--text-main);">Faktinė grūdų drėgmė kaupe (%)</label>
+                        <div class="space-y-1">
+                            <label class="text-[10px] sm:text-[11px] font-bold text-tractorPrimaryLight uppercase tracking-wider block truncate">
+                                Kultūra
+                            </label>
+                            <select id="vent-crop-select" class="w-full h-10 bg-tractorBg border border-tractorBorder focus:border-tractorPrimary rounded-xl px-2.5 text-xs font-bold outline-none cursor-pointer truncate" style="color: var(--text-main);">
+                                ${Object.entries(CROP_EMC_PARAMS).map(([k, c]) => `
+                                    <option value="${k}">${c.icon} ${c.name.split(' ')[0]}</option>
+                                `).join('')}
+                            </select>
+                        </div>
+
+                        <div class="space-y-1">
+                            <label class="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider block truncate" style="color: var(--text-main);">
+                                Grudų drėgmė (%)
+                            </label>
                             <input id="vent-grain-moisture" type="number" step="0.1" value="14.2" 
-                                class="w-full h-12 bg-tractorBg border border-tractorBorder focus:border-tractorPrimary rounded-xl px-4 text-base font-bold font-mono outline-none" style="color: var(--text-main);">
+                                class="w-full h-10 bg-tractorBg border border-tractorBorder focus:border-tractorPrimary rounded-xl px-3 text-xs sm:text-sm font-bold font-mono outline-none" style="color: var(--text-main);">
                         </div>
 
-                        <div class="space-y-1.5">
-                            <label class="text-xs font-bold uppercase tracking-wider" style="color: var(--text-main);">Grūdų temperatūra bokšte (°C)</label>
+                        <div class="space-y-1">
+                            <label class="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider block truncate" style="color: var(--text-main);">
+                                Grudų Temperatūra (°C)
+                            </label>
                             <input id="vent-grain-temp" type="number" step="1" value="14" 
-                                class="w-full h-12 bg-tractorBg border border-tractorBorder focus:border-tractorPrimary rounded-xl px-4 text-base font-bold font-mono text-amber-500 outline-none">
+                                class="w-full h-10 bg-tractorBg border border-tractorBorder focus:border-tractorPrimary rounded-xl px-3 text-xs sm:text-sm font-bold font-mono text-amber-500 outline-none">
                         </div>
                     </div>
 
-                    <!-- GYVAS VERDIKTAS (SU 4 LANGELIAIS) -->
-                    <div id="vent-live-verdict-card" class="p-6 rounded-2xl border-2 space-y-3 shadow-xl transition-all">
-                        <div class="text-center py-4 text-slate-400 text-xs">Skaičiuojamos lauko oro sąlygos iš Open-Meteo...</div>
-                    </div>
-
-                    <!-- 48 VALANDŲ PROGNOZĖS LENTELĖ (3 Į EILUTĘ TELEFONE) -->
-                    <div class="bg-tractorBg border border-tractorBorder rounded-2xl p-3.5 sm:p-5 space-y-3 shadow-lg">
-                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1 border-b border-tractorBorder/70 pb-2.5">
+                    <!-- 48 VALANDŲ PROGNOZĖS LENTELĖ -->
+                    <div class="bg-tractorBg border border-tractorBorder rounded-2xl p-3 sm:p-4 space-y-3 shadow-lg">
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1 border-b border-tractorBorder/70 pb-2">
                             <div>
-                                <h4 class="font-oswald text-base sm:text-lg font-bold uppercase tracking-wider flex items-center gap-2" style="color: var(--text-main);">
-                                    <span>⏱️</span> Saugios Ventiliavimo Valandos (Artimiausios 48 val.)
+                                <h4 class="font-oswald text-base sm:text-lg font-bold uppercase tracking-wider flex items-center gap-1.5" style="color: var(--text-main);">
+                                    <span>⏱️</span> Saugios Ventiliavimo Valandos (48 val.)
                                 </h4>
-                                <p class="text-[10px] sm:text-xs text-slate-400">Žalia = vėsina be drėkinimo • Raudona = ventiliatorius įpūs drėgmę (išjungti!)</p>
+                                <p class="text-[10px] sm:text-xs text-slate-400">
+                                    👉 <strong>Spustelėkite bet kurią valandą</strong>, kad atvertumėte išsamų verdiktą ir poveikį.
+                                </p>
                             </div>
-                            <span class="text-xs font-mono font-bold text-green-500" id="vent-safe-hours-counter">...</span>
+                            <span class="text-xs font-mono font-bold text-green-500 shrink-0" id="vent-safe-hours-counter">...</span>
                         </div>
 
-                        <!-- 3 Į EILUTĘ TELEFONE, IKI 12 KOMPIUTERYJE -->
+                        <!-- VALANDŲ TINKLELIS -->
                         <div id="vent-hourly-grid" class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 2xl:grid-cols-12 gap-2 sm:gap-2.5 pt-1">
                             <div class="col-span-full py-8 text-center text-slate-500 text-xs">Kraunamas valandinis modelis...</div>
                         </div>
+                    </div>
+
+                    <!-- EMC PAAIŠKINIMAS APAČIOJE -->
+                    <div class="bg-tractorBg/80 border border-tractorBorder rounded-xl p-3.5 sm:p-4 text-xs space-y-1.5">
+                        <div class="flex items-center gap-2">
+                            <span class="text-base">🌬️</span>
+                            <strong class="font-bold text-slate-200">Kaip veikia EMC ventiliavimo taisyklė?</strong>
+                        </div>
+                        <p class="text-[11px] leading-relaxed text-slate-400">
+                            Grūdai veikia kaip kempinė: jei pučiamo lauko oro santykinė drėgmė per didelė (naktį kyla rūkas virš 85–90%), ventiliatorius <strong>įpučia drėgmę į bokštą</strong> vietoj to, kad vėsintų. Sistema lygina jūsų grūdų drėgmę su termodinamine pusiausvyra (EMC) ir nurodo saugias valandas.
+                        </p>
                     </div>
 
                 </div>
 
             </div>
 
+        </div>
+
+        <!-- 🌟 TIKRAS PROJEKTO STANDARTO BOTTOM SHEET: GLOTNIAI IŠKYLA IŠ APAČIOS PASPAUDUS VALANDĄ -->
+        <div id="vent-verdict-sheet" class="fixed inset-0 bg-black/80 z-[9999] hidden flex flex-col justify-end items-center p-0 backdrop-blur-sm transition-opacity duration-300">
+            <div id="vent-sheet-panel" class="bg-tractorSurface border-t-2 border-x-2 border-b-0 border-tractorBorder rounded-t-3xl rounded-b-none p-5 sm:p-7 pb-10 max-w-2xl w-full space-y-4 shadow-2xl relative max-h-[90vh] overflow-y-auto mb-0 transform translate-y-full transition-transform duration-300">
+                
+                <div class="flex justify-between items-center border-b border-tractorBorder/70 pb-3">
+                    <div class="flex items-center gap-2">
+                        <span class="text-xl">🌬️</span>
+                        <h3 id="vent-sheet-time-title" class="font-oswald text-base sm:text-lg font-bold uppercase tracking-wider" style="color: var(--text-main);">
+                            Ventiliavimo Verdiktas
+                        </h3>
+                    </div>
+                    <button type="button" id="btn-close-vent-sheet" class="text-slate-400 hover:text-white text-2xl font-bold cursor-pointer p-1 leading-none transition">&times;</button>
+                </div>
+
+                <!-- VERDIKTO DETALĖS -->
+                <div id="vent-sheet-body" class="space-y-4 pt-1"></div>
+
+                <div class="pt-2">
+                    <button type="button" id="btn-ack-vent-sheet" class="w-full h-11 bg-tractorPrimary hover:bg-tractorPrimaryHover text-white font-extrabold rounded-xl text-xs uppercase tracking-wider shadow transition cursor-pointer flex items-center justify-center">
+                        Supratau 👍
+                    </button>
+                </div>
+
+            </div>
         </div>
     `;
 
@@ -257,6 +283,7 @@ export async function renderStorageCalculator(container, currentUser, userData) 
     calculateStorageDecision();
 
     setupVentEvents(activeUserData);
+    setupVerdictSheetCloseEvents();
 }
 
 function setupTabEvents() {
@@ -268,16 +295,16 @@ function setupTabEvents() {
     if (btnEcon && btnVent) {
         btnEcon.onclick = () => {
             activeTab = 'econ';
-            btnEcon.className = "px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer bg-tractorPrimary text-white shadow";
-            btnVent.className = "px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer text-slate-400 hover:text-white";
+            btnEcon.className = "px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer bg-tractorPrimary text-white shadow";
+            btnVent.className = "px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer text-slate-400 hover:text-white";
             viewEcon.classList.remove('hidden');
             viewVent.classList.add('hidden');
         };
 
         btnVent.onclick = () => {
             activeTab = 'vent';
-            btnVent.className = "px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer bg-tractorPrimary text-white shadow";
-            btnEcon.className = "px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer text-slate-400 hover:text-white";
+            btnVent.className = "px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer bg-tractorPrimary text-white shadow";
+            btnEcon.className = "px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer text-slate-400 hover:text-white";
             viewVent.classList.remove('hidden');
             viewEcon.classList.add('hidden');
             calculateVentilationDecision();
@@ -294,8 +321,8 @@ function setupEconEvents() {
     if (btnOwn && btnElevator) {
         btnOwn.onclick = () => {
             storageTypeMode = 'own';
-            btnOwn.className = "px-3 py-1 rounded-md text-xs font-bold bg-tractorPrimary text-white";
-            btnElevator.className = "px-3 py-1 rounded-md text-xs font-bold text-slate-400 hover:text-white";
+            btnOwn.className = "px-2.5 py-1 rounded-md text-xs font-bold bg-tractorPrimary text-white";
+            btnElevator.className = "px-2.5 py-1 rounded-md text-xs font-bold text-slate-400 hover:text-white";
             boxElectric?.classList.remove('hidden');
             boxElevator?.classList.add('hidden');
             calculateStorageDecision();
@@ -303,8 +330,8 @@ function setupEconEvents() {
 
         btnElevator.onclick = () => {
             storageTypeMode = 'elevator';
-            btnElevator.className = "px-3 py-1 rounded-md text-xs font-bold bg-tractorPrimary text-white";
-            btnOwn.className = "px-3 py-1 rounded-md text-xs font-bold text-slate-400 hover:text-white";
+            btnElevator.className = "px-2.5 py-1 rounded-md text-xs font-bold bg-tractorPrimary text-white";
+            btnOwn.className = "px-2.5 py-1 rounded-md text-xs font-bold text-slate-400 hover:text-white";
             boxElevator?.classList.remove('hidden');
             boxElectric?.classList.add('hidden');
             calculateStorageDecision();
@@ -322,6 +349,7 @@ function setupEconEvents() {
     });
 }
 
+// 100% IDENTIŠKAS EKONOMINIS ALGORITMAS
 function calculateStorageDecision() {
     const weightTons = parseFloat(document.getElementById('store-weight')?.value) || 0;
     const priceNow = parseFloat(document.getElementById('store-price-now')?.value) || 0;
@@ -383,42 +411,42 @@ function calculateStorageDecision() {
     if (!decisionCard) return;
 
     if (netProfitOrLoss > 0) {
-        decisionCard.className = "rounded-2xl p-6 md:p-8 border-2 border-green-500 bg-green-950/20 shadow-2xl space-y-3";
+        decisionCard.className = "rounded-2xl p-4 sm:p-5 border-2 border-green-500 bg-green-950/20 shadow-xl space-y-2";
         decisionCard.innerHTML = `
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-green-500/40 pb-4">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 border-b border-green-500/40 pb-2.5">
                 <div>
                     <span class="text-xs uppercase font-black tracking-wider text-green-500 block">Ekonominis verdiktas:</span>
-                    <h3 class="font-oswald text-2xl md:text-3xl font-black uppercase tracking-wide" style="color: var(--text-main);">
+                    <h3 class="font-oswald text-xl md:text-2xl font-black uppercase tracking-wide" style="color: var(--text-main);">
                         🟢 APSIMOKA LAIKYTI! (Tikėtinas papildomas pelnas)
                     </h3>
                 </div>
                 <div class="text-left sm:text-right">
                     <span class="text-[10px] text-slate-400 uppercase font-bold block" style="color: var(--text-muted);">Grynasis pelnas atmetus visas sąnaudas</span>
-                    <strong class="font-mono text-3xl md:text-4xl font-black text-green-500">+${netProfitOrLoss.toLocaleString('lt-LT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €</strong>
+                    <strong class="font-mono text-2xl md:text-3xl font-black text-green-500">+${netProfitOrLoss.toLocaleString('lt-LT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €</strong>
                     <span class="text-xs font-bold text-green-600 block">(+${profitPerTon.toFixed(2)} € už kiekvieną toną)</span>
                 </div>
             </div>
-            <p class="text-xs md:text-sm leading-relaxed" style="color: var(--text-main);">
+            <p class="text-xs leading-relaxed" style="color: var(--text-main);">
                 Pavasario kainų šuolis (+${(priceFuture - priceNow).toFixed(2)} €/t) pilnai atperka ventiliaciją, ${totalShrinkagePercent.toFixed(1)}% svorio nusekimą ir ${interestYearly}% banko palūkanas. Nenuostolinga kaina pavasarį yra <strong>${breakevenPrice.toFixed(2)} €/t</strong>.
             </p>
         `;
     } else {
-        decisionCard.className = "rounded-2xl p-6 md:p-8 border-2 border-red-500 bg-red-950/30 shadow-2xl space-y-3";
+        decisionCard.className = "rounded-2xl p-4 sm:p-5 border-2 border-red-500 bg-red-950/30 shadow-xl space-y-2";
         decisionCard.innerHTML = `
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-red-500/40 pb-4">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 border-b border-red-500/40 pb-2.5">
                 <div>
                     <span class="text-xs uppercase font-black tracking-wider text-red-500 block">Ekonominis verdiktas:</span>
-                    <h3 class="font-oswald text-2xl md:text-3xl font-black uppercase tracking-wide" style="color: var(--text-main);">
+                    <h3 class="font-oswald text-xl md:text-2xl font-black uppercase tracking-wide" style="color: var(--text-main);">
                         🔴 PARDUOKITE DABAR! (Laikymas atneš nuostolį)
                     </h3>
                 </div>
                 <div class="text-left sm:text-right">
                     <span class="text-[10px] text-slate-400 uppercase font-bold block" style="color: var(--text-muted);">Nuostolis lyginant su pardavimu šiandien</span>
-                    <strong class="font-mono text-3xl md:text-4xl font-black text-red-500">${netProfitOrLoss.toLocaleString('lt-LT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €</strong>
+                    <strong class="font-mono text-2xl md:text-3xl font-black text-red-500">${netProfitOrLoss.toLocaleString('lt-LT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €</strong>
                     <span class="text-xs font-bold text-red-600 block">(${profitPerTon.toFixed(2)} €/t praradimas)</span>
                 </div>
             </div>
-            <p class="text-xs md:text-sm leading-relaxed" style="color: var(--text-main);">
+            <p class="text-xs leading-relaxed" style="color: var(--text-main);">
                 Laikyti neapsimoka! Elektra, svorio praradimas ir apyvartinių lėšų palūkanos „suvalgo“ kainos skirtumą. Norint uždirbti laikant ${months} mėn., kaina privalo pakilti <strong>bent iki ${breakevenPrice.toFixed(2)} €/t</strong>.
             </p>
         `;
@@ -467,6 +495,30 @@ function setupVentEvents(userData) {
     fetchHourlyWeatherForVentilation(selectedVentLocation);
 }
 
+function setupVerdictSheetCloseEvents() {
+    const sheet = document.getElementById('vent-verdict-sheet');
+    const panel = document.getElementById('vent-sheet-panel');
+    const closeBtn = document.getElementById('btn-close-vent-sheet');
+    const ackBtn = document.getElementById('btn-ack-vent-sheet');
+
+    const closeSheet = () => {
+        if (panel) panel.classList.add('translate-y-full');
+        setTimeout(() => {
+            if (sheet) sheet.classList.add('hidden');
+            selectedHourIdx = null;
+            updateActiveCardHighlight();
+        }, 250);
+    };
+
+    if (closeBtn) closeBtn.onclick = closeSheet;
+    if (ackBtn) ackBtn.onclick = closeSheet;
+    if (sheet) {
+        sheet.onclick = (e) => {
+            if (e.target === sheet) closeSheet();
+        };
+    }
+}
+
 async function fetchHourlyWeatherForVentilation(loc) {
     try {
         const url = `https://api.open-meteo.com/v1/forecast?latitude=${loc.lat}&longitude=${loc.lng}&current=temperature_2m,relative_humidity_2m&hourly=temperature_2m,relative_humidity_2m&timezone=Europe%2FVilnius&forecast_days=3`;
@@ -478,6 +530,7 @@ async function fetchHourlyWeatherForVentilation(loc) {
     }
 }
 
+// 100% IDENTIŠKA CHUNG-PFOST EMC FORMULĖ
 function calculateEMC(cropKey, airTempC, rhPercent) {
     const params = CROP_EMC_PARAMS[cropKey] || CROP_EMC_PARAMS.wheat;
     const rh = Math.max(0.05, Math.min(0.98, rhPercent / 100));
@@ -493,25 +546,35 @@ function calculateEMC(cropKey, airTempC, rhPercent) {
     }
 }
 
-function calculateVentilationDecision() {
-    const card = document.getElementById('vent-live-verdict-card');
-    const grid = document.getElementById('vent-hourly-grid');
-    const safeCounter = document.getElementById('vent-safe-hours-counter');
+// 🌟 ATIDARO TIKRĄ, VISAME PORTALE NAUDOJAMĄ BOTTOM SHEET
+function openVerdictBottomSheet(hourIdx) {
+    const sheet = document.getElementById('vent-verdict-sheet');
+    const panel = document.getElementById('vent-sheet-panel');
+    const titleEl = document.getElementById('vent-sheet-time-title');
+    const bodyEl = document.getElementById('vent-sheet-body');
+    if (!sheet || !bodyEl || !cachedWeatherData || !cachedWeatherData.hourly) return;
 
-    if (!card || !grid || !cachedWeatherData || !cachedWeatherData.hourly) return;
+    const hourly = cachedWeatherData.hourly;
+    if (hourIdx < 0 || hourIdx >= hourly.time.length) return;
 
     const cropKey = document.getElementById('vent-crop-select')?.value || 'wheat';
     const grainMoisture = parseFloat(document.getElementById('vent-grain-moisture')?.value) || 14.0;
     const grainTemp = parseFloat(document.getElementById('vent-grain-temp')?.value) || 12.0;
 
-    const curTemp = cachedWeatherData.current?.temperature_2m || 10;
-    const curRh = cachedWeatherData.current?.relative_humidity_2m || 75;
-    const curEmc = calculateEMC(cropKey, curTemp, curRh);
+    const timeStr = hourly.time[hourIdx];
+    const dateObj = new Date(timeStr);
+    const hour = dateObj.getHours();
+    const dayName = dateObj.toLocaleDateString('lt-LT', { weekday: 'long' });
+    const shortDate = `${dateObj.getMonth() + 1}-${dateObj.getDate()}`;
 
-    const isWetting = curEmc > (grainMoisture + 0.4);
-    const isWarming = curTemp > grainTemp;
-    const isSafeToCool = curTemp <= (grainTemp - 2) && curEmc <= (grainMoisture + 0.3);
-    const isDrying = curEmc < (grainMoisture - 0.4);
+    const tAir = hourly.temperature_2m[hourIdx];
+    const rhAir = hourly.relative_humidity_2m[hourIdx];
+    const emcVal = calculateEMC(cropKey, tAir, rhAir);
+
+    const isWetting = emcVal > (grainMoisture + 0.4);
+    const isWarming = tAir > grainTemp;
+    const isSafeToCool = tAir <= (grainTemp - 2) && emcVal <= (grainMoisture + 0.3);
+    const isDrying = emcVal < (grainMoisture - 0.4);
 
     let verdictTitle = "";
     let verdictDesc = "";
@@ -520,64 +583,96 @@ function calculateVentilationDecision() {
 
     if (isWetting) {
         verdictTitle = "🔴 VENTILIUOTI GRIEŽTAI DRAUDŽIAMA (Grūdai sudrėks!)";
-        verdictDesc = `Lauko oro drėgmė (${curRh}%) yra per didelė. Pučiamas oras atiduos vandenį grūdams (EMC: ${curEmc.toFixed(1)}% > ${grainMoisture}%). Išjunkite variklį!`;
+        verdictDesc = `Pučiamo oro drėgmė (${Math.round(rhAir)}%) yra per didelė. Oras atiduos vandenį grūdams (EMC: ${emcVal.toFixed(1)}% > ${grainMoisture}%). Išjunkite variklį!`;
         borderClass = "border-red-500";
-        bgClass = "bg-red-500/10";
+        bgClass = "bg-red-500/15";
     } else if (isWarming) {
         verdictTitle = "🟡 NEEFEKTYVU: LAUKO ORAS ŠILTESNIS UŽ BOKŠTĄ";
-        verdictDesc = `Lauke (+${curTemp.toFixed(1)}°C) yra šilčiau nei grūduose (+${grainTemp}°C). Ventiliavimas tik sušildys grūdus ir padidins kaitimo riziką.`;
+        verdictDesc = `Lauke (+${tAir.toFixed(1)}°C) yra šilčiau nei grūduose (+${grainTemp}°C). Ventiliatorius tik sušildys grūdus ir didins kaitimo riziką.`;
         borderClass = "border-amber-500";
-        bgClass = "bg-amber-500/10";
+        bgClass = "bg-amber-500/15";
     } else if (isSafeToCool) {
-        verdictTitle = "🟢 ŠIUO METU VENTILIUOTI GALIMA (Optimalus vėsinimas)";
-        verdictDesc = `Puikus laikas! Lauko oras (+${curTemp.toFixed(1)}°C) saugiai vėsina grūdus be drėkinimo rizikos (Oro EMC: ${curEmc.toFixed(1)}%).`;
+        verdictTitle = "🟢 ŠIĄ VALANDĄ VENTILIUOTI GALIMA (Optimalus vėsinimas)";
+        verdictDesc = `Puikus laikas! Lauko oras (+${tAir.toFixed(1)}°C) saugiai vėsina grūdus be drėkinimo rizikos (Oro EMC: ${emcVal.toFixed(1)}%).`;
         borderClass = "border-green-500";
-        bgClass = "bg-green-500/10";
+        bgClass = "bg-green-500/15";
     } else {
         verdictTitle = "🟢 SĄLYGOS SAUGIOS (Bazinė palaikymo ventiliacija)";
         verdictDesc = `Lauko oras subalansuotas su grūdų mase. Drėgmės pritraukimo pavojaus nėra.`;
         borderClass = "border-green-600";
-        bgClass = "bg-tractorSurface";
+        bgClass = "bg-tractorBg";
     }
 
-    card.className = `p-6 rounded-2xl border-2 ${borderClass} ${bgClass} space-y-3 shadow-xl transition-all`;
-    card.innerHTML = `
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-tractorBorder/70 pb-3">
-            <div class="space-y-1">
-                <span class="text-[10px] uppercase font-bold text-tractorPrimaryLight tracking-wider block">Faktinis šios valandos verdiktas</span>
-                <h4 class="font-oswald text-xl font-bold tracking-wide" style="color: var(--text-main);">${verdictTitle}</h4>
-                <p class="text-xs leading-relaxed" style="color: var(--text-muted);">${verdictDesc}</p>
+    if (titleEl) {
+        titleEl.textContent = `📅 ${dayName} (${shortDate}), ${String(hour).padStart(2, '0')}:00 val.`;
+    }
+
+    bodyEl.innerHTML = `
+        <div class="p-4 sm:p-5 rounded-2xl border-2 ${borderClass} ${bgClass} space-y-2.5">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-tractorBorder/70 pb-2.5">
+                <div class="space-y-0.5">
+                    <span class="text-[10px] uppercase font-bold text-tractorPrimaryLight tracking-wider block">Verdiktas pasirinktam laikui</span>
+                    <h4 class="font-oswald text-lg sm:text-xl font-bold tracking-wide" style="color: var(--text-main);">${verdictTitle}</h4>
+                </div>
+                <div class="text-left sm:text-right shrink-0">
+                    <span class="text-[10px] uppercase font-bold block" style="color: var(--text-muted);">Oro pusiausvyra (EMC)</span>
+                    <strong class="font-mono text-2xl font-black ${isWetting ? 'text-red-500' : 'text-green-500'}">${emcVal.toFixed(1)}%</strong>
+                    <span class="text-[10px] block" style="color: var(--text-muted);">(Bokšte: ${grainMoisture}%)</span>
+                </div>
             </div>
-            <div class="text-left sm:text-right shrink-0">
-                <span class="text-[10px] uppercase font-bold block" style="color: var(--text-muted);">Oro pusiausvyra (EMC)</span>
-                <strong class="font-mono text-2xl font-black ${isWetting ? 'text-red-500' : 'text-green-500'}">${curEmc.toFixed(1)}%</strong>
-                <span class="text-[10px] block" style="color: var(--text-muted);">(Bokšte: ${grainMoisture}%)</span>
-            </div>
+
+            <p class="text-xs leading-relaxed" style="color: var(--text-main);">${verdictDesc}</p>
         </div>
 
-        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs pt-1">
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-xs">
             <div class="bg-tractorBg p-2.5 rounded-xl border border-tractorBorder">
                 <span class="block text-[10px]" style="color: var(--text-muted);">Lauko temperatūra</span>
-                <strong class="font-mono font-bold" style="color: var(--text-main);">${curTemp > 0 ? '+' : ''}${curTemp.toFixed(1)}°C</strong>
+                <strong class="font-mono font-bold text-sm" style="color: var(--text-main);">${tAir > 0 ? '+' : ''}${tAir.toFixed(1)}°C</strong>
             </div>
             <div class="bg-tractorBg p-2.5 rounded-xl border border-tractorBorder">
                 <span class="block text-[10px]" style="color: var(--text-muted);">Santykinė drėgmė</span>
-                <strong class="font-mono ${curRh > 85 ? 'text-amber-500' : 'text-green-500'} font-bold">${curRh}%</strong>
+                <strong class="font-mono text-sm ${rhAir > 85 ? 'text-amber-500' : 'text-green-500'} font-bold">${Math.round(rhAir)}%</strong>
             </div>
             <div class="bg-tractorBg p-2.5 rounded-xl border border-tractorBorder">
                 <span class="block text-[10px]" style="color: var(--text-muted);">Grūdų temperatūra</span>
-                <strong class="font-mono font-bold" style="color: var(--text-main);">+${grainTemp}°C</strong>
+                <strong class="font-mono text-sm font-bold" style="color: var(--text-main);">+${grainTemp}°C</strong>
             </div>
             <div class="bg-tractorBg p-2.5 rounded-xl border border-tractorBorder">
                 <span class="block text-[10px]" style="color: var(--text-muted);">Poveikis grūdams</span>
-                <strong class="font-bold ${isWetting ? 'text-red-500' : (isSafeToCool ? 'text-green-500' : '')}" style="${!isWetting && !isSafeToCool ? 'color: var(--text-main);' : ''}">
+                <strong class="font-bold text-sm ${isWetting ? 'text-red-500' : (isSafeToCool ? 'text-green-500' : '')}" style="${!isWetting && !isSafeToCool ? 'color: var(--text-main);' : ''}">
                     ${isWetting ? '💧 Drėkina (+)' : (isDrying ? '☀️ Džiovina (-)' : '❄️ Vėsina')}
                 </strong>
             </div>
         </div>
     `;
 
-    // 🌟 3 STULPELIAI TELEFONE IR ŠVIEČIANTI BALTA SPALVA VALANDOMS TAMSIAI TEMAI
+    sheet.classList.remove('hidden');
+    setTimeout(() => {
+        if (panel) panel.classList.remove('translate-y-full');
+    }, 15);
+}
+
+function updateActiveCardHighlight() {
+    document.querySelectorAll('.vent-hour-card').forEach(card => {
+        const idx = parseInt(card.getAttribute('data-hour-idx'));
+        if (idx === selectedHourIdx) {
+            card.classList.add('border-tractorPrimary', 'ring-2', 'ring-tractorPrimary');
+        } else {
+            card.classList.remove('border-tractorPrimary', 'ring-2', 'ring-tractorPrimary');
+        }
+    });
+}
+
+function calculateVentilationDecision() {
+    const grid = document.getElementById('vent-hourly-grid');
+    const safeCounter = document.getElementById('vent-safe-hours-counter');
+
+    if (!grid || !cachedWeatherData || !cachedWeatherData.hourly) return;
+
+    const cropKey = document.getElementById('vent-crop-select')?.value || 'wheat';
+    const grainMoisture = parseFloat(document.getElementById('vent-grain-moisture')?.value) || 14.0;
+    const grainTemp = parseFloat(document.getElementById('vent-grain-temp')?.value) || 12.0;
+
     const hourly = cachedWeatherData.hourly;
     const now = new Date();
     let currentHourIdx = 0;
@@ -627,20 +722,21 @@ function calculateVentilationDecision() {
             badgeStyle = "background-color: rgba(148, 163, 184, 0.15); color: var(--text-main); border: 1px solid rgba(148, 163, 184, 0.4);";
         }
 
-        // 🌟 DIENA IR LAIKAS VIENOJE EILUTĖJE SU ŠVIEČIANČIA TEKSTO SPALVA
+        const isSelected = i === selectedHourIdx;
+
         items.push(`
-            <div class="bg-tractorSurface border ${isNow ? 'border-tractorPrimary ring-2 ring-tractorPrimary' : 'border-tractorBorder'} rounded-xl p-2 sm:p-2.5 text-center space-y-1 sm:space-y-1.5 flex flex-col justify-between text-xs select-none transition hover:border-slate-400">
+            <div class="vent-hour-card bg-tractorSurface border ${isSelected ? 'border-tractorPrimary ring-2 ring-tractorPrimary' : 'border-tractorBorder'} rounded-xl p-2 sm:p-2.5 text-center space-y-1 sm:space-y-1.5 flex flex-col justify-between text-xs select-none transition cursor-pointer hover:border-tractorPrimary hover:bg-tractorCard active:scale-95" data-hour-idx="${i}">
                 
-                <div class="flex items-center justify-between border-b border-tractorBorder/60 pb-1 text-[10px] sm:text-xs font-bold leading-none">
+                <div class="flex items-center justify-between border-b border-tractorBorder/60 pb-1 text-[10px] sm:text-xs font-bold leading-none pointer-events-none">
                     <span class="text-slate-400 uppercase font-black tracking-wider truncate">${isNow ? 'Dabar' : dayName}</span>
                     <strong class="font-mono font-black" style="color: var(--text-main);">${String(hour).padStart(2, '0')}:00</strong>
                 </div>
 
-                <div class="text-[10px] sm:text-xs font-bold py-0.5 px-1 rounded flex items-center justify-center leading-none truncate" style="${badgeStyle}">
+                <div class="text-[10px] sm:text-xs font-bold py-0.5 px-1 rounded flex items-center justify-center leading-none truncate pointer-events-none" style="${badgeStyle}">
                     ${badge}
                 </div>
 
-                <div class="space-y-0.5 pt-0.5 text-[10px] sm:text-xs font-mono leading-tight">
+                <div class="space-y-0.5 pt-0.5 text-[10px] sm:text-xs font-mono leading-tight pointer-events-none">
                     <div class="font-black" style="color: var(--text-main);">${tAir > 0 ? '+' : ''}${Math.round(tAir)}°C</div>
                     <div class="text-slate-400 font-medium">RH: ${Math.round(rhAir)}%</div>
                     <div class="font-bold text-green-600 dark:text-green-400">EMC: ${emcVal.toFixed(1)}%</div>
@@ -652,4 +748,14 @@ function calculateVentilationDecision() {
 
     grid.innerHTML = items.join('');
     if (safeCounter) safeCounter.textContent = `Saugių valandų: ${safeHoursCount} iš 36 val.`;
+
+    // 🌟 PASPAUDUS VALANDĄ – IŠKYLA TIKRAS BOTTOM SHEET
+    grid.querySelectorAll('.vent-hour-card').forEach(card => {
+        card.onclick = () => {
+            const idx = parseInt(card.getAttribute('data-hour-idx'));
+            selectedHourIdx = idx;
+            updateActiveCardHighlight();
+            openVerdictBottomSheet(idx);
+        };
+    });
 }

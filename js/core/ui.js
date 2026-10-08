@@ -9,7 +9,8 @@ export function switchTab(tabIndex) {
         document.getElementById('view-tab-feed'),        // 7 (SOS)
         document.getElementById('view-tab-garage'),      // 8 (Technika)
         document.getElementById('view-tab-settings'),    // 9 (Nustatymai)
-        document.getElementById('view-tab-cropplanner')  // 10 Sėjomainos Planavimas (GAAB 7)
+        document.getElementById('view-tab-cropplanner'),  // 10 Sėjomainos Planavimas (GAAB 7)
+		document.getElementById('view-tab-league')       // 11 👈 lyga
     ];
 
     let targetView = document.getElementById('view-tab-calculators');
@@ -20,6 +21,7 @@ export function switchTab(tabIndex) {
     else if (tabIndex === 8) targetView = document.getElementById('view-tab-garage');
     else if (tabIndex === 9) targetView = document.getElementById('view-tab-settings');
     else if (tabIndex === 10) targetView = document.getElementById('view-tab-cropplanner');
+	else if (tabIndex === 11) targetView = document.getElementById('view-tab-league');
 
     allViews.forEach(el => {
         if (!el) return;

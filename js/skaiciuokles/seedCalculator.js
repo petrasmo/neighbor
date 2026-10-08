@@ -1,4 +1,4 @@
-// js/seedCalculator.js
+// js/skaiciuokles/seedCalculator.js
 import { createCustomSelect } from '../core/customSelect.js';
 
 const defaultCropPresets = {
@@ -22,105 +22,113 @@ export function renderSeedCalculator(container) {
     }));
 
     container.innerHTML = `
-        <div class="space-y-6">
+        <div class="space-y-4 max-w-6xl mx-auto w-full">
             
-            <div class="bg-tractorSurface border border-tractorBorder rounded-2xl p-6 md:p-8 space-y-6 shadow-xl">
-                <div class="border-b border-tractorBorder/70 pb-4">
-                    <h3 class="font-oswald text-xl md:text-2xl font-bold text-white uppercase tracking-wider flex items-center gap-2">
-                        <span>🌱</span> Tiksli Sėjos Normos ir Sėklos Poreikio Skaičiuoklė
-                    </h3>
-                    <p class="text-xs md:text-sm text-slate-300 mt-0.5">
-                        Apskaičiuokite tikslią normą (kg/ha) pagal sėklos kokybės sertifikato duomenis (MTG, daigumą).
+            <div class="bg-tractorSurface border border-tractorBorder rounded-2xl p-3.5 sm:p-5 md:p-6 space-y-3.5 shadow-xl">
+                
+                <!-- HEADERIS (KOMPAKTIŠKAS) -->
+                <div class="border-b border-tractorBorder/70 pb-2.5 space-y-0.5">
+                    <h2 class="font-oswald text-lg sm:text-xl md:text-2xl font-bold text-white uppercase tracking-wider flex items-center gap-2">
+                        <span>🌱</span> Tiksli Sėjos Normos Skaičiuoklė
+                    </h2>
+                    <p class="text-[11px] sm:text-xs text-slate-300">
+                        Tikslus kg/ha ir sėklos poreikis pagal kokybės sertifikato duomenis (MTG, daigumą).
                     </p>
                 </div>
 
-                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5">
+                <!-- 🌟 LAUKELIAI TELEFONE PO DU Į EILUTĘ (2x2 TINKLELIS) -->
+                <div class="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-2.5 sm:gap-3">
                     
-                    <div class="space-y-1.5">
-                        <label class="text-xs font-bold text-tractorPrimaryLight uppercase tracking-wider">Pasirinkite kultūrą</label>
+                    <div class="space-y-1">
+                        <label class="text-[10px] sm:text-[11px] font-bold text-tractorPrimaryLight uppercase tracking-wider block truncate">Kultūra</label>
                         <div id="seed-crop-select-container"></div>
                     </div>
 
-                    <div class="space-y-1.5">
-                        <label class="text-xs font-bold text-slate-200 uppercase tracking-wider">Norimas daigų skaičius (mln. vnt./ha)</label>
-                        <input id="seed-target-density" type="number" step="0.05" value="4.5" 
-                            class="w-full h-12 bg-tractorBg border border-tractorBorder focus:border-tractorPrimary rounded-xl px-4 text-sm text-white font-bold outline-none">
-                    </div>
-
-                    <div class="space-y-1.5">
-                        <label class="text-xs font-bold text-slate-200 uppercase tracking-wider">1000 sėklų masė - MTG (gramais)</label>
-                        <input id="seed-mtg" type="number" step="0.1" value="45.0" 
-                            class="w-full h-12 bg-tractorBg border border-tractorBorder focus:border-tractorPrimary rounded-xl px-4 text-sm text-white font-bold outline-none">
-                    </div>
-
-                    <div class="space-y-1.5">
-                        <label class="text-xs font-bold text-slate-200 uppercase tracking-wider">Sėklų daigumas (%)</label>
-                        <input id="seed-germination" type="number" step="1" min="50" max="100" value="95" 
-                            class="w-full h-12 bg-tractorBg border border-tractorBorder focus:border-tractorPrimary rounded-xl px-4 text-sm text-white font-bold outline-none">
-                    </div>
-
-                    <div class="space-y-1.5">
-                        <label class="text-xs font-bold text-slate-200 uppercase tracking-wider">Sėklų švarumas (%)</label>
-                        <input id="seed-purity" type="number" step="0.5" min="80" max="100" value="99" 
-                            class="w-full h-12 bg-tractorBg border border-tractorBorder focus:border-tractorPrimary rounded-xl px-4 text-sm text-white font-bold outline-none">
-                    </div>
-
-                    <div class="space-y-1.5">
-                        <label class="text-xs font-bold text-slate-200 uppercase tracking-wider">Sėjamas lauko plotas (ha)</label>
-                        <input id="seed-area" type="number" step="0.5" value="25.0" 
-                            class="w-full h-12 bg-tractorBg border border-tractorBorder focus:border-tractorPrimary rounded-xl px-4 text-sm text-white font-bold outline-none">
-                    </div>
-
-                </div>
-
-                <div class="pt-3 border-t border-tractorBorder/60 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div class="space-y-1">
-                        <span class="text-xs font-bold text-slate-300 uppercase">Sėklos kaina (€/t su PVM):</span>
-                        <p class="text-[11px] text-slate-400">Įveskite kainą, jei norite apskaičiuoti lauko sėklos biudžetą.</p>
+                        <label class="text-[10px] sm:text-[11px] font-bold text-slate-200 uppercase tracking-wider block truncate">Plotas (ha)</label>
+                        <input id="seed-area" type="number" step="0.5" value="25.0" 
+                            class="w-full h-12 bg-tractorBg border border-tractorBorder focus:border-tractorPrimary rounded-xl px-3 text-xs sm:text-sm text-white font-bold font-mono outline-none">
                     </div>
-                    <input id="seed-cost-per-ton" type="number" step="10" value="420" 
-                        class="w-full sm:w-48 h-11 bg-tractorBg border border-tractorBorder focus:border-tractorPrimary rounded-xl px-4 text-sm text-amber-300 font-mono font-bold outline-none">
+
+                    <div class="space-y-1">
+                        <label class="text-[10px] sm:text-[11px] font-bold text-slate-200 uppercase tracking-wider block truncate">Daigai (mln./ha)</label>
+                        <input id="seed-target-density" type="number" step="0.05" value="4.5" 
+                            class="w-full h-12 bg-tractorBg border border-tractorBorder focus:border-tractorPrimary rounded-xl px-3 text-xs sm:text-sm text-white font-bold font-mono outline-none">
+                    </div>
+
+                    <div class="space-y-1">
+                        <label class="text-[10px] sm:text-[11px] font-bold text-slate-200 uppercase tracking-wider block truncate">MTG masė (g)</label>
+                        <input id="seed-mtg" type="number" step="0.1" value="45.0" 
+                            class="w-full h-12 bg-tractorBg border border-tractorBorder focus:border-tractorPrimary rounded-xl px-3 text-xs sm:text-sm text-white font-bold font-mono outline-none">
+                    </div>
+
+                    <div class="space-y-1">
+                        <label class="text-[10px] sm:text-[11px] font-bold text-slate-200 uppercase tracking-wider block truncate">Daigumas (%)</label>
+                        <input id="seed-germination" type="number" step="1" min="50" max="100" value="95" 
+                            class="w-full h-12 bg-tractorBg border border-tractorBorder focus:border-tractorPrimary rounded-xl px-3 text-xs sm:text-sm text-white font-bold font-mono outline-none">
+                    </div>
+
+                    <div class="space-y-1">
+                        <label class="text-[10px] sm:text-[11px] font-bold text-slate-200 uppercase tracking-wider block truncate">Švarumas (%)</label>
+                        <input id="seed-purity" type="number" step="0.5" min="80" max="100" value="99" 
+                            class="w-full h-12 bg-tractorBg border border-tractorBorder focus:border-tractorPrimary rounded-xl px-3 text-xs sm:text-sm text-white font-bold font-mono outline-none">
+                    </div>
+
+                    <div class="space-y-1 col-span-2 sm:col-span-2 md:col-span-2">
+                        <div class="flex justify-between items-center text-[10px] sm:text-[11px]">
+                            <label class="font-bold text-amber-300 uppercase tracking-wider">Sėklos kaina (€/t su PVM)</label>
+                            <span class="text-slate-400 text-[10px] hidden sm:inline">(biudžeto skaičiavimui)</span>
+                        </div>
+                        <input id="seed-cost-per-ton" type="number" step="10" value="420" 
+                            class="w-full h-12 bg-tractorBg border border-tractorBorder focus:border-tractorPrimary rounded-xl px-3 text-xs sm:text-sm text-amber-300 font-mono font-bold outline-none">
+                    </div>
+
                 </div>
+
             </div>
 
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                <div class="bg-tractorPrimary/20 border-2 border-tractorPrimary p-5 rounded-2xl space-y-1 shadow-xl shadow-tractorPrimary/10">
-                    <span class="text-[11px] uppercase font-extrabold text-tractorPrimaryLight tracking-wider">Tiksli sėjos norma</span>
-                    <div class="text-3xl font-black text-white font-mono" id="res-seed-rate">215.3 kg/ha</div>
-                    <p class="text-xs text-green-300 font-semibold" id="res-seed-rate-bags">~0.43 didmaišio/ha</p>
+            <!-- 🌟 REZULTATŲ KORTELĖS: TELEFONE PO DVI Į EILUTĘ (2x2 TINKLELIS) -->
+            <div class="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3">
+                
+                <div class="bg-tractorPrimary/20 border-2 border-tractorPrimary p-3.5 sm:p-4 rounded-2xl space-y-0.5 shadow-lg">
+                    <span class="text-[10px] sm:text-[11px] uppercase font-black text-tractorPrimaryLight tracking-wider block truncate">Tiksli norma</span>
+                    <div class="text-xl sm:text-2xl md:text-3xl font-black text-white font-mono leading-tight" id="res-seed-rate">215.3 kg/ha</div>
+                    <p class="text-[10px] sm:text-xs text-green-300 font-semibold truncate" id="res-seed-rate-bags">~0.43 didmaišio/ha</p>
                 </div>
 
-                <div class="bg-tractorSurface border border-tractorBorder p-5 rounded-2xl space-y-1">
-                    <span class="text-[11px] uppercase font-bold text-slate-400 tracking-wider">Viso sėklos poreikis</span>
-                    <div class="text-2xl font-bold text-white font-mono" id="res-total-seed-weight">5.38 t</div>
-                    <p class="text-xs text-slate-300" id="res-total-bigbags">Reikės 11 didmaišių (po 500kg)</p>
+                <div class="bg-tractorSurface border border-tractorBorder p-3.5 sm:p-4 rounded-2xl space-y-0.5 shadow">
+                    <span class="text-[10px] sm:text-[11px] uppercase font-bold text-slate-400 tracking-wider block truncate">Sėklos kiekis</span>
+                    <div class="text-xl sm:text-2xl font-bold text-white font-mono leading-tight" id="res-total-seed-weight">5.38 t</div>
+                    <p class="text-[10px] sm:text-xs text-slate-300 truncate" id="res-total-bigbags">11 didmaišių (po 500kg)</p>
                 </div>
 
-                <div class="bg-tractorSurface border border-tractorBorder p-5 rounded-2xl space-y-1">
-                    <span class="text-[11px] uppercase font-bold text-slate-400 tracking-wider">Sėklos išlaidos visam laukui</span>
-                    <div class="text-2xl font-bold text-amber-400 font-mono" id="res-total-seed-cost">2 260.65 €</div>
-                    <p class="text-xs text-slate-300" id="res-cost-per-ha">Savikaina: 90.43 €/ha</p>
+                <div class="bg-tractorSurface border border-tractorBorder p-3.5 sm:p-4 rounded-2xl space-y-0.5 shadow">
+                    <span class="text-[10px] sm:text-[11px] uppercase font-bold text-slate-400 tracking-wider block truncate">Lauko biudžetas</span>
+                    <div class="text-xl sm:text-2xl font-bold text-amber-400 font-mono leading-tight" id="res-total-seed-cost">2 260 €</div>
+                    <p class="text-[10px] sm:text-xs text-slate-300 truncate" id="res-cost-per-ha">Savikaina: 90.43 €/ha</p>
                 </div>
 
-                <div class="bg-tractorSurface border border-tractorBorder p-5 rounded-2xl space-y-1">
-                    <span class="text-[11px] uppercase font-bold text-slate-400 tracking-wider">Tikrasis ūkinis daigumas</span>
-                    <div class="text-2xl font-bold text-slate-100 font-mono" id="res-real-germination">94.05 %</div>
-                    <p class="text-xs text-slate-400">Daigumas × Švarumas</p>
+                <div class="bg-tractorSurface border border-tractorBorder p-3.5 sm:p-4 rounded-2xl space-y-0.5 shadow">
+                    <span class="text-[10px] sm:text-[11px] uppercase font-bold text-slate-400 tracking-wider block truncate">Ūkinis daigumas</span>
+                    <div class="text-xl sm:text-2xl font-bold text-slate-100 font-mono leading-tight" id="res-real-germination">94.05 %</div>
+                    <p class="text-[10px] sm:text-xs text-slate-400 truncate">Daigumas × Švarumas</p>
                 </div>
+
             </div>
 
-            <div class="bg-tractorBg border border-tractorBorder p-4 rounded-xl text-xs text-slate-400 flex items-center justify-between">
-                <span>📐 Oficiali formulė: <code>Norma (kg/ha) = (Daigai mln./ha × MTG g) / (Daigumas % × Švarumas % / 100)</code></span>
-                <span class="text-green-400 font-bold">100% tikslumas</span>
+            <!-- KOMPAKTIŠKA FORMULĖ APAČIOJE -->
+            <div class="bg-tractorBg border border-tractorBorder p-2.5 sm:p-3 rounded-xl text-[11px] text-slate-400 flex items-center justify-between">
+                <span class="truncate">📐 Formulė: <code>(Daigai × MTG × 100) ÷ Ūkinis daigumas</code></span>
+                <span class="text-green-400 font-bold shrink-0 ml-2">100% tikslumas</span>
             </div>
 
         </div>
     `;
 
-    // 🔍 Inicijuojame CustomSelect kultūrai
+    // Inicijuojame CustomSelect kultūrai
     createCustomSelect({
         containerId: 'seed-crop-select-container',
-        placeholder: 'Ieškoti kultūros...',
+        placeholder: 'Kultūra...',
         items: presetItems,
         selectedId: 'wheat_winter',
         onSelect: (selected) => {
@@ -145,13 +153,14 @@ export function renderSeedCalculator(container) {
     calculateSeedNorm();
 }
 
+// 100% IDENTIŠKAS SKAIČIAVIMO ALGORITMAS
 function calculateSeedNorm() {
-    const densityMln = parseFloat(document.getElementById('seed-target-density').value) || 0;
-    const mtg = parseFloat(document.getElementById('seed-mtg').value) || 0;
-    const germination = parseFloat(document.getElementById('seed-germination').value) || 100;
-    const purity = parseFloat(document.getElementById('seed-purity').value) || 100;
-    const areaHa = parseFloat(document.getElementById('seed-area').value) || 0;
-    const pricePerTon = parseFloat(document.getElementById('seed-cost-per-ton').value) || 0;
+    const densityMln = parseFloat(document.getElementById('seed-target-density')?.value) || 0;
+    const mtg = parseFloat(document.getElementById('seed-mtg')?.value) || 0;
+    const germination = parseFloat(document.getElementById('seed-germination')?.value) || 100;
+    const purity = parseFloat(document.getElementById('seed-purity')?.value) || 100;
+    const areaHa = parseFloat(document.getElementById('seed-area')?.value) || 0;
+    const pricePerTon = parseFloat(document.getElementById('seed-cost-per-ton')?.value) || 0;
 
     const realGermination = (germination * purity) / 100;
 
@@ -166,11 +175,19 @@ function calculateSeedNorm() {
     const totalCost = totalTons * pricePerTon;
     const costPerHa = areaHa > 0 ? (totalCost / areaHa) : 0;
 
-    document.getElementById('res-seed-rate').textContent = `${rateKgHa.toFixed(1)} kg/ha`;
-    document.getElementById('res-seed-rate-bags').textContent = `~${(rateKgHa / 500).toFixed(2)} didmaišio/ha`;
-    document.getElementById('res-total-seed-weight').textContent = `${totalTons.toFixed(2)} t`;
-    document.getElementById('res-total-bigbags').textContent = `Reikės ${bigBags500kg} didmaišių (po 500 kg)`;
-    document.getElementById('res-total-seed-cost').textContent = `${totalCost.toLocaleString('lt-LT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €`;
-    document.getElementById('res-cost-per-ha').textContent = `Savikaina: ${costPerHa.toFixed(2)} €/ha`;
-    document.getElementById('res-real-germination').textContent = `${realGermination.toFixed(2)} %`;
+    const elRate = document.getElementById('res-seed-rate');
+    const elRateBags = document.getElementById('res-seed-rate-bags');
+    const elWeight = document.getElementById('res-total-seed-weight');
+    const elBags = document.getElementById('res-total-bigbags');
+    const elCost = document.getElementById('res-total-seed-cost');
+    const elCostHa = document.getElementById('res-cost-per-ha');
+    const elRealGerm = document.getElementById('res-real-germination');
+
+    if (elRate) elRate.textContent = `${rateKgHa.toFixed(1)} kg/ha`;
+    if (elRateBags) elRateBags.textContent = `~${(rateKgHa / 500).toFixed(2)} didm./ha`;
+    if (elWeight) elWeight.textContent = `${totalTons.toFixed(2)} t`;
+    if (elBags) elBags.textContent = `${bigBags500kg} didmaišių (po 500kg)`;
+    if (elCost) elCost.textContent = `${totalCost.toLocaleString('lt-LT', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} €`;
+    if (elCostHa) elCostHa.textContent = `Savikaina: ${costPerHa.toFixed(2)} €/ha`;
+    if (elRealGerm) elRealGerm.textContent = `${realGermination.toFixed(2)} %`;
 }

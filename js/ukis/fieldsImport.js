@@ -69,33 +69,50 @@ export function setupNmaImportEvents(currentUser) {
                     return;
                 }
 
-                // 1. Gauname esamus vartotojo laukus dublikatų patikrai
+                showBottomToast("Išvalomi seni laukai ir įkeliami nauji su Lyga...");
+
+                // ==========================================
+                // 🌟 1 ŽINGSNIS: IŠTRINAME VISUS ŠIO VARTOTOJO SENUS LAUKUS
+                // ==========================================
                 const existingSnap = await db.collection("user_fields")
                     .where("userId", "==", currentUser.uid)
                     .get();
 
-                const existingFields = [];
-                existingSnap.forEach(doc => {
-                    const d = doc.data();
-                    if (d.polygonCoordinates && d.polygonCoordinates.length >= 3) {
-                        existingFields.push({
-                            id: d.id,
-                            name: (d.name || "").trim().toLowerCase(),
-                            block: (d.fieldBlockNumber || "").trim().toLowerCase(),
-                            coords: d.polygonCoordinates,
-                            center: getPolygonCenter(d.polygonCoordinates)
-                        });
-                    }
-                });
+                // Ištriname senus laukus dalimis (kad neviršytų 500 operacijų limito)
+                if (!existingSnap.empty) {
+                    const deleteBatches = [];
+                    let delBatch = db.batch();
+                    let delCount = 0;
 
+                    existingSnap.forEach(doc => {
+                        delBatch.delete(doc.ref);
+                        delCount++;
+                        if (delCount === 350) {
+                            deleteBatches.push(delBatch.commit());
+                            delBatch = db.batch();
+                            delCount = 0;
+                        }
+                    });
+                    if (delCount > 0) deleteBatches.push(delBatch.commit());
+                    await Promise.all(deleteBatches);
+                }
+
+                // ==========================================
+                // 🌟 2 ŽINGSNIS: ĮRAŠOME NAUJUS LAUKUS SU inLeague = true
+                // ==========================================
+                const existingFields = [];
                 let importedCount = 0;
                 let skippedCount = 0;
-                const batch = db.batch();
+                
+                const writeBatches = [];
+                let batch = db.batch();
+                let batchCount = 0;
 
-                features.forEach((feat, idx) => {
+                for (let idx = 0; idx < features.length; idx++) {
+                    const feat = features[idx];
                     const props = feat.properties || {};
                     const geom = feat.geometry;
-                    if (!geom || (geom.type !== 'Polygon' && geom.type !== 'MultiPolygon')) return;
+                    if (!geom || (geom.type !== 'Polygon' && geom.type !== 'MultiPolygon')) continue;
 
                     let rawCoords = [];
                     if (geom.type === 'Polygon') {
@@ -104,7 +121,7 @@ export function setupNmaImportEvents(currentUser) {
                         rawCoords = geom.coordinates[0][0];
                     }
 
-                    if (!rawCoords || rawCoords.length < 3) return;
+                    if (!rawCoords || rawCoords.length < 3) continue;
 
                     const cleanCoords = rawCoords.map(pt => ({
                         lat: parseFloat(pt[1]),
@@ -117,25 +134,15 @@ export function setupNmaImportEvents(currentUser) {
                     const cleanBlockLower = blockNumber.trim().toLowerCase();
                     const newCenter = getPolygonCenter(cleanCoords);
 
-                    // 2. TIKRINAME AR LAUKAS JAU EGZISTUOJA ARBA PERSIDENGIA
+                    // Tikriname dublikatus pačiame faile
                     let isDuplicate = false;
-
                     for (const ef of existingFields) {
-                        // A: Jei sutampa tas pats bloko numeris ir pavadinimas
                         if (cleanBlockLower && ef.block && cleanBlockLower === ef.block && cleanNameLower === ef.name) {
                             isDuplicate = true;
                             break;
                         }
-
-                        // B: Geometrinė patikra: centras yra arčiau nei 40 metrų nuo esamo lauko centro
                         const distToCenter = getDistMeters(newCenter, ef.center);
                         if (distToCenter < 40) {
-                            isDuplicate = true;
-                            break;
-                        }
-
-                        // C: Naujo lauko centras patenka į esamo lauko vidų
-                        if (isPointInPoly(newCenter, ef.coords)) {
                             isDuplicate = true;
                             break;
                         }
@@ -143,10 +150,9 @@ export function setupNmaImportEvents(currentUser) {
 
                     if (isDuplicate) {
                         skippedCount++;
-                        return; // Praleidžiame šį lauką, jo nebekeliame
+                        continue;
                     }
 
-                    // Jei laukas naujas – įtraukiame į esamų sąrašą, kad nepasidubliuotų ir pačiame importo faile
                     existingFields.push({
                         name: cleanNameLower,
                         block: cleanBlockLower,
@@ -156,6 +162,7 @@ export function setupNmaImportEvents(currentUser) {
 
                     const areaHa = props.areaHa ? parseFloat(props.areaHa) : parseFloat(calculatePolygonAreaHa(cleanCoords));
                     const crop = props.crop || props.PASELIS || 'Žieminiai kviečiai';
+                    const region = props.region || props.RAJONAS || null;
                     const notes = props.notes || props.PASTABOS || 'Importuota iš NMA';
 
                     const docRef = db.collection("user_fields").doc();
@@ -166,11 +173,13 @@ export function setupNmaImportEvents(currentUser) {
                         fieldBlockNumber: blockNumber,
                         areaHa: areaHa,
                         crop: crop,
+                        region: region,         // 👈 Automatinis rajonas iš failo!
+                        inLeague: true,         // 👈 AUTOMATIŠKAI DALYVAUJA LYGOJE!
                         notes: notes,
                         polygonCoordinates: cleanCoords,
                         operations: [
                             {
-                                type: "Sėja",
+                                type: crop.includes("Arimas") ? "Žemės dirbimas" : "Sėja",
                                 date: getTodayDateString(),
                                 product: crop,
                                 rate: "NMA Deklaruotas plotas",
@@ -182,26 +191,29 @@ export function setupNmaImportEvents(currentUser) {
                     });
 
                     importedCount++;
-                });
+                    batchCount++;
 
-                if (importedCount > 0) {
-                    await batch.commit();
+                    // Saugus partijų siuntimas iki 350 įrašų
+                    if (batchCount === 350) {
+                        writeBatches.push(batch.commit());
+                        batch = db.batch();
+                        batchCount = 0;
+                    }
                 }
+
+                if (batchCount > 0) {
+                    writeBatches.push(batch.commit());
+                }
+                await Promise.all(writeBatches);
 
                 modal.classList.add('hidden');
                 fileInput.value = '';
 
-                if (importedCount === 0 && skippedCount > 0) {
-                    showBottomToast(`Visi faile buvę laukai (${skippedCount} vnt.) jau yra jūsų ūkyje!`, "warning");
-                } else if (skippedCount > 0) {
-                    showBottomToast(`Įkelta ${importedCount} naujų laukų (praleista ${skippedCount} dublikatų) 🚜`);
-                } else {
-                    showBottomToast(`Sėkmingai importuota: įkelta ${importedCount} laukų! 🚜`);
-                }
+                showBottomToast(`Sėkmingai atnaujinta: įkelta ${importedCount} laukų su aktyvia Lyga! 🏆🌾`);
 
             } catch (err) {
                 console.error("NMA import klaida:", err);
-                showBottomToast("Nepavyko perskaityti GeoJSON failo formato!", "error");
+                showBottomToast("Klaida importuojant: " + err.message, "error");
             }
         };
     }

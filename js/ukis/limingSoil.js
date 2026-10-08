@@ -93,6 +93,7 @@ function setupLimingHubEvents(currentUser) {
     const openBtn = document.getElementById('btn-open-new-liming-modal');
     const closeBtn = document.getElementById('btn-close-liming-creator');
     const dateInput = document.getElementById('liming-modal-date');
+    const satDateInput = document.getElementById('liming-sat-date'); // 👈 KADRO DATOS LAUKELIS
     const addPointBtn = document.getElementById('btn-lime-add-point');
     const saveProjBtn = document.getElementById('btn-save-liming-project');
     const downloadShpBtn = document.getElementById('btn-download-liming-shp');
@@ -116,6 +117,32 @@ function setupLimingHubEvents(currentUser) {
     if (modal) {
         modal.onclick = (e) => {
             if (e.target === modal) modal.classList.add('hidden');
+        };
+    }
+
+    // 🌟 ŠTAI ČIA PRIJUNGTAS TIKRAS KADRO DATOS KEITIMASIS:
+    if (satDateInput) {
+        satDateInput.onchange = (e) => {
+            const dateVal = e.target.value;
+            if (!dateVal || !sentinelNdviLayer) return;
+
+            let target = new Date(dateVal);
+            if (target.getFullYear() >= 2026) {
+                target = new Date("2024-07-25"); // Apsauga nuo ateities
+            }
+
+            const end = new Date(target);
+            const start = new Date(target);
+            start.setDate(start.getDate() - 30); // 30 dienų langas iki pasirinktos datos
+
+            const timeRange = `${start.toISOString().split('T')[0]}/${end.toISOString().split('T')[0]}`;
+
+            // Pakeičiame WMS parametrus – žemėlapis iškart atsiunčia kitą nuotrauką!
+            if (sentinelNdviLayer) sentinelNdviLayer.setParams({ time: timeRange });
+            if (sentinelTrueColorLayer) sentinelTrueColorLayer.setParams({ time: timeRange });
+            if (sentinelMoistureLayer) sentinelMoistureLayer.setParams({ time: timeRange });
+
+            showBottomToast(`Palydovo kadras atnaujintas (${timeRange}) 🛰️`);
         };
     }
 
@@ -231,10 +258,13 @@ function initPreviewMap() {
 
     previewMap = L.map('liming-preview-map', { zoomControl: true }).setView([55.2885, 23.9745], 13);
 
+    // Numatytasis vasaros langas atidarant pirmą kartą
+    const defaultTime = "2024-05-01/2024-07-25";
+
     esriBaseLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxNativeZoom: 17, maxZoom: 18 });
-    sentinelNdviLayer = L.tileLayer.wms(CDSE_WMS_URL, { layers: 'VEGETATION_INDEX', format: 'image/png', transparent: true, maxcc: 25, time: '2024-05-01/2024-06-15' });
-    sentinelTrueColorLayer = L.tileLayer.wms(CDSE_WMS_URL, { layers: 'TRUE_COLOR', format: 'image/png', transparent: true, maxcc: 25, time: '2024-05-01/2024-06-15' });
-    sentinelMoistureLayer = L.tileLayer.wms(CDSE_WMS_URL, { layers: 'MOISTURE_INDEX', format: 'image/png', transparent: true, maxcc: 25, time: '2024-05-01/2024-06-15' });
+    sentinelNdviLayer = L.tileLayer.wms(CDSE_WMS_URL, { layers: 'VEGETATION_INDEX', format: 'image/png', transparent: true, maxcc: 35, time: defaultTime });
+    sentinelTrueColorLayer = L.tileLayer.wms(CDSE_WMS_URL, { layers: 'TRUE_COLOR', format: 'image/png', transparent: true, maxcc: 35, time: defaultTime });
+    sentinelMoistureLayer = L.tileLayer.wms(CDSE_WMS_URL, { layers: 'MOISTURE_INDEX', format: 'image/png', transparent: true, maxcc: 35, time: defaultTime });
     streetLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 18 });
 
     esriBaseLayer.addTo(previewMap);
@@ -697,10 +727,7 @@ function loadSavedLimingProjects(currentUser) {
         });
 }
 
-// ==========================================
 // 🚜 TIKRASIS KALKINIMO SHAPEFILE EKSPORTAS SU PH APSAUGA
-// ==========================================
-
 async function exportLimingShapefile(field, samples) {
     if (!field || !field.polygonCoordinates || field.polygonCoordinates.length < 3) {
         showBottomToast("Laukas neturi tinkamų koordinačių!", "error");

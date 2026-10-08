@@ -30,11 +30,15 @@ import { initCropPlannerTab } from './ukis/cropPlanner.js';
 import { renderTSumRadar } from './ukis/tsumRadar.js';
 import { autoRegisterFcmToken } from './core/notifications.js';
 import { renderFertilizerBarometer } from './skaiciuokles/fertilizerBarometer.js';
+import { initCropLeagueTab } from './bendruomene/cropLeague.js';
 
 let currentUser = null;
 let userData = null;
 let cachedFieldsList = [];
 const classifierMap = {};
+
+// Pagalbinė funkcija grąžinimui į skaičiuoklių centrą
+let returnToCalculatorsHub = null;
 
 document.addEventListener('DOMContentLoaded', () => {
     const urlParams = new URLSearchParams(window.location.search);
@@ -63,13 +67,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
             switchTab(tabIdx);
 
-            if (tabIdx === 1) {
+            // Jei paspaudė į Skaičiuokles (0) – grąžiname į pagrindinį sąrašą
+            if (tabIdx === 0 && typeof returnToCalculatorsHub === 'function') {
+                returnToCalculatorsHub();
+            } else if (tabIdx === 1) {
                 initWeatherTab(currentUser, userData);
             } else if (tabIdx === 2) {
                 initFieldsManager(currentUser, userData);
                 setTimeout(() => refreshFieldsMap(), 150);
             } else if (tabIdx === 10) {
-                initCropPlannerTab(currentUser, userData); // Sėjomaina ir GAAB 7
+                initCropPlannerTab(currentUser, userData);
             } else if (tabIdx === 3) {
                 initVraFertilizerTab(currentUser, userData);
             } else if (tabIdx === 4) {
@@ -84,6 +91,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 initGarageTab(currentUser, userData);
             } else if (tabIdx === 9) {
                 refreshSettingsMap();
+            } else if (tabIdx === 11) {
+                initCropLeagueTab(currentUser, userData);
             }
         });
     });
@@ -202,6 +211,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     switchTab(requestedTab);
                     if (requestedTab === 2) refreshFieldsMap();
                     if (requestedTab === 10) initCropPlannerTab(currentUser, userData);
+                    if (requestedTab === 11) initCropLeagueTab(currentUser, userData);
                     if (requestedTab === 3) initVraFertilizerTab(currentUser, userData);
                     if (requestedTab === 4) initLimingSoilTab(currentUser, userData);
                     if (requestedTab === 5) initOperationsJournalTab(currentUser, userData);
@@ -300,6 +310,14 @@ function setupCalculatorsHub() {
 		barometerView?.classList.add('hidden');
     };
 
+    const returnToHub = () => {
+        hideAll();
+        hubView?.classList.remove('hidden');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    returnToCalculatorsHub = returnToHub;
+
     if (openGrainBtn) openGrainBtn.onclick = () => {
         hideAll();
         grainView?.classList.remove('hidden');
@@ -375,13 +393,6 @@ function setupCalculatorsHub() {
 		renderFertilizerBarometer(document.getElementById('barometer-calc-content'));
 		window.scrollTo({ top: 0, behavior: 'smooth' });
 	};
-
-
-    const returnToHub = () => {
-        hideAll();
-        hubView?.classList.remove('hidden');
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-    };
 
     if (backFromGrainBtn) backFromGrainBtn.onclick = returnToHub;
     if (backFromMatifBtn) backFromMatifBtn.onclick = returnToHub;

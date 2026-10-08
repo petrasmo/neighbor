@@ -2,6 +2,7 @@
 import { db, auth } from '../core/firebase.js';
 import { showDialog, showBottomToast } from '../core/ui.js';
 import { autoRegisterFcmToken } from '../core/notifications.js';
+import { getDistrictFromCoords } from '../core/geoDistricts.js'; // 👈 1 Žingsnio modulis
 
 let mapInstance = null;
 let markerInstance = null;
@@ -14,10 +15,9 @@ let editingSiloId = null;
 let cachedCurrentUser = null;
 let cachedUserData = null;
 
-// Saugosime ūkio laukų statistiką
 let hasAnyField = false;
 let hasWinterField = false;
-let hasGarageBase = false; // 🌟 Nauja apsauga krušai
+let hasGarageBase = false;
 
 export function initSettingsTab(currentUser, userData) {
     cachedCurrentUser = currentUser;
@@ -43,6 +43,8 @@ export function initSettingsTab(currentUser, userData) {
         tSumStart: false,
         hailWarning: false
     };
+
+    const garageRegionText = userData?.garageRegion ? ` (${userData.garageRegion})` : '';
 
     const container = document.getElementById('view-tab-settings');
     container.innerHTML = `
@@ -104,7 +106,7 @@ export function initSettingsTab(currentUser, userData) {
                     <div class="flex justify-between items-center">
                         <label class="text-[11px] font-bold text-tractorPrimaryLight uppercase tracking-wider">📍 Ūkio bazė (garažas) ir grūdų bokštai žemėlapyje *</label>
                         <span id="coords-text" class="text-[10px] text-green-400 font-mono font-bold">
-                            Garažas: ${hasGarageBase ? `${currentCoords.lat.toFixed(4)}, ${currentCoords.lon.toFixed(4)}` : 'Nenustatytas'}
+                            Garažas: ${hasGarageBase ? `${currentCoords.lat.toFixed(4)}, ${currentCoords.lon.toFixed(4)}${garageRegionText}` : 'Nenustatytas'}
                         </span>
                     </div>
                     
@@ -133,12 +135,12 @@ export function initSettingsTab(currentUser, userData) {
     if (notifToggle) {
         notifToggle.onchange = (e) => {
             if (e.target.checked) {
-                // 🌟 Perduodame true: vartotojas pats paspaudė, klausiame leidimo!
                 autoRegisterFcmToken(currentUser, userData, true);
             }
         };
     }
 
+    // 🌟 IŠSAUGOJIMAS SU AUTOMATINIU RAJONU:
     document.getElementById('save-settings-btn').onclick = async (e) => {
         e.preventDefault();
         const name = document.getElementById('set-name-input').value.trim();
@@ -149,18 +151,22 @@ export function initSettingsTab(currentUser, userData) {
         const currentPrefs = cachedUserData?.notificationPreferences || {};
         currentPrefs.enabled = notifEnabled;
 
+        // 🌟 DINAMIŠKAI NUSTATOME RAJONĄ PAGAL GPS:
+        const detectedDistrict = await getDistrictFromCoords(currentCoords.lat, currentCoords.lon);
+
         await db.collection("users").doc(currentUser.uid).update({
             name: name,
             phone: phone,
             notificationDistance: dist,
             garageLat: currentCoords.lat,
             garageLon: currentCoords.lon,
+            garageRegion: detectedDistrict || null, // 👈 Išsaugo oficialų rajoną
             silos: userSilos,
             notificationPreferences: currentPrefs,
             isSetupComplete: true
         });
 
-        hasGarageBase = true; // Jau išsaugota
+        hasGarageBase = true;
 
         if (userData) {
             userData.name = name;
@@ -168,17 +174,49 @@ export function initSettingsTab(currentUser, userData) {
             userData.notificationDistance = dist;
             userData.garageLat = currentCoords.lat;
             userData.garageLon = currentCoords.lon;
+            userData.garageRegion = detectedDistrict || null;
             userData.silos = userSilos;
             userData.notificationPreferences = currentPrefs;
             userData.isSetupComplete = true;
         }
 
-        showBottomToast("Ūkio nustatymai išsaugoti! 🚜");
+        const regionMsg = detectedDistrict ? ` (${detectedDistrict})` : '';
+        showBottomToast(`Ūkio nustatymai išsaugoti! 🚜${regionMsg}`);
+        updateCoordsDisplay();
     };
 
+    // 🌟 VISŲ DUOMENŲ KASKADINIS TRYNIMAS
     document.getElementById('delete-account-btn').onclick = () => {
-        showDialog("Dėmesio", "Ar tikrai norite pašalinti paskyrą ir visus savo duomenis negrįžtamai?", "⚠️", async () => {
-            await db.collection("users").doc(currentUser.uid).delete();
+        showDialog("Dėmesio", "Ar tikrai norite pašalinti paskyrą ir visus savo duomenis (laukus, istoriją, nustatymus) negrįžtamai?", "⚠️", async () => {
+            const uid = currentUser.uid;
+
+            // 1. Randame ir ištriname visus vartotojo laukus (user_fields)
+            const fieldsSnap = await db.collection("user_fields").where("userId", "==", uid).get();
+            const batch = db.batch();
+            
+            fieldsSnap.forEach(doc => {
+                batch.delete(doc.ref);
+            });
+
+            // 2. Ištriname vartotojo laukus iš Pasėlių Lygos (league_scores)
+            const leagueSnap = await db.collection("league_scores").where("userId", "==", uid).get();
+            leagueSnap.forEach(doc => {
+                batch.delete(doc.ref);
+            });
+
+            // 3. Ištriname vartotojo SOS skelbimus (posts)
+            const postsSnap = await db.collection("posts").where("userId", "==", uid).get();
+            postsSnap.forEach(doc => {
+                batch.delete(doc.ref);
+            });
+
+            // 4. Ištriname patį vartotojo profilį (users)
+            batch.delete(db.collection("users").doc(uid));
+
+            // Vykdome visų susijusių duomenų ištrynimą vienu metu
+            await batch.commit();
+
+            // 5. Ištriname prisijungimą iš Firebase Auth ir perkrauname puslapį
             await auth.currentUser.delete();
             location.reload();
         }, true);
@@ -200,9 +238,6 @@ export function initSettingsTab(currentUser, userData) {
     }, 150);
 }
 
-// ==========================================
-// 🌟 MODALAI TIESIAI DOCUMENT.BODY
-// ==========================================
 function ensureModalsInBody(notifPrefs) {
     if (!document.getElementById('silo-name-modal')) {
         const siloModalHtml = `
@@ -242,7 +277,7 @@ function ensureModalsInBody(notifPrefs) {
     if (!document.getElementById('notif-topics-modal')) {
         const anyFieldClass = hasAnyField ? '' : 'opacity-40';
         const winterFieldClass = hasWinterField ? '' : 'opacity-40';
-        const garageClass = hasGarageBase ? '' : 'opacity-40'; // 🌟 Krušai reikia garažo!
+        const garageClass = hasGarageBase ? '' : 'opacity-40';
 
         const notifModalHtml = `
             <div id="notif-topics-modal" class="fixed inset-0 bg-black/80 z-[9999] hidden flex flex-col justify-end items-center p-0 backdrop-blur-sm transition-all duration-300">
@@ -282,7 +317,6 @@ function ensureModalsInBody(notifPrefs) {
                             </div>
                         </div>
 
-                        <!-- 🌟 KRUŠAI REIKIA ŪKIO BAZĖS -->
                         <div class="topic-row flex items-start gap-3 p-3.5 bg-tractorBg rounded-xl border border-tractorBorder cursor-pointer transition select-none ${garageClass}" data-req="garageBase" data-type="hail">
                             <input type="checkbox" id="modal-notif-hail" class="w-4 h-4 mt-0.5 accent-tractorPrimary cursor-pointer pointer-events-none">
                             <div>
@@ -438,11 +472,11 @@ export function refreshSettingsMap() {
         markerInstance = L.marker([currentCoords.lat, currentCoords.lon], { draggable: true, icon: garageIcon }).addTo(mapInstance);
         markerInstance.bindTooltip("Ūkio bazė / Garažas", { permanent: false, direction: 'top' });
 
-        markerInstance.on('dragend', (e) => {
+        markerInstance.on('dragend', async (e) => {
             const pos = e.target.getLatLng();
             currentCoords.lat = pos.lat;
             currentCoords.lon = pos.lng;
-            updateCoordsDisplay();
+            await updateCoordsDisplay();
         });
 
         siloMarkersLayer = L.layerGroup().addTo(mapInstance);
@@ -601,9 +635,12 @@ function setupSiloModalEvents() {
     }
 }
 
-function updateCoordsDisplay() {
+async function updateCoordsDisplay() {
     const el = document.getElementById('coords-text');
     if (el) {
-        el.textContent = `Garažas: ${currentCoords.lat.toFixed(4)}, ${currentCoords.lon.toFixed(4)}`;
+        el.textContent = `Garažas: ${currentCoords.lat.toFixed(4)}, ${currentCoords.lon.toFixed(4)}...`;
+        const reg = await getDistrictFromCoords(currentCoords.lat, currentCoords.lon);
+        const regionText = reg ? ` (${reg})` : '';
+        el.textContent = `Garažas: ${currentCoords.lat.toFixed(4)}, ${currentCoords.lon.toFixed(4)}${regionText}`;
     }
 }

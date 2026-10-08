@@ -1,7 +1,7 @@
 // functions/notificationsHelper.js
 const axios = require("axios");
 
-const CDSE_INSTANCE_ID = "2ecdf3ed-4338-4577-a502-11dd5b2df254";
+const GEE_URL = "https://us-central1-neighborpm-b9968.cloudfunctions.net/calculate-field-ndvi-gee";
 
 /**
  * 1. MATIF KAINŲ ŠUOLIAI (virš ±2%)
@@ -132,61 +132,88 @@ async function checkAndSendHailAlerts(db, admin, user, weatherCode) {
 }
 
 /**
- * 🌟 7. SENTINEL-2 PALYDOVO KADRAS (Automatinis patikrinimas per ESA katalogą)
+ * 🌟 7. SENTINEL-2 PRASKRIDIMAS VIRŠ GARAŽO (Pagal ūkio bazės koordinates)
+ * Tikrina GEE, siunčia pranešimą VISADA, kai praskrido, nurodydama debesuotumo %
  */
-async function checkAndSendSatAlert(db, admin, user, field) {
-    if (!user.notificationPreferences?.satPass) return;
-    const coords = field.polygonCoordinates || [];
-    if (coords.length < 3) return;
+async function checkAndSendGarageSatPass(db, admin) {
+    console.log("🛰️ Vykdomas ūkio bazių (garažų) Sentinel-2 praskridimo patikrinimas...");
 
-    const lat = Array.isArray(coords[0]) ? parseFloat(coords[0][0]) : parseFloat(coords[0].lat);
-    const lng = Array.isArray(coords[0]) ? parseFloat(coords[0][1]) : parseFloat(coords[0].lng);
+    const usersSnap = await db.collection("users").get();
 
-    try {
-        const now = new Date();
-        const past2Days = new Date(now.getTime() - 48 * 60 * 60 * 1000).toISOString().split('T')[0];
-        const todayStr = now.toISOString().split('T')[0];
+    for (const uDoc of usersSnap.docs) {
+        const user = uDoc.data();
+        user.userId = user.userId || uDoc.id;
+        const prefs = user.notificationPreferences || {};
 
-        // Kreipiamės į oficialią Sentinel-2 WFS tarnybą pagal lauko koordinates
-        const wfsUrl = `https://sh.dataspace.copernicus.eu/ogc/wfs/${CDSE_INSTANCE_ID}?REQUEST=GetFeature&TYPENAME=DSS2&BBOX=${lng - 0.02},${lat - 0.02},${lng + 0.02},${lat + 0.02}&TIME=${past2Days}/${todayStr}&MAXCC=35&OUTPUTFORMAT=application/json`;
-        const res = await axios.get(wfsUrl, { timeout: 6000 });
+        if (prefs.enabled === false || prefs.satPass !== true) continue;
+        if (!user.garageLat || !user.garageLon || user.garageLat === 0) continue;
 
-        const features = res.data?.features || [];
-        if (features.length === 0) return;
+        try {
+            // Kreipiamės į mūsų GEE debesies funkciją su garažo koordinatėmis
+            const response = await axios.post(GEE_URL, {
+                coords: [{ lat: user.garageLat, lng: user.garageLon }]
+            }, { timeout: 15000 });
 
-        const latestFeature = features[0];
-        const passDate = latestFeature.properties?.date || todayStr;
+            const data = response.data;
+            if (!data || !data.success) continue;
 
-        // Apsauga nuo dubliavimo: tikriname ar apie šį kadrą jau buvo pranešta
-        const trackerRef = db.collection("system_state").doc(`sat_${field.id}`);
-        const trackerDoc = await trackerRef.get();
-        if (trackerDoc.exists && trackerDoc.data().lastPassDate === passDate) {
-            return; // Jau pranešta, nespaminame
+            const satDate = data.satDate || "Šiandien";
+            const cloudCover = data.cloudCover ?? 0;
+
+            // Apsauga nuo dubliavimo šiandienai
+            const trackerRef = db.collection("system_state").doc(`garage_sat_${user.userId}_${satDate}`);
+            const trackerDoc = await trackerRef.get();
+            if (trackerDoc.exists) continue;
+
+            // Pranešimo tekstas priklausomai nuo debesuotumo
+            let cloudText = `Dangus giedras (debesuotumas: ${cloudCover}%). Atnaujintas NDVI!`;
+            if (cloudCover > 50) {
+                cloudText = `Debesuotumas: ${cloudCover}% (Dangus trauktas, palydovas laukų nematė).`;
+            } else if (cloudCover > 20) {
+                cloudText = `Debesuotumas: ${cloudCover}% (Dalinis debesuotumas).`;
+            }
+
+            const title = `🛰️ Sentinel-2 praskrido virš ūkio bazės!`;
+            const body = `Kadras: ${satDate}. ${cloudText}`;
+
+            const tokens = user.fcmTokens || (user.fcmToken ? [user.fcmToken] : []);
+            if (tokens.length > 0) {
+                await admin.messaging().sendEachForMulticast({
+                    tokens: tokens,
+                    notification: { title, body },
+                    data: { title, body },
+                    webpush: {
+                        notification: {
+                            title,
+                            body,
+                            icon: "https://jurgisagro.com/logo.png",
+                            badge: "https://jurgisagro.com/logo.png"
+                        }
+                    }
+                });
+                console.log(`✅ Pranešimas išsiųstas vartotojui ${user.name} apie kadrą ${satDate} (${cloudCover}% debesų).`);
+            }
+
+            await trackerRef.set({
+                notifiedAt: admin.firestore.FieldValue.serverTimestamp()
+            }, { merge: true });
+
+        } catch (err) {
+            console.warn(`Klaida tikrinant garažo palydovą vartotojui ${user.name}:`, err.message);
         }
-
-        // Siunčiame pranešimą į telefoną
-        await sendToSubscribers(db, admin, "satPass", [{
-            title: `🛰️ Naujas palydovo kadras: „${field.name}“`,
-            body: `Virš jūsų lauko ką tik užfiksuotas naujas Sentinel-2 kadras (${passDate}). Paruošta šviežia NDVI biomasės analizė!`
-        }], [user.userId]);
-
-        // Įrašome, kad šis kadras jau apdorotas
-        await trackerRef.set({ 
-            lastPassDate: passDate, 
-            updatedAt: admin.firestore.FieldValue.serverTimestamp() 
-        }, { merge: true });
-
-    } catch (err) {
-        console.warn(`Sentinel patikros klaida laukui ${field.name}:`, err.message);
     }
 }
 
 /**
- * 🌟 8. BENDROSIOS LAUKŲ, ORŲ IR PALYDOVŲ STEBĖSENOS VARIKLIS (Visos temos vienoje vietoje)
+ * 🌟 8. BENDROSIOS LAUKŲ, ORŲ IR PALYDOVŲ STEBĖSENOS VARIKLIS
  */
 async function checkAndSendFieldAndWeatherAlerts(db, admin) {
-    console.log("🌾 Vykdomas visų ūkio laukų, orų ir palydovų skenavimas...");
+    console.log("🌾 Vykdomas visų ūkio laukų ir orų skenavimas...");
 
+    // 1. Patikriname palydovo praskridimus virš ūkio bazių (garažų)
+    await checkAndSendGarageSatPass(db, admin);
+
+    // 2. Toliau tikriname orų pavojus laukuose
     const usersSnap = await db.collection("users").get();
 
     for (const uDoc of usersSnap.docs) {
@@ -207,7 +234,6 @@ async function checkAndSendFieldAndWeatherAlerts(db, admin) {
             const lng = Array.isArray(coords[0]) ? parseFloat(coords[0][1]) : parseFloat(coords[0].lng);
 
             try {
-                // 1. Orų patikra per Open-Meteo
                 const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&current=temperature_2m,soil_temperature_6cm,weather_code&hourly=snow_depth,soil_temperature_6cm,temperature_2m&timezone=auto`;
                 const wRes = await axios.get(url, { timeout: 6000 });
                 const current = wRes.data?.current || {};
@@ -235,7 +261,6 @@ async function checkAndSendFieldAndWeatherAlerts(db, admin) {
                     moldDays: (snowCm >= 10 && soilTemp >= -1.0) ? 50 : 5
                 };
 
-                // IŠKVIEČIAMI ORŲ PAVOJAI:
                 await checkAndSendWinterDanger(db, admin, user, fieldData);
                 await checkAndSendHailAlerts(db, admin, user, weatherCode);
                 await checkAndSendTsumAlert(db, admin, user, fieldData);
@@ -243,15 +268,12 @@ async function checkAndSendFieldAndWeatherAlerts(db, admin) {
             } catch (err) {
                 console.warn(`Nepavyko gauti orų laukui ${field.name}:`, err.message);
             }
-
-            // 2. 🌟 IŠKVIEČIAMAS PALYDOVO KADRO TIKRINIMAS:
-            await checkAndSendSatAlert(db, admin, user, field);
         }
     }
 }
 
 /**
- * 🌟 BENDRA SIUNTIMO FUNKCIJA (Su WebPush palaikymu telefonams)
+ * 🌟 BENDRA SIUNTIMO FUNKCIJA
  */
 async function sendToSubscribers(db, admin, topicKey, messagesArray, userIds = null) {
     let usersSnap;
@@ -313,6 +335,6 @@ module.exports = {
     checkAndSendWinterDanger, 
     checkAndSendTsumAlert, 
     checkAndSendHailAlerts, 
-    checkAndSendSatAlert,
+    checkAndSendGarageSatPass,
     checkAndSendFieldAndWeatherAlerts
 };

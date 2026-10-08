@@ -1,2 +1,4 @@
 node_modules/
 *.local
+nma_grid/
+top_20ha_laukai.json
