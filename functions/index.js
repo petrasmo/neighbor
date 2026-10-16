@@ -21,8 +21,6 @@ const {
   checkAndSendNmaAlerts,
   checkAndSendFieldAndWeatherAlerts
 } = require("./notificationsHelper");
-const { executeLeagueSyncForLargeFields } = require("./cropLeagueSync");
-
 const CDSE_INSTANCE_ID = "2ecdf3ed-4338-4577-a502-11dd5b2df254";
 const axios = require("axios"); // 👈 ŠITO TRŪKO VIRŠUJE!
 const { checkAndRegisterSatellitePass } = require("./satellitePassSync");
