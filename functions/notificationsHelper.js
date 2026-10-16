@@ -132,11 +132,16 @@ async function checkAndSendHailAlerts(db, admin, user, weatherCode) {
 }
 
 /**
- * 🌟 7. SENTINEL-2 PRASKRIDIMAS VIRŠ GARAŽO (Pagal ūkio bazės koordinates)
- * Tikrina GEE, siunčia pranešimą VISADA, kai praskrido, nurodydama debesuotumo %
+ * 🌟 7. SENTINEL-2 PRASKRIDIMAS VIRŠ ŪKIO BAZĖS (GARAŽO)
+ * Suformuojamas ~150x150 m kvadratėlis aplink bazę, užklausiamas GEE ir išsiunčiamas FCM pranešimas.
+ */
+/**
+ * 🌟 7. SENTINEL-2 PRASKRIDIMAS VIRŠ ŪKIO BAZĖS (GARAŽO)
+ * Tikrinamas TIK per Google Earth Engine (GEE).
+ * JOKIO NDVI SKAIČIAVIMO – tik praskridimo data ir debesuotumas!
  */
 async function checkAndSendGarageSatPass(db, admin) {
-    console.log("🛰️ Vykdomas ūkio bazių (garažų) Sentinel-2 praskridimo patikrinimas...");
+    console.log("🛰️ Tikrinamas Google Earth Engine (GEE) Sentinel-2 praskridimas virš ūkio bazių...");
 
     const usersSnap = await db.collection("users").get();
 
@@ -145,61 +150,100 @@ async function checkAndSendGarageSatPass(db, admin) {
         user.userId = user.userId || uDoc.id;
         const prefs = user.notificationPreferences || {};
 
-        if (prefs.enabled === false || prefs.satPass !== true) continue;
-        if (!user.garageLat || !user.garageLon || user.garageLat === 0) continue;
+        if (prefs.enabled === false || prefs.satPass !== true) {
+            continue;
+        }
+
+        const lat = parseFloat(user.garageLat);
+        const lon = parseFloat(user.garageLon);
+
+        if (!lat || !lon || isNaN(lat) || isNaN(lon)) {
+            continue;
+        }
+
+        // Kvadratėlis (~100x100 m) aplink ūkio bazę
+        const offsetLat = 0.0008;
+        const offsetLng = 0.0014;
+        const squarePolygon = [
+            { lat: lat - offsetLat, lng: lon - offsetLng },
+            { lat: lat + offsetLat, lng: lon - offsetLng },
+            { lat: lat + offsetLat, lng: lon + offsetLng },
+            { lat: lat - offsetLat, lng: lon + offsetLng },
+            { lat: lat - offsetLat, lng: lon - offsetLng }
+        ];
 
         try {
-            // Kreipiamės į mūsų GEE debesies funkciją su garažo koordinatėmis
+            console.log(`📡 Užklausa į Google Earth Engine dėl vartotojo ${user.name || user.userId} bazės...`);
+
+            // Standartinė užklausa į GEE – paima naujausią nedebesuotą kadrą
             const response = await axios.post(GEE_URL, {
-                coords: [{ lat: user.garageLat, lng: user.garageLon }]
-            }, { timeout: 15000 });
+                coords: squarePolygon
+            }, { 
+                timeout: 25000,
+                headers: { "Content-Type": "application/json" }
+            });
 
             const data = response.data;
-            if (!data || !data.success) continue;
-
-            const satDate = data.satDate || "Šiandien";
-            const cloudCover = data.cloudCover ?? 0;
-
-            // Apsauga nuo dubliavimo šiandienai
-            const trackerRef = db.collection("system_state").doc(`garage_sat_${user.userId}_${satDate}`);
-            const trackerDoc = await trackerRef.get();
-            if (trackerDoc.exists) continue;
-
-            // Pranešimo tekstas priklausomai nuo debesuotumo
-            let cloudText = `Dangus giedras (debesuotumas: ${cloudCover}%). Atnaujintas NDVI!`;
-            if (cloudCover > 50) {
-                cloudText = `Debesuotumas: ${cloudCover}% (Dangus trauktas, palydovas laukų nematė).`;
-            } else if (cloudCover > 20) {
-                cloudText = `Debesuotumas: ${cloudCover}% (Dalinis debesuotumas).`;
+            if (!data || !data.success || !data.satDate) {
+                console.log(`ℹ️ Google Earth Engine nerado tinkamų kadrų vartotojui ${user.name || user.userId}.`);
+                continue;
             }
 
-            const title = `🛰️ Sentinel-2 praskrido virš ūkio bazės!`;
-            const body = `Kadras: ${satDate}. ${cloudText}`;
+            const satDate = String(data.satDate).trim(); // pvz., "10-07"
+
+            // 🌟 PATAISYTA DUBLIAVIMO APSAUGA:
+            // Tikriname TIK pagal vartotojo ID ir kadro datą (BE šiandienos datos).
+            // Apie kadrą "10-07" bus pranešta TIK 1 KARTĄ.
+            // Kai ateityje atsiras naujas kadras (pvz., "10-14"), apie jį iškart praneš!
+            const safeSatDate = satDate.replace(/[^a-zA-Z0-9_-]/g, "_");
+            const trackerDocId = `gee_pass_${user.userId}_${safeSatDate}`;
+            const trackerRef = db.collection("system_state").doc(trackerDocId);
+            const trackerDoc = await trackerRef.get();
+
+            if (trackerDoc.exists) {
+                console.log(`ℹ️ Apie Google Earth Engine kadrą ${satDate} vartotojui ${user.name} jau buvo pranešta.`);
+                continue;
+            }
+
+            // Švari, profesionali žinutė be klaidų
+            const title = "🛰️ Sentinel-2 praskrido virš Jūsų ūkio!";
+            const body = `Užfiksuotas naujausias giedras palydovo kadras: ${satDate}.`;
 
             const tokens = user.fcmTokens || (user.fcmToken ? [user.fcmToken] : []);
             if (tokens.length > 0) {
                 await admin.messaging().sendEachForMulticast({
                     tokens: tokens,
                     notification: { title, body },
-                    data: { title, body },
+                    data: { 
+                        title, 
+                        body,
+                        click_action: "https://jurgisagro.com/?tab=2"
+                    },
                     webpush: {
                         notification: {
                             title,
                             body,
                             icon: "https://jurgisagro.com/logo.png",
-                            badge: "https://jurgisagro.com/logo.png"
-                        }
+                            badge: "https://jurgisagro.com/logo.png",
+                            vibrate: [200, 100, 200]
+                        },
+                        fcmOptions: { link: "https://jurgisagro.com/?tab=2" }
                     }
                 });
-                console.log(`✅ Pranešimas išsiųstas vartotojui ${user.name} apie kadrą ${satDate} (${cloudCover}% debesų).`);
+
+                console.log(`✅ Google Earth Engine pranešimas sėkmingai išsiųstas (${user.name}): data: ${satDate}.`);
             }
 
+            // Įrašome į Firestore, kad apie šį kadrą jau pranešta
             await trackerRef.set({
+                userId: user.userId,
+                satDate: satDate,
+                source: "Google Earth Engine",
                 notifiedAt: admin.firestore.FieldValue.serverTimestamp()
             }, { merge: true });
 
         } catch (err) {
-            console.warn(`Klaida tikrinant garažo palydovą vartotojui ${user.name}:`, err.message);
+            console.error(`❌ Google Earth Engine klaida vartotojui ${user.name}:`, err.message);
         }
     }
 }
@@ -208,12 +252,12 @@ async function checkAndSendGarageSatPass(db, admin) {
  * 🌟 8. BENDROSIOS LAUKŲ, ORŲ IR PALYDOVŲ STEBĖSENOS VARIKLIS
  */
 async function checkAndSendFieldAndWeatherAlerts(db, admin) {
-    console.log("🌾 Vykdomas visų ūkio laukų ir orų skenavimas...");
+    console.log("🌾 Vykdomas visų ūkio laukų, orų ir palydovų skenavimas...");
 
-    // 1. Patikriname palydovo praskridimus virš ūkio bazių (garažų)
+    // 1. Tikriname Sentinel-2 praskridimą virš ūkio bazės
     await checkAndSendGarageSatPass(db, admin);
 
-    // 2. Toliau tikriname orų pavojus laukuose
+    // 2. Tikriname laukų orus ir pavojus
     const usersSnap = await db.collection("users").get();
 
     for (const uDoc of usersSnap.docs) {

@@ -25,6 +25,8 @@ const { executeLeagueSyncForLargeFields } = require("./cropLeagueSync");
 
 const CDSE_INSTANCE_ID = "2ecdf3ed-4338-4577-a502-11dd5b2df254";
 const axios = require("axios"); // 👈 ŠITO TRŪKO VIRŠUJE!
+const { checkAndRegisterSatellitePass } = require("./satellitePassSync");
+
 
 
 // 🔄 BENDRAS VISŲ DUOMENŲ ATNAUJINIMAS IR PRANEŠIMŲ TIKRINIMAS
@@ -187,68 +189,6 @@ exports.seedFertilizerHistory = onRequest(
   }
 );
 
-// 🌾 PAGALBINĖ FUNKCIJA: APSKAIČIUOJA LAUKO NDVI IR LYGOS BALĄ
-function computeFieldLeagueScore(docId, f) {
-  const cropLower = (f.crop || "").toLowerCase();
-  const area = parseFloat(f.areaHa || 1);
-
-  const coords = f.polygonCoordinates || [];
-  let lat = 54.8;
-  let lng = 25.0;
-  if (coords.length > 0) {
-    const p = coords[0];
-    lat = Array.isArray(p) ? p[0] : (p.lat || 54.8);
-    lng = Array.isArray(p) ? p[1] : (p.lng || 25.0);
-  }
-
-  let hash = 0;
-  const s = docId + (f.name || "");
-  for (let i = 0; i < s.length; i++) hash += s.charCodeAt(i);
-
-  let satDateStr = "09-24";
-  let fieldNdvi = 0.55;
-
-  if (lat < -60 || (f.name || "").toLowerCase().includes("antarkt")) {
-    fieldNdvi = 0.04;
-    satDateStr = "08-12";
-  } else if (lat < 0) {
-    fieldNdvi = cropLower.includes("raps") ? 0.44 : 0.38;
-    satDateStr = "09-19";
-  } else if (lng < -60) {
-    fieldNdvi = cropLower.includes("raps") ? 0.52 : 0.46;
-    satDateStr = "09-21";
-  } else {
-    const daysOffset = (hash % 4) + 1;
-    const dayNum = Math.max(18, 25 - daysOffset);
-    satDateStr = `09-${String(dayNum).padStart(2, '0')}`;
-
-    const geoVariance = ((hash % 15) - 7) / 100;
-    const areaBonus = Math.min(0.04, (area / 100) * 0.08);
-
-    if (cropLower.includes("raps")) {
-      fieldNdvi = 0.73 + geoVariance + areaBonus;
-    } else if (cropLower.includes("kvieč")) {
-      fieldNdvi = 0.59 + geoVariance + areaBonus;
-    } else {
-      fieldNdvi = 0.49 + geoVariance + areaBonus;
-    }
-  }
-
-  const finalNdvi = parseFloat(Math.max(0.04, Math.min(0.89, fieldNdvi)).toFixed(3));
-  const score = parseFloat(((finalNdvi / 0.90) * 100).toFixed(2));
-
-  return {
-    fieldId: docId,
-    userId: f.userId || null,
-    fieldName: f.name || "Laukas",
-    crop: f.crop || "Kviečiai",
-    region: f.region || "Vilniaus r.",
-    areaHa: area,
-    ndvi: finalNdvi,
-    score: score,
-    satDate: satDateStr
-  };
-}
 
 // ========================================================
 // ⚡ 9. AUTOMATINIS FIRESTORE TRIGERIS (EVENT-DRIVEN)
@@ -402,49 +342,6 @@ exports.getLeagueLeaderboard = onRequest(
     } catch (err) {
       console.error("Lygos klaida:", err);
       res.status(500).json({ error: err.message });
-    }
-  }
-);
-
-// ========================================================
-// 🚀 11. VIENKARTINĖ SINCHRONIZACIJA ESAMIEMS 200 LAUKŲ
-// ========================================================
-exports.syncLeagueScoresNow = onRequest(
-  { cors: true, invoker: "public" },
-  async (req, res) => {
-    try {
-      const snap = await db.collection("user_fields").where("inLeague", "==", true).get();
-      let count = 0;
-      const batches = [];
-      let batch = db.batch();
-      let bCount = 0;
-
-      snap.forEach(doc => {
-        const f = doc.data();
-        if (f.crop && !f.crop.includes("Arimas")) {
-          const leagueData = computeFieldLeagueScore(doc.id, f);
-          const ref = db.collection("league_scores").doc(doc.id);
-          batch.set(ref, {
-            ...leagueData,
-            updatedAt: admin.firestore.FieldValue.serverTimestamp()
-          }, { merge: true });
-
-          count++;
-          bCount++;
-          if (bCount === 400) {
-            batches.push(batch.commit());
-            batch = db.batch();
-            bCount = 0;
-          }
-        }
-      });
-
-      if (bCount > 0) batches.push(batch.commit());
-      await Promise.all(batches);
-
-      res.send(`✅ SĖKMINGAI SINCHRONIZUOTA! Naujoje lentelėje paruošta: ${count} laukų. Lyga dabar krausis žaibiškai! 🏆`);
-    } catch (err) {
-      res.status(500).send("Klaida: " + err.message);
     }
   }
 );
@@ -881,90 +778,19 @@ exports.manualTriggerLeagueSync = onRequest(
     }
   }
 );
-exports.calculateSingleFieldNdvi = onRequest(
+
+exports.checkAndRegisterPass = onRequest(
   { cors: true, invoker: "public" },
   async (req, res) => {
     try {
-      const coords = req.body?.coords || req.query?.coords;
-      const crop = (req.body?.crop || req.query?.crop || "").toLowerCase();
-
-      if (!coords || !Array.isArray(coords) || coords.length < 3) {
-        return res.status(400).json({ error: "Nenurodytos tinkamos koordinatės" });
-      }
-
-      // 1. Apskaičiuojame lauko ribas (BBOX)
-      let minLng = 180, maxLng = -180, minLat = 90, maxLat = -90;
-      coords.forEach(p => {
-        const lng = p.lng !== undefined ? parseFloat(p.lng) : parseFloat(p[0]);
-        const lat = p.lat !== undefined ? parseFloat(p.lat) : parseFloat(p[1]);
-        if (lng < minLng) minLng = lng;
-        if (lng > maxLng) maxLng = lng;
-        if (lat < minLat) minLat = lat;
-        if (lat > maxLat) maxLat = lat;
-      });
-
-      // 2. Dinaminis laiko langas: po 09-15 iki šiandien
-      const now = new Date();
-      const currentYear = now.getFullYear();
-      let seasonYear = currentYear;
-      if (now.getMonth() < 8 || (now.getMonth() === 8 && now.getDate() < 15)) {
-        seasonYear = currentYear - 1;
-      }
-      const startDate = `${seasonYear}-09-15`;
-      const endDate = now.toISOString().split("T")[0];
-
-      // 3. Tikra užklausa į Copernicus Sentinel-2 WFS katalogą
-      let actualSatDate = "10-03";
-      try {
-        const wfsUrl = `https://sh.dataspace.copernicus.eu/ogc/wfs/${CDSE_INSTANCE_ID}?REQUEST=GetFeature&TYPENAME=DSS2&BBOX=${minLng - 0.01},${minLat - 0.01},${maxLng + 0.01},${maxLat + 0.01}&TIME=${startDate}/${endDate}&MAXCC=35&OUTPUTFORMAT=application/json`;
-        const wfsRes = await axios.get(wfsUrl, { timeout: 6000 });
-        const features = wfsRes.data?.features || [];
-
-        if (features.length > 0) {
-          features.sort((a, b) => new Date(b.properties?.date || 0) - new Date(a.properties?.date || 0));
-          const rawDate = features[0].properties?.date;
-          if (rawDate) {
-            const dObj = new Date(rawDate);
-            actualSatDate = `${String(dObj.getMonth() + 1).padStart(2, '0')}-${String(dObj.getDate()).padStart(2, '0')}`;
-          }
-        }
-      } catch (wfsErr) {
-        console.warn("WFS katalogo klaida, imama naujausia data:", wfsErr.message);
-      }
-
-      // 4. Tikroji NDVI reikšmė pagal lauko centroidą ir kultūrą
-      const centerLat = (minLat + maxLat) / 2;
-      const centerLng = (minLng + maxLng) / 2;
-      const geoVariance = ((Math.sin(centerLat * 80 + centerLng * 40) * 10000) % 8) / 100;
-
-      let baseNdvi = 0.58;
-      if (crop.includes("raps")) {
-        baseNdvi = 0.78 + geoVariance;
-      } else if (crop.includes("kvieč") || crop.includes("javai")) {
-        baseNdvi = 0.58 + geoVariance;
+      const result = await checkAndRegisterSatellitePass(db);
+      if (result && result.registered) {
+        res.send(`✅ Sėkmingai užregistruotas naujas Sentinel-2 praskridimas: ${result.passDate} (statusas: pending) 🛰️`);
       } else {
-        baseNdvi = 0.45 + geoVariance;
+        res.send(`ℹ️ Naujų užregistruotų praskridimų nerasta arba šis kadras jau buvo įrašytas.`);
       }
-
-      const cleanNdvi = parseFloat(Math.max(0.15, Math.min(0.88, baseNdvi)).toFixed(2));
-      const calculatedScore = parseFloat(((cleanNdvi / 0.85) * 100).toFixed(2));
-
-      return res.json({
-        success: true,
-        ndvi: cleanNdvi,
-        score: calculatedScore,
-        satDate: actualSatDate
-      });
-
     } catch (err) {
-      console.error("Single field NDVI klaida:", err);
-      // Niekada negrąžiname 500, o grąžiname saugų atsakymą
-      return res.json({
-        success: true,
-        ndvi: 0.60,
-        score: 70.58,
-        satDate: "10-03"
-      });
+      res.status(500).send("Klaida registruojant praskridimą: " + err.message);
     }
   }
 );
