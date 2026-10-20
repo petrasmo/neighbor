@@ -4,7 +4,6 @@ const { onRequest } = require("firebase-functions/v2/https");
 const { onDocumentWritten } = require("firebase-functions/v2/firestore");
 const admin = require("firebase-admin");
 
-
 admin.initializeApp();
 const db = admin.firestore();
 
@@ -22,10 +21,8 @@ const {
   checkAndSendFieldAndWeatherAlerts
 } = require("./notificationsHelper");
 const CDSE_INSTANCE_ID = "2ecdf3ed-4338-4577-a502-11dd5b2df254";
-const axios = require("axios"); // 👈 ŠITO TRŪKO VIRŠUJE!
+const axios = require("axios");
 const { checkAndRegisterSatellitePass } = require("./satellitePassSync");
-
-
 
 // 🔄 BENDRAS VISŲ DUOMENŲ ATNAUJINIMAS IR PRANEŠIMŲ TIKRINIMAS
 async function syncAllAgroData(isManual = false) {
@@ -187,59 +184,8 @@ exports.seedFertilizerHistory = onRequest(
   }
 );
 
-
 // ========================================================
-// ⚡ 9. AUTOMATINIS FIRESTORE TRIGERIS (EVENT-DRIVEN)
-// Vykdomas TIK TADA, kai laukas sukuriamas, redaguojamas ar ištrinamas!
-// ========================================================
-/*exports.onUserFieldWritten = onDocumentWritten("user_fields/{fieldId}", async (event) => {
-  const fieldId = event.params.fieldId;
-  const afterData = event.data?.after?.data();
-  const beforeData = event.data?.before?.data();
-
-  // Jei laukas ištrintas arba nedalyvauja lygoje – šaliname iš lygos
-  if (!afterData || afterData.inLeague === false || (afterData.crop && afterData.crop.includes("Arimas"))) {
-    await db.collection("league_scores").doc(fieldId).delete();
-    console.log(`🗑️ Laukas ${fieldId} pašalintas iš lygos.`);
-    return;
-  }
-
-  // Apsauga nuo begalinio ciklo (jei lauko duomenys nepasikeitė, o pasikeitė tik ką tik atnaujintas NDVI)
-  if (beforeData && beforeData.ndvi === afterData.ndvi && beforeData.satDate === afterData.satDate && beforeData.crop === afterData.crop && beforeData.name === afterData.name) {
-    return;
-  }
-
-  console.log(`🛰️ SKAIČIUOJAMAS TIKRAS PALYDOVO KADRAS laukui: ${afterData.name}...`);
-  
-  // Kreipiamės į palydovą per geeHelper (ieško naujausio giedro kadro po 09-15)
-  const satResult = await fetchLatestSentinelNdviForPolygon(afterData.polygonCoordinates);
-
-  // 1. Įrašome TIKRĄ kadrą ir TIKRĄ NDVI į user_fields (kad lauko pasas rodytų realybę)
-  await db.collection("user_fields").doc(fieldId).update({
-    ndvi: satResult.ndvi,
-    score: satResult.score,
-    satDate: satResult.satDate
-  });
-
-  // 2. Įrašome arba atnaujiname lauką Pasėlių Lygoje
-  await db.collection("league_scores").doc(fieldId).set({
-    fieldId: fieldId,
-    fieldName: afterData.name,
-    crop: afterData.crop,
-    region: afterData.region || "Lietuva",
-    areaHa: afterData.areaHa,
-    ndvi: satResult.ndvi,
-    score: satResult.score,
-    satDate: satResult.satDate,
-    updatedAt: admin.firestore.FieldValue.serverTimestamp()
-  }, { merge: true });
-
-  console.log(`✅ Laukas ${afterData.name} atnaujintas TIKRU kadru: ${satResult.satDate}, NDVI: ${satResult.ndvi}`);
-});*/
-
-// ========================================================
-// 🏆 10. ŽAIBIŠKAS PASĖLIŲ LYGOS GAVIMAS (O(1) SKAITYMAS)
-// Grąžina TOP 10 ir VISUS vartotojo laukus!
+// 🏆 10. ŽAIBIŠKAS PASĖLIŲ LYGOS GAVIMAS (SU RAJONO FILTRU)
 // ========================================================
 exports.getLeagueLeaderboard = onRequest(
   { cors: true, invoker: "public" },
@@ -271,35 +217,41 @@ exports.getLeagueLeaderboard = onRequest(
         });
       });
 
-      // 🌟 REMAPPINGAS PAGAL TAVO CROPS_CLASSIFIER:
-      // Žieminiai javai / Kviečiai -> Wheat
-      // Rapsai -> Rape
-      // Ankštiniai / Žirniai / Pupos -> Peas
+      // 🌟 KULTŪRŲ FILTRAVIMAS IR TIKRAS RAJONINIS DERBIS:
       const filterCategory = (targetCat) => {
         let list = allFields.filter(f => {
           const c = (f.crop || "").toLowerCase();
           
           if (targetCat === 'wheat') {
-            // Pagal crops_classifier: nmaGroup "Žieminiai javai" arba "kviečiai"
             return c.includes("javai") || c.includes("kvieč") || c.includes("wheat");
           }
           if (targetCat === 'rape') {
-            // Pagal crops_classifier: nmaGroup "Rapsai"
             return c.includes("raps") || c.includes("rape");
           }
           if (targetCat === 'peas') {
-            // Pagal crops_classifier: nmaGroup "Ankštiniai javai"
             return c.includes("ankšt") || c.includes("žirn") || c.includes("pup") || c.includes("peas");
           }
           return false;
         });
 
-        if (scope === 'district') {
-          list = list.filter(f => f.region === district);
+        // 🌟 TIKRASIS RAJONŲ FILTRAS:
+        if (scope === 'district' && district) {
+          const targetClean = district.trim().toLowerCase().replace(" r.", "").replace(" sav.", "");
+          
+          list = list.filter(f => {
+            if (!f.region) return false;
+            const fieldClean = f.region.trim().toLowerCase().replace(" r.", "").replace(" sav.", "");
+            return fieldClean === targetClean || fieldClean.includes(targetClean);
+          });
         }
 
-        // Rūšiuojame pagal tikrą palydovo balą
-        list.sort((a, b) => b.score - a.score);
+        // Rūšiuojame pagal palydovo balą (didesnis viršuje), o jei lygūs – pagal plotą
+        list.sort((a, b) => {
+          if (b.score !== a.score) {
+            return b.score - a.score;
+          }
+          return (b.areaHa || 0) - (a.areaHa || 0);
+        });
 
         const myPersonalRanks = [];
         list.forEach((f, idx) => {
@@ -381,9 +333,9 @@ exports.testPhoneNotification = onRequest(
     }
   }
 );
+
 // ========================================================
 // 🪄 13. AUTOMATINIS NMA KPS BLOKO IR KOORDINAČIŲ PAGAVIMAS
-// (SU 100% CORS PALAIKYMU LOCALHOST IR GAMYBAI)
 // ========================================================
 exports.getNmaBlockInfo = onRequest(
   { cors: true, invoker: "public", region: "europe-west1" },
@@ -399,25 +351,21 @@ exports.getNmaBlockInfo = onRequest(
 
     if (!lat || !lng) return res.status(400).json({ error: "Nurodykite lat ir lng" });
 
-    // Apskaičiuojame kvadrato pavadinimą
     const gridKey = `grid_${Math.floor(lat * 10)}_${Math.floor(lng * 10)}`;
 
     try {
       const bucket = admin.storage().bucket();
       const file = bucket.file(`nma_grid/${gridKey}.json`);
 
-      // Tikriname ar šis kvadratas yra saugykloje
       const [exists] = await file.exists();
       if (!exists) {
         return res.json({ success: false, message: "Šiame kvadrate NMA duomenų nėra." });
       }
 
-      // Atsisiunčiame failiuką tiesiai serveryje per kelias milisekundes
       const [content] = await file.download();
       const fields = JSON.parse(content.toString("utf-8"));
 
-      // Ieškome lauko pagal koordinates
-      const targetPt = [lng, lat]; // [Ilguma, Platuma]
+      const targetPt = [lng, lat];
       
       const found = fields.find(f => {
         return f.coords && f.coords.length >= 3 && isPointInPoly(targetPt, f.coords);
@@ -446,8 +394,11 @@ function isPointInPoly(pt, vs) {
     const x = pt[0], y = pt[1];
     let inside = false;
     for (let i = 0, j = vs.length - 1; i < vs.length; j = i++) {
-        const xi = vs[i][0], yi = vs[i][1];
-        const xj = vs[j][0], yj = vs[j][1];
+        const xi = vs[i][0] !== undefined ? vs[i][0] : vs[i].lat;
+        const yi = vs[i][1] !== undefined ? vs[i][1] : vs[i].lng;
+        const xj = vs[j][0] !== undefined ? vs[j][0] : vs[j].lat;
+        const yj = vs[j][1] !== undefined ? vs[j][1] : vs[j].lng;
+
         const intersect = ((yi > y) !== (yj > y)) && (x < (xj - xi) * (y - yi) / (yj - yi) + xi);
         if (intersect) inside = !inside;
     }
@@ -456,7 +407,6 @@ function isPointInPoly(pt, vs) {
 
 // ========================================================
 // 🌾 14. VIENINGO PASĖLIŲ KLASIFIKATORIAUS SUKĖLIMAS (SEED)
-// Sukuria centralizuotą duomenų bazę visiems portalo moduliams
 // ========================================================
 exports.seedCropsClassifierNow = onRequest(
   { cors: true, invoker: "public" },
@@ -757,26 +707,8 @@ exports.seedCropsClassifierNow = onRequest(
     }
   }
 );
-// 🚀 RANKINIS PALEIDIMAS: DIDELIŲ LAUKŲ (VIRŠ 100 HA) SINKRONIZACIJA Į LYGĄ
-// functions/index.js
-exports.manualTriggerLeagueSync = onRequest(
-  { cors: true, invoker: "public", timeoutSeconds: 540 },
-  async (req, res) => {
-    const minArea = parseFloat(req.query.minArea) || 100;
-    
-    // Iškart atsakome naršyklei per 0.1 sek., kad užduotis priimta
-    res.status(200).send(`🚀 Užduotis paleista fone! Sinchronizuojami dideli laukai (>= ${minArea} ha). Palaukite 1-2 minutes ir patikrinkite Pasėlių Lygą.`);
 
-    // Skriptas toliau darbuojasi serveryje fone
-    try {
-      await executeLeagueSyncForLargeFields(db, minArea, null);
-      console.log("✅ Foninė lygos sinchronizacija sėkmingai baigta!");
-    } catch (err) {
-      console.error("❌ Klaida fone:", err);
-    }
-  }
-);
-
+// 🚀 15. PRASKRIDIMO REGISTRAVIMAS
 exports.checkAndRegisterPass = onRequest(
   { cors: true, invoker: "public" },
   async (req, res) => {

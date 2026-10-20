@@ -359,6 +359,9 @@ function setupFieldEvents(currentUser) {
                     areaHa: field.areaHa,
                     updatedAt: new Date()
                 }, { merge: true });
+            } else {
+                // Jeigu išjungė dalyvavimą lygoje arba pasėlis arimas – pašaliname iš lygos balų
+                await db.collection("league_scores").doc(selectedFieldId).delete().catch(() => {});
             }
 
             editModal?.classList.add('hidden');
@@ -391,7 +394,13 @@ function setupFieldEvents(currentUser) {
                 showDialog("Trinti lauką?", `Ar tikrai norite pašalinti lauką „${field.name}“?`, "🗑️", async () => {
                     try {
                         editModal?.classList.add('hidden');
+                        
+                        // 1. Ištriname iš pagrindinės user_fields kolekcijos
                         await db.collection("user_fields").doc(targetId).delete();
+                        
+                        // 2. 🌟 Taip pat ištriname ir iš Pasėlių lygos (league_scores), kad neliktų vaiduoklių
+                        await db.collection("league_scores").doc(targetId).delete().catch(() => {});
+
                         selectedFieldId = null;
                         showBottomToast(`Laukas „${field.name}“ pašalintas.`);
                     } catch (err) {

@@ -7,6 +7,8 @@ import { createCustomSelect } from '../core/customSelect.js';
 
 let unsubscribePosts = null;
 let selectedTechObj = null;
+let cachedTechUsers = [];
+let currentSourceCoords = { lat: null, lon: null };
 
 export function initFeedTab(currentUser, userData, classifierMap) {
     const container = document.getElementById('view-tab-feed');
@@ -74,6 +76,9 @@ export function initFeedTab(currentUser, userData, classifierMap) {
                                 <span id="sos-radius-label" class="font-bold text-tractorPrimaryLight bg-tractorPrimary/20 px-3 py-1 rounded-lg border border-tractorPrimary/40">20 km</span>
                             </div>
                             <input id="sos-radius-input" type="range" min="5" max="100" value="20" class="w-full accent-tractorPrimary cursor-pointer">
+                            <div id="sos-potential-recipients" class="text-xs md:text-sm text-slate-200 pt-2 border-t border-tractorBorder/60 flex items-center gap-2 font-medium">
+                                <span>ℹ️</span> <span>Pasirinkite ieškomą techniką, kad matytumėte potencialių gavėjų skaičių.</span>
+                            </div>
                         </div>
 
                         <div class="space-y-1.5">
@@ -86,7 +91,7 @@ export function initFeedTab(currentUser, userData, classifierMap) {
                             <button type="button" id="btn-cancel-sos" class="px-6 h-12 bg-tractorSurface hover:bg-zinc-800 border border-tractorBorder text-slate-300 font-bold rounded-xl text-xs md:text-sm uppercase tracking-wider transition">
                                 Atšaukti
                             </button>
-                            <button type="submit" id="btn-submit-sos" class="flex-1 h-12 bg-tractorPrimary hover:bg-tractorPrimaryHover text-white font-bold rounded-xl text-xs md:text-sm uppercase tracking-wider shadow-lg shadow-tractorPrimary/20 flex items-center justify-center gap-2 cursor-pointer transition">
+                            <button type="submit" id="btn-submit-sos" class="flex-1 h-12 bg-tractorPrimary hover:bg-tractorPrimaryHover text-white font-extrabold rounded-xl text-xs md:text-sm uppercase tracking-wider shadow-lg shadow-tractorPrimary/20 flex items-center justify-center gap-2 cursor-pointer transition">
                                 <span>🚨</span> SIŲSTI SOS PRANEŠIMĄ KAIMYNAMS
                             </button>
                         </div>
@@ -112,6 +117,96 @@ export function initFeedTab(currentUser, userData, classifierMap) {
         </div>
     `;
 
+    const resolveSourceCoordinates = async () => {
+        const locSource = document.getElementById('sos-location-source')?.value || 'garage';
+        let lat = parseFloat(userData?.garageLat) || 54.8985;
+        let lon = parseFloat(userData?.garageLon) || 23.9036;
+
+        if (locSource === 'current' && navigator.geolocation) {
+            try {
+                const pos = await new Promise((resolve, reject) => {
+                    navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 5000 });
+                });
+                lat = pos.coords.latitude;
+                lon = pos.coords.longitude;
+            } catch (geoErr) {
+                console.warn("GPS klaida:", geoErr);
+            }
+        }
+        currentSourceCoords = { lat, lon };
+        return currentSourceCoords;
+    };
+
+    const updateRecipientsCountUI = () => {
+        const infoEl = document.getElementById('sos-potential-recipients');
+        const radiusInput = document.getElementById('sos-radius-input');
+        if (!infoEl || !radiusInput) return;
+
+        if (!selectedTechObj) {
+            infoEl.innerHTML = `<span>ℹ️</span> <span class="text-slate-300">Pasirinkite ieškomą techniką, kad matytumėte potencialių gavėjų skaičių.</span>`;
+            return;
+        }
+
+        const selectedRadius = parseFloat(radiusInput.value) || 20;
+        const { lat, lon } = currentSourceCoords;
+
+        let count = 0;
+        cachedTechUsers.forEach(u => {
+            if (currentUser && u.userId === currentUser.uid) return;
+            const uLat = parseFloat(u.garageLat);
+            const uLon = parseFloat(u.garageLon);
+            if (!uLat || !uLon) return;
+
+            const distKm = calculateDist(lat, lon, uLat, uLon);
+            const neighborMaxDist = parseFloat(u.notificationDistance) || 50;
+
+            if (distKm <= selectedRadius && distKm <= neighborMaxDist) {
+                count++;
+            }
+        });
+
+        if (count > 0) {
+            infoEl.innerHTML = `<span>📡</span> <span class="text-green-400 font-bold text-sm">Šį SOS pranešimą gaus potencialūs kaimynai: ${count}</span>`;
+        } else {
+            infoEl.innerHTML = `<span>⚠️</span> <span class="text-amber-400 font-semibold">Šiuo spinduliu (${selectedRadius} km) kaimynų su šia technika nerasta. Pabandykite padidinti spindulį.</span>`;
+        }
+    };
+
+    const fetchPotentialUsersForTech = async () => {
+        const infoEl = document.getElementById('sos-potential-recipients');
+        if (!selectedTechObj || !currentUser) return;
+
+        if (infoEl) {
+            infoEl.innerHTML = `<span>⏳</span> <span class="text-slate-300">Tikrinamas potencialių gavėjų skaičius...</span>`;
+        }
+
+        try {
+            const { lat } = await resolveSourceCoordinates();
+            const minLat = lat - 0.9;
+            const maxLat = lat + 0.9;
+
+            const snap = await db.collection("users")
+                .where("ownedTech", "array-contains", selectedTechObj.id)
+                .where("garageLat", ">=", minLat)
+                .where("garageLat", "<=", maxLat)
+                .get();
+
+            cachedTechUsers = [];
+            snap.forEach(doc => {
+                const d = doc.data();
+                d.userId = d.userId || doc.id;
+                cachedTechUsers.push(d);
+            });
+
+            updateRecipientsCountUI();
+        } catch (err) {
+            console.error("Klaida tikrinant potencialius gavėjus:", err);
+            if (infoEl) {
+                infoEl.innerHTML = `<span>⚠️</span> <span class="text-red-400">Nepavyko patikrinti gavėjų skaičiaus (patikrinkite Firestore indeksą konsolėje).</span>`;
+            }
+        }
+    };
+
     createCustomSelect({
         containerId: 'sos-tech-select-box',
         placeholder: '🔍 Ieškoti mašinos...',
@@ -119,6 +214,7 @@ export function initFeedTab(currentUser, userData, classifierMap) {
         selectedId: '',
         onSelect: (item) => {
             selectedTechObj = item;
+            fetchPotentialUsersForTech();
         }
     });
 
@@ -142,6 +238,16 @@ export function initFeedTab(currentUser, userData, classifierMap) {
 
         const isHidden = formContainer.classList.contains('hidden');
         if (isHidden) {
+            const cleanPhone = (userData?.phone || "").trim();
+            if (cleanPhone.length < 9) {
+                showDialog(
+                    "Trūksta telefono numerio",
+                    "Norėdami skelbti SOS pagalbos prašymą, pirmiausia nurodykite savo tikslų telefono numerį (bent 9 simboliai) skiltyje „Nustatymai“.",
+                    "📞"
+                );
+                return;
+            }
+
             formContainer.classList.remove('hidden');
             btnIcon.textContent = '✖';
             btnText.textContent = 'UŽDARYTI FORMĄ';
@@ -160,7 +266,19 @@ export function initFeedTab(currentUser, userData, classifierMap) {
     const radiusInput = document.getElementById('sos-radius-input');
     const radiusLabel = document.getElementById('sos-radius-label');
     if (radiusInput && radiusLabel) {
-        radiusInput.oninput = (e) => { radiusLabel.textContent = `${e.target.value} km`; };
+        radiusInput.oninput = (e) => {
+            radiusLabel.textContent = `${e.target.value} km`;
+            updateRecipientsCountUI();
+        };
+    }
+
+    const locSelect = document.getElementById('sos-location-source');
+    if (locSelect) {
+        locSelect.onchange = () => {
+            if (selectedTechObj) {
+                fetchPotentialUsersForTech();
+            }
+        };
     }
 
     const form = document.getElementById('create-post-form');
@@ -170,6 +288,12 @@ export function initFeedTab(currentUser, userData, classifierMap) {
 
             if (!currentUser) {
                 showDialog("Reikalingas prisijungimas", "Prisijunkite su Google paskyra.", "🔒", loginWithGoogle, true);
+                return;
+            }
+
+            const cleanPhone = (userData?.phone || "").trim();
+            if (cleanPhone.length < 9) {
+                showBottomToast("Nurodykite savo telefono numerį nustatymuose (bent 9 simboliai)!", "warning");
                 return;
             }
 
@@ -207,7 +331,8 @@ export function initFeedTab(currentUser, userData, classifierMap) {
                     id: postRef.id,
                     userId: currentUser.uid,
                     userName: userData?.name || "Ūkininkas",
-                    phone: userData?.phone || "",
+                    phone: cleanPhone,
+                    email: userData?.email || currentUser.email || "",
                     requiredMachineId: selectedTechObj.id,
                     requiredMachineName: selectedTechObj.name,
                     message: msg,
@@ -219,6 +344,8 @@ export function initFeedTab(currentUser, userData, classifierMap) {
 
                 form.reset();
                 selectedTechObj = null;
+                cachedTechUsers = [];
+                updateRecipientsCountUI();
                 toggleForm();
 
                 showBottomToast("SOS pagalbos skelbimas sėkmingai išsiųstas kaimynams! 🚨");
@@ -251,6 +378,9 @@ function listenToFeedPosts(currentUser, userData, classifierMap) {
             const notifDist = userData?.notificationDistance || 50;
             const owned = userData?.ownedTech || [];
             const currentUserId = currentUser ? currentUser.uid : null;
+            
+            // 🌟 Patikriname, ar prisijungęs vartotojas yra administratorius
+            const isAdmin = userData?.role === 'admin';
 
             let renderedCount = 0;
 
@@ -263,11 +393,14 @@ function listenToFeedPosts(currentUser, userData, classifierMap) {
 
                 if (post.location && garageLat && garageLon) {
                     distKm = Math.round(calculateDist(garageLat, garageLon, post.location.latitude, post.location.longitude));
-                    isWithinDist = distKm <= notifDist;
+                    const postRadius = parseFloat(post.radius) || 100;
+                    isWithinDist = (distKm <= notifDist) && (distKm <= postRadius);
                 }
 
                 const matchesTech = owned.includes(post.requiredMachineId);
-                const shouldShow = !currentUser || isMyPost || (matchesTech && isWithinDist) || (!garageLat);
+                
+                // 🌟 Jeigu tai administratorius, rodomi absoliučiai visi skelbimai be jokių apribojimų!
+                const shouldShow = isAdmin || !currentUser || isMyPost || (matchesTech && isWithinDist) || (!garageLat);
 
                 if (shouldShow) {
                     renderedCount++;
@@ -276,6 +409,9 @@ function listenToFeedPosts(currentUser, userData, classifierMap) {
                         : (post.requiredMachineName || "Technika");
                     const cleanMessage = (post.message || '').replace("(lokacija garaze)", "").trim();
                     const dateStr = post.timestamp ? new Date(post.timestamp.toDate()).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '';
+
+                    // 🌟 Administratorius mato trynimo mygtuką prie bet kurio skelbimo
+                    const canDelete = isMyPost || isAdmin;
 
                     const card = document.createElement('div');
                     card.className = `p-6 md:p-7 rounded-2xl border transition w-full ${
@@ -289,19 +425,25 @@ function listenToFeedPosts(currentUser, userData, classifierMap) {
                             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-tractorBorder/70 pb-4">
                                 <div>
                                     ${isMyPost ? `<span class="text-xs font-black uppercase text-tractorPrimaryLight tracking-widest block mb-1">Mano skelbimas</span>` : ''}
+                                    ${isAdmin && !isMyPost ? `<span class="text-xs font-black uppercase text-amber-400 tracking-widest block mb-1">🛡️ Admin peržiūra</span>` : ''}
                                     <h3 class="text-xl md:text-2xl font-bold text-white tracking-wide">${machineTitle}</h3>
                                     ${distKm !== null ? `<p class="text-xs md:text-sm font-bold text-green-400 mt-0.5">📍 ~${distKm} km nuo jūsų garažo</p>` : ''}
                                 </div>
-                                <div class="flex items-center gap-3">
+                                <div class="flex flex-wrap items-center gap-2">
                                     ${!isMyPost && post.phone ? `
                                         <a href="tel:${post.phone}" class="h-10 px-5 bg-tractorPrimary hover:bg-tractorPrimaryHover rounded-xl flex items-center gap-2 text-white text-xs md:text-sm font-bold shadow-lg shadow-tractorPrimary/20 transition">
                                             <span>📞</span> Skambinti ūkininkui
                                         </a>
                                     ` : ''}
-                                    ${isMyPost ? `
-                                        <button data-delete-id="${post.id}" class="btn-delete-post h-10 px-4 bg-red-900/30 hover:bg-red-800 text-red-300 rounded-xl flex items-center gap-1.5 text-xs font-bold border border-red-800/60 transition">
-                                            <span>🗑️</span> Ištrinti skelbimą
-                                        </button>
+                                    ${!isMyPost && post.email ? `
+                                        <a href="mailto:${post.email}" class="h-10 px-4 bg-tractorBg hover:bg-zinc-800 border border-tractorBorder rounded-xl flex items-center gap-2 text-slate-200 text-xs md:text-sm font-bold transition">
+                                            <span>✉️</span> El. paštas
+                                        </a>
+                                    ` : ''}
+                                    ${canDelete ? `
+                                    <button data-delete-id="${post.id}" class="btn-delete-post h-10 px-4 bg-slate-800 hover:bg-red-700 border border-tractorBorder rounded-xl flex items-center gap-1.5 text-xs font-bold shadow-sm transition cursor-pointer" style="color: #ffffff !important;">
+    <span>🗑️</span> <span style="color: #ffffff !important;">Ištrinti skelbimą</span>
+</button>
                                     ` : ''}
                                 </div>
                             </div>
@@ -311,8 +453,12 @@ function listenToFeedPosts(currentUser, userData, classifierMap) {
                                 <p class="text-sm md:text-base text-slate-100 leading-relaxed">${cleanMessage}</p>
                             </div>
 
-                            <div class="flex justify-between items-center text-xs md:text-sm text-slate-400 pt-1">
-                                <span>Ūkininkas: <strong class="text-white font-semibold">${post.userName || 'Ūkininkas'}</strong> ${post.phone ? `(${post.phone})` : ''}</span>
+                            <div class="flex flex-wrap justify-between items-center gap-2 text-xs md:text-sm text-slate-400 pt-1">
+                                <div class="flex flex-wrap items-center gap-x-3 gap-y-1">
+                                    <span>Ūkininkas: <strong class="text-white font-semibold">${post.userName || 'Ūkininkas'}</strong></span>
+                                    ${post.phone ? `<span class="text-slate-300">📞 ${post.phone}</span>` : ''}
+                                    ${post.email ? `<span class="text-slate-300">✉️ ${post.email}</span>` : ''}
+                                </div>
                                 <span class="bg-tractorBg px-3 py-1 rounded-lg border border-tractorBorder text-slate-300 font-medium">🕒 ${dateStr}</span>
                             </div>
                         </div>
@@ -324,8 +470,14 @@ function listenToFeedPosts(currentUser, userData, classifierMap) {
             document.querySelectorAll('.btn-delete-post').forEach(btn => {
                 btn.onclick = () => {
                     const id = btn.getAttribute('data-delete-id');
-                    showDialog("Šalinimas", "Ar tikrai norite pašalinti savo SOS skelbimą?", "🗑️", () => {
-                        db.collection("posts").doc(id).delete();
+                    showDialog("Šalinimas", "Ar tikrai norite pašalinti šį SOS skelbimą?", "🗑️", async () => {
+                        try {
+                            await db.collection("posts").doc(id).delete();
+                            showBottomToast("SOS skelbimas sėkmingai pašalintas.", "info");
+                        } catch (err) {
+                            console.error("Klaida trinant skelbimą:", err);
+                            showBottomToast("Nepavyko pašalinti skelbimo.", "error");
+                        }
                     }, true);
                 };
             });
