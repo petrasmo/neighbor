@@ -32,6 +32,8 @@ export async function getDistrictFromCoords(lat, lng) {
 
         if (districtName) {
             return districtName
+                .replace(/ miesto savivaldybė/gi, " r.")
+                .replace(/ miesto/gi, " r.")
                 .replace(/ rajono savivaldybė/gi, " r.")
                 .replace(/ rajono/gi, " r.")
                 .replace(/ savivaldybė/gi, " sav.")
@@ -41,6 +43,6 @@ export async function getDistrictFromCoords(lat, lng) {
         return null;
     } catch (err) {
         console.warn("Nepavyko nustatyti rajono pagal GPS:", err.message);
-        return null; // Jokio spėliojimo – tiesiog null
+        return null;
     }
 }

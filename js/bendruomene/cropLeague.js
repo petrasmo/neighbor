@@ -63,7 +63,15 @@ async function resolveUserDistrict(userData, currentUser) {
 
 function matchDistrictWithList(rawName) {
     if (!rawName) return null;
-    const clean = rawName.toLowerCase().replace(" rajono", "").replace(" savivaldybė", "").replace(" r.", "").replace(" sav.", "").trim();
+    const clean = rawName
+        .toLowerCase()
+        .replace(" miesto", "")
+        .replace(" m.", "")
+        .replace(" rajono", "")
+        .replace(" savivaldybė", "")
+        .replace(" r.", "")
+        .replace(" sav.", "")
+        .trim();
     
     return ALL_LITHUANIAN_DISTRICTS.find(d => {
         const cleanD = d.toLowerCase().replace(" r.", "").replace(" sav.", "").trim();
