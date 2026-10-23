@@ -55,6 +55,41 @@ export function switchTab(tabIndex) {
     setMobileBtnActive('btn-mobile-ukis-menu', isUkis);
     setMobileBtnActive('btn-mobile-bendruomene-menu', isBendruomene);
     setMobileBtnActive('btn-mobile-settings-nav', tabIndex === 9);
+
+    const seoMap = {
+        0: {
+            title: "JurgisAgro – Ūkininkų Portalas, Grūdų Kainos, MATIF Birža ir Ūkio Skaičiuoklės",
+            desc: "Lietuvos ūkininkų portalas ir programa: gyvos grūdų supirkimo kainos, MATIF birža, žymėtas dyzelinas (gazolas), trąšų barometras ir NMA žurnalai.",
+            url: "https://jurgisagro.com/"
+        },
+        1: {
+            title: "Agro-Orai Purškimui, Įšalo Gylis ir Žiemkenčių Radaras | JurgisAgro",
+            desc: "Tikslūs agro-orai ūkininkams: 48 val. purškimo langas, vėjo greitis, dirvos temperatūra, įšalas, T-Sum 200 ir sniego pelėsio rizika.",
+            url: "https://jurgisagro.com/?tab=1"
+        },
+        7: {
+            title: "SOS Pagalba Ūkininkams Laukuose ir Technikos Paieška | JurgisAgro",
+            desc: "Skubi ūkininkų savitarpio pagalba sugedus traktoriui, kombainui ar įstrigus laukuose jūsų rajone.",
+            url: "https://jurgisagro.com/?tab=7"
+        },
+        11: {
+            title: "Lietuvos Pasėlių Lyga (TOP 10) – Sentinel-2 NDVI Reitingas | JurgisAgro",
+            desc: "Kurio ūkininko kviečiai ir rapsai stipriausi jūsų rajone ir Lietuvoje? Palydovinis Sentinel-2 ir Google Earth Engine pasėlių reitingas.",
+            url: "https://jurgisagro.com/?tab=11"
+        },
+        12: {
+            title: "Žemės Ūkio Renginiai, LŽŪKT Mokymai ir Kaimo Šventės | JurgisAgro",
+            desc: "Gyvas Lietuvos agro-renginių kalendorius: kaimo šventės, mugės, LŽŪKT kursai, purškimo pažymėjimai, NMA seminarai ir parodos.",
+            url: "https://jurgisagro.com/?tab=12"
+        }
+    };
+
+    const activeSeo = seoMap[tabIndex] || seoMap[0];
+    document.title = activeSeo.title;
+    const descMeta = document.querySelector('meta[name="description"]');
+    if (descMeta) descMeta.setAttribute('content', activeSeo.desc);
+    const canonLink = document.querySelector('link[rel="canonical"]');
+    if (canonLink) canonLink.setAttribute('href', activeSeo.url);
 }
 
 function setMobileBtnActive(id, isActive) {
