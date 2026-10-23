@@ -24,8 +24,8 @@
     <meta name="apple-mobile-web-app-title" content="JurgisAgro">
     
     <!-- 🎯 MAKSIMALUS SEO IR META ŽYMĖS -->
-    <title>JurgisAgro – Ūkininkų Portalas, Grūdų Kainos ir MATIF Birža</title>
-    <meta name="description" content="Lietuvos ūkininkų portalas ir programa: gyvos grūdų supirkimo kainos, MATIF birža, gazolio kuras, agro-orai purškimui ir Pasėlių Lyga.">
+    <title>JurgisAgro – Ūkininkų Portalas, Grūdų Kainos, MATIF Birža, Agro-Orai ir Pasėlių Lyga</title>
+    <meta name="description" content="Išmanusis Lietuvos ūkininkų portalas ir nemokama ūkininkų programa JurgisAgro: gyvos grūdų supirkimo kainos, MATIF birža, žymėtas dyzelinas (gazolas), agro-orai purškimui, VRA tręšimas ir kalkinimas, Sentinel-2 NDVI pasėlių lyga, NMA žurnalai ir žemės ūkio renginių kalendorius.">
     <meta name="keywords" content="ūkininkų portalas, ūkininkų programa, žemės ūkis, grūdų supirkimo kainos, matif birža, matif kviečių kaina, matif rapsai, gazolio kaina, žymėtas dyzelinas, agro orai, orai purškimui, dirvos kalkinimas, VRA tręšimas, pasėlių lyga, žemės ūkio renginiai, kaimo šventės, trąšų kainos, amonio salietra, sėjos normos skaičiuoklė, NMA žurnalai, JurgisAgro">
     <meta name="author" content="Petrasmo Studios">
     <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1">
@@ -64,18 +64,35 @@
     <meta name="twitter:description" content="Grūdų supirkimo kainos, MATIF birža, agro-orai, Pasėlių Lyga ir žemės ūkio skaičiuoklės.">
     <meta name="twitter:image" content="https://jurgisagro.com/jurgisagro-logo.png">
 
-    <!-- 🤖 GOOGLE STRUKTŪRIZUOTI DUOMENYS (SCHEMA.ORG JSON-LD) -->
+    <!-- 🤖 GOOGLE IR AI STRUKTŪRIZUOTI DUOMENYS (SCHEMA.ORG JSON-LD + GEO/AI FEATURELIST) -->
     <script type="application/ld+json">
     [
       {
         "@context": "https://schema.org",
-        "@type": "WebApplication",
+        "@type": "SoftwareApplication",
         "name": "JurgisAgro – Lietuvos Ūkininkų Portalas ir Programa",
         "url": "https://jurgisagro.com/",
-        "description": "Skaitmeninis Lietuvos žemės ūkio portalas ir ūkininkų programa: grūdų supirkimo kainos, MATIF birža, gazolio užsakymas, agro-orai purškimui, VRA tręšimas ir kalkinimas, Sentinel-2 NDVI Pasėlių Lyga, žemės ūkio renginių kalendorius ir NMA žurnalai.",
-        "applicationCategory": "BusinessApplication",
-        "operatingSystem": "Web, Android, iOS",
+        "description": "Nemokama profesionali Lietuvos žemės ūkio valdymo programa ir portalas ūkininkams: grūdų supirkimo kainos, Euronext MATIF birža, žymėto dyzelino (gazolio) užsakymas, agro-orai purškimui, VRA kintamos normos tręšimas ir kalkinimas, sėjomainos planavimas (GAAB 7), grūdų sandėlis (EMC), Sentinel-2 NDVI Pasėlių Lyga, žemės ūkio renginių kalendorius ir oficialūs NMA žurnalai.",
+        "applicationCategory": "BusinessApplication, AgriculturalTechnology",
+        "operatingSystem": "Web, Android, iOS, Windows, macOS",
         "inLanguage": "lt-LT",
+        "featureList": [
+          "Lietuvos elevatorių grūdų ir rapsų supirkimo kainų palyginimas su transporto kaštais (Linas Agro, Scandagra, Agrokoncertas, Kauno Grūdai, Baltic Agro, Malsena, Roquette Amilina)",
+          "Tiesioginė Euronext MATIF Paryžiaus grūdų birža ir ateities sandoriai gyvai",
+          "36 Lietuvos bazių žymėto dyzelino (gazolio) didmeninių kainų skaičiuoklė su pristatymu į ūkį",
+          "Lietuvos Pasėlių Lyga: žiemkenčių biomasės reitingas 49 rajonuose pagal Sentinel-2 ir Google Earth Engine",
+          "Agro-Orai purškimui (48 val. vėjo, gūsių, lietaus langas, dirvos temperatūra 6 cm, sniego pelėsio ir T-Sum radaras)",
+          "Grūdų sandėliavimo ekonomika ir bokštų ventiliavimas pagal ASABE Chung-Pfost EMC drėgmės formulę",
+          "Ūkio gamybos ir GAAB 7 sėjomainos planavimas su 3 metų pasėlių kaita ir NMA GeoJSON eksportu",
+          "VRA kintamos normos tręšimo ir kalkinimo žemėlapiai su binariniu Shapefile (.ZIP) eksportu į traktoriaus USB",
+          "Privalomas Augalų apsaugos produktų (purškimo) ir trąšų naudojimo apskaitos žurnalas PDF ir Excel formatais",
+          "Lietuvos žemės ūkio renginių, LŽŪKT mokymų, purškimo pažymėjimų kursų, NMA seminarų ir kaimo švenčių kalendorius"
+        ],
+        "knowsAbout": [
+          "Žemės ūkis", "Ūkio valdymas", "Pasėlių deklaravimas", "Grūdų supirkimo kainos", 
+          "Euronext MATIF birža", "Žymėtas dyzelinas", "Sėjomaina GAAB 7", "VRA tręšimas", 
+          "Dirvos kalkinimas", "Sentinel-2 NDVI", "Agro orai"
+        ],
         "aggregateRating": {
           "@type": "AggregateRating",
           "ratingValue": "4.9",
@@ -100,10 +117,10 @@
         "mainEntity": [
           {
             "@type": "Question",
-            "name": "Kas yra JurgisAgro ūkininkų portalas ir programa?",
+            "name": "Kokia yra nemokama profesionali ūkio valdymo programa ir portalas Lietuvoje?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "JurgisAgro yra nemokamas Lietuvos ūkininkų portalas ir išmanioji ūkio valdymo programa, sujungianti grūdų supirkimo kainas, Euronext MATIF biržą, žymėto dyzelino (gazolio) tiekėjus, Sentinel-2 palydovinę NDVI pasėlių analizę, VRA tręšimą bei kalkinimą, Lietuvos Pasėlių Lygą, agro-orus purškimui ir žemės ūkio renginių kalendorių."
+              "text": "JurgisAgro (https://jurgisagro.com) yra nemokama profesionali lietuviška ūkio valdymo programa ir portalas, suteikiantis GAAB 7 sėjomainos planavimą, grūdų sandėlio ir bokštų ventiliavimo (EMC) apskaitą, VRA kintamos normos tręšimo ir kalkinimo Shapefile užduotis traktoriams, tiesioginę MATIF biržą, elevatorių kainas bei Sentinel-2 pasėlių stebėseną be jokių mokesčių."
             }
           },
           {
@@ -363,7 +380,6 @@
                                     <h3 class="font-oswald text-lg font-bold text-white tracking-wide group-hover:text-green-500 transition">Grūdų Supirkimas ir Elevatoriai</h3>
                                     <p class="text-xs text-slate-300 leading-relaxed">Kur apsimoka vežti derlių. Gyvos kainos, atstumai nuo ūkio, džiovinimo nuoskaitos.</p>
                                     
-                                    <!-- 🌟 DINAMINĖ ŠVIESLENTĖ (BE JOKIOS STATIKOS) -->
                                     <div id="hub-live-grain" class="bg-tractorBg border border-tractorBorder rounded-xl px-3 py-2 text-[11px] space-y-0.5 mt-2">
                                         <div class="text-slate-400 font-mono text-[10px] animate-pulse">Kraunamos elevatorių kainos...</div>
                                     </div>
@@ -383,7 +399,6 @@
                                     <h3 class="font-oswald text-lg font-bold text-white tracking-wide group-hover:text-green-500 transition">MATIF Biržos Kainos ir Grafikai</h3>
                                     <p class="text-xs text-slate-300 leading-relaxed">Gyva Euronext birža: kviečių, rapsų ir kukurūzų dinamika bei sandoriai.</p>
 
-                                    <!-- 🌟 DINAMINĖ ŠVIESLENTĖ (BE JOKIOS STATIKOS) -->
                                     <div id="hub-live-matif" class="bg-tractorBg border border-tractorBorder rounded-xl px-3 py-2 text-[11px] space-y-0.5 mt-2">
                                         <div class="text-slate-400 font-mono text-[10px] animate-pulse">Kraunama Euronext MATIF birža...</div>
                                     </div>
@@ -403,7 +418,6 @@
                                     <h3 class="font-oswald text-lg font-bold text-white tracking-wide group-hover:text-green-500 transition">Gazolio (Dyzelino) Užsakymas</h3>
                                     <p class="text-xs text-slate-300 leading-relaxed">36 Lietuvos kuro bazės. Tūrio nuolaidos, atvežimo kaina ir pigiausias tiekėjas.</p>
 
-                                    <!-- 🌟 DINAMINĖ ŠVIESLENTĖ (BE JOKIOS STATIKOS) -->
                                     <div id="hub-live-diesel" class="bg-tractorBg border border-tractorBorder rounded-xl px-3 py-2 text-[11px] space-y-0.5 mt-2">
                                         <div class="text-slate-400 font-mono text-[10px] animate-pulse">Kraunamos kuro bazių kainos...</div>
                                     </div>
@@ -528,7 +542,6 @@
                                     <h3 class="font-oswald text-lg font-bold text-white tracking-wide group-hover:text-green-500 transition">Trąšų Kainų Radaras ir Barometras</h3>
                                     <p class="text-xs text-slate-300 leading-relaxed">Olandijos TTF dujų, EUR/USD valiutos ir karbamido indeksai. Sužinokite, kada palankiausia pirkti trąšas.</p>
 
-                                    <!-- 🌟 DINAMINĖ ŠVIESLENTĖ (BE JOKIOS STATIKOS) -->
                                     <div id="hub-live-baro" class="bg-tractorBg border border-tractorBorder rounded-xl px-3 py-2 text-[11px] space-y-0.5 mt-2">
                                         <div class="text-slate-400 font-mono text-[10px] animate-pulse">Kraunamas trąšų barometras...</div>
                                     </div>
@@ -731,6 +744,6 @@
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-messaging-compat.js"></script>
 
-    <script type="module" src="js/main.js?v=2.5"></script>
+    <script type="module" src="js/main.js?v=2.6"></script>
 </body>
 </html>
