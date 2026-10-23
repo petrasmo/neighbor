@@ -38,7 +38,6 @@ let userData = null;
 let cachedFieldsList = [];
 const classifierMap = {};
 
-// Pagalbinė funkcija grąžinimui į skaičiuoklių centrą
 let returnToCalculatorsHub = null;
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -48,9 +47,11 @@ document.addEventListener('DOMContentLoaded', () => {
     renderGlobalSidebar('index', requestedTab);
     initThemeToggle();
 
+    // 🌟 UŽKRAUNAME GYVAS KAINAS IR LAIKĄ Į PRADINIO EKRANO KORTELES
+    loadHubLivePriceTickers();
+
     document.querySelectorAll('.login-trigger-btn').forEach(btn => btn.addEventListener('click', () => openAuthModal('login')));
 
-    // Navigacija su visais tab indeksais
     document.querySelectorAll('.nav-tab-btn').forEach(btn => {
         btn.addEventListener('click', () => {
             const tabIdx = parseInt(btn.getAttribute('data-tab'));
@@ -68,7 +69,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
             switchTab(tabIdx);
 
-            // Jei paspaudė į Skaičiuokles (0) – grąžiname į pagrindinį sąrašą
             if (tabIdx === 0 && typeof returnToCalculatorsHub === 'function') {
                 returnToCalculatorsHub();
             } else if (tabIdx === 1) {
@@ -95,7 +95,6 @@ document.addEventListener('DOMContentLoaded', () => {
             } else if (tabIdx === 11) {
                 initCropLeagueTab(currentUser, userData);
             } else if (tabIdx === 12) {
-                // 🌟 TAB 12: AGRO-RENGINIAI IR ŠVENTĖS
                 initEventsTab(currentUser, userData);
             }
         });
@@ -167,7 +166,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     userData = { userId: user.uid, name: user.displayName || "Ūkininkas", email: user.email || "", isSetupComplete: true };
                 }
 				
-				autoRegisterFcmToken(currentUser, userData);
+                autoRegisterFcmToken(currentUser, userData);
 				
                 if (sidebarAuthBox) {
                     sidebarAuthBox.innerHTML = `
@@ -264,6 +263,140 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 
+// 🌟 AUTOMATINIS GYVŲ KAINŲ IR LAIKO ATVAIZDAVIMAS PRADINIO EKRANO KORTELĖSE
+// 🌟 100% DINAMINĖS KAINOS TIK IŠ FIRESTORE (JOKIOS STATIKOS!)
+function loadHubLivePriceTickers() {
+    // 1. MATIF birža
+    db.collection("matif_prices").doc("market_data").onSnapshot(doc => {
+        if (!doc.exists) return;
+        const d = doc.data();
+        const w = d.crops?.wheat;
+        const r = d.crops?.rapeseed;
+        const el = document.getElementById('hub-live-matif');
+        if (!el || !w || !r || w.currentPrice === undefined || r.currentPrice === undefined) return;
+
+        let timeStr = "";
+        if (d.updatedAt && d.updatedAt.toDate) {
+            const dt = d.updatedAt.toDate();
+            timeStr = dt.toLocaleString('lt-LT', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
+        }
+
+        el.innerHTML = `
+            <div class="flex items-center justify-between font-mono font-bold text-white">
+                <span>🌾 ${Number(w.currentPrice).toFixed(2)} € <span class="${w.isPositive ? 'text-green-500' : 'text-red-500'} text-[10px]">(${w.change || ''})</span></span>
+                <span>🌱 ${Number(r.currentPrice).toFixed(2)} € <span class="${r.isPositive ? 'text-green-500' : 'text-red-500'} text-[10px]">(${r.change || ''})</span></span>
+            </div>
+            <div class="text-[10px] text-green-600 dark:text-green-400 font-semibold flex items-center gap-1.5">
+                <span class="w-1.5 h-1.5 rounded-full bg-green-500 animate-ping"></span>
+                <span>🕒 Atnaujinta: ${timeStr}</span>
+            </div>
+        `;
+    }, () => {});
+
+    // 2. Trąšų barometras
+    db.collection("fertilizer_market").doc("barometer_data").onSnapshot(doc => {
+        if (!doc.exists) return;
+        const d = doc.data();
+        const sal = d.indicators?.estimatedSalietra;
+        const gas = d.gasTTF?.priceMWh;
+        const el = document.getElementById('hub-live-baro');
+        if (!el || sal === undefined || gas === undefined) return;
+
+        let timeStr = "";
+        if (d.updatedAt && d.updatedAt.toDate) {
+            const dt = d.updatedAt.toDate();
+            timeStr = dt.toLocaleString('lt-LT', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
+        }
+
+        el.innerHTML = `
+            <div class="flex items-center justify-between font-mono font-bold text-white">
+                <span>🧪 Salietra ~${sal} €/t</span>
+                <span>⚡ TTF: ${gas} €/MWh</span>
+            </div>
+            <div class="text-[10px] text-green-600 dark:text-green-400 font-semibold flex items-center gap-1.5">
+                <span class="w-1.5 h-1.5 rounded-full bg-green-500 animate-ping"></span>
+                <span>🕒 Atnaujinta: ${timeStr}</span>
+            </div>
+        `;
+    }, () => {});
+
+    // 3. Elevatoriai (Grūdai)
+    db.collection("grain_prices").onSnapshot(snap => {
+        if (snap.empty) return;
+        let maxWheat = 0;
+        let maxRape = 0;
+        let latestDate = null;
+
+        snap.forEach(doc => {
+            const p = doc.data();
+            const w = p.prices?.wheatExtra || p.prices?.wheat2 || 0;
+            const r = p.prices?.rapeseed || 0;
+            if (w > maxWheat) maxWheat = w;
+            if (r > maxRape) maxRape = r;
+            if (p.updatedAt && p.updatedAt.toDate) {
+                const dt = p.updatedAt.toDate();
+                if (!latestDate || dt > latestDate) latestDate = dt;
+            }
+        });
+
+        const el = document.getElementById('hub-live-grain');
+        if (!el || maxWheat === 0) return;
+
+        const timeStr = latestDate 
+            ? latestDate.toLocaleString('lt-LT', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })
+            : "";
+
+        el.innerHTML = `
+            <div class="flex items-center justify-between font-mono font-bold text-white">
+                <span>🌾 Kviečiai iki ${maxWheat} €/t</span>
+                <span>🌱 Rapsai iki ${maxRape} €/t</span>
+            </div>
+            <div class="text-[10px] text-green-600 dark:text-green-400 font-semibold flex items-center gap-1.5">
+                <span class="w-1.5 h-1.5 rounded-full bg-green-500 animate-ping"></span>
+                <span>🕒 Atnaujinta: ${timeStr} (${snap.size} elev.)</span>
+            </div>
+        `;
+    }, () => {});
+
+    // 4. Gazolas (Dyzelinas)
+    db.collection("diesel_prices").onSnapshot(snap => {
+        if (snap.empty) return;
+        let minDiesel = Infinity;
+        let latestDate = null;
+
+        snap.forEach(doc => {
+            const d = doc.data();
+            if (d.basePriceNoVat !== undefined) {
+                const disc = d.discounts?.tier20k || 0;
+                const best = d.basePriceNoVat + disc;
+                if (best < minDiesel) minDiesel = best;
+            }
+            if (d.updatedAt && d.updatedAt.toDate) {
+                const dt = d.updatedAt.toDate();
+                if (!latestDate || dt > latestDate) latestDate = dt;
+            }
+        });
+
+        const el = document.getElementById('hub-live-diesel');
+        if (!el || minDiesel === Infinity) return;
+
+        const timeStr = latestDate 
+            ? latestDate.toLocaleString('lt-LT', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })
+            : "";
+
+        el.innerHTML = `
+            <div class="flex items-center justify-between font-mono font-bold text-white">
+                <span>⛽ Didmena nuo ${minDiesel.toFixed(3)} €/l</span>
+                <span class="text-[10px] font-sans text-slate-400">(be PVM)</span>
+            </div>
+            <div class="text-[10px] text-amber-600 dark:text-amber-400 font-semibold flex items-center gap-1.5">
+                <span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-ping"></span>
+                <span>🕒 Atnaujinta: ${timeStr} (${snap.size} bazės)</span>
+            </div>
+        `;
+    }, () => {});
+}
+
 function setupCalculatorsHub() {
     const hubView = document.getElementById('view-calculators-hub');
     const grainView = document.getElementById('view-tab-grain-embed');
@@ -274,9 +407,9 @@ function setupCalculatorsHub() {
     const combineView = document.getElementById('view-tab-combine-embed');
     const sprayView = document.getElementById('view-tab-spray-embed');
     const fertView = document.getElementById('view-tab-fert-embed');
-	const barometerView = document.getElementById('view-tab-barometer-embed');
-	const openBarometerBtn = document.getElementById('btn-open-barometer-calc');
-	const backFromBarometerBtn = document.getElementById('btn-back-from-barometer');
+    const barometerView = document.getElementById('view-tab-barometer-embed');
+    const openBarometerBtn = document.getElementById('btn-open-barometer-calc');
+    const backFromBarometerBtn = document.getElementById('btn-back-from-barometer');
     const storageView = document.getElementById('view-tab-storage-embed');
     const nmaView = document.getElementById('view-tab-nma-embed');
 
@@ -314,7 +447,7 @@ function setupCalculatorsHub() {
         fertView?.classList.add('hidden');
         storageView?.classList.add('hidden');
         nmaView?.classList.add('hidden');
-		barometerView?.classList.add('hidden');
+        barometerView?.classList.add('hidden');
     };
 
     const returnToHub = () => {
@@ -394,12 +527,13 @@ function setupCalculatorsHub() {
         renderNmaCalendar(document.getElementById('nma-calc-content'));
         window.scrollTo({ top: 0, behavior: 'smooth' });
     };
-	if (openBarometerBtn) openBarometerBtn.onclick = () => {
-		hideAll();
-		barometerView?.classList.remove('hidden');
-		renderFertilizerBarometer(document.getElementById('barometer-calc-content'));
-		window.scrollTo({ top: 0, behavior: 'smooth' });
-	};
+
+    if (openBarometerBtn) openBarometerBtn.onclick = () => {
+        hideAll();
+        barometerView?.classList.remove('hidden');
+        renderFertilizerBarometer(document.getElementById('barometer-calc-content'));
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
 
     if (backFromGrainBtn) backFromGrainBtn.onclick = returnToHub;
     if (backFromMatifBtn) backFromMatifBtn.onclick = returnToHub;
@@ -411,5 +545,5 @@ function setupCalculatorsHub() {
     if (backFromFertBtn) backFromFertBtn.onclick = returnToHub;
     if (backFromStorageBtn) backFromStorageBtn.onclick = returnToHub;
     if (backFromNmaBtn) backFromNmaBtn.onclick = returnToHub;
-	if (backFromBarometerBtn) backFromBarometerBtn.onclick = returnToHub;
+    if (backFromBarometerBtn) backFromBarometerBtn.onclick = returnToHub;
 }
