@@ -10,7 +10,8 @@ export function switchTab(tabIndex) {
         document.getElementById('view-tab-garage'),      // 8 (Technika)
         document.getElementById('view-tab-settings'),    // 9 (Nustatymai)
         document.getElementById('view-tab-cropplanner'),  // 10 Sėjomainos Planavimas (GAAB 7)
-		document.getElementById('view-tab-league')       // 11 👈 lyga
+		document.getElementById('view-tab-league'),       // 11 👈 lyga
+        document.getElementById('view-tab-events')
     ];
 
     let targetView = document.getElementById('view-tab-calculators');
@@ -22,6 +23,7 @@ export function switchTab(tabIndex) {
     else if (tabIndex === 9) targetView = document.getElementById('view-tab-settings');
     else if (tabIndex === 10) targetView = document.getElementById('view-tab-cropplanner');
 	else if (tabIndex === 11) targetView = document.getElementById('view-tab-league');
+    else if (tabIndex === 12) targetView = document.getElementById('view-tab-events') // 12
 
     allViews.forEach(el => {
         if (!el) return;
@@ -46,7 +48,7 @@ export function switchTab(tabIndex) {
 
     // 2. 🌟 MOBILI APATINĖ JUOSTA: užtikriname, kad TIK VIENAS mygtukas būtų žalias!
     const isUkis = (tabIndex >= 2 && tabIndex <= 6) || tabIndex === 10;
-    const isBendruomene = tabIndex === 7 || tabIndex === 8;
+    const isBendruomene = tabIndex === 7 || tabIndex === 8 || tabIndex === 11 || tabIndex === 12;
 
     setMobileBtnActive('btn-mobile-skaiciuokles-menu', tabIndex === 0);
     setMobileBtnActive('btn-mobile-weather-nav', tabIndex === 1);

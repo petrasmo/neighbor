@@ -16,7 +16,7 @@ export function renderGlobalSidebar(activePage = 'index', activeTab = 0) {
     };
 
     const isUkisActive = (activeTab >= 2 && activeTab <= 6) || activeTab === 10;
-    const isBendruomeneActive = (activeTab >= 7 && activeTab <= 8) || activeTab === 11;
+    const isBendruomeneActive = (activeTab >= 7 && activeTab <= 8) || activeTab === 11 || activeTab === 12;
 
     // 1. DESKTOP ŠONINIS MENIU
     if (sidebarContainer) {
@@ -98,6 +98,9 @@ export function renderGlobalSidebar(activePage = 'index', activeTab = 0) {
                                 <!-- 🌟 ŠTAI NAUJAS LYGOS MYGTUKAS: -->
                                 <button class="nav-tab-btn w-full text-left px-3 py-2 rounded-lg font-semibold transition flex items-center gap-2.5 cursor-pointer ${activeTab === 11 ? 'bg-tractorPrimary text-white shadow' : 'text-amber-400 hover:text-white hover:bg-tractorCard'}" ${getNavClickAction(11)}>
                                     <span>🏆</span> <span>Pasėlių Lyga (TOP 10)</span>
+                                </button>
+                                <button class="nav-tab-btn w-full text-left px-3 py-2 rounded-lg font-semibold transition flex items-center gap-2.5 cursor-pointer ${activeTab === 12 ? 'bg-tractorPrimary text-white shadow' : 'text-slate-300 hover:text-white hover:bg-tractorCard'}" ${getNavClickAction(12)}>
+                                    <span>🎉</span> <span>Agro-Renginiai ir Šventės</span>
                                 </button>
                                 <button class="nav-tab-btn w-full text-left px-3 py-2 rounded-lg font-semibold transition flex items-center gap-2.5 cursor-pointer ${activeTab === 7 ? 'bg-tractorPrimary text-white shadow' : 'text-slate-300 hover:text-white hover:bg-tractorCard'}" ${getNavClickAction(7)}>
                                     <span>🚨</span> <span>SOS Pagalba kaimynams</span>
@@ -288,6 +291,9 @@ export function renderGlobalSidebar(activePage = 'index', activeTab = 0) {
                         <!-- 🌟 ŠTAI NAUJAS LYGOS MYGTUKAS TELEFONAMS: -->
                         <button class="nav-tab-btn text-left p-3.5 rounded-xl bg-tractorBg hover:bg-tractorPrimary/20 border border-tractorBorder flex items-center gap-3 font-bold text-amber-400 transition cursor-pointer ${activeTab === 11 ? 'border-tractorPrimary bg-tractorPrimary/20 text-green-400' : ''}" ${getNavClickAction(11)}>
                             <span class="text-base">🏆</span> <span>Pasėlių Lyga (TOP 10)</span>
+                        </button>
+                        <button class="nav-tab-btn text-left p-3.5 rounded-xl bg-tractorBg hover:bg-tractorPrimary/20 border border-tractorBorder flex items-center gap-3 font-bold text-white transition cursor-pointer ${activeTab === 12 ? 'border-tractorPrimary bg-tractorPrimary/20 text-green-400' : ''}" ${getNavClickAction(12)}>
+                            <span class="text-base">🎉</span> <span>Agro-Renginiai ir Šventės</span>
                         </button>
                         <button class="nav-tab-btn text-left p-3.5 rounded-xl bg-tractorBg hover:bg-tractorPrimary/20 border border-tractorBorder flex items-center gap-3 font-bold text-white transition cursor-pointer ${activeTab === 7 ? 'border-tractorPrimary bg-tractorPrimary/20 text-green-400' : ''}" ${getNavClickAction(7)}>
                             <span class="text-base">🚨</span> <span>SOS Pagalba kaimynams</span>

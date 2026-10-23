@@ -31,6 +31,7 @@ import { renderTSumRadar } from './ukis/tsumRadar.js';
 import { autoRegisterFcmToken } from './core/notifications.js';
 import { renderFertilizerBarometer } from './skaiciuokles/fertilizerBarometer.js';
 import { initCropLeagueTab } from './bendruomene/cropLeague.js';
+import { initEventsTab } from './bendruomene/events.js';
 
 let currentUser = null;
 let userData = null;
@@ -93,6 +94,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 refreshSettingsMap();
             } else if (tabIdx === 11) {
                 initCropLeagueTab(currentUser, userData);
+            } else if (tabIdx === 12) {
+                // 🌟 TAB 12: AGRO-RENGINIAI IR ŠVENTĖS
+                initEventsTab(currentUser, userData);
             }
         });
     });
@@ -212,6 +216,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (requestedTab === 2) refreshFieldsMap();
                     if (requestedTab === 10) initCropPlannerTab(currentUser, userData);
                     if (requestedTab === 11) initCropLeagueTab(currentUser, userData);
+                    if (requestedTab === 12) initEventsTab(currentUser, userData);
                     if (requestedTab === 3) initVraFertilizerTab(currentUser, userData);
                     if (requestedTab === 4) initLimingSoilTab(currentUser, userData);
                     if (requestedTab === 5) initOperationsJournalTab(currentUser, userData);
@@ -245,6 +250,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 initWeatherTab(null, null);
 
                 switchTab(requestedTab);
+                if (requestedTab === 11) initCropLeagueTab(null, null);
+                if (requestedTab === 12) initEventsTab(null, null);
             }
         } catch (globalErr) {
             console.error("Auth klaida:", globalErr);
