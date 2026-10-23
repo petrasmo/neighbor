@@ -1,0 +1,30 @@
+{
+  "name": "JurgisAgro – Lietuvos Ūkininkų Portalas",
+  "short_name": "JurgisAgro",
+  "description": "Skaitmeninis Lietuvos ūkininkų portalas: grūdų kainos, MATIF birža, gazolas, agro-orai, Pasėlių Lyga, žemės ūkio renginiai ir NMA žurnalai.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0F120F",
+  "theme_color": "#2E7D32",
+  "orientation": "portrait-primary",
+  "lang": "lt-LT",
+  "icons": [
+    {
+      "src": "/logo.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/logo.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}
