@@ -58,8 +58,8 @@ export function switchTab(tabIndex) {
 
     const seoMap = {
         0: {
-            title: "JurgisAgro – Ūkininkų Portalas, Grūdų Kainos, MATIF Birža ir Ūkio Skaičiuoklės",
-            desc: "Lietuvos ūkininkų portalas ir programa: gyvos grūdų supirkimo kainos, MATIF birža, žymėtas dyzelinas (gazolas), trąšų barometras ir NMA žurnalai.",
+            title: "JurgisAgro – Ūkininkų Portalas, Grūdų Kainos ir MATIF Birža",
+            desc: "Lietuvos ūkininkų portalas ir programa: gyvos grūdų supirkimo kainos, MATIF birža, gazolio kuras, agro-orai purškimui ir Pasėlių Lyga.",
             url: "https://jurgisagro.com/"
         },
         1: {
