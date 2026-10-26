@@ -23,6 +23,7 @@ import { renderSprayerCalculator } from './skaiciuokles/sprayerCalculator.js';
 import { renderFertilizerCalculator } from './skaiciuokles/fertilizerCalculator.js';
 import { renderStorageCalculator } from './skaiciuokles/storageCalculator.js';
 import { renderNmaCalendar } from './skaiciuokles/nmaCalendar.js';
+import { renderElectricityCalculator } from './skaiciuokles/electricityCalculator.js';
 import { initVraFertilizerTab } from './ukis/vraFertilizer.js';
 import { initLimingSoilTab } from './ukis/limingSoil.js';
 import { initOperationsJournalTab } from './ukis/operationsJournal.js';
@@ -39,6 +40,14 @@ let cachedFieldsList = [];
 const classifierMap = {};
 
 let returnToCalculatorsHub = null;
+
+function formatCleanCtHub(val) {
+    if (Math.abs(val) < 0.005) return "0";
+    if (Math.abs(val) < 0.1) {
+        return parseFloat(val.toFixed(2)).toString().replace('.', ',');
+    }
+    return parseFloat(val.toFixed(1)).toString().replace('.', ',');
+}
 
 document.addEventListener('DOMContentLoaded', () => {
     const urlParams = new URLSearchParams(window.location.search);
@@ -263,10 +272,60 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 
-// 🌟 AUTOMATINIS GYVŲ KAINŲ IR LAIKO ATVAIZDAVIMAS PRADINIO EKRANO KORTELĖSE
-// 🌟 100% DINAMINĖS KAINOS TIK IŠ FIRESTORE (JOKIOS STATIKOS!)
+// 🌟 100% DINAMINĖS KAINOS TIK IŠ FIRESTORE
 function loadHubLivePriceTickers() {
-    // 1. MATIF birža
+    // 1. Nord Pool Elektra (1 vietoje)
+    db.collection("electricity_prices").doc("market_data").onSnapshot(doc => {
+        if (!doc.exists) return;
+        const d = doc.data();
+        const allHours = d.hours || [];
+        const el = document.getElementById('hub-live-electricity');
+        if (!el || allHours.length === 0) return;
+
+        const now = new Date();
+        let todayStr = now.toLocaleDateString('lt-LT', { timeZone: 'Europe/Vilnius', year: 'numeric', month: '2-digit', day: '2-digit' });
+        const curH = parseInt(now.toLocaleTimeString('en-GB', { timeZone: 'Europe/Vilnius', hour: '2-digit', hour12: false }), 10);
+
+        // Atrenkame tik pilnas paras (bent 20 valandų)
+        const dateCounts = {};
+        allHours.forEach(h => { dateCounts[h.date] = (dateCounts[h.date] || 0) + 1; });
+        const fullDates = Object.keys(dateCounts).filter(dt => dateCounts[dt] >= 20).sort();
+
+        if (fullDates.length > 0 && !fullDates.includes(todayStr)) {
+            todayStr = fullDates[0];
+        }
+
+        const todayHours = allHours.filter(h => h.date === todayStr);
+        if (todayHours.length === 0) return;
+
+        const nowObj = todayHours.find(h => h.hour === curH) || todayHours[0];
+        let minObj = todayHours[0];
+        todayHours.forEach(h => {
+            if (h.priceCtNoVat < minObj.priceCtNoVat) minObj = h;
+        });
+
+        const nowCt = formatCleanCtHub(nowObj.priceCtNoVat);
+        const minCt = formatCleanCtHub(minObj.priceCtNoVat);
+
+        let timeStr = "";
+        if (d.updatedAt && d.updatedAt.toDate) {
+            const dt = d.updatedAt.toDate();
+            timeStr = dt.toLocaleString('lt-LT', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
+        }
+
+        el.innerHTML = `
+            <div class="flex items-center justify-between font-mono font-bold text-white">
+                <span>⚡ Dabar: ${nowCt} ct / kWh</span>
+                <span class="text-green-600 dark:text-green-400">Min (${minObj.hourLabel}): ${minCt} ct / kWh</span>
+            </div>
+            <div class="text-[10px] text-green-600 dark:text-green-400 font-semibold flex items-center gap-1.5">
+                <span class="w-1.5 h-1.5 rounded-full bg-green-500 animate-ping"></span>
+                <span>🕒 Atnaujinta: ${timeStr} (be PVM)</span>
+            </div>
+        `;
+    }, () => {});
+
+    // 2. MATIF birža
     db.collection("matif_prices").doc("market_data").onSnapshot(doc => {
         if (!doc.exists) return;
         const d = doc.data();
@@ -285,33 +344,6 @@ function loadHubLivePriceTickers() {
             <div class="flex items-center justify-between font-mono font-bold text-white">
                 <span>🌾 ${Number(w.currentPrice).toFixed(2)} € <span class="${w.isPositive ? 'text-green-500' : 'text-red-500'} text-[10px]">(${w.change || ''})</span></span>
                 <span>🌱 ${Number(r.currentPrice).toFixed(2)} € <span class="${r.isPositive ? 'text-green-500' : 'text-red-500'} text-[10px]">(${r.change || ''})</span></span>
-            </div>
-            <div class="text-[10px] text-green-600 dark:text-green-400 font-semibold flex items-center gap-1.5">
-                <span class="w-1.5 h-1.5 rounded-full bg-green-500 animate-ping"></span>
-                <span>🕒 Atnaujinta: ${timeStr}</span>
-            </div>
-        `;
-    }, () => {});
-
-    // 2. Trąšų barometras
-    db.collection("fertilizer_market").doc("barometer_data").onSnapshot(doc => {
-        if (!doc.exists) return;
-        const d = doc.data();
-        const sal = d.indicators?.estimatedSalietra;
-        const gas = d.gasTTF?.priceMWh;
-        const el = document.getElementById('hub-live-baro');
-        if (!el || sal === undefined || gas === undefined) return;
-
-        let timeStr = "";
-        if (d.updatedAt && d.updatedAt.toDate) {
-            const dt = d.updatedAt.toDate();
-            timeStr = dt.toLocaleString('lt-LT', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
-        }
-
-        el.innerHTML = `
-            <div class="flex items-center justify-between font-mono font-bold text-white">
-                <span>🧪 Salietra ~${sal} €/t</span>
-                <span>⚡ TTF: ${gas} €/MWh</span>
             </div>
             <div class="text-[10px] text-green-600 dark:text-green-400 font-semibold flex items-center gap-1.5">
                 <span class="w-1.5 h-1.5 rounded-full bg-green-500 animate-ping"></span>
@@ -395,10 +427,38 @@ function loadHubLivePriceTickers() {
             </div>
         `;
     }, () => {});
+
+    // 5. Trąšų barometras
+    db.collection("fertilizer_market").doc("barometer_data").onSnapshot(doc => {
+        if (!doc.exists) return;
+        const d = doc.data();
+        const sal = d.indicators?.estimatedSalietra;
+        const gas = d.gasTTF?.priceMWh;
+        const el = document.getElementById('hub-live-baro');
+        if (!el || sal === undefined || gas === undefined) return;
+
+        let timeStr = "";
+        if (d.updatedAt && d.updatedAt.toDate) {
+            const dt = d.updatedAt.toDate();
+            timeStr = dt.toLocaleString('lt-LT', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
+        }
+
+        el.innerHTML = `
+            <div class="flex items-center justify-between font-mono font-bold text-white">
+                <span>🧪 Salietra ~${sal} €/t</span>
+                <span>⚡ TTF: ${gas} €/MWh</span>
+            </div>
+            <div class="text-[10px] text-green-600 dark:text-green-400 font-semibold flex items-center gap-1.5">
+                <span class="w-1.5 h-1.5 rounded-full bg-green-500 animate-ping"></span>
+                <span>🕒 Atnaujinta: ${timeStr}</span>
+            </div>
+        `;
+    }, () => {});
 }
 
 function setupCalculatorsHub() {
     const hubView = document.getElementById('view-calculators-hub');
+    const electricityView = document.getElementById('view-tab-electricity-embed');
     const grainView = document.getElementById('view-tab-grain-embed');
     const matifView = document.getElementById('view-tab-matif-embed');
     const dieselView = document.getElementById('view-tab-diesel-embed');
@@ -408,11 +468,10 @@ function setupCalculatorsHub() {
     const sprayView = document.getElementById('view-tab-spray-embed');
     const fertView = document.getElementById('view-tab-fert-embed');
     const barometerView = document.getElementById('view-tab-barometer-embed');
-    const openBarometerBtn = document.getElementById('btn-open-barometer-calc');
-    const backFromBarometerBtn = document.getElementById('btn-back-from-barometer');
     const storageView = document.getElementById('view-tab-storage-embed');
     const nmaView = document.getElementById('view-tab-nma-embed');
 
+    const openElectricityBtn = document.getElementById('btn-open-electricity-calc');
     const openGrainBtn = document.getElementById('btn-open-grain-calc');
     const openMatifBtn = document.getElementById('btn-open-matif-calc');
     const openDieselBtn = document.getElementById('btn-open-diesel-calc');
@@ -423,20 +482,11 @@ function setupCalculatorsHub() {
     const openFertBtn = document.getElementById('btn-open-fert-calc');
     const openStorageBtn = document.getElementById('btn-open-storage-calc');
     const openNmaBtn = document.getElementById('btn-open-nma-calc');
-
-    const backFromGrainBtn = document.getElementById('btn-back-from-grain');
-    const backFromMatifBtn = document.getElementById('btn-back-from-matif');
-    const backFromDieselBtn = document.getElementById('btn-back-from-diesel');
-    const backFromSeedBtn = document.getElementById('btn-back-from-seed');
-    const backFromCoverBtn = document.getElementById('btn-back-from-cover');
-    const backFromCombineBtn = document.getElementById('btn-back-from-combine');
-    const backFromSprayBtn = document.getElementById('btn-back-from-spray');
-    const backFromFertBtn = document.getElementById('btn-back-from-fert');
-    const backFromStorageBtn = document.getElementById('btn-back-from-storage');
-    const backFromNmaBtn = document.getElementById('btn-back-from-nma');
+    const openBarometerBtn = document.getElementById('btn-open-barometer-calc');
 
     const hideAll = () => {
         hubView?.classList.add('hidden');
+        electricityView?.classList.add('hidden');
         grainView?.classList.add('hidden');
         matifView?.classList.add('hidden');
         dieselView?.classList.add('hidden');
@@ -457,6 +507,13 @@ function setupCalculatorsHub() {
     };
 
     returnToCalculatorsHub = returnToHub;
+
+    if (openElectricityBtn) openElectricityBtn.onclick = () => {
+        hideAll();
+        electricityView?.classList.remove('hidden');
+        renderElectricityCalculator(document.getElementById('electricity-calc-content'));
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
 
     if (openGrainBtn) openGrainBtn.onclick = () => {
         hideAll();
@@ -534,16 +591,4 @@ function setupCalculatorsHub() {
         renderFertilizerBarometer(document.getElementById('barometer-calc-content'));
         window.scrollTo({ top: 0, behavior: 'smooth' });
     };
-
-    if (backFromGrainBtn) backFromGrainBtn.onclick = returnToHub;
-    if (backFromMatifBtn) backFromMatifBtn.onclick = returnToHub;
-    if (backFromDieselBtn) backFromDieselBtn.onclick = returnToHub;
-    if (backFromSeedBtn) backFromSeedBtn.onclick = returnToHub;
-    if (backFromCoverBtn) backFromCoverBtn.onclick = returnToHub;
-    if (backFromCombineBtn) backFromCombineBtn.onclick = returnToHub;
-    if (backFromSprayBtn) backFromSprayBtn.onclick = returnToHub;
-    if (backFromFertBtn) backFromFertBtn.onclick = returnToHub;
-    if (backFromStorageBtn) backFromStorageBtn.onclick = returnToHub;
-    if (backFromNmaBtn) backFromNmaBtn.onclick = returnToHub;
-    if (backFromBarometerBtn) backFromBarometerBtn.onclick = returnToHub;
 }

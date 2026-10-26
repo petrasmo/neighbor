@@ -209,11 +209,14 @@ export function renderGlobalSidebar(activePage = 'index', activeTab = 0) {
                         <button id="btn-close-skaiciuokles-sheet" class="text-slate-400 hover:text-white text-xl font-bold cursor-pointer">✕</button>
                     </div>
                     <div class="grid grid-cols-1 gap-2 text-xs">
-                        <button class="mobile-calc-trigger text-left p-3 rounded-xl bg-tractorBg hover:bg-tractorPrimary/20 border border-tractorBorder flex items-center gap-3 font-bold text-white transition cursor-pointer" data-target="btn-open-grain-calc">
-                            <span>🌾</span> <span>Grūdų supirkimas (Elevatoriai su logistika)</span>
+                        <button class="mobile-calc-trigger text-left p-3 rounded-xl bg-tractorBg hover:bg-tractorPrimary/20 border border-tractorBorder flex items-center gap-3 font-bold text-white transition cursor-pointer" data-target="btn-open-electricity-calc">
+                            <span>⚡</span> <span>Nord Pool elektros birža (Pavalandžiui)</span>
                         </button>
                         <button class="mobile-calc-trigger text-left p-3 rounded-xl bg-tractorBg hover:bg-tractorPrimary/20 border border-tractorBorder flex items-center gap-3 font-bold text-white transition cursor-pointer" data-target="btn-open-matif-calc">
                             <span>📈</span> <span>MATIF birža (Paryžius – gyvi grafikai)</span>
+                        </button>
+                        <button class="mobile-calc-trigger text-left p-3 rounded-xl bg-tractorBg hover:bg-tractorPrimary/20 border border-tractorBorder flex items-center gap-3 font-bold text-white transition cursor-pointer" data-target="btn-open-grain-calc">
+                            <span>🌾</span> <span>Grūdų supirkimas (Elevatoriai su logistika)</span>
                         </button>
                         <button class="mobile-calc-trigger text-left p-3 rounded-xl bg-tractorBg hover:bg-tractorPrimary/20 border border-tractorBorder flex items-center gap-3 font-bold text-white transition cursor-pointer" data-target="btn-open-diesel-calc">
                             <span>⛽</span> <span>Dyzelinas / Gazolas (36 tiekėjų bazės)</span>
@@ -241,7 +244,7 @@ export function renderGlobalSidebar(activePage = 'index', activeTab = 0) {
                         </button>
 						<button class="mobile-calc-trigger text-left p-3 rounded-xl bg-tractorBg hover:bg-tractorPrimary/20 border border-tractorBorder flex items-center gap-3 font-bold text-white transition cursor-pointer" data-target="btn-open-barometer-calc">
                             <span>🧭</span> <span>Trąšų kainų radaras ir barometras</span>
-                        </button>
+                        </button>                        
                     </div>
                 </div>
             </div>

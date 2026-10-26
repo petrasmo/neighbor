@@ -12,6 +12,7 @@ const { executeElevatorsSync } = require("./grainSync");
 const { executeMatifSync } = require("./matifSync");
 const { executeDieselSync } = require("./dieselSync");
 const { executeFertilizerSync } = require("./fertilizerSync");
+const { executeElectricitySync } = require("./electricitySync");
 
 // Importuojame Išmaniųjų Pranešimų pagalbininką
 const { 
@@ -32,6 +33,7 @@ async function syncAllAgroData(isManual = false) {
   const matifCount = await executeMatifSync(db, admin, false);
   const dieselDataArray = await executeDieselSync(db, admin);
   const fertilizerData = await executeFertilizerSync(db, admin);
+  const electricityData = await executeElectricitySync(db, admin);
 
   const vilniusHour = parseInt(new Date().toLocaleTimeString("en-GB", { timeZone: "Europe/Vilnius", hour: "2-digit" }));
   console.log(`🕒 Dabartinė valanda Lietuvoje: ${vilniusHour}:00`);
@@ -67,7 +69,8 @@ async function syncAllAgroData(isManual = false) {
     elevators: elevatorsCount, 
     matif: matifCount, 
     diesel: (dieselDataArray ? dieselDataArray.length : 0),
-    fertilizerBarometer: fertilizerData?.barometer?.statusText || "OK"
+    fertilizerBarometer: fertilizerData?.barometer?.statusText || "OK",
+    electricityHours: electricityData?.hours?.length || 0
   };
 }
 
@@ -77,6 +80,15 @@ exports.scrapeAllAgroData = onSchedule(
   async (event) => {
     console.log("⏰ Vykdomas suplanuotas 4 kartų per parą duomenų atnaujinimas...");
     await syncAllAgroData(false);
+  }
+);
+
+// ⚡ 1B. ATSKIRAS GRAFIKAS TIK NORD POOL ELEKTRAI: KELIASI KASDIEN 15:00 VAL. (RYTOJAUS KAINOMS)
+exports.scrapeNordPoolAt15 = onSchedule(
+  { schedule: "0 15 * * *", timeZone: "Europe/Vilnius" },
+  async (event) => {
+    console.log("⚡ [15:00] Vykdomas suplanuotas Nord Pool rytojaus elektros kainų atnaujinimas...");
+    await executeElectricitySync(db, admin);
   }
 );
 
@@ -105,6 +117,7 @@ exports.manualTriggerAllSync = onRequest(
 - 📈 MATIF birža: ${stats.matif}
 - ⛽ Gazolio rinka: ${stats.diesel}
 - 🧪 Trąšų barometras: ${stats.fertilizerBarometer}
+- ⚡ Nord Pool elektra: ${stats.electricityHours} val.
 - 🔔 Pranešimai patikrinti ir išsiųsti įrenginiams!`);
     } catch (err) {
       res.status(500).send("Klaida: " + err.message);
@@ -721,6 +734,19 @@ exports.checkAndRegisterPass = onRequest(
       }
     } catch (err) {
       res.status(500).send("Klaida registruojant praskridimą: " + err.message);
+    }
+  }
+);
+
+// 🚀 16. RANKINIS PALEIDIMAS: TIK NORD POOL ELEKTRA
+exports.manualTriggerElectricitySync = onRequest(
+  { cors: true, invoker: "public" },
+  async (req, res) => {
+    try {
+      const data = await executeElectricitySync(db, admin);
+      res.send(`✅ Sėkmingai atnaujintos Nord Pool LT elektros kainos! Valandų: ${data?.hours?.length || 0} ⚡`);
+    } catch (err) {
+      res.status(500).send("Klaida: " + err.message);
     }
   }
 );
