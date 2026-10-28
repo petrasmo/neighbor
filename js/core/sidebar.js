@@ -15,7 +15,7 @@ export function renderGlobalSidebar(activePage = 'index', activeTab = 0) {
         }
     };
 
-    const isUkisActive = (activeTab >= 2 && activeTab <= 6) || activeTab === 10;
+    const isUkisActive = (activeTab >= 2 && activeTab <= 6) || activeTab === 10 || activeTab === 13;
     const isBendruomeneActive = (activeTab >= 7 && activeTab <= 8) || activeTab === 11 || activeTab === 12;
 
     // 1. DESKTOP ŠONINIS MENIU
@@ -67,12 +67,16 @@ export function renderGlobalSidebar(activePage = 'index', activeTab = 0) {
                                 <span class="cat-arrow text-[10px] transform transition-transform duration-200 ${isUkisActive ? 'rotate-180' : ''}">▼</span>
                             </div>
                             <div class="sidebar-cat-body space-y-1 ${isUkisActive ? '' : 'hidden'}">
+                                <!-- 🌟 1 VIETOJE: IŠMANIEJI ĮRENGINIAI -->
+                                <button class="nav-tab-btn w-full text-left px-3 py-2 rounded-lg font-semibold transition flex items-center gap-2.5 cursor-pointer ${activeTab === 13 ? 'bg-tractorPrimary text-white shadow' : 'text-slate-300 hover:text-white hover:bg-tractorCard'}" ${getNavClickAction(13)}>
+                                    <span>⚡</span> <span>Išmanieji Įrenginiai</span>
+                                </button>
                                 <button class="nav-tab-btn w-full text-left px-3 py-2 rounded-lg font-semibold transition flex items-center gap-2.5 cursor-pointer ${activeTab === 2 ? 'bg-tractorPrimary text-white shadow' : 'text-slate-300 hover:text-white hover:bg-tractorCard'}" ${getNavClickAction(2)}>
                                     <span>🗺️</span> <span>Mano Laukai (Žemėlapis)</span>
                                 </button>
-								<button class="nav-tab-btn w-full text-left px-3 py-2 rounded-lg font-semibold transition flex items-center gap-2.5 cursor-pointer ${activeTab === 10 ? 'bg-tractorPrimary text-white shadow' : 'text-slate-300 hover:text-white hover:bg-tractorCard'}" ${getNavClickAction(10)}>
-									<span>🌱</span> <span>Sėjomainos Planavimas (GAAB 7)</span>
-								</button>
+                                <button class="nav-tab-btn w-full text-left px-3 py-2 rounded-lg font-semibold transition flex items-center gap-2.5 cursor-pointer ${activeTab === 10 ? 'bg-tractorPrimary text-white shadow' : 'text-slate-300 hover:text-white hover:bg-tractorCard'}" ${getNavClickAction(10)}>
+                                    <span>🌱</span> <span>Sėjomainos Planavimas (GAAB 7)</span>
+                                </button>
                                 <button class="nav-tab-btn w-full text-left px-3 py-2 rounded-lg font-semibold transition flex items-center gap-2.5 cursor-pointer ${activeTab === 3 ? 'bg-tractorPrimary text-white shadow' : 'text-slate-300 hover:text-white hover:bg-tractorCard'}" ${getNavClickAction(3)}>
                                     <span>🧪</span> <span>Tręšimas (VRA Traktoriui)</span>
                                 </button>
@@ -95,7 +99,6 @@ export function renderGlobalSidebar(activePage = 'index', activeTab = 0) {
                                 <span class="cat-arrow text-[10px] transform transition-transform duration-200 ${isBendruomeneActive ? 'rotate-180' : ''}">▼</span>
                             </div>
                             <div class="sidebar-cat-body space-y-1 ${isBendruomeneActive ? '' : 'hidden'}">
-                                <!-- 🌟 ŠTAI NAUJAS LYGOS MYGTUKAS: -->
                                 <button class="nav-tab-btn w-full text-left px-3 py-2 rounded-lg font-semibold transition flex items-center gap-2.5 cursor-pointer ${activeTab === 11 ? 'bg-tractorPrimary text-white shadow' : 'text-amber-400 hover:text-white hover:bg-tractorCard'}" ${getNavClickAction(11)}>
                                     <span>🏆</span> <span>Pasėlių Lyga (TOP 10)</span>
                                 </button>
@@ -222,8 +225,8 @@ export function renderGlobalSidebar(activePage = 'index', activeTab = 0) {
                             <span>⛽</span> <span>Dyzelinas / Gazolas (36 tiekėjų bazės)</span>
                         </button>
                         <button class="mobile-calc-trigger text-left p-3 rounded-xl bg-tractorBg hover:bg-tractorPrimary/20 border border-tractorBorder flex items-center gap-3 font-bold text-white transition cursor-pointer" data-target="btn-open-storage-calc">
-							<span>🌾</span> <span>Grūdų sandėlis ir bokštų ventiliavimas (EMC)</span>
-						</button>
+                            <span>🌾</span> <span>Grūdų sandėlis ir bokštų ventiliavimas (EMC)</span>
+                        </button>
                         <button class="mobile-calc-trigger text-left p-3 rounded-xl bg-tractorBg hover:bg-tractorPrimary/20 border border-tractorBorder flex items-center gap-3 font-bold text-white transition cursor-pointer" data-target="btn-open-nma-calc">
                             <span>📜</span> <span>NMA terminai ir draudimai</span>
                         </button>
@@ -242,9 +245,9 @@ export function renderGlobalSidebar(activePage = 'index', activeTab = 0) {
                         <button class="mobile-calc-trigger text-left p-3 rounded-xl bg-tractorBg hover:bg-tractorPrimary/20 border border-tractorBorder flex items-center gap-3 font-bold text-white transition cursor-pointer" data-target="btn-open-fert-calc">
                             <span>🧪</span> <span>NPK ir azoto savikaina</span>
                         </button>
-						<button class="mobile-calc-trigger text-left p-3 rounded-xl bg-tractorBg hover:bg-tractorPrimary/20 border border-tractorBorder flex items-center gap-3 font-bold text-white transition cursor-pointer" data-target="btn-open-barometer-calc">
+                        <button class="mobile-calc-trigger text-left p-3 rounded-xl bg-tractorBg hover:bg-tractorPrimary/20 border border-tractorBorder flex items-center gap-3 font-bold text-white transition cursor-pointer" data-target="btn-open-barometer-calc">
                             <span>🧭</span> <span>Trąšų kainų radaras ir barometras</span>
-                        </button>                        
+                        </button>
                     </div>
                 </div>
             </div>
@@ -259,12 +262,16 @@ export function renderGlobalSidebar(activePage = 'index', activeTab = 0) {
                         <button id="btn-close-ukis-sheet" class="text-slate-400 hover:text-white text-xl font-bold cursor-pointer">✕</button>
                     </div>
                     <div class="grid grid-cols-1 gap-2.5 text-xs">
+                        <!-- 🌟 1 VIETOJE MOBILIAJAME MENIU: IŠMANIEJI ĮRENGINIAI -->
+                        <button class="nav-tab-btn text-left p-3.5 rounded-xl bg-tractorBg hover:bg-tractorPrimary/20 border border-tractorBorder flex items-center gap-3 font-bold text-white transition cursor-pointer ${activeTab === 13 ? 'border-tractorPrimary bg-tractorPrimary/20 text-green-400' : ''}" ${getNavClickAction(13)}>
+                            <span class="text-base">⚡</span> <span>Išmanieji Įrenginiai</span>
+                        </button>
                         <button class="nav-tab-btn text-left p-3.5 rounded-xl bg-tractorBg hover:bg-tractorPrimary/20 border border-tractorBorder flex items-center gap-3 font-bold text-white transition cursor-pointer ${activeTab === 2 ? 'border-tractorPrimary bg-tractorPrimary/20 text-green-400' : ''}" ${getNavClickAction(2)}>
                             <span class="text-base">🗺️</span> <span>Mano Laukai (Žemėlapis)</span>
                         </button>
-						<button class="nav-tab-btn text-left p-3.5 rounded-xl bg-tractorBg hover:bg-tractorPrimary/20 border border-tractorBorder flex items-center gap-3 font-bold text-white transition cursor-pointer ${activeTab === 10 ? 'border-tractorPrimary bg-tractorPrimary/20 text-green-400' : ''}" ${getNavClickAction(10)}>
-							<span class="text-base">🌱</span> <span>Sėjomainos Planavimas (GAAB 7)</span>
-						</button>
+                        <button class="nav-tab-btn text-left p-3.5 rounded-xl bg-tractorBg hover:bg-tractorPrimary/20 border border-tractorBorder flex items-center gap-3 font-bold text-white transition cursor-pointer ${activeTab === 10 ? 'border-tractorPrimary bg-tractorPrimary/20 text-green-400' : ''}" ${getNavClickAction(10)}>
+                            <span class="text-base">🌱</span> <span>Sėjomainos Planavimas (GAAB 7)</span>
+                        </button>
                         <button class="nav-tab-btn text-left p-3.5 rounded-xl bg-tractorBg hover:bg-tractorPrimary/20 border border-tractorBorder flex items-center gap-3 font-bold text-white transition cursor-pointer ${activeTab === 3 ? 'border-tractorPrimary bg-tractorPrimary/20 text-green-400' : ''}" ${getNavClickAction(3)}>
                             <span class="text-base">🧪</span> <span>Tręšimas (VRA Traktoriui)</span>
                         </button>
@@ -291,7 +298,6 @@ export function renderGlobalSidebar(activePage = 'index', activeTab = 0) {
                         <button id="btn-close-bendruomene-sheet" class="text-slate-400 hover:text-white text-xl font-bold cursor-pointer">✕</button>
                     </div>
                     <div class="grid grid-cols-1 gap-2.5 text-xs">
-                        <!-- 🌟 ŠTAI NAUJAS LYGOS MYGTUKAS TELEFONAMS: -->
                         <button class="nav-tab-btn text-left p-3.5 rounded-xl bg-tractorBg hover:bg-tractorPrimary/20 border border-tractorBorder flex items-center gap-3 font-bold text-amber-400 transition cursor-pointer ${activeTab === 11 ? 'border-tractorPrimary bg-tractorPrimary/20 text-green-400' : ''}" ${getNavClickAction(11)}>
                             <span class="text-base">🏆</span> <span>Pasėlių Lyga (TOP 10)</span>
                         </button>

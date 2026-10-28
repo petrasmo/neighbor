@@ -14,6 +14,15 @@ const { executeDieselSync } = require("./dieselSync");
 const { executeFertilizerSync } = require("./fertilizerSync");
 const { executeElectricitySync } = require("./electricitySync");
 
+// Importuojame Daikin šilumos siurblio modulį
+const {
+  getDaikinLoginUrl,
+  exchangeCodeForTokens,
+  syncUserDaikinTelemetry,
+  sendDaikinCommand,
+  executeHourlyDaikinAutopilot,
+} = require("./daikinSync");
+
 // Importuojame Išmaniųjų Pranešimų pagalbininką
 const { 
   checkAndSendMatifAlerts, 
@@ -89,6 +98,14 @@ exports.scrapeNordPoolAt15 = onSchedule(
   async (event) => {
     console.log("⚡ [15:00] Vykdomas suplanuotas Nord Pool rytojaus elektros kainų atnaujinimas...");
     await executeElectricitySync(db, admin);
+  }
+);
+
+// 🏠 1C. KASVALANDINIS DAIKIN AUTOPILOTAS IR ATSTATYMAS (ROLLBACK) KAS VALANDĄ:
+exports.scheduledHourlyDaikinAutopilot = onSchedule(
+  { schedule: "0 * * * *", timeZone: "Europe/Vilnius" },
+  async (event) => {
+    await executeHourlyDaikinAutopilot(db, admin);
   }
 );
 
@@ -210,7 +227,6 @@ exports.getLeagueLeaderboard = onRequest(
       const district = req.query.district || 'Vilniaus r.';
       const currentUserId = req.query.userId || null;
 
-      // Nuskaitome paruoštą league_scores kolekciją
       const snap = await db.collection("league_scores").get();
       const allFields = [];
 
@@ -230,7 +246,6 @@ exports.getLeagueLeaderboard = onRequest(
         });
       });
 
-      // 🌟 KULTŪRŲ FILTRAVIMAS IR TIKRAS RAJONINIS DERBIS:
       const filterCategory = (targetCat) => {
         let list = allFields.filter(f => {
           const c = (f.crop || "").toLowerCase();
@@ -247,10 +262,8 @@ exports.getLeagueLeaderboard = onRequest(
           return false;
         });
 
-        // 🌟 TIKRASIS RAJONŲ FILTRAS:
         if (scope === 'district' && district) {
           const targetClean = district.trim().toLowerCase().replace(" r.", "").replace(" sav.", "");
-          
           list = list.filter(f => {
             if (!f.region) return false;
             const fieldClean = f.region.trim().toLowerCase().replace(" r.", "").replace(" sav.", "");
@@ -258,11 +271,8 @@ exports.getLeagueLeaderboard = onRequest(
           });
         }
 
-        // Rūšiuojame pagal palydovo balą (didesnis viršuje), o jei lygūs – pagal plotą
         list.sort((a, b) => {
-          if (b.score !== a.score) {
-            return b.score - a.score;
-          }
+          if (b.score !== a.score) return b.score - a.score;
           return (b.areaHa || 0) - (a.areaHa || 0);
         });
 
@@ -377,12 +387,9 @@ exports.getNmaBlockInfo = onRequest(
 
       const [content] = await file.download();
       const fields = JSON.parse(content.toString("utf-8"));
-
       const targetPt = [lng, lat];
       
-      const found = fields.find(f => {
-        return f.coords && f.coords.length >= 3 && isPointInPoly(targetPt, f.coords);
-      });
+      const found = fields.find(f => f.coords && f.coords.length >= 3 && isPointInPoly(targetPt, f.coords));
 
       if (found) {
         return res.json({
@@ -402,7 +409,6 @@ exports.getNmaBlockInfo = onRequest(
   }
 );
 
-// Pagalbinė ray-casting funkcija serveryje
 function isPointInPoly(pt, vs) {
     const x = pt[0], y = pt[1];
     let inside = false;
@@ -747,6 +753,76 @@ exports.manualTriggerElectricitySync = onRequest(
       res.send(`✅ Sėkmingai atnaujintos Nord Pool LT elektros kainos! Valandų: ${data?.hours?.length || 0} ⚡`);
     } catch (err) {
       res.status(500).send("Klaida: " + err.message);
+    }
+  }
+);
+
+// ========================================================
+// 🏠 17. DAIKIN ŠILUMOS SIURBLIO VALDYMAS IR OAUTH2 (user_smart_devices)
+// ========================================================
+exports.getDaikinAuthUrl = onRequest(
+  { cors: true, invoker: "public" },
+  async (req, res) => {
+    const userId = req.query.userId || "anonymous";
+    res.json({ success: true, url: getDaikinLoginUrl(userId) });
+  }
+);
+
+exports.daikinAuthCallback = onRequest(
+  { cors: true, invoker: "public" },
+  async (req, res) => {
+    const code = req.query.code;
+    const userId = req.query.state;
+
+    if (!code || !userId) {
+      return res.status(400).send("❌ Trūksta Daikin kodo arba vartotojo ID.");
+    }
+
+    try {
+      const tokens = await exchangeCodeForTokens(code);
+
+      // Saugome privačioje daikin_secrets kolekcijoje (neprieinama naršyklėms!)
+      await db.collection("daikin_secrets").doc(userId).set({
+        accessToken: tokens.access_token,
+        refreshToken: tokens.refresh_token,
+        expiresAt: Date.now() + (tokens.expires_in || 3600) * 1000,
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      });
+
+      // Iškart nuskaitome katilą ir įrašome į user_smart_devices kolekciją!
+      await syncUserDaikinTelemetry(db, admin, userId);
+
+      res.redirect("https://jurgisagro.com/?daikin=connected");
+    } catch (err) {
+      console.error("Daikin prijungimo klaida:", err.response?.data || err.message);
+      res.status(500).send("Klaida jungiant Daikin: " + (JSON.stringify(err.response?.data) || err.message));
+    }
+  }
+);
+
+exports.refreshDaikinStatus = onRequest(
+  { cors: true, invoker: "public" },
+  async (req, res) => {
+    try {
+      const userId = req.query.userId;
+      const tel = await syncUserDaikinTelemetry(db, admin, userId);
+      res.json({ success: true, telemetry: tel });
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  }
+);
+
+exports.controlDaikinPump = onRequest(
+  { cors: true, invoker: "public" },
+  async (req, res) => {
+    try {
+      const body = typeof req.body === "string" ? JSON.parse(req.body) : req.body;
+      const userId = body.userId;
+      const tel = await sendDaikinCommand(db, admin, userId, body);
+      res.json({ success: true, telemetry: tel });
+    } catch (err) {
+      res.status(500).json({ error: err.message });
     }
   }
 );

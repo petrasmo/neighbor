@@ -28,6 +28,7 @@ import { initVraFertilizerTab } from './ukis/vraFertilizer.js';
 import { initLimingSoilTab } from './ukis/limingSoil.js';
 import { initOperationsJournalTab } from './ukis/operationsJournal.js';
 import { initCropPlannerTab } from './ukis/cropPlanner.js';
+import { initSmartDevicesTab } from './ukis/smartDevices.js';
 import { renderTSumRadar } from './ukis/tsumRadar.js';
 import { autoRegisterFcmToken } from './core/notifications.js';
 import { renderFertilizerBarometer } from './skaiciuokles/fertilizerBarometer.js';
@@ -51,12 +52,13 @@ function formatCleanCtHub(val) {
 
 document.addEventListener('DOMContentLoaded', () => {
     const urlParams = new URLSearchParams(window.location.search);
-    const requestedTab = parseInt(urlParams.get('tab')) || 0;
+    let requestedTab = parseInt(urlParams.get('tab')) || 0;
+    if (urlParams.get('daikin') === 'connected') {
+        requestedTab = 13;
+    }
 
     renderGlobalSidebar('index', requestedTab);
     initThemeToggle();
-
-    // 🌟 UŽKRAUNAME GYVAS KAINAS IR LAIKĄ Į PRADINIO EKRANO KORTELES
     loadHubLivePriceTickers();
 
     document.querySelectorAll('.login-trigger-btn').forEach(btn => btn.addEventListener('click', () => openAuthModal('login')));
@@ -65,10 +67,24 @@ document.addEventListener('DOMContentLoaded', () => {
         btn.addEventListener('click', () => {
             const tabIdx = parseInt(btn.getAttribute('data-tab'));
 
-            if (!currentUser && ((tabIdx >= 2 && tabIdx <= 6) || tabIdx === 10 || tabIdx === 8 || tabIdx === 9)) {
+            // 🔒 1. LAIKINA APSAUGA: „Išmanieji Įrenginiai“ (tab 13) leidžiama TIK administratoriui (petrasmo@gmail.com)!
+            if (tabIdx === 13) {
+                const isAdmin = currentUser && currentUser.email === "petrasmo@gmail.com";
+                if (!isAdmin) {
+                    showDialog(
+                        "🔒 Tik administratoriui",
+                        "„⚡ Išmanieji Įrenginiai“ šiuo metu yra vidinio testavimo stadijoje ir laikinai pasiekiami tik sistemos administratoriui.",
+                        "⚙️"
+                    );
+                    return;
+                }
+            }
+
+            // 🔒 2. Reikalingas prisijungimas kitiems ūkio moduliams
+            if (!currentUser && ((tabIdx >= 2 && tabIdx <= 6) || tabIdx === 10 || tabIdx === 13 || tabIdx === 8 || tabIdx === 9)) {
                 showDialog(
                     "Reikalingas prisijungimas",
-                    "Norėdami valdyti savo laukus, sėjomainą, tręšimą, ataskaitas ar nustatymus, prisijunkite prie savo ūkio paskyros.",
+                    "Norėdami valdyti išmaniuosius įrenginius, laukus, sėjomainą, tręšimą, ataskaitas ar nustatymus, prisijunkite prie savo ūkio paskyros.",
                     "🔒",
                     () => openAuthModal('login'),
                     true
@@ -82,6 +98,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 returnToCalculatorsHub();
             } else if (tabIdx === 1) {
                 initWeatherTab(currentUser, userData);
+            } else if (tabIdx === 13) {
+                initSmartDevicesTab(currentUser, userData);
             } else if (tabIdx === 2) {
                 initFieldsManager(currentUser, userData);
                 setTimeout(() => refreshFieldsMap(), 150);
@@ -201,11 +219,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 }, err => console.warn("Laukų klausymosi klaida:", err));
 
                 initFeedTab(currentUser, userData, classifierMap);
-                initFieldsManager(currentUser, userData);
                 initGarageTab(currentUser, userData);
                 initSettingsTab(currentUser, userData);
                 initWeatherTab(currentUser, userData);
-                initVraFertilizerTab(currentUser, userData);
 
                 const hasValidGarage = userData && userData.isSetupComplete && userData.garageLat && userData.garageLon && userData.garageLat !== 0;
 
@@ -220,16 +236,22 @@ document.addEventListener('DOMContentLoaded', () => {
                         );
                     }, 200);
                 } else {
+                    // Jei bando atidaryti tab 13, bet nėra administratorius – nukreipiame į pradžią
+                    if (requestedTab === 13 && user.email !== "petrasmo@gmail.com") {
+                        requestedTab = 0;
+                    }
+
                     switchTab(requestedTab);
-                    if (requestedTab === 2) refreshFieldsMap();
-                    if (requestedTab === 10) initCropPlannerTab(currentUser, userData);
-                    if (requestedTab === 11) initCropLeagueTab(currentUser, userData);
-                    if (requestedTab === 12) initEventsTab(currentUser, userData);
-                    if (requestedTab === 3) initVraFertilizerTab(currentUser, userData);
-                    if (requestedTab === 4) initLimingSoilTab(currentUser, userData);
-                    if (requestedTab === 5) initOperationsJournalTab(currentUser, userData);
-                    if (requestedTab === 1) initWeatherTab(currentUser, userData);
-                    if (requestedTab === 6) initReportsTab(cachedFieldsList, userData);
+                    if (requestedTab === 13) initSmartDevicesTab(currentUser, userData);
+                    else if (requestedTab === 2) { initFieldsManager(currentUser, userData); refreshFieldsMap(); }
+                    else if (requestedTab === 10) initCropPlannerTab(currentUser, userData);
+                    else if (requestedTab === 11) initCropLeagueTab(currentUser, userData);
+                    else if (requestedTab === 12) initEventsTab(currentUser, userData);
+                    else if (requestedTab === 3) initVraFertilizerTab(currentUser, userData);
+                    else if (requestedTab === 4) initLimingSoilTab(currentUser, userData);
+                    else if (requestedTab === 5) initOperationsJournalTab(currentUser, userData);
+                    else if (requestedTab === 1) initWeatherTab(currentUser, userData);
+                    else if (requestedTab === 6) initReportsTab(cachedFieldsList, userData);
                 }
 
             } else {
@@ -257,6 +279,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 initFeedTab(null, null, classifierMap);
                 initWeatherTab(null, null);
 
+                if (requestedTab === 13) requestedTab = 0;
                 switchTab(requestedTab);
                 if (requestedTab === 11) initCropLeagueTab(null, null);
                 if (requestedTab === 12) initEventsTab(null, null);
@@ -272,7 +295,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 
-// 🌟 100% DINAMINĖS KAINOS TIK IŠ FIRESTORE
 function loadHubLivePriceTickers() {
     // 1. Nord Pool Elektra (1 vietoje)
     db.collection("electricity_prices").doc("market_data").onSnapshot(doc => {
@@ -286,7 +308,6 @@ function loadHubLivePriceTickers() {
         let todayStr = now.toLocaleDateString('lt-LT', { timeZone: 'Europe/Vilnius', year: 'numeric', month: '2-digit', day: '2-digit' });
         const curH = parseInt(now.toLocaleTimeString('en-GB', { timeZone: 'Europe/Vilnius', hour: '2-digit', hour12: false }), 10);
 
-        // Atrenkame tik pilnas paras (bent 20 valandų)
         const dateCounts = {};
         allHours.forEach(h => { dateCounts[h.date] = (dateCounts[h.date] || 0) + 1; });
         const fullDates = Object.keys(dateCounts).filter(dt => dateCounts[dt] >= 20).sort();

@@ -9,7 +9,7 @@ export function renderElectricityCalculator(container) {
     if (!container) return;
 
     container.innerHTML = `
-        <div class="space-y-4 max-w-6xl mx-auto w-full">
+        <div class="space-y-4 w-full">
             
             <div class="bg-tractorSurface border border-tractorBorder rounded-2xl p-3.5 sm:p-5 md:p-6 space-y-4 shadow-xl">
                 
@@ -61,7 +61,7 @@ export function renderElectricityCalculator(container) {
                     </div>
                 </div>
 
-                <!-- VALANDŲ TINKLELIS (VIENAS BENDRAS SĄRAŠAS) -->
+                <!-- VALANDŲ TINKLELIS -->
                 <div class="space-y-3 pt-1">
                     <div class="flex flex-wrap items-center justify-between gap-2 border-b border-tractorBorder/60 pb-2">
                         <h3 class="font-oswald text-base sm:text-lg font-bold uppercase tracking-wider flex items-center gap-1.5" style="color: var(--text-main);">
@@ -155,23 +155,17 @@ function listenToElectricityFirebase() {
     });
 }
 
-// Grąžina kainą centais už 1 kWh (pvz. 0.7 arba 3.0)
 function getPriceCt(hourObj) {
     const eurMwh = hourObj.priceMWh || 0;
-    const ctNoVat = eurMwh / 10; // 10 €/MWh = 1 ct/kWh
+    const ctNoVat = eurMwh / 10;
     return includeVat ? (ctNoVat * 1.21) : ctNoVat;
 }
 
-// 🌟 Švarus lietuviškas centų formatavimas: "3 ct", "0,5 ct", "0,05 ct", "0 ct"
 function formatCleanCt(val) {
     if (Math.abs(val) < 0.005) return "0";
-    
-    // Jei mažiau nei 0,1 ct (pvz., 0.05 ct), rodome 2 skaičius po kablelio
     if (Math.abs(val) < 0.1) {
         return parseFloat(val.toFixed(2)).toString().replace('.', ',');
     }
-    
-    // Standartiškai rodome iki 1 skaičiaus po kablelio (pvz. "3" arba "0,7" arba "12,4")
     return parseFloat(val.toFixed(1)).toString().replace('.', ',');
 }
 
@@ -239,7 +233,6 @@ function renderElectricityUI() {
 
         const topLeftLabel = isCurrent ? "DABAR" : (isToday ? `${h.date.slice(8)} d.` : `Rytoj`);
 
-        // Ribos centais: < 5 ct = Pigu, 5–12 ct = Vidutinė, > 12 ct = Brangu
         let badgeText = "🟢 Pigu";
         let badgeStyle = "background-color: rgba(34, 197, 94, 0.15); color: #16A34A; border: 1px solid rgba(34, 197, 94, 0.4);";
 
@@ -256,19 +249,15 @@ function renderElectricityUI() {
 
         return `
             <div class="elec-hour-card bg-tractorBg border ${isCurrent ? 'border-tractorPrimary ring-2 ring-tractorPrimary shadow-md' : 'border-tractorBorder'} rounded-xl p-3 text-center space-y-2 flex flex-col justify-between transition cursor-pointer hover:border-tractorPrimary select-none" data-idx="${idx}">
-                
-                <!-- VIRŠUS: DIENA IR VALANDA -->
                 <div class="flex items-center justify-between border-b border-tractorBorder/60 pb-1.5 text-xs font-bold leading-none gap-2">
                     <span class="${isCurrent ? 'text-green-600 dark:text-green-400 font-black' : 'text-slate-400 font-bold'} uppercase text-[11px]">${topLeftLabel}</span>
                     <strong class="font-mono font-black text-xs" style="color: var(--text-main);">${h.hourLabel}</strong>
                 </div>
 
-                <!-- STATUSO ŽENKLIUKAS -->
                 <div class="text-xs font-bold py-1 px-2 rounded-md flex items-center justify-center leading-none" style="${badgeStyle}">
                     ${badgeText}
                 </div>
 
-                <!-- AIŠKI KAINA: pvz. "3 ct / kWh" arba "0,7 ct / kWh" -->
                 <div class="pt-0.5">
                     <div class="font-mono font-black text-lg sm:text-xl leading-tight" style="color: var(--text-main);">
                         ${formatCleanCt(pCt)} ct
@@ -277,7 +266,6 @@ function renderElectricityUI() {
                         / kWh
                     </div>
                 </div>
-
             </div>
         `;
     }).join('');

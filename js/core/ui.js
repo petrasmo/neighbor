@@ -4,26 +4,26 @@ export function switchTab(tabIndex) {
     const allViews = [
         document.getElementById('view-tab-calculators'), // 0
         document.getElementById('view-tab-weather'),     // 1
-        document.getElementById('view-tab-fields'),      // 2, 3, 4, 5 (Laukai, Tręšimas, Kalkinimas, Žurnalas)
+        document.getElementById('view-tab-fields'),      // 2, 3, 4, 5, 13 (Išmanieji įrenginiai, Laukai, Tręšimas, Kalkinimas, Žurnalas)
         document.getElementById('view-tab-reports'),     // 6
         document.getElementById('view-tab-feed'),        // 7 (SOS)
         document.getElementById('view-tab-garage'),      // 8 (Technika)
         document.getElementById('view-tab-settings'),    // 9 (Nustatymai)
         document.getElementById('view-tab-cropplanner'),  // 10 Sėjomainos Planavimas (GAAB 7)
-		document.getElementById('view-tab-league'),       // 11 👈 lyga
-        document.getElementById('view-tab-events')
+        document.getElementById('view-tab-league'),       // 11 👈 lyga
+        document.getElementById('view-tab-events')       // 12
     ];
 
     let targetView = document.getElementById('view-tab-calculators');
     if (tabIndex === 1) targetView = document.getElementById('view-tab-weather');
-    else if (tabIndex >= 2 && tabIndex <= 5) targetView = document.getElementById('view-tab-fields');
+    else if ((tabIndex >= 2 && tabIndex <= 5) || tabIndex === 13) targetView = document.getElementById('view-tab-fields');
     else if (tabIndex === 6) targetView = document.getElementById('view-tab-reports');
     else if (tabIndex === 7) targetView = document.getElementById('view-tab-feed');
     else if (tabIndex === 8) targetView = document.getElementById('view-tab-garage');
     else if (tabIndex === 9) targetView = document.getElementById('view-tab-settings');
     else if (tabIndex === 10) targetView = document.getElementById('view-tab-cropplanner');
-	else if (tabIndex === 11) targetView = document.getElementById('view-tab-league');
-    else if (tabIndex === 12) targetView = document.getElementById('view-tab-events') // 12
+    else if (tabIndex === 11) targetView = document.getElementById('view-tab-league');
+    else if (tabIndex === 12) targetView = document.getElementById('view-tab-events'); // 12
 
     allViews.forEach(el => {
         if (!el) return;
@@ -47,7 +47,7 @@ export function switchTab(tabIndex) {
     });
 
     // 2. 🌟 MOBILI APATINĖ JUOSTA: užtikriname, kad TIK VIENAS mygtukas būtų žalias!
-    const isUkis = (tabIndex >= 2 && tabIndex <= 6) || tabIndex === 10;
+    const isUkis = (tabIndex >= 2 && tabIndex <= 6) || tabIndex === 10 || tabIndex === 13;
     const isBendruomene = tabIndex === 7 || tabIndex === 8 || tabIndex === 11 || tabIndex === 12;
 
     setMobileBtnActive('btn-mobile-skaiciuokles-menu', tabIndex === 0);
@@ -81,6 +81,11 @@ export function switchTab(tabIndex) {
             title: "Žemės Ūkio Renginiai, LŽŪKT Mokymai ir Kaimo Šventės | JurgisAgro",
             desc: "Gyvas Lietuvos agro-renginių kalendorius: kaimo šventės, mugės, LŽŪKT kursai, purškimo pažymėjimai, NMA seminarai ir parodos.",
             url: "https://jurgisagro.com/?tab=12"
+        },
+        13: {
+            title: "Išmanieji Ūkio Įrenginiai ir Nord Pool Šilumos Siurblio Valdymas | JurgisAgro",
+            desc: "Automatinis Daikin Altherma šilumos siurblių ir ūkio įrenginių valdymas pagal pigiausias Nord Pool elektros biržos valandas.",
+            url: "https://jurgisagro.com/?tab=13"
         }
     };
 
@@ -110,7 +115,6 @@ export function showBottomToast(message, type = 'success') {
     if (!toastContainer) {
         toastContainer = document.createElement('div');
         toastContainer.id = 'global-bottom-toast';
-        // z-[300] su griežtu pointer-events-none, kad niekada neblokuotų paspaudimų
         toastContainer.className = 'fixed bottom-20 md:bottom-10 left-1/2 -translate-x-1/2 z-[300] pointer-events-none transition-all duration-300 opacity-0 transform translate-y-4 w-[92%] sm:w-auto max-w-md flex justify-center hidden';
         document.body.appendChild(toastContainer);
     }
@@ -135,7 +139,6 @@ export function showBottomToast(message, type = 'success') {
         </span>
     `);
 
-    // 🌟 PATAISYMAS: pašalintas 'pointer-events-auto', įdėtas 'pointer-events-none'
     toastContainer.innerHTML = `
         <div style="${bgStyle} color: #FFFFFF !important; box-shadow: 0 10px 25px -3px rgba(0, 0, 0, 0.45);" 
              class="w-full sm:w-auto px-4 py-2.5 rounded-2xl font-bold text-xs sm:text-sm flex items-center justify-center gap-2.5 pointer-events-none tracking-wide text-center">
@@ -151,7 +154,6 @@ export function showBottomToast(message, type = 'success') {
 
     setTimeout(() => {
         toastContainer.classList.add('opacity-0', 'translate-y-4');
-        // Po išblukimo visiškai paslepiame iš ekrano
         setTimeout(() => {
             toastContainer.classList.add('hidden');
         }, 300);
