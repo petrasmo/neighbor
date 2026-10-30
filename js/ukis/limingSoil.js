@@ -3,6 +3,10 @@ import { db } from '../core/firebase.js';
 import { showBottomToast, showDialog } from '../core/ui.js';
 import { createCustomSelect } from '../core/customSelect.js';
 import { getLimingHtml } from './templates/limingTemplate.js';
+import {
+    generateLimingVraGrid,
+    buildBinaryShapefileFromCells
+} from './vraGridEngine.js';
 
 const CDSE_INSTANCE_ID = "2ecdf3ed-4338-4577-a502-11dd5b2df254";
 const CDSE_WMS_URL = `https://sh.dataspace.copernicus.eu/ogc/wms/${CDSE_INSTANCE_ID}`;
@@ -14,6 +18,7 @@ let editingPlanId = null;
 let activeFilterFieldId = 'all';
 
 let currentSamples = [];
+let currentLimingCells = [];
 let currentDensityHa = 3;
 let isAddingSampleMode = false;
 
@@ -93,7 +98,7 @@ function setupLimingHubEvents(currentUser) {
     const openBtn = document.getElementById('btn-open-new-liming-modal');
     const closeBtn = document.getElementById('btn-close-liming-creator');
     const dateInput = document.getElementById('liming-modal-date');
-    const satDateInput = document.getElementById('liming-sat-date'); // 👈 KADRO DATOS LAUKELIS
+    const satDateInput = document.getElementById('liming-sat-date');
     const addPointBtn = document.getElementById('btn-lime-add-point');
     const saveProjBtn = document.getElementById('btn-save-liming-project');
     const downloadShpBtn = document.getElementById('btn-download-liming-shp');
@@ -120,7 +125,6 @@ function setupLimingHubEvents(currentUser) {
         };
     }
 
-    // 🌟 ŠTAI ČIA PRIJUNGTAS TIKRAS KADRO DATOS KEITIMASIS:
     if (satDateInput) {
         satDateInput.onchange = (e) => {
             const dateVal = e.target.value;
@@ -128,16 +132,15 @@ function setupLimingHubEvents(currentUser) {
 
             let target = new Date(dateVal);
             if (target.getFullYear() >= 2026) {
-                target = new Date("2024-07-25"); // Apsauga nuo ateities
+                target = new Date("2024-07-25");
             }
 
             const end = new Date(target);
             const start = new Date(target);
-            start.setDate(start.getDate() - 30); // 30 dienų langas iki pasirinktos datos
+            start.setDate(start.getDate() - 30);
 
             const timeRange = `${start.toISOString().split('T')[0]}/${end.toISOString().split('T')[0]}`;
 
-            // Pakeičiame WMS parametrus – žemėlapis iškart atsiunčia kitą nuotrauką!
             if (sentinelNdviLayer) sentinelNdviLayer.setParams({ time: timeRange });
             if (sentinelTrueColorLayer) sentinelTrueColorLayer.setParams({ time: timeRange });
             if (sentinelMoistureLayer) sentinelMoistureLayer.setParams({ time: timeRange });
@@ -181,17 +184,7 @@ function setupLimingHubEvents(currentUser) {
 
             const limeDate = dateInput?.value || new Date().toISOString().split('T')[0];
             const entered = currentSamples.filter(s => s.ph !== null && s.ph > 0 && !isNaN(s.ph));
-            const totalArea = parseFloat(selectedField.areaHa || 10);
-            const areaPerSample = totalArea / Math.max(1, currentSamples.length);
-
-            let totalLimeTons = 0;
-            let sumPh = 0;
-            entered.forEach(s => {
-                sumPh += s.ph;
-                let r = s.ph < 5.3 ? 4.5 : (s.ph < 6.0 ? 2.0 : 0);
-                totalLimeTons += (r * areaPerSample);
-            });
-            const avgPh = entered.length > 0 ? (sumPh / entered.length).toFixed(2) : "--";
+            const summaryStats = calculateLimingStatsFromCells(currentLimingCells, selectedField, entered);
 
             try {
                 const fieldRef = db.collection("user_fields").doc(selectedField.id);
@@ -205,8 +198,8 @@ function setupLimingHubEvents(currentUser) {
                             return {
                                 ...p,
                                 createdAtDate: limeDate,
-                                totalTons: parseFloat(totalLimeTons.toFixed(1)),
-                                avgPh: avgPh,
+                                totalTons: parseFloat(summaryStats.totalLimeTons.toFixed(1)),
+                                avgPh: summaryStats.avgPh,
                                 samples: cleanSamples
                             };
                         }
@@ -219,8 +212,8 @@ function setupLimingHubEvents(currentUser) {
                         fieldName: selectedField.name,
                         crop: selectedField.crop || "Kviečiai",
                         createdAtDate: limeDate,
-                        totalTons: parseFloat(totalLimeTons.toFixed(1)),
-                        avgPh: avgPh,
+                        totalTons: parseFloat(summaryStats.totalLimeTons.toFixed(1)),
+                        avgPh: summaryStats.avgPh,
                         samples: cleanSamples
                     };
                     existingPlans.unshift(newPlan);
@@ -258,7 +251,6 @@ function initPreviewMap() {
 
     previewMap = L.map('liming-preview-map', { zoomControl: true }).setView([55.2885, 23.9745], 13);
 
-    // Numatytasis vasaros langas atidarant pirmą kartą
     const defaultTime = "2024-05-01/2024-07-25";
 
     esriBaseLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxNativeZoom: 17, maxZoom: 18 });
@@ -315,8 +307,8 @@ function addLimingLayerControl() {
             div.innerHTML = `
                 <div style="background: rgba(15,18,15,0.95); padding: 5px; border-radius: 12px; border: 1.5px solid #2E7D32; display: flex; flex-wrap: wrap; gap: 4px; box-shadow: 0 6px 18px rgba(0,0,0,0.6);">
                     <button type="button" id="lime-layer-sat" style="background: transparent; color: #CBD5E1; border: none; padding: 5px 9px; border-radius: 8px; font-weight: 800; font-size: 11px; cursor: pointer;">🌍 Bazinė HD</button>
-                    <button type="button" id="lime-layer-ndvi" style="background: #15803D; color: #fff; border: 1px solid #2E7D32; padding: 5px 9px; border-radius: 8px; font-weight: 800; font-size: 11px; cursor: pointer;">🌿 NDVI Spektras</button>
-                    <button type="button" id="lime-layer-truecolor" style="background: transparent; color: #CBD5E1; border: none; padding: 5px 9px; border-radius: 8px; font-weight: 800; font-size: 11px; cursor: pointer;">🛰️ Sentinel-2 (Foto)</button>
+                    <button type="button" id="lime-layer-ndvi" style="background: #15803D; color: #fff; border: 1px solid #2E7D32; padding: 5px 9px; border-radius: 8px; font-weight: 800; font-size: 11px; cursor: pointer;">🌿 VRA + NDVI</button>
+                    <button type="button" id="lime-layer-truecolor" style="background: transparent; color: #CBD5E1; border: none; padding: 5px 9px; border-radius: 8px; font-weight: 800; font-size: 11px; cursor: pointer;">🛰️ Sentinel-2</button>
                     <button type="button" id="lime-layer-moisture" style="background: transparent; color: #60A5FA; border: none; padding: 5px 9px; border-radius: 8px; font-weight: 800; font-size: 11px; cursor: pointer;">💧 Drėgmė</button>
                     <button type="button" id="lime-layer-street" style="background: transparent; color: #CBD5E1; border: none; padding: 5px 9px; border-radius: 8px; font-weight: 800; font-size: 11px; cursor: pointer;">🗺️ Keliai</button>
                 </div>
@@ -331,11 +323,11 @@ function addLimingLayerControl() {
 
                 const reset = () => { [bSat, bNdvi, bTc, bMoist, bStr].forEach(b => { if(b) { b.style.background='transparent'; b.style.color='#CBD5E1'; } }); };
 
-                bSat.onclick = () => { [sentinelNdviLayer, sentinelTrueColorLayer, sentinelMoistureLayer, streetLayer].forEach(l => previewMap.removeLayer(l)); esriBaseLayer.addTo(previewMap); reset(); bSat.style.background='#2E7D32'; bSat.style.color='#fff'; sampleMarkersLayer.bringToFront(); };
-                bNdvi.onclick = () => { esriBaseLayer.addTo(previewMap); sentinelNdviLayer.addTo(previewMap); reset(); bNdvi.style.background='#15803D'; bNdvi.style.color='#fff'; sampleMarkersLayer.bringToFront(); };
-                bTc.onclick = () => { esriBaseLayer.addTo(previewMap); previewMap.removeLayer(sentinelNdviLayer); sentinelTrueColorLayer.addTo(previewMap); reset(); bTc.style.background='#2E7D32'; bTc.style.color='#fff'; sampleMarkersLayer.bringToFront(); };
-                bMoist.onclick = () => { esriBaseLayer.addTo(previewMap); sentinelMoistureLayer.addTo(previewMap); reset(); bMoist.style.background='#1E40AF'; bMoist.style.color='#fff'; sampleMarkersLayer.bringToFront(); };
-                bStr.onclick = () => { [esriBaseLayer, sentinelNdviLayer, sentinelTrueColorLayer, sentinelMoistureLayer].forEach(l => previewMap.removeLayer(l)); streetLayer.addTo(previewMap); reset(); bStr.style.background='#334155'; bStr.style.color='#fff'; sampleMarkersLayer.bringToFront(); };
+                if (bSat) bSat.onclick = () => { [sentinelNdviLayer, sentinelTrueColorLayer, sentinelMoistureLayer, streetLayer].forEach(l => previewMap.removeLayer(l)); esriBaseLayer.addTo(previewMap); reset(); bSat.style.background='#2E7D32'; bSat.style.color='#fff'; sampleMarkersLayer.bringToFront(); };
+                if (bNdvi) bNdvi.onclick = () => { esriBaseLayer.addTo(previewMap); sentinelNdviLayer.addTo(previewMap); reset(); bNdvi.style.background='#15803D'; bNdvi.style.color='#fff'; sampleMarkersLayer.bringToFront(); };
+                if (bTc) bTc.onclick = () => { esriBaseLayer.addTo(previewMap); previewMap.removeLayer(sentinelNdviLayer); sentinelTrueColorLayer.addTo(previewMap); reset(); bTc.style.background='#2E7D32'; bTc.style.color='#fff'; sampleMarkersLayer.bringToFront(); };
+                if (bMoist) bMoist.onclick = () => { esriBaseLayer.addTo(previewMap); sentinelMoistureLayer.addTo(previewMap); reset(); bMoist.style.background='#1E40AF'; bMoist.style.color='#fff'; sampleMarkersLayer.bringToFront(); };
+                if (bStr) bStr.onclick = () => { [esriBaseLayer, sentinelNdviLayer, sentinelTrueColorLayer, sentinelMoistureLayer].forEach(l => previewMap.removeLayer(l)); streetLayer.addTo(previewMap); reset(); bStr.style.background='#334155'; bStr.style.color='#fff'; sampleMarkersLayer.bringToFront(); };
             }, 100);
             return div;
         }
@@ -349,10 +341,8 @@ function renderFieldAndSamples(field, samples = null) {
     const coords = field.polygonCoordinates || [];
     if (coords.length < 3) return;
 
-    previewPolygonLayer.clearLayers();
     const latLngs = coords.map(p => [parseFloat(p.lat), parseFloat(p.lng)]);
-    const poly = L.polygon(latLngs, { color: '#F59E0B', weight: 3, fill: false });
-    previewPolygonLayer.addLayer(poly);
+    const poly = L.polygon(latLngs);
     previewMap.fitBounds(poly.getBounds(), { padding: [25, 25] });
 
     if (samples && Array.isArray(samples) && samples.length > 0) {
@@ -480,6 +470,7 @@ function renderSampleMarkersAndInputs() {
             const pos = e.target.getLatLng();
             s.lat = Number(pos.lat);
             s.lng = Number(pos.lng);
+            recalculateLimingSummaryAndZones();
         });
 
         marker.bindPopup(`
@@ -531,7 +522,7 @@ function renderSampleMarkersAndInputs() {
                 if (sample) {
                     sample.ph = isNaN(val) ? null : val;
                 }
-                recalculateLimingSummary();
+                recalculateLimingSummaryAndZones();
             };
         });
 
@@ -543,7 +534,7 @@ function renderSampleMarkersAndInputs() {
         });
     }
 
-    recalculateLimingSummary();
+    recalculateLimingSummaryAndZones();
 }
 
 function removeSamplePoint(sampleId) {
@@ -567,31 +558,79 @@ function reindexSamples() {
     });
 }
 
-function recalculateLimingSummary() {
-    const entered = currentSamples.filter(s => s.ph !== null && s.ph > 0 && !isNaN(s.ph));
-    const totalArea = parseFloat(selectedField?.areaHa || 10);
-    const areaPerSample = totalArea / Math.max(1, currentSamples.length);
-
-    let totalLimeTons = 0;
+function calculateLimingStatsFromCells(cells, field, enteredSamples) {
     let sumPh = 0;
+    enteredSamples.forEach(s => { sumPh += s.ph; });
+    const avgPh = enteredSamples.length > 0 ? (sumPh / enteredSamples.length).toFixed(2) : "--";
 
-    entered.forEach(s => {
-        sumPh += s.ph;
-        let r = s.ph < 5.3 ? 4.5 : (s.ph < 6.0 ? 2.0 : 0);
-        totalLimeTons += (r * areaPerSample);
+    if (!cells || cells.length === 0 || enteredSamples.length === 0) {
+        return { avgPh, totalLimeTons: 0 };
+    }
+
+    const sumCellsArea = cells.reduce((acc, c) => acc + c.areaHa, 0) || 1;
+    const officialArea = parseFloat(field?.areaHa || sumCellsArea);
+    const scaleFactor = officialArea / sumCellsArea;
+
+    let totalTons = 0;
+    cells.forEach(c => {
+        totalTons += (c.areaHa * scaleFactor) * (c.rate / 1000);
     });
 
-    const avgPh = entered.length > 0 ? (sumPh / entered.length).toFixed(2) : "--";
+    return { avgPh, totalLimeTons: totalTons };
+}
+
+/**
+ * 🌟 PERSKAIČIUOJA IR NUPIEŠIA TIKRAS KALKINIMO VRA GARDELES ŽEMĖLAPYJE PAGAL PH TAŠKUS!
+ */
+function recalculateLimingSummaryAndZones() {
+    const entered = currentSamples.filter(s => s.ph !== null && s.ph > 0 && !isNaN(s.ph));
+    const totalArea = parseFloat(selectedField?.areaHa || 10);
+
+    if (selectedField && selectedField.polygonCoordinates) {
+        previewPolygonLayer?.clearLayers();
+
+        if (entered.length > 0) {
+            currentLimingCells = generateLimingVraGrid(selectedField.polygonCoordinates, currentSamples);
+
+            // Nupiešiame spalvotas pH zonas žemėlapyje
+            currentLimingCells.forEach(cell => {
+                const latLngs = cell.ring.map(pt => [pt[1], pt[0]]);
+                const cellPoly = L.polygon(latLngs, {
+                    color: '#FFFFFF',
+                    weight: 1,
+                    opacity: 0.65,
+                    fillColor: cell.color,
+                    fillOpacity: 0.55
+                });
+
+                cellPoly.bindTooltip(
+                    `<div class="text-xs font-sans"><b>${cell.zoneName}</b><br>Interpoliuotas pH: <b>${cell.ph}</b><br>Norma: <b>${cell.rate} kg/ha</b></div>`,
+                    { sticky: true }
+                );
+                previewPolygonLayer.addLayer(cellPoly);
+            });
+        } else {
+            currentLimingCells = [];
+        }
+
+        // Išorinis lauko kontūras
+        const outerLatLngs = selectedField.polygonCoordinates.map(p => [parseFloat(p.lat), parseFloat(p.lng)]);
+        const outerPoly = L.polygon(outerLatLngs, { color: '#F59E0B', weight: 3, fill: false, interactive: false });
+        previewPolygonLayer.addLayer(outerPoly);
+        sampleMarkersLayer?.bringToFront();
+    }
+
+    const stats = calculateLimingStatsFromCells(currentLimingCells, selectedField, entered);
     const blindTons = totalArea * 4.0;
-    const savedTons = Math.max(0, blindTons - totalLimeTons);
+    const savedTons = entered.length > 0 ? Math.max(0, blindTons - stats.totalLimeTons) : 0;
     const savedEuros = Math.round(savedTons * 35);
 
     const avgEl = document.getElementById('liming-avg-ph-badge');
     const tonsEl = document.getElementById('liming-total-tons');
     const savedEl = document.getElementById('liming-saved-info');
 
-    if (avgEl) avgEl.textContent = `Vid. pH: ${avgPh}`;
-    if (tonsEl) tonsEl.textContent = `${totalLimeTons.toFixed(1)} t`;
+    if (avgEl) avgEl.textContent = `Vid. pH: ${stats.avgPh}`;
+    if (tonsEl) tonsEl.textContent = `${stats.totalLimeTons.toFixed(1)} t`;
     if (savedEl) savedEl.textContent = `~${savedTons.toFixed(1)} t (~${savedEuros} €)`;
 }
 
@@ -727,7 +766,9 @@ function loadSavedLimingProjects(currentUser) {
         });
 }
 
-// 🚜 TIKRASIS KALKINIMO SHAPEFILE EKSPORTAS SU PH APSAUGA
+/**
+ * 🚜 TIKRASIS BINARINIS KALKINIMO SHAPEFILE EKSPORTAS (.SHP, .SHX, .DBF, .PRJ) SU PH ZONŲ TINKLELIU!
+ */
 async function exportLimingShapefile(field, samples) {
     if (!field || !field.polygonCoordinates || field.polygonCoordinates.length < 3) {
         showBottomToast("Laukas neturi tinkamų koordinačių!", "error");
@@ -740,54 +781,42 @@ async function exportLimingShapefile(field, samples) {
         return;
     }
 
-    showBottomToast("Ruošiamas kalkinimo Shapefile paketas į USB (.ZIP)...");
+    showBottomToast("Generuojamas VRA kalkinimo Shapefile paketas į USB (.ZIP)...");
 
     try {
         await ensureZipLibraries();
         const cleanFieldName = field.name.replace(/[^a-zA-Z0-9_-]/g, '_');
-        const baseName = `KALKINIMAS_${cleanFieldName}_${new Date().toISOString().split('T')[0]}`;
+        const dateStr = new Date().toISOString().split('T')[0];
+        const baseName = `KALKINIMAS_${cleanFieldName}_${dateStr}`;
 
-        const ring = field.polygonCoordinates.map(p => [p.lng, p.lat]);
-        ring.push(ring[0]);
-
-        const avgPhVal = entered.reduce((acc, s) => acc + s.ph, 0) / entered.length;
-
-        const features = samples.map(s => {
-            const actualPh = (s.ph !== null && s.ph > 0 && !isNaN(s.ph)) ? s.ph : avgPhVal;
-            let rate = 0;
-            let zone = "NEUTRALI (0t)";
-
-            if (actualPh < 5.3) {
-                rate = 4500;
-                zone = "RUGSTI (+4.5t)";
-            } else if (actualPh < 6.0) {
-                rate = 2000;
-                zone = "VIDUTINE (+2.0t)";
-            }
-
-            return {
-                rate,
-                ph: Number(actualPh.toFixed(1)),
-                zone,
-                coords: ring
-            };
-        });
+        const cells = generateLimingVraGrid(field.polygonCoordinates, samples);
+        const shpPkg = buildBinaryShapefileFromCells(cells, "Kalkes", dateStr);
 
         const zip = new JSZip();
-        const folder = zip.folder(baseName);
+
+        // 1. Rx/ aplankas John Deere terminalams
+        const rxFolder = zip.folder("Rx");
+        rxFolder.file(`${baseName}.shp`, shpPkg.shp);
+        rxFolder.file(`${baseName}.shx`, shpPkg.shx);
+        rxFolder.file(`${baseName}.dbf`, shpPkg.dbf);
+        rxFolder.file(`${baseName}.prj`, shpPkg.prj);
+
+        // 2. Šakninis katalogas kitiems barstytuvų kompiuteriams
+        zip.file(`${baseName}.shp`, shpPkg.shp);
+        zip.file(`${baseName}.shx`, shpPkg.shx);
+        zip.file(`${baseName}.dbf`, shpPkg.dbf);
+        zip.file(`${baseName}.prj`, shpPkg.prj);
 
         const geoJsonData = {
             type: "FeatureCollection",
             name: baseName,
-            features: features.map(f => ({
+            features: shpPkg.features.map(f => ({
                 type: "Feature",
-                properties: { RATE_KG_HA: f.rate, PH: f.ph, ZONE: f.zone, MATERIAL: "Kalkes" },
+                properties: { RATE: f.rate, ZONE: f.zone, PRODUCT: "Kalkes", UNIT: "KG/HA" },
                 geometry: { type: "Polygon", coordinates: [f.coords] }
             }))
         };
-
-        folder.file(`${baseName}.geojson`, JSON.stringify(geoJsonData, null, 2));
-        folder.file(`${baseName}.prj`, `GEOGCS["GCS_WGS_1984",DATUM["D_WGS_1984",SPHEROID["WGS_1984",6378137.0,298.257223563]],PRIMEM["Greenwich",0.0],UNIT["Degree",0.0174532925199433]]`);
+        zip.file(`${baseName}.geojson`, JSON.stringify(geoJsonData, null, 2));
 
         const zipBlob = await zip.generateAsync({ type: "blob" });
         const a = document.createElement('a');
@@ -797,7 +826,7 @@ async function exportLimingShapefile(field, samples) {
         a.click();
         document.body.removeChild(a);
 
-        showBottomToast("Kalkinimo Shapefile archyvas sėkmingai atsiųstas į USB! 🚜");
+        showBottomToast(`Kalkinimo Shapefile (${cells.length} zonų) sėkmingai atsiųstas į USB! 🚜`);
     } catch (err) {
         showBottomToast("Klaida generuojant: " + err.message, "error");
     }

@@ -3,6 +3,11 @@ import { db } from '../core/firebase.js';
 import { showBottomToast, showDialog } from '../core/ui.js';
 import { createCustomSelect } from '../core/customSelect.js';
 import { getVraFertilizerHtml } from './templates/vraTemplate.js';
+import {
+    generateFertilizerVraGrid,
+    applyFertilizerRatesToCells,
+    buildBinaryShapefileFromCells
+} from './vraGridEngine.js';
 
 const CDSE_INSTANCE_ID = "2ecdf3ed-4338-4577-a502-11dd5b2df254";
 const CDSE_WMS_URL = `https://sh.dataspace.copernicus.eu/ogc/wms/${CDSE_INSTANCE_ID}`;
@@ -12,6 +17,9 @@ let selectedField = null;
 let fieldSelectInstance = null;
 let editingPlanId = null;
 let activeFilterFieldId = 'all';
+
+// Saugome sugeneruotas lauko VRA gardeles
+let currentVraCells = [];
 
 let previewMap = null;
 let previewPolygonLayer = null;
@@ -70,10 +78,10 @@ function loadUserFields(currentUser) {
             placeholder: 'Pasirinkite lauką...',
             items: items,
             selectedId: selectedField ? selectedField.id : '',
-            onSelect: (item) => {
+            onSelect: async (item) => {
                 if (!item) return;
                 selectedField = userFieldsList.find(f => f.id === item.id);
-                updateVraPreview();
+                await rebuildGridForSelectedField();
             }
         });
 
@@ -87,10 +95,6 @@ function loadUserFields(currentUser) {
                 loadSavedVraProjects(currentUser);
             }
         });
-
-        if (selectedField) {
-            updateVraPreview();
-        }
     });
 }
 
@@ -114,9 +118,9 @@ function setupVraHubEvents(currentUser) {
             if (saveBtnText) saveBtnText.textContent = "Išsaugoti tręšimo projektą";
             if (fertDateInput) fertDateInput.value = new Date().toISOString().split('T')[0];
             modal.classList.remove('hidden');
-            setTimeout(() => {
+            setTimeout(async () => {
                 initPreviewMap();
-                updateVraPreview();
+                await rebuildGridForSelectedField();
             }, 200);
         };
     }
@@ -129,9 +133,18 @@ function setupVraHubEvents(currentUser) {
         };
     }
 
-    baseRateInput?.addEventListener('input', updateVraPreview);
-    fertSelect?.addEventListener('change', updateVraPreview);
-    satDateInput?.addEventListener('change', (e) => {
+    // Keičiant bazinę normą perskaičiuojame esamų gardelių kg/ha
+    baseRateInput?.addEventListener('input', () => {
+        const baseRate = parseFloat(baseRateInput.value) || 200;
+        currentVraCells = applyFertilizerRatesToCells(currentVraCells, baseRate);
+        renderVraCellsOnMapAndStats();
+    });
+
+    fertSelect?.addEventListener('change', () => {
+        renderVraCellsOnMapAndStats();
+    });
+
+    satDateInput?.addEventListener('change', async (e) => {
         const d = e.target.value;
         const start = new Date(d);
         start.setDate(start.getDate() - 30);
@@ -139,6 +152,7 @@ function setupVraHubEvents(currentUser) {
         if (sentinelNdviLayer) sentinelNdviLayer.setParams({ time: timeRange });
         if (sentinelTrueColorLayer) sentinelTrueColorLayer.setParams({ time: timeRange });
         if (sentinelMoistureLayer) sentinelMoistureLayer.setParams({ time: timeRange });
+        await rebuildGridForSelectedField();
     });
 
     if (saveProjBtn) {
@@ -149,9 +163,11 @@ function setupVraHubEvents(currentUser) {
             }
 
             const baseRate = parseFloat(baseRateInput.value) || 200;
-            const totalArea = parseFloat(selectedField.areaHa || 10);
-            const totalTons = ((totalArea * baseRate) / 1000).toFixed(2);
+            const totalTons = calculateTotalTonsFromCells(currentVraCells, selectedField, baseRate);
             const fertDate = fertDateInput?.value || new Date().toISOString().split('T')[0];
+
+            // Išsaugome ir sugeneruotų gardelių zonas, kad atidarius vėliau išliktų net ir rankiniai pakeitimai
+            const savedZones = currentVraCells.map(c => ({ id: c.id, zoneIndex: c.zoneIndex }));
 
             try {
                 const fieldRef = db.collection("user_fields").doc(selectedField.id);
@@ -165,7 +181,8 @@ function setupVraHubEvents(currentUser) {
                                 fertilizerType: fertSelect.value,
                                 baseRate: baseRate,
                                 totalTons: parseFloat(totalTons),
-                                createdAtDate: fertDate
+                                createdAtDate: fertDate,
+                                savedZones: savedZones
                             };
                         }
                         return p;
@@ -180,7 +197,8 @@ function setupVraHubEvents(currentUser) {
                         baseRate: baseRate,
                         totalTons: parseFloat(totalTons),
                         savedPercent: 12.5,
-                        createdAtDate: fertDate
+                        createdAtDate: fertDate,
+                        savedZones: savedZones
                     };
                     existingPlans.unshift(newPlan);
                     showBottomToast("Tręšimo projektas sėkmingai išsaugotas archyve! 🚜");
@@ -208,7 +226,7 @@ function setupVraHubEvents(currentUser) {
             const baseRate = parseFloat(baseRateInput.value) || 200;
             const fertName = fertSelect.value;
             const satDate = satDateInput.value || new Date().toISOString().split('T')[0];
-            await exportVraShapefile(selectedField, baseRate, fertName, satDate);
+            await exportVraShapefile(selectedField, baseRate, fertName, satDate, currentVraCells);
         };
     }
 }
@@ -245,8 +263,8 @@ function addVraLayerControl() {
             div.innerHTML = `
                 <div style="background: rgba(15,18,15,0.95); padding: 5px; border-radius: 12px; border: 1.5px solid #2E7D32; display: flex; flex-wrap: wrap; gap: 4px; box-shadow: 0 6px 18px rgba(0,0,0,0.6);">
                     <button type="button" id="vra-layer-sat" style="background: transparent; color: #CBD5E1; border: none; padding: 5px 9px; border-radius: 8px; font-weight: 800; font-size: 11px; cursor: pointer;">🌍 Bazinė HD</button>
-                    <button type="button" id="vra-layer-ndvi" style="background: #15803D; color: #fff; border: 1px solid #2E7D32; padding: 5px 9px; border-radius: 8px; font-weight: 800; font-size: 11px; cursor: pointer;">🌿 NDVI Spektras</button>
-                    <button type="button" id="vra-layer-truecolor" style="background: transparent; color: #CBD5E1; border: none; padding: 5px 9px; border-radius: 8px; font-weight: 800; font-size: 11px; cursor: pointer;">🛰️ Sentinel-2 (Foto)</button>
+                    <button type="button" id="vra-layer-ndvi" style="background: #15803D; color: #fff; border: 1px solid #2E7D32; padding: 5px 9px; border-radius: 8px; font-weight: 800; font-size: 11px; cursor: pointer;">🌿 VRA + NDVI</button>
+                    <button type="button" id="vra-layer-truecolor" style="background: transparent; color: #CBD5E1; border: none; padding: 5px 9px; border-radius: 8px; font-weight: 800; font-size: 11px; cursor: pointer;">🛰️ Sentinel-2</button>
                     <button type="button" id="vra-layer-moisture" style="background: transparent; color: #60A5FA; border: none; padding: 5px 9px; border-radius: 8px; font-weight: 800; font-size: 11px; cursor: pointer;">💧 Drėgmė</button>
                     <button type="button" id="vra-layer-street" style="background: transparent; color: #CBD5E1; border: none; padding: 5px 9px; border-radius: 8px; font-weight: 800; font-size: 11px; cursor: pointer;">🗺️ Keliai</button>
                 </div>
@@ -261,11 +279,11 @@ function addVraLayerControl() {
 
                 const reset = () => { [bSat, bNdvi, bTc, bMoist, bStr].forEach(b => { if(b) { b.style.background='transparent'; b.style.color='#CBD5E1'; } }); };
 
-                bSat.onclick = () => { [sentinelNdviLayer, sentinelTrueColorLayer, sentinelMoistureLayer, streetLayer].forEach(l => previewMap.removeLayer(l)); esriBaseLayer.addTo(previewMap); reset(); bSat.style.background='#2E7D32'; bSat.style.color='#fff'; previewPolygonLayer.bringToFront(); };
-                bNdvi.onclick = () => { esriBaseLayer.addTo(previewMap); sentinelNdviLayer.addTo(previewMap); reset(); bNdvi.style.background='#15803D'; bNdvi.style.color='#fff'; previewPolygonLayer.bringToFront(); };
-                bTc.onclick = () => { esriBaseLayer.addTo(previewMap); previewMap.removeLayer(sentinelNdviLayer); sentinelTrueColorLayer.addTo(previewMap); reset(); bTc.style.background='#2E7D32'; bTc.style.color='#fff'; previewPolygonLayer.bringToFront(); };
-                bMoist.onclick = () => { esriBaseLayer.addTo(previewMap); sentinelMoistureLayer.addTo(previewMap); reset(); bMoist.style.background='#1E40AF'; bMoist.style.color='#fff'; previewPolygonLayer.bringToFront(); };
-                bStr.onclick = () => { [esriBaseLayer, sentinelNdviLayer, sentinelTrueColorLayer, sentinelMoistureLayer].forEach(l => previewMap.removeLayer(l)); streetLayer.addTo(previewMap); reset(); bStr.style.background='#334155'; bStr.style.color='#fff'; previewPolygonLayer.bringToFront(); };
+                if (bSat) bSat.onclick = () => { [sentinelNdviLayer, sentinelTrueColorLayer, sentinelMoistureLayer, streetLayer].forEach(l => previewMap.removeLayer(l)); esriBaseLayer.addTo(previewMap); reset(); bSat.style.background='#2E7D32'; bSat.style.color='#fff'; previewPolygonLayer.bringToFront(); };
+                if (bNdvi) bNdvi.onclick = () => { esriBaseLayer.addTo(previewMap); sentinelNdviLayer.addTo(previewMap); reset(); bNdvi.style.background='#15803D'; bNdvi.style.color='#fff'; previewPolygonLayer.bringToFront(); };
+                if (bTc) bTc.onclick = () => { esriBaseLayer.addTo(previewMap); previewMap.removeLayer(sentinelNdviLayer); sentinelTrueColorLayer.addTo(previewMap); reset(); bTc.style.background='#2E7D32'; bTc.style.color='#fff'; previewPolygonLayer.bringToFront(); };
+                if (bMoist) bMoist.onclick = () => { esriBaseLayer.addTo(previewMap); sentinelMoistureLayer.addTo(previewMap); reset(); bMoist.style.background='#1E40AF'; bMoist.style.color='#fff'; previewPolygonLayer.bringToFront(); };
+                if (bStr) bStr.onclick = () => { [esriBaseLayer, sentinelNdviLayer, sentinelTrueColorLayer, sentinelMoistureLayer].forEach(l => previewMap.removeLayer(l)); streetLayer.addTo(previewMap); reset(); bStr.style.background='#334155'; bStr.style.color='#fff'; previewPolygonLayer.bringToFront(); };
             }, 100);
             return div;
         }
@@ -273,30 +291,110 @@ function addVraLayerControl() {
     previewMap.addControl(new controlClass());
 }
 
-function updateVraPreview() {
+/**
+ * Sugeneruoja naują gardelių tinklelį pasirinktam laukui
+ */
+async function rebuildGridForSelectedField(savedZones = null) {
+    if (!selectedField || !selectedField.polygonCoordinates) return;
+
+    const baseRate = parseFloat(document.getElementById('vra-modal-base-rate')?.value) || 200;
+    const satDate = document.getElementById('vra-modal-sat-date')?.value || new Date().toISOString().split('T')[0];
+
+    currentVraCells = await generateFertilizerVraGrid(selectedField.polygonCoordinates, baseRate, satDate);
+
+    // Jei atidarome jau išsaugotą planą, atkuriame jo išsaugotas zonas
+    if (savedZones && Array.isArray(savedZones)) {
+        const zoneMap = {};
+        savedZones.forEach(z => { zoneMap[z.id] = z.zoneIndex; });
+        currentVraCells.forEach(c => {
+            if (zoneMap[c.id] !== undefined) {
+                c.zoneIndex = zoneMap[c.id];
+            }
+        });
+        currentVraCells = applyFertilizerRatesToCells(currentVraCells, baseRate);
+    }
+
+    renderVraCellsOnMapAndStats(true);
+}
+
+function calculateTotalTonsFromCells(cells, field, baseRate) {
+    if (!cells || cells.length === 0) {
+        const totalArea = parseFloat(field?.areaHa || 10);
+        return ((totalArea * baseRate) / 1000).toFixed(2);
+    }
+    const sumCellsArea = cells.reduce((acc, c) => acc + c.areaHa, 0) || 1;
+    const officialFieldArea = parseFloat(field?.areaHa || sumCellsArea);
+    const scaleFactor = officialFieldArea / sumCellsArea;
+
+    let totalKg = 0;
+    cells.forEach(c => {
+        totalKg += (c.areaHa * scaleFactor) * c.rate;
+    });
+    return (totalKg / 1000).toFixed(2);
+}
+
+function renderVraCellsOnMapAndStats(fitBoundsNow = false) {
     if (!selectedField) return;
 
     const baseRate = parseFloat(document.getElementById('vra-modal-base-rate')?.value) || 200;
-    const totalArea = parseFloat(selectedField.areaHa || 10);
-
     const weak = Math.round(baseRate * 1.20);
     const normal = Math.round(baseRate);
     const strong = Math.round(baseRate * 0.80);
 
-    const totalKg = (totalArea * 0.25 * weak) + (totalArea * 0.50 * normal) + (totalArea * 0.25 * strong);
-    const totalTons = (totalKg / 1000).toFixed(2);
+    const totalTons = calculateTotalTonsFromCells(currentVraCells, selectedField, baseRate);
 
-    document.getElementById('vra-mod-weak').textContent = `${weak} kg/ha`;
-    document.getElementById('vra-mod-norm').textContent = `${normal} kg/ha`;
-    document.getElementById('vra-mod-strong').textContent = `${strong} kg/ha`;
-    document.getElementById('vra-mod-total-tons').textContent = `${totalTons} t`;
+    const wEl = document.getElementById('vra-mod-weak');
+    const nEl = document.getElementById('vra-mod-norm');
+    const sEl = document.getElementById('vra-mod-strong');
+    const tEl = document.getElementById('vra-mod-total-tons');
 
-    if (previewMap && selectedField.polygonCoordinates) {
+    if (wEl) wEl.textContent = `${weak} kg/ha`;
+    if (nEl) nEl.textContent = `${normal} kg/ha`;
+    if (sEl) sEl.textContent = `${strong} kg/ha`;
+    if (tEl) tEl.textContent = `${totalTons} t`;
+
+    if (previewMap && selectedField.polygonCoordinates && previewPolygonLayer) {
         previewPolygonLayer.clearLayers();
-        const latLngs = selectedField.polygonCoordinates.map(p => [p.lat, p.lng]);
-        const poly = L.polygon(latLngs, { color: '#F59E0B', weight: 3, fill: false });
-        previewPolygonLayer.addLayer(poly);
-        previewMap.fitBounds(poly.getBounds(), { padding: [25, 25] });
+
+        // 1. Nupiešiame kiekvieną VRA gardelę (zoną)
+        currentVraCells.forEach(cell => {
+            const latLngs = cell.ring.map(pt => [pt[1], pt[0]]);
+            const cellPoly = L.polygon(latLngs, {
+                color: '#FFFFFF',
+                weight: 1,
+                opacity: 0.65,
+                fillColor: cell.color,
+                fillOpacity: 0.60
+            });
+
+            cellPoly.bindTooltip(
+                `<div class="text-xs font-sans"><b>${cell.zoneName}</b><br>Norma: <b>${cell.rate} kg/ha</b><br><i>(Spustelėkite zonai pakeisti)</i></div>`,
+                { sticky: true }
+            );
+
+            // Paspaudus ant gardelės – perjungiame jos zoną (Silpna -> Optimali -> Vešli)
+            cellPoly.on('click', () => {
+                cell.zoneIndex = (cell.zoneIndex + 1) % 3;
+                currentVraCells = applyFertilizerRatesToCells(currentVraCells, baseRate);
+                renderVraCellsOnMapAndStats(false);
+            });
+
+            previewPolygonLayer.addLayer(cellPoly);
+        });
+
+        // 2. Nupiešiame ryškų išorinį lauko kontūrą
+        const outerLatLngs = selectedField.polygonCoordinates.map(p => [p.lat, p.lng]);
+        const outerBorder = L.polygon(outerLatLngs, {
+            color: '#FFD700',
+            weight: 3,
+            fill: false,
+            interactive: false
+        });
+        previewPolygonLayer.addLayer(outerBorder);
+
+        if (fitBoundsNow) {
+            previewMap.fitBounds(outerBorder.getBounds(), { padding: [25, 25] });
+        }
         previewPolygonLayer.bringToFront();
     }
 }
@@ -346,7 +444,7 @@ function loadSavedVraProjects(currentUser) {
                                 <strong class="text-amber-600 dark:text-amber-400 font-bold">${p.fertilizerType}</strong>
                                 <span class="text-slate-400">•</span>
                                 <span class="text-slate-400">Norma:</span>
-                                <strong class="font-mono font-bold" style="color: var(--text-main);">${p.baseRate} kg/ha</strong>
+                                <strong class="font-mono font-bold" style="color: var(--text-main);">${p.baseRate} kg/ha (${p.totalTons} t)</strong>
                                 <span class="text-slate-400">•</span>
                                 <span class="text-slate-400">Data:</span>
                                 <strong class="font-mono font-bold text-slate-700 dark:text-slate-300">📅 ${p.createdAtDate || '2026-09-11'}</strong>
@@ -379,7 +477,14 @@ function loadSavedVraProjects(currentUser) {
                         const plan = (field?.vraPlans || []).find(p => p.id === planId);
                         if (!field || !plan) return;
 
-                        await exportVraShapefile(field, plan.baseRate, plan.fertilizerType, plan.createdAtDate);
+                        let cells = await generateFertilizerVraGrid(field.polygonCoordinates, plan.baseRate, plan.createdAtDate);
+                        if (plan.savedZones && Array.isArray(plan.savedZones)) {
+                            const zMap = {};
+                            plan.savedZones.forEach(z => { zMap[z.id] = z.zoneIndex; });
+                            cells.forEach(c => { if (zMap[c.id] !== undefined) c.zoneIndex = zMap[c.id]; });
+                            cells = applyFertilizerRatesToCells(cells, plan.baseRate);
+                        }
+                        await exportVraShapefile(field, plan.baseRate, plan.fertilizerType, plan.createdAtDate, cells);
                     };
                 });
 
@@ -406,9 +511,9 @@ function loadSavedVraProjects(currentUser) {
                         document.getElementById('vra-save-btn-text').textContent = "Išsaugoti pakeitimus";
 
                         document.getElementById('vra-creator-modal').classList.remove('hidden');
-                        setTimeout(() => {
+                        setTimeout(async () => {
                             initPreviewMap();
-                            updateVraPreview();
+                            await rebuildGridForSelectedField(plan.savedZones || null);
                         }, 200);
                     };
                 });
@@ -442,57 +547,56 @@ function loadSavedVraProjects(currentUser) {
         });
 }
 
-// ==========================================
-// 🚜 TIKRASIS BINARINIS SHAPEFILE GENERATORIUS TRAKTORIAUS USB
-// ==========================================
-
-async function exportVraShapefile(field, baseRate, fertName, satDate) {
+/**
+ * 🚜 EKSPORTUOJA TIKRĄ NESIKERTANČIŲ GARDELIŲ SHAPEFILE ARCHYVĄ Į TRAKTORIAUS USB (.ZIP)
+ */
+async function exportVraShapefile(field, baseRate, fertName, satDate, cellsToExport) {
     if (!field || !field.polygonCoordinates || field.polygonCoordinates.length < 3) {
         showBottomToast("Laukas neturi tinkamų koordinačių!", "error");
         return;
     }
 
-    showBottomToast("Ruošiamas traktoriaus Shapefile archyvas į USB (.ZIP)...");
+    showBottomToast("Generuojamas VRA gardelių Shapefile paketas į USB (.ZIP)...");
 
     try {
         await ensureZipLibraries();
 
-        const weakRate = Math.round(baseRate * 1.20);
-        const strongRate = Math.round(baseRate * 0.80);
+        let cells = cellsToExport;
+        if (!cells || cells.length === 0) {
+            cells = await generateFertilizerVraGrid(field.polygonCoordinates, baseRate, satDate);
+        }
 
-        const coords = field.polygonCoordinates.map(p => [p.lng, p.lat]);
-        coords.push(coords[0]); // uždarome poligoną
-
-        const features = [
-            { rate: weakRate, zone: "SILPNA (+20%)", coords },
-            { rate: baseRate, zone: "OPTIMALI", coords },
-            { rate: strongRate, zone: "VESLI (-20%)", coords }
-        ];
-
-        const shapefileBuffers = generateBinaryShapefilePackage(features, fertName, satDate);
+        const shpPkg = buildBinaryShapefileFromCells(cells, fertName, satDate);
         const zip = new JSZip();
 
         const cleanFieldName = field.name.replace(/[^a-zA-Z0-9_-]/g, '_');
         const cleanBaseName = `VRA_${cleanFieldName}_${satDate || '2026'}`;
-        const folder = zip.folder(cleanBaseName);
 
-        folder.file(`${cleanBaseName}.shp`, shapefileBuffers.shp);
-        folder.file(`${cleanBaseName}.dbf`, shapefileBuffers.dbf);
-        folder.file(`${cleanBaseName}.shx`, shapefileBuffers.shx);
-        folder.file(`${cleanBaseName}.prj`, `GEOGCS["GCS_WGS_1984",DATUM["D_WGS_1984",SPHEROID["WGS_1984",6378137.0,298.257223563]],PRIMEM["Greenwich",0.0],UNIT["Degree",0.0174532925199433]]`);
+        // 1. Įrašome tiesiai į Rx/ aplanką (John Deere standartas) ir į pagrindinį aplanką (Trimble / Amazone)
+        const rxFolder = zip.folder("Rx");
+        rxFolder.file(`${cleanBaseName}.shp`, shpPkg.shp);
+        rxFolder.file(`${cleanBaseName}.shx`, shpPkg.shx);
+        rxFolder.file(`${cleanBaseName}.dbf`, shpPkg.dbf);
+        rxFolder.file(`${cleanBaseName}.prj`, shpPkg.prj);
+
+        // Taip pat ir šakniniame ZIP lygyje kitiems terminalams
+        zip.file(`${cleanBaseName}.shp`, shpPkg.shp);
+        zip.file(`${cleanBaseName}.shx`, shpPkg.shx);
+        zip.file(`${cleanBaseName}.dbf`, shpPkg.dbf);
+        zip.file(`${cleanBaseName}.prj`, shpPkg.prj);
 
         const vraGeoJson = {
             type: "FeatureCollection",
             name: cleanBaseName,
             field_name: field.name,
             crop: field.crop,
-            features: features.map(f => ({
+            features: shpPkg.features.map(f => ({
                 type: "Feature",
                 properties: { RATE: f.rate, ZONE: f.zone, PRODUCT: fertName, UNIT: "KG/HA" },
                 geometry: { type: "Polygon", coordinates: [f.coords] }
             }))
         };
-        folder.file(`${cleanBaseName}.geojson`, JSON.stringify(vraGeoJson, null, 2));
+        zip.file(`${cleanBaseName}.geojson`, JSON.stringify(vraGeoJson, null, 2));
 
         const zipContent = await zip.generateAsync({ type: "blob" });
         const a = document.createElement('a');
@@ -502,152 +606,10 @@ async function exportVraShapefile(field, baseRate, fertName, satDate) {
         a.click();
         document.body.removeChild(a);
 
-        showBottomToast("Failas sėkmingai atsiųstas į USB! 🚜");
+        showBottomToast(`VRA Shapefile (${cells.length} zonų) sėkmingai paruoštas į USB! 🚜`);
     } catch (err) {
         console.error("VRA export error:", err);
         showBottomToast("Klaida generuojant Shapefile: " + err.message, "error");
-    }
-}
-
-function generateBinaryShapefilePackage(features, fertName, satDate) {
-    let minX = 180, minY = 90, maxX = -180, maxY = -90;
-
-    features.forEach(f => {
-        f.coords.forEach(pt => {
-            const x = pt[0], y = pt[1];
-            if (x < minX) minX = x;
-            if (x > maxX) maxX = x;
-            if (y < minY) minY = y;
-            if (y > maxY) maxY = y;
-        });
-    });
-
-    const numRecords = features.length;
-    let totalShpBytes = 100;
-    const recordOffsetsWords = [];
-
-    features.forEach(f => {
-        recordOffsetsWords.push(totalShpBytes / 2);
-        const numPoints = f.coords.length;
-        const recordContentBytes = 48 + numPoints * 16;
-        totalShpBytes += 8 + recordContentBytes;
-    });
-
-    const shpBuffer = new ArrayBuffer(totalShpBytes);
-    const shpView = new DataView(shpBuffer);
-
-    shpView.setInt32(0, 9994, false);
-    shpView.setInt32(24, totalShpBytes / 2, false);
-    shpView.setInt32(28, 1000, true);
-    shpView.setInt32(32, 5, true);
-    shpView.setFloat64(36, minX, true);
-    shpView.setFloat64(44, minY, true);
-    shpView.setFloat64(52, maxX, true);
-    shpView.setFloat64(60, maxY, true);
-
-    let byteOffset = 100;
-    features.forEach((f, idx) => {
-        const numPoints = f.coords.length;
-        const recordContentBytes = 48 + numPoints * 16;
-        const recordContentWords = recordContentBytes / 2;
-
-        shpView.setInt32(byteOffset, idx + 1, false);
-        shpView.setInt32(byteOffset + 4, recordContentWords, false);
-
-        const contentOffset = byteOffset + 8;
-        shpView.setInt32(contentOffset, 5, true);
-        shpView.setFloat64(contentOffset + 4, minX, true);
-        shpView.setFloat64(contentOffset + 12, minY, true);
-        shpView.setFloat64(contentOffset + 20, maxX, true);
-        shpView.setFloat64(contentOffset + 28, maxY, true);
-        shpView.setInt32(contentOffset + 36, 1, true);
-        shpView.setInt32(contentOffset + 40, numPoints, true);
-        shpView.setInt32(contentOffset + 44, 0, true);
-
-        let ptOffset = contentOffset + 48;
-        f.coords.forEach(pt => {
-            shpView.setFloat64(ptOffset, pt[0], true);
-            shpView.setFloat64(ptOffset + 8, pt[1], true);
-            ptOffset += 16;
-        });
-
-        byteOffset += 8 + recordContentBytes;
-    });
-
-    const totalShxBytes = 100 + numRecords * 8;
-    const shxBuffer = new ArrayBuffer(totalShxBytes);
-    const shxView = new DataView(shxBuffer);
-
-    shxView.setInt32(0, 9994, false);
-    shxView.setInt32(24, totalShxBytes / 2, false);
-    shxView.setInt32(28, 1000, true);
-    shxView.setInt32(32, 5, true);
-    shxView.setFloat64(36, minX, true);
-    shxView.setFloat64(44, minY, true);
-    shxView.setFloat64(52, maxX, true);
-    shxView.setFloat64(60, maxY, true);
-
-    features.forEach((f, idx) => {
-        const numPoints = f.coords.length;
-        const recordContentWords = (48 + numPoints * 16) / 2;
-        shxView.setInt32(100 + idx * 8, recordOffsetsWords[idx], false);
-        shxView.setInt32(104 + idx * 8, recordContentWords, false);
-    });
-
-    const headerBytes = 32 + (4 * 32) + 1;
-    const recordBytes = 1 + 10 + 20 + 20 + 10;
-    const totalDbfBytes = headerBytes + (numRecords * recordBytes) + 1;
-
-    const dbfBuffer = new ArrayBuffer(totalDbfBytes);
-    const dbfView = new DataView(dbfBuffer);
-    const dbfBytes = new Uint8Array(dbfBuffer);
-
-    dbfView.setUint8(0, 0x03);
-    const now = new Date();
-    dbfView.setUint8(1, now.getFullYear() - 1900);
-    dbfView.setUint8(2, now.getMonth() + 1);
-    dbfView.setUint8(3, now.getDate());
-    dbfView.setUint32(4, numRecords, true);
-    dbfView.setUint16(8, headerBytes, true);
-    dbfView.setUint16(10, recordBytes, true);
-
-    writeDbfField(dbfBytes, 32, "RATE", "N", 10, 0);
-    writeDbfField(dbfBytes, 64, "ZONE", "C", 20, 0);
-    writeDbfField(dbfBytes, 96, "PRODUCT", "C", 20, 0);
-    writeDbfField(dbfBytes, 128, "SAT_DATE", "C", 10, 0);
-
-    dbfView.setUint8(160, 0x0D);
-
-    let recOffset = headerBytes;
-    features.forEach(f => {
-        dbfBytes[recOffset] = 0x20;
-        writeDbfString(dbfBytes, recOffset + 1, String(f.rate).padStart(10, " "), 10);
-        writeDbfString(dbfBytes, recOffset + 11, f.zone.padEnd(20, " "), 20);
-        writeDbfString(dbfBytes, recOffset + 31, fertName.slice(0, 20).padEnd(20, " "), 20);
-        writeDbfString(dbfBytes, recOffset + 51, (satDate || "").slice(0, 10).padEnd(10, " "), 10);
-        recOffset += recordBytes;
-    });
-
-    dbfBytes[totalDbfBytes - 1] = 0x1A;
-
-    return {
-        shp: new Uint8Array(shpBuffer),
-        shx: new Uint8Array(shxBuffer),
-        dbf: dbfBytes
-    };
-}
-
-function writeDbfField(bytes, offset, name, type, len, decimals) {
-    for (let i = 0; i < 11; i++) bytes[offset + i] = 0;
-    for (let i = 0; i < name.length && i < 10; i++) bytes[offset + i] = name.charCodeAt(i);
-    bytes[offset + 11] = type.charCodeAt(0);
-    bytes[offset + 16] = len;
-    bytes[offset + 17] = decimals;
-}
-
-function writeDbfString(bytes, offset, str, maxLen) {
-    for (let i = 0; i < maxLen; i++) {
-        bytes[offset + i] = i < str.length ? str.charCodeAt(i) : 0x20;
     }
 }
 

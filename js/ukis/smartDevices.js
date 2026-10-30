@@ -538,10 +538,26 @@ function bindSheetActionButtons(currentUser) {
     document.getElementById('btn-approve-schedule-manually')?.addEventListener('click', async () => {
         if (!currentUser || !dev) return;
 
-        // Galioja iki šiandienos (arba rytojaus, jei rodomas) 23:59:59 val.
-        const endOfDay = new Date();
-        endOfDay.setHours(23, 59, 59, 999);
-        const approvalTs = endOfDay.getTime();
+        const now = new Date();
+        const todayStr = now.toLocaleDateString('lt-LT', { timeZone: 'Europe/Vilnius', year: 'numeric', month: '2-digit', day: '2-digit' });
+
+        // Tikriname, kokias pilnas paras turime užkrovę iš Nord Pool
+        const dateCounts = {};
+        cachedElecHours.forEach(h => { dateCounts[h.date] = (dateCounts[h.date] || 0) + 1; });
+        const fullDates = Object.keys(dateCounts).filter(d => dateCounts[d] >= 20).sort();
+
+        const todayIdx = fullDates.indexOf(todayStr);
+        const tomorrowStr = todayIdx >= 0 ? fullDates[todayIdx + 1] : null;
+
+        // Jei matoma ir rytojaus diena – patvirtiname iki rytojaus 23:59:59, jei tik šiandiena – iki šiandienos 23:59:59
+        const targetDate = new Date();
+        if (tomorrowStr) {
+            targetDate.setDate(targetDate.getDate() + 1);
+        }
+        targetDate.setHours(23, 59, 59, 999);
+        const approvalTs = targetDate.getTime();
+
+        const durationText = tomorrowStr ? "šiandienai ir rytojui (iki rytojaus 23:59)" : "šiandienai (iki 23:59)";
 
         await db.collection("user_smart_devices").doc(dev.id).update({
             "config.manualApprovalActive": true,
@@ -552,10 +568,11 @@ function bindSheetActionButtons(currentUser) {
         if (dev.config) {
             dev.config.manualApprovalActive = true;
             dev.config.approvedUntilTimestamp = approvalTs;
+            dev.config.wasRolledBack = false;
         }
 
         renderDeviceControlPanel(currentUser);
-        showBottomToast("Grafikas patvirtintas rankiniu būdu! Katilas vykdys šį grafiką. ✅⚡");
+        showBottomToast(`Grafikas patvirtintas ${durationText}! Katilas vykdys šį grafiką. ✅⚡`);
     });
 
     // 🌟 2. MYGTUKAS: GRAFIKO ATŠAUKIMAS IR GREITASIS ROLLBACK Į BAZĘ

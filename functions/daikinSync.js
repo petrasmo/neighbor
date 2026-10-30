@@ -240,6 +240,10 @@ async function sendDaikinCommand(db, admin, userId, cmd) {
         { value: cmd.climateOnOff },
         { headers, timeout: 10000 }
       );
+      // 🌟 Jei kartu keičiamas ir poslinkis – duodame Daikin 2 sek. atsikvėpti
+      if (cmd.offset !== undefined && cmd.offset !== null) {
+        await new Promise((r) => setTimeout(r, 2000));
+      }
     }
 
     if (cmd.offset !== undefined && cmd.offset !== null) {
@@ -298,31 +302,52 @@ async function executeHourlyDaikinAutopilot(db, admin) {
   if (allHours.length === 0) return;
 
   const now = new Date();
-  const todayStr = now.toLocaleDateString("lt-LT", { timeZone: "Europe/Vilnius", year: "numeric", month: "2-digit", day: "2-digit" });
-  const currentHourInt = parseInt(now.toLocaleTimeString("en-GB", { timeZone: "Europe/Vilnius", hour: "2-digit", hour12: false }), 10);
+  const todayStr = now.toLocaleDateString("lt-LT", {
+    timeZone: "Europe/Vilnius",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  });
+  const currentHourInt = parseInt(
+    now.toLocaleTimeString("en-GB", {
+      timeZone: "Europe/Vilnius",
+      hour: "2-digit",
+      hour12: false,
+    }),
+    10
+  );
   const nowTs = Date.now();
 
   // Šiandienos valandos
   const dayHours = allHours.filter((h) => h.date === todayStr);
+  if (dayHours.length === 0) {
+    console.warn(`⚠️ Nerasta Nord Pool valandų šiai dienai (${todayStr}).`);
+    return;
+  }
+
   const sortedDay = [...dayHours].sort((a, b) => a.priceCtNoVat - b.priceCtNoVat);
 
   await Promise.allSettled(
     snap.docs.map(async (doc) => {
       const dev = doc.data();
       const cfg = dev.config || {};
+      const tel = dev.telemetry || {};
       const baseline = dev.baselineSettings || { climateOnOff: "off", offset: -10, dhwOnOff: "off" };
       const userId = dev.userId;
 
-      // 1. TIKRINAME AR GRAFIKAS AKTYVUS (ARBA PILNA AUTOMATIKA, ARBA ŽMOGAUS PATVIRTINTAS GRAFIKAS)
+      // 1. TIKRINAME AR GRAFIKAS AKTYVUS
       const isFullAuto = cfg.autopilotEnabled === true;
-      const isManualActive = cfg.manualApprovalActive === true && cfg.approvedUntilTimestamp && nowTs <= cfg.approvedUntilTimestamp;
+      const isManualActive =
+        cfg.manualApprovalActive === true &&
+        cfg.approvedUntilTimestamp &&
+        nowTs <= cfg.approvedUntilTimestamp;
 
-      // 2. JEI GRAFIKAS PASIBAIGĖ ARBA IŠJUNGTAS -> AUTOMATINIS ROLLBACK (ATSTATYMAS Į BAZĘ)!
+      // 2. JEI GRAFIKAS PASIBAIGĖ ARBA IŠJUNGTAS -> AUTOMATINIS ROLLBACK Į BAZĘ!
       if (!isFullAuto && !isManualActive) {
         if (cfg.wasRolledBack !== true) {
           console.log(`↩️ [ROLLBACK] Katilas ${dev.name} pasibaigus grafikui atstatomas į pirminę būseną!`);
           await sendDaikinCommand(db, admin, userId, {
-            deviceId: dev.telemetry?.deviceId,
+            deviceId: tel.deviceId,
             climateOnOff: baseline.climateOnOff,
             offset: baseline.offset,
             dhwOnOff: baseline.dhwOnOff,
@@ -335,35 +360,47 @@ async function executeHourlyDaikinAutopilot(db, admin) {
         return;
       }
 
-      // 3. JEI GRAFIKAS AKTYVUS -> VYKDOME DABARTINĖS VALANDOS KOMANDĄ
-      const allowedCount = Math.min(24, Math.max(0, cfg.allowedHoursPerDay || 4));
+      // 3. JEI GRAFIKAS AKTYVUS -> NUSTATOME ŠIOS VALANDOS TIKSLĄ
+      const allowedCount = Math.min(24, Math.max(0, cfg.allowedHoursPerDay ?? 4));
       const cheapHoursSet = new Set(sortedDay.slice(0, allowedCount).map((h) => h.hour));
       const shouldHeatThisHour = cheapHoursSet.has(currentHourInt);
 
       // Saugiklis: patalpos temperatūros lubos
-      const roomTemp = dev.telemetry?.roomTemp;
+      const roomTemp = tel.roomTemp;
       const isOverMax = roomTemp !== null && roomTemp !== undefined && roomTemp >= (cfg.maxRoomTempLimit || 16);
 
+      let targetCmd = {};
       if (shouldHeatThisHour && !isOverMax) {
-        console.log(`🔥 [AUTOPILOT] Katilas ${dev.name}: pigi valanda (${currentHourInt}:00), įjungiamas šildymas (offset: ${cfg.cheapHourOffset})`);
-        await sendDaikinCommand(db, admin, userId, {
-          deviceId: dev.telemetry?.deviceId,
+        targetCmd = {
           climateOnOff: "on",
           offset: cfg.cheapHourOffset ?? -5,
-        });
+        };
       } else {
-        const offCmd = cfg.normalHourAction === "offset_minus_10"
-          ? { climateOnOff: "on", offset: -10 }
-          : (cfg.normalHourAction === "offset_minus_5" ? { climateOnOff: "on", offset: -5 } : { climateOnOff: "off" });
+        targetCmd =
+          cfg.normalHourAction === "offset_minus_10"
+            ? { climateOnOff: "on", offset: -10 }
+            : cfg.normalHourAction === "offset_minus_5"
+            ? { climateOnOff: "on", offset: -5 }
+            : { climateOnOff: "off" };
+      }
 
-        console.log(`💤 [AUTOPILOT] Katilas ${dev.name}: brangi valanda (${currentHourInt}:00), taikomas poilsis`);
+      // 4. TIKRINAME, AR REIKIA SIŲSTI KOMANDĄ (kad neeikvotume Daikin API limito, jei jau nustatyta)
+      const isSameOnOff = tel.climateOnOff === targetCmd.climateOnOff;
+      const isSameOffset = targetCmd.offset === undefined || Number(tel.currentOffset) === Number(targetCmd.offset);
+
+      if (isSameOnOff && isSameOffset) {
+        console.log(`✅ [AUTOPILOT] Katilas ${dev.name} (${currentHourInt}:00) jau yra reikiamoje būsenoje (${targetCmd.climateOnOff}, offset: ${tel.currentOffset}). Komanda nesiunčiama.`);
+      } else {
+        console.log(`🔥 [AUTOPILOT] Katilas ${dev.name} (${currentHourInt}:00) keičiama būsena į:`, targetCmd);
         await sendDaikinCommand(db, admin, userId, {
-          deviceId: dev.telemetry?.deviceId,
-          ...offCmd,
+          deviceId: tel.deviceId,
+          ...targetCmd,
         });
       }
 
-      await doc.ref.update({ "config.wasRolledBack": false });
+      if (cfg.wasRolledBack !== false) {
+        await doc.ref.update({ "config.wasRolledBack": false });
+      }
     })
   );
 }
