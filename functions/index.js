@@ -12,7 +12,7 @@ const { executeElevatorsSync } = require("./grainSync");
 const { executeMatifSync } = require("./matifSync");
 const { executeDieselSync } = require("./dieselSync");
 const { executeFertilizerSync } = require("./fertilizerSync");
-const { executeElectricitySync } = require("./electricitySync");
+const { executeElectricitySync, seedFullYearElectricityToFile } = require("./electricitySync");
 
 // Importuojame Daikin šilumos siurblio modulį
 const {
@@ -823,6 +823,47 @@ exports.controlDaikinPump = onRequest(
       res.json({ success: true, telemetry: tel });
     } catch (err) {
       res.status(500).json({ error: err.message });
+    }
+  }
+);
+
+// 📁 18. NORD POOL METŲ JSON FAILO NUSKAITYMAS NARŠYKLEI
+exports.getElectricityHistoryFile = onRequest(
+  { cors: true, invoker: "public" },
+  async (req, res) => {
+    try {
+      res.set("Cache-Control", "public, max-age=300, s-maxage=600");
+      const year = req.query.year || new Date().getFullYear();
+      const bucket = admin.storage().bucket();
+      const file = bucket.file(`electricity_history/${year}.json`);
+
+      const [exists] = await file.exists();
+      if (!exists) {
+        return res.json({ year: Number(year), days: {} });
+      }
+
+      const [content] = await file.download();
+      res.setHeader("Content-Type", "application/json");
+      return res.send(content);
+    } catch (err) {
+      return res.status(500).json({ error: err.message });
+    }
+  }
+);
+
+// 🚀 19. VIENKARTINIS 2025 IR 2026 M. ISTORIJOS SUKŪRIMAS Į JSON FAILUS
+exports.seedElectricityFilesNow = onRequest(
+  { cors: true, invoker: "public", timeoutSeconds: 300, memory: "512MiB" },
+  async (req, res) => {
+    try {
+      const c2025 = await seedFullYearElectricityToFile(admin, 2025);
+      const c2026 = await seedFullYearElectricityToFile(admin, 2026);
+      res.send(`✅ SĖKMINGAI SUKURTI IR UŽPILDYTI JSON FAILAI STORAGE:
+- 📁 electricity_history/2025.json (${c2025} valandų)
+- 📁 electricity_history/2026.json (${c2026} valandų)
+Nuo šiol kasdien 15:00 val. šie failai pasipildys automatiškai!`);
+    } catch (err) {
+      res.status(500).send("Klaida: " + err.message);
     }
   }
 );

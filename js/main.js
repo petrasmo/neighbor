@@ -67,20 +67,7 @@ document.addEventListener('DOMContentLoaded', () => {
         btn.addEventListener('click', () => {
             const tabIdx = parseInt(btn.getAttribute('data-tab'));
 
-            // 🔒 1. LAIKINA APSAUGA: „Išmanieji Įrenginiai“ (tab 13) leidžiama TIK administratoriui (petrasmo@gmail.com)!
-            if (tabIdx === 13) {
-                const isAdmin = currentUser && currentUser.email === "petrasmo@gmail.com";
-                if (!isAdmin) {
-                    showDialog(
-                        "🔒 Tik administratoriui",
-                        "„⚡ Išmanieji Įrenginiai“ šiuo metu yra vidinio testavimo stadijoje ir laikinai pasiekiami tik sistemos administratoriui.",
-                        "⚙️"
-                    );
-                    return;
-                }
-            }
-
-            // 🔒 2. Reikalingas prisijungimas kitiems ūkio moduliams
+            // 🔒 Reikalingas prisijungimas visiems ūkio moduliams (įskaitant tab 13 – Išmanieji Įrenginiai)
             if (!currentUser && ((tabIdx >= 2 && tabIdx <= 6) || tabIdx === 10 || tabIdx === 13 || tabIdx === 8 || tabIdx === 9)) {
                 showDialog(
                     "Reikalingas prisijungimas",
@@ -236,11 +223,6 @@ document.addEventListener('DOMContentLoaded', () => {
                         );
                     }, 200);
                 } else {
-                    // Jei bando atidaryti tab 13, bet nėra administratorius – nukreipiame į pradžią
-                    if (requestedTab === 13 && user.email !== "petrasmo@gmail.com") {
-                        requestedTab = 0;
-                    }
-
                     switchTab(requestedTab);
                     if (requestedTab === 13) initSmartDevicesTab(currentUser, userData);
                     else if (requestedTab === 2) { initFieldsManager(currentUser, userData); refreshFieldsMap(); }
