@@ -1,6 +1,6 @@
 // js/ukis/daikinEnergyTab.js
 
-let activePeriod = 'day'; // 'day', 'week', 'year'
+let activePeriod = 'week'; // 'day', 'week', 'year'
 let selectedYear = new Date().getFullYear();
 
 const historyFilesCache = {};
@@ -77,7 +77,7 @@ export function renderDaikinEnergyTabHtml(dev, cachedElecHours) {
             <!-- LENTELIŲ / GRAFIKŲ TURINYS -->
             <div id="energy-columns-wrapper" class="space-y-3"></div>
 
-            <!-- 🌟 BENDRA SUVESTINĖ APAČIOJE (VISADA MATOMA VISOSE ATASKAITOSE!) -->
+            <!-- BENDRA SUVESTINĖ APAČIOJE -->
             <div id="energy-bottom-grand-total"></div>
 
         </div>
@@ -146,9 +146,8 @@ function renderEnergyData(dev, cachedElecHours) {
 
     let climArr = [...rawClim];
     let dhwArr = [...rawDhw];
-    const maxItems = Math.max(climArr.length, dhwArr.length);
 
-    // Taip pat pasiimame 2 valandų 'd' masyvus tiksliam Vakar ir Šiandien eurų skaičiavimui
+    // 2 valandų 'd' masyvai tiksliam Vakar ir Šiandien kWh bei € skaičiavimui
     const dClimArr = cons?.climate?.d || [];
     const dDhwArr = cons?.dhw?.d || [];
 
@@ -158,14 +157,10 @@ function renderEnergyData(dev, cachedElecHours) {
 
     const allElecHours = cachedElecHours || [];
 
-    /**
-     * Grąžina 24 valandų kainų masyvą [ct0, ct1, ..., ct23] konkrečiai dienai
-     */
     const getDay24Prices = (d) => {
         const y = d.getFullYear();
         const isoDate = formatDateIso(d);
 
-        // 1. Pirma ieškome greitajame Firestore (ypač aktualu Šiandienai ir Vakarui)
         const fromLive = new Array(24).fill(null);
         let liveCount = 0;
         allElecHours.forEach(h => {
@@ -178,10 +173,8 @@ function renderEnergyData(dev, cachedElecHours) {
         });
         if (liveCount >= 20) return fromLive;
 
-        // 2. Jei gyvame nėra – imame iš JSON failo kešo
         if (historyFilesCache[y] && Array.isArray(historyFilesCache[y][isoDate])) {
             const fileArr = historyFilesCache[y][isoDate];
-            // Jei turėjome dalį gyvų valandų – apjungiame
             for (let hr = 0; hr < 24; hr++) {
                 if (fromLive[hr] === null && fileArr[hr] !== undefined) {
                     fromLive[hr] = fileArr[hr];
@@ -195,40 +188,46 @@ function renderEnergyData(dev, cachedElecHours) {
     };
 
     /**
-     * 🌟 Pagalbinė funkcija: Apskaičiuoja TIKSLIĄ Vakar (startIdx=0) arba Šiandien (startIdx=12)
-     * sumą eurais pagal 2 valandų intervalų vidurkius!
+     * Apskaičiuoja TIKSLIĄ Vakar (startIdx=0) arba Šiandien (startIdx=12)
+     * kWh ir € sumą iš 2 valandų masyvo!
      */
-    const calcExact2HourDayCost = (targetDate, startIdx) => {
+    const calcExact2HourDayStats = (targetDate, startIdx) => {
         const prices24 = getDay24Prices(targetDate);
-        if (prices24.length === 0) return { hasPrice: false, costEur: 0, kwh: 0 };
-
         let dayEur = 0;
-        let dayKwh = 0;
+        let climKwh = 0;
+        let dhwKwh = 0;
         let foundIntervals = 0;
 
         for (let k = 0; k < 12; k++) {
             const idx = startIdx + k;
-            const kwh = Number(dClimArr[idx] || 0) + Number(dDhwArr[idx] || 0);
-            dayKwh += kwh;
+            const c = Number(dClimArr[idx] || 0);
+            const d = Number(dDhwArr[idx] || 0);
+            const kwh = c + d;
+            climKwh += c;
+            dhwKwh += d;
 
-            const hOffset = k * 2;
-            const p1 = prices24[hOffset];
-            const p2 = prices24[hOffset + 1];
+            if (prices24.length > 0) {
+                const hOffset = k * 2;
+                const p1 = prices24[hOffset];
+                const p2 = prices24[hOffset + 1];
 
-            if (p1 !== null && p1 !== undefined && p2 !== null && p2 !== undefined) {
-                const avg2hCt = (p1 + p2) / 2;
-                dayEur += kwh * (avg2hCt / 100);
-                foundIntervals++;
-            } else if (p1 !== null && p1 !== undefined) {
-                dayEur += kwh * (p1 / 100);
-                foundIntervals++;
+                if (p1 !== null && p1 !== undefined && p2 !== null && p2 !== undefined) {
+                    const avg2hCt = (p1 + p2) / 2;
+                    dayEur += kwh * (avg2hCt / 100);
+                    foundIntervals++;
+                } else if (p1 !== null && p1 !== undefined) {
+                    dayEur += kwh * (p1 / 100);
+                    foundIntervals++;
+                }
             }
         }
 
         return {
             hasPrice: foundIntervals > 0,
             costEur: dayEur,
-            kwh: dayKwh
+            climKwh,
+            dhwKwh,
+            sumKwh: climKwh + dhwKwh
         };
     };
 
@@ -237,9 +236,6 @@ function renderEnergyData(dev, cachedElecHours) {
     let totalCostEur = 0;
     let pricedCount = 0;
 
-    /**
-     * 🌟 LENTELĖS GENERATORIUS SU APATINIU SUMINIU FOOTERIU („IŠ VISO:“) KIEKVIENAM STULPELIUI!
-     */
     const buildColumnTableHtml = (title, rows, fullMaxVal) => {
         let colSumClim = 0;
         let colSumDhw = 0;
@@ -277,7 +273,6 @@ function renderEnergyData(dev, cachedElecHours) {
 
         const colTotalKwh = colSumClim + colSumDhw;
 
-        // 🌟 APATINĖ SUMINĖ EILUTĖ STULPELYJE
         const footerHtml = `
             <div class="bg-tractorSurface px-3 sm:px-4 py-2.5 border-t-2 border-tractorBorder flex items-center justify-between text-xs font-mono">
                 <div class="flex items-center gap-2">
@@ -343,7 +338,6 @@ function renderEnergyData(dev, cachedElecHours) {
             const hourOffset = isYesterday ? (i * 2) : ((i - 12) * 2);
             const target24 = isYesterday ? yest24 : today24;
 
-            // Imame dviejų valandų (pvz. 16:00 ir 17:00) Nord Pool kainų vidurkį
             const p1 = target24[hourOffset];
             const p2 = target24[hourOffset + 1];
 
@@ -394,15 +388,17 @@ function renderEnergyData(dev, cachedElecHours) {
     }
 
     // =========================================================================
-    // 2. REŽIMAS: 2 SAVAITĖS (ŠI SAVAITĖ KAIRĖJE, PRAĖJUSI DEŠINĖJE)
+    // 2. REŽIMAS: 2 SAVAITĖS (TIKSLUS KALENDORINIS INDEKSAVIMAS: 0..6 PRAĖJUSI, 7..13 ŠI SAVAITĖ!)
     // =========================================================================
     else if (activePeriod === 'week') {
-        const curDayOfWeek = now.getDay() === 0 ? 7 : now.getDay();
+        const curDayOfWeek = now.getDay() === 0 ? 7 : now.getDay(); // 1 = PIR, 2 = ANT, ..., 7 = SEK
 
+        // Šios savaitės Pirmadienis
         const thisMonday = new Date(now);
         thisMonday.setDate(now.getDate() - (curDayOfWeek - 1));
         thisMonday.setHours(0, 0, 0, 0);
 
+        // Praėjusios savaitės Pirmadienis ir Sekmadienis
         const prevMonday = new Date(thisMonday);
         prevMonday.setDate(prevMonday.getDate() - 7);
 
@@ -416,67 +412,75 @@ function renderEnergyData(dev, cachedElecHours) {
         const thisWeekRows = [];
         const prevWeekRows = [];
 
-        for (let i = 0; i < maxItems; i++) {
-            const daysAgo = (maxItems - 2) - i;
-            if (daysAgo < 0) continue;
+        const todayIso = formatDateIso(now);
+        const yestIso = formatDateIso(yestDate);
 
-            const itemDate = new Date(now);
-            itemDate.setDate(itemDate.getDate() - daysAgo);
+        // 🌟 DAIKIN 'w' MASYVO STRUKTŪRA:
+        // i = 0..6 yra PRAĖJUSI SAVAITĖ (nuo prevMonday + 0 iki prevMonday + 6)
+        // i = 7..(6 + curDayOfWeek) yra ŠI SAVAITĖ (nuo thisMonday + 0 iki Šiandien)
+        const totalDaysToProcess = 7 + curDayOfWeek;
+
+        for (let i = 0; i < totalDaysToProcess; i++) {
+            const itemDate = new Date(prevMonday);
+            itemDate.setDate(prevMonday.getDate() + i);
             itemDate.setHours(0, 0, 0, 0);
-
-            // Tikriname, ar ši diena patenka į Šią arba Praėjusią savaitę
-            const isThisWeek = itemDate >= thisMonday;
-            const isPrevWeek = itemDate >= prevMonday && itemDate <= prevSunday;
-            if (!isThisWeek && !isPrevWeek) continue;
-
-            const cKwh = Number(climArr[i] || 0);
-            const dKwh = Number(dhwArr[i] || 0);
-            const sumKwh = cKwh + dKwh;
-            totalClimKwh += cKwh;
-            totalDhwKwh += dKwh;
 
             const dateIso = formatDateIso(itemDate);
             const dayOfWeekName = WEEKDAYS_LT[itemDate.getDay()];
             const shortDate = dateIso.slice(5);
 
+            const isToday = (dateIso === todayIso);
+            const isYesterday = (dateIso === yestIso);
+
             let dayLabel = `${shortDate} (${dayOfWeekName})`;
-            if (daysAgo === 0) dayLabel = `Šiandien (${dayOfWeekName})`;
-            else if (daysAgo === 1) dayLabel = `Vakar (${dayOfWeekName})`;
+            if (isToday) dayLabel = `Šiandien (${dayOfWeekName})`;
+            else if (isYesterday) dayLabel = `Vakar (${dayOfWeekName})`;
+
+            let cKwh = Number(climArr[i] || 0);
+            let dKwh = Number(dhwArr[i] || 0);
+            let sumKwh = cKwh + dKwh;
 
             let costText = "(-)";
             let rawCostEur = 0;
             let hasPrice = false;
 
-            // 🌟 JEI TAI ŠIANDIENA ARBA VAKAR – IMAME TIKSLIĄ 2 VALANDŲ SUMĄ (KAD SUTAPTŲ CENTAS Į CENTĄ SU DIENOS GRAFIKU!)
-            if (daysAgo === 0 && dClimArr.length >= 24) {
-                const exact = calcExact2HourDayCost(now, 12);
+            // 🌟 JEI TAI ŠIANDIENA ARBA VAKAR – IMAME TIKSLIUS KILOVATUS IR EURUS IŠ 2 VALANDŲ MASYVO!
+            if (isToday && dClimArr.length >= 24) {
+                const exact = calcExact2HourDayStats(now, 12);
+                cKwh = exact.climKwh;
+                dKwh = exact.dhwKwh;
+                sumKwh = exact.sumKwh;
                 if (exact.hasPrice) {
                     rawCostEur = exact.costEur;
-                    totalCostEur += rawCostEur;
-                    pricedCount++;
                     hasPrice = true;
                     costText = `(${rawCostEur.toFixed(2)} €)`;
                 }
-            } else if (daysAgo === 1 && dClimArr.length >= 12) {
-                const exact = calcExact2HourDayCost(yestDate, 0);
+            } else if (isYesterday && dClimArr.length >= 12) {
+                const exact = calcExact2HourDayStats(yestDate, 0);
+                cKwh = exact.climKwh;
+                dKwh = exact.dhwKwh;
+                sumKwh = exact.sumKwh;
                 if (exact.hasPrice) {
                     rawCostEur = exact.costEur;
-                    totalCostEur += rawCostEur;
-                    pricedCount++;
                     hasPrice = true;
                     costText = `(${rawCostEur.toFixed(2)} €)`;
                 }
             } else {
-                // Ankstesnėms savaitės dienoms Daikin saugo tik paros kWh, todėl imame tos paros Nord Pool kainą
+                // Kitoms savaitės dienoms skaičiuojame iš tos dienos Nord Pool kainų
                 const day24 = getDay24Prices(itemDate).filter(v => v !== null && v !== undefined);
                 if (day24.length > 0) {
                     const avgDayPriceCt = day24.reduce((a, b) => a + b, 0) / day24.length;
                     rawCostEur = sumKwh * (avgDayPriceCt / 100);
-                    totalCostEur += rawCostEur;
-                    pricedCount++;
                     hasPrice = true;
                     costText = `(~${rawCostEur.toFixed(2)} €)`;
                 }
+            }
+
+            totalClimKwh += cKwh;
+            totalDhwKwh += dKwh;
+            if (hasPrice) {
+                totalCostEur += rawCostEur;
+                pricedCount++;
             }
 
             const rowItem = {
@@ -490,8 +494,11 @@ function renderEnergyData(dev, cachedElecHours) {
                 hasPrice
             };
 
-            if (isThisWeek) thisWeekRows.push(rowItem);
-            else if (isPrevWeek) prevWeekRows.push(rowItem);
+            if (i < 7) {
+                prevWeekRows.push(rowItem);
+            } else {
+                thisWeekRows.push(rowItem);
+            }
         }
 
         renderKpiCards(kpiBox, totalClimKwh, totalDhwKwh, totalCostEur, pricedCount, '2 SAVAITĖS');
@@ -508,7 +515,7 @@ function renderEnergyData(dev, cachedElecHours) {
     }
 
     // =========================================================================
-    // 3. REŽIMAS: METAI (12 MĖNESIŲ SU DETALIA APATINE SUVESTINE)
+    // 3. REŽIMAS: METAI (12 MĖNESIŲ)
     // =========================================================================
     else if (activePeriod === 'year') {
         const curYear = now.getFullYear();
@@ -556,12 +563,10 @@ function renderEnergyData(dev, cachedElecHours) {
             let rawCostEur = 0;
             let hasPrice = false;
 
-            // 🌟 Jei tai EINAMASIS MĖNUO ir kWh sutampa su Vakar + Šiandien 2val. suma –
-            // imame tikslią 2 valandų sumą, kad nesiskirtų nuo Dienos ataskaitos!
             const isCurrentMonth = (selectedYear === curYear && i === now.getMonth());
-            const yestExact = calcExact2HourDayCost(yestDate, 0);
-            const todayExact = calcExact2HourDayCost(now, 12);
-            const recent2DaysKwh = (yestDate.getMonth() === i ? yestExact.kwh : 0) + todayExact.kwh;
+            const yestExact = calcExact2HourDayStats(yestDate, 0);
+            const todayExact = calcExact2HourDayStats(now, 12);
+            const recent2DaysKwh = (yestDate.getMonth() === i ? yestExact.sumKwh : 0) + todayExact.sumKwh;
 
             if (isCurrentMonth && sumKwh > 0 && Math.abs(sumKwh - recent2DaysKwh) < 0.5) {
                 rawCostEur = (yestDate.getMonth() === i ? yestExact.costEur : 0) + todayExact.costEur;
@@ -570,8 +575,6 @@ function renderEnergyData(dev, cachedElecHours) {
                 hasPrice = true;
                 costText = `(${rawCostEur.toFixed(2)} €)`;
             } else {
-                // Praėjusiems mėnesiams Daikin pateikia tik bendrą mėnesio kWh sumą,
-                // todėl skaičiuojame pagal to mėnesio Nord Pool biržos kainas iš JSON failo
                 const monthPrefix = `${selectedYear}-${String(i + 1).padStart(2, '0')}`;
                 const monthPrices = [];
 
@@ -644,9 +647,6 @@ function renderKpiCards(kpiBox, totalClimKwh, totalDhwKwh, totalCostEur, pricedC
     `;
 }
 
-/**
- * 🌟 DIDELĖ BENDRA APATINĖ SUVESTINĖS JUOSTA VISOMS ATASKAITOMS
- */
 function renderBottomGrandTotal(container, title, totalClimKwh, totalDhwKwh, totalCostEur, pricedCount) {
     if (!container) return;
     const totalKwh = totalClimKwh + totalDhwKwh;
