@@ -36,43 +36,45 @@ export function renderElectricityCalculator(container) {
 
                 <!-- 4 METRIKŲ KORTELĖS (DABAR, PIGIAUSIA, VIDURKIS, BRANGIAUSIA) -->
                 <div class="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3">
-                    <div class="bg-tractorPrimary/20 border-2 border-tractorPrimary p-3.5 sm:p-4 rounded-2xl space-y-0.5 shadow-lg">
+                    <div class="bg-tractorPrimary/20 border-2 border-tractorPrimary p-3 sm:p-3.5 rounded-2xl space-y-0.5 shadow-lg">
                         <span class="text-[10px] sm:text-[11px] uppercase font-black text-tractorPrimaryLight tracking-wider block truncate">Kaina dabar</span>
-                        <div class="text-xl sm:text-2xl md:text-3xl font-black font-mono leading-tight" id="elec-now-val" style="color: var(--text-main);">-- ct / kWh</div>
+                        <div class="text-xl sm:text-2xl font-black font-mono leading-tight" id="elec-now-val" style="color: var(--text-main);">-- ct / kWh</div>
                         <p class="text-[10px] sm:text-xs font-bold text-green-500 truncate" id="elec-now-sub">Skaičiuojama...</p>
                     </div>
 
-                    <div class="bg-tractorBg border border-tractorBorder p-3.5 sm:p-4 rounded-2xl space-y-0.5">
+                    <div class="bg-tractorBg border border-tractorBorder p-3 sm:p-3.5 rounded-2xl space-y-0.5">
                         <span class="text-[10px] sm:text-[11px] uppercase font-bold text-slate-400 tracking-wider block truncate">🟢 Pigiausia valanda</span>
                         <div class="text-xl sm:text-2xl font-bold font-mono text-green-500 leading-tight" id="elec-min-val">-- ct / kWh</div>
                         <p class="text-[10px] sm:text-xs text-slate-400 truncate" id="elec-min-hour">Laikas: --:--</p>
                     </div>
 
-                    <div class="bg-tractorBg border border-tractorBorder p-3.5 sm:p-4 rounded-2xl space-y-0.5">
+                    <div class="bg-tractorBg border border-tractorBorder p-3 sm:p-3.5 rounded-2xl space-y-0.5">
                         <span class="text-[10px] sm:text-[11px] uppercase font-bold text-slate-400 tracking-wider block truncate">📊 Vidutinė kaina</span>
                         <div class="text-xl sm:text-2xl font-bold font-mono text-amber-500 leading-tight" id="elec-avg-val">-- ct / kWh</div>
                         <p class="text-[10px] sm:text-xs text-slate-400 truncate" id="elec-avg-sub">Paros vidurkis</p>
                     </div>
 
-                    <div class="bg-tractorBg border border-tractorBorder p-3.5 sm:p-4 rounded-2xl space-y-0.5">
+                    <div class="bg-tractorBg border border-tractorBorder p-3 sm:p-3.5 rounded-2xl space-y-0.5">
                         <span class="text-[10px] sm:text-[11px] uppercase font-bold text-slate-400 tracking-wider block truncate">🔴 Brangiausia valanda</span>
                         <div class="text-xl sm:text-2xl font-bold font-mono text-red-500 leading-tight" id="elec-max-val">-- ct / kWh</div>
                         <p class="text-[10px] sm:text-xs text-slate-400 truncate" id="elec-max-hour">Laikas: --:--</p>
                     </div>
                 </div>
 
-                <!-- VALANDŲ TINKLELIS -->
-                <div class="space-y-3 pt-1">
+                <!-- 🌟 2 STULPELIŲ KOMPAKTIŠKOS LENTELĖS (ŠIANDIEN IR RYTOJ) -->
+                <div class="space-y-2.5 pt-1">
                     <div class="flex flex-wrap items-center justify-between gap-2 border-b border-tractorBorder/60 pb-2">
-                        <h3 class="font-oswald text-base sm:text-lg font-bold uppercase tracking-wider flex items-center gap-1.5" style="color: var(--text-main);">
-                            <span>⏱️</span> Elektros Kainos Pavalandžiui (ct / kWh)
+                        <h3 class="font-oswald text-sm sm:text-base font-bold uppercase tracking-wider flex items-center gap-1.5" style="color: var(--text-main);">
+                            <span>📅</span> Elektros Kainos Pavalandžiui (Šiandien ir Rytoj)
                         </h3>
-                        <span class="text-[11px] text-slate-400 font-medium">
-                            🟢 Pigu (&lt;5 ct) • 🟡 Vidutinė (5–12 ct) • 🔴 Brangu (&gt;12 ct)
-                        </span>
+                        <div class="flex items-center gap-3 text-[11px] font-bold">
+                            <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-green-500"></span> Pigiausios val.</span>
+                            <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span> Vidutinės</span>
+                            <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-red-500"></span> Brangiausios</span>
+                        </div>
                     </div>
 
-                    <div id="elec-hourly-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2.5 sm:gap-3">
+                    <div id="elec-hourly-grid" class="grid grid-cols-1 lg:grid-cols-2 gap-4">
                         <div class="col-span-full py-8 text-center text-slate-500 text-xs">Kraunamos Nord Pool valandinės kainos...</div>
                     </div>
                 </div>
@@ -178,22 +180,27 @@ function renderElectricityUI() {
     const currentHourInt = parseInt(now.toLocaleTimeString('en-GB', { timeZone: 'Europe/Vilnius', hour: '2-digit', hour12: false }), 10);
 
     const allHours = cachedElecData.hours || [];
-    const availableDates = [...new Set(allHours.map(h => h.date))].sort();
-    if (availableDates.length > 0 && !availableDates.includes(todayStr)) {
-        todayStr = availableDates[0];
-    }
-
-    const todayStartIdx = allHours.findIndex(h => h.date === todayStr);
-    const rawVisible = allHours.slice(todayStartIdx >= 0 ? todayStartIdx : 0);
     const dateCounts = {};
-    rawVisible.forEach(h => { dateCounts[h.date] = (dateCounts[h.date] || 0) + 1; });
-    const visibleHours = rawVisible.filter(h => dateCounts[h.date] >= 20);
+    allHours.forEach(h => { dateCounts[h.date] = (dateCounts[h.date] || 0) + 1; });
+    const fullDates = Object.keys(dateCounts).filter(d => dateCounts[d] >= 20).sort();
 
-    if (visibleHours.length === 0) {
+    if (fullDates.length === 0) {
         grid.innerHTML = `<div class="col-span-full py-8 text-center text-slate-500 text-xs">Šiuo metu duomenų nėra.</div>`;
         return;
     }
 
+    if (!fullDates.includes(todayStr)) {
+        todayStr = fullDates[0];
+    }
+
+    const todayIdx = fullDates.indexOf(todayStr);
+    const tomorrowStr = fullDates[todayIdx + 1] || null;
+
+    const todayHours = allHours.filter(h => h.date === todayStr);
+    const tomorrowHours = tomorrowStr ? allHours.filter(h => h.date === tomorrowStr) : [];
+    const visibleHours = [...todayHours, ...tomorrowHours];
+
+    // Viršutinės 4 KPI kortelės skaičiuojamos pagal ŠIANDIENOS ir RYTOJAUS matomas valandas
     const pricesCt = visibleHours.map(h => getPriceCt(h));
     const minCt = Math.min(...pricesCt);
     const maxCt = Math.max(...pricesCt);
@@ -201,7 +208,7 @@ function renderElectricityUI() {
 
     const minHourObj = visibleHours.find(h => getPriceCt(h) === minCt) || visibleHours[0];
     const maxHourObj = visibleHours.find(h => getPriceCt(h) === maxCt) || visibleHours[0];
-    const nowHourObj = visibleHours.find(h => h.date === todayStr && h.hour === currentHourInt) || visibleHours[0];
+    const nowHourObj = todayHours.find(h => h.hour === currentHourInt) || todayHours[0];
 
     const nowCt = getPriceCt(nowHourObj);
 
@@ -226,54 +233,148 @@ function renderElectricityUI() {
     if (elMaxVal) elMaxVal.textContent = `${formatCleanCt(maxCt)} ct / kWh`;
     if (elMaxHour) elMaxHour.textContent = `Laikas: ${maxHourObj.hourLabel} (${maxHourObj.date.slice(5)})`;
 
-    grid.innerHTML = visibleHours.map((h, idx) => {
-        const pCt = getPriceCt(h);
-        const isCurrent = (h.date === todayStr && h.hour === currentHourInt);
-        const isToday = (h.date === todayStr);
-
-        const topLeftLabel = isCurrent ? "DABAR" : (isToday ? `${h.date.slice(8)} d.` : `Rytoj`);
-
-        let badgeText = "🟢 Pigu";
-        let badgeStyle = "background-color: rgba(34, 197, 94, 0.15); color: #16A34A; border: 1px solid rgba(34, 197, 94, 0.4);";
-
-        if (pCt <= 0) {
-            badgeText = "💎 0 ct";
-            badgeStyle = "background-color: rgba(59, 130, 246, 0.2); color: #3B82F6; border: 1px solid rgba(59, 130, 246, 0.5);";
-        } else if (pCt >= 12) {
-            badgeText = "🔴 Brangu";
-            badgeStyle = "background-color: rgba(239, 68, 68, 0.15); color: #DC2626; border: 1px solid rgba(239, 68, 68, 0.4);";
-        } else if (pCt >= 5) {
-            badgeText = "🟡 Vidutinė";
-            badgeStyle = "background-color: rgba(245, 158, 11, 0.15); color: #D97706; border: 1px solid rgba(245, 158, 11, 0.4);";
+    // Pagalbinė funkcija vienos dienos lentelės generavimui
+    const buildDayTableHtml = (dateStr, dayHours, titlePrefix) => {
+        if (!dateStr || dayHours.length === 0) {
+            return `
+                <div class="bg-tractorBg border border-tractorBorder rounded-2xl overflow-hidden flex flex-col">
+                    <div class="bg-tractorSurface px-3.5 py-2.5 border-b border-tractorBorder flex justify-between items-center">
+                        <strong class="font-oswald text-sm sm:text-base uppercase tracking-wider" style="color: var(--text-main);">⏭️ RYTOJ</strong>
+                        <span class="text-xs text-slate-400">Nuo 14:00–15:00 val.</span>
+                    </div>
+                    <div class="p-8 text-center text-xs text-slate-400 my-auto space-y-1.5">
+                        <span class="text-3xl block">⏳</span>
+                        <strong class="block text-sm" style="color: var(--text-main);">Rytojaus kainos dar nepaskelbtos</strong>
+                        <span>Nord Pool birža kitos paros valandines kainas pateikia po 14:00 val. Lietuvos laiku.</span>
+                    </div>
+                </div>
+            `;
         }
 
+        // Surūšiuojame tos dienos valandas, kad nustatytume 8 pigiausias ir 8 brangiausias
+        const sortedDay = [...dayHours].sort((a, b) => getPriceCt(a) - getPriceCt(b));
+        const cheapestTierSet = new Set(sortedDay.slice(0, 8).map(h => h.hour));
+        const expensiveTierSet = new Set(sortedDay.slice(-8).map(h => h.hour));
+
+        const dayPrices = dayHours.map(h => getPriceCt(h));
+        const dMin = Math.min(...dayPrices);
+        const dMax = Math.max(...dayPrices);
+        const dAvg = dayPrices.reduce((a, b) => a + b, 0) / dayPrices.length;
+
+        const rowsHtml = dayHours.map(h => {
+            const pCt = getPriceCt(h);
+            const isCurrent = (dateStr === todayStr && h.hour === currentHourInt);
+
+            let priceDot = `<span class="w-2 h-2 rounded-full bg-amber-500 inline-block shrink-0"></span>`;
+            let priceColorClass = `text-amber-600 dark:text-amber-400`;
+            let rowBgClass = `hover:bg-tractorSurface/70`;
+            let statusBadge = `
+                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30 font-bold text-[11px]">
+                    <span>🟡</span> <span>Vidutinė</span>
+                </span>
+            `;
+
+            if (pCt <= 0) {
+                priceDot = `<span class="w-2 h-2 rounded-full bg-blue-500 inline-block shrink-0"></span>`;
+                priceColorClass = `text-blue-600 dark:text-blue-400`;
+                rowBgClass = `bg-blue-500/[0.06] hover:bg-blue-500/[0.12]`;
+                statusBadge = `
+                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-blue-500/20 text-blue-600 dark:text-blue-300 border border-blue-500/40 font-extrabold text-[11px]">
+                        <span>💎</span> <span>Nemokama / 0 ct</span>
+                    </span>
+                `;
+            } else if (cheapestTierSet.has(h.hour)) {
+                priceDot = `<span class="w-2 h-2 rounded-full bg-green-500 inline-block shrink-0"></span>`;
+                priceColorClass = `text-green-600 dark:text-green-400`;
+                rowBgClass = `bg-green-500/[0.06] hover:bg-green-500/[0.12]`;
+                statusBadge = `
+                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-green-500/20 text-green-700 dark:text-green-300 border border-green-500/40 font-extrabold text-[11px]">
+                        <span>🟢</span> <span>Pigu (Palanki)</span>
+                    </span>
+                `;
+            } else if (expensiveTierSet.has(h.hour)) {
+                priceDot = `<span class="w-2 h-2 rounded-full bg-red-500 inline-block shrink-0"></span>`;
+                priceColorClass = `text-red-600 dark:text-red-400`;
+                rowBgClass = `bg-red-500/[0.04] hover:bg-red-500/[0.09]`;
+                statusBadge = `
+                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-red-500/15 text-red-600 dark:text-red-400 border border-red-500/30 font-bold text-[11px]">
+                        <span>🔴</span> <span>Brangu</span>
+                    </span>
+                `;
+            }
+
+            if (isCurrent) {
+                rowBgClass = `bg-tractorPrimary/20 border-l-4 border-l-tractorPrimary font-bold`;
+            }
+
+            return `
+                <tr class="elec-hour-row border-b border-tractorBorder/50 transition cursor-pointer ${rowBgClass}" data-date="${h.date}" data-hour="${h.hour}">
+                    <td class="py-1.5 px-3 whitespace-nowrap">
+                        <div class="flex items-center gap-1.5">
+                            <span class="font-mono text-xs sm:text-sm font-bold" style="color: var(--text-main);">${h.hourLabel}</span>
+                            ${isCurrent ? `<span class="px-1.5 py-0.5 rounded bg-tractorPrimary text-white text-[9px] font-black uppercase leading-none">Dabar</span>` : ''}
+                        </div>
+                    </td>
+                    <td class="py-1.5 px-2 whitespace-nowrap">
+                        <div class="flex items-center gap-1.5">
+                            ${priceDot}
+                            <span class="font-mono text-xs sm:text-sm font-black ${priceColorClass}">${formatCleanCt(pCt)}</span>
+                            <span class="text-[11px] font-semibold ${priceColorClass}">ct/kWh</span>
+                        </div>
+                    </td>
+                    <td class="py-1.5 px-3 text-right whitespace-nowrap">
+                        ${statusBadge}
+                    </td>
+                </tr>
+            `;
+        }).join('');
+
         return `
-            <div class="elec-hour-card bg-tractorBg border ${isCurrent ? 'border-tractorPrimary ring-2 ring-tractorPrimary shadow-md' : 'border-tractorBorder'} rounded-xl p-3 text-center space-y-2 flex flex-col justify-between transition cursor-pointer hover:border-tractorPrimary select-none" data-idx="${idx}">
-                <div class="flex items-center justify-between border-b border-tractorBorder/60 pb-1.5 text-xs font-bold leading-none gap-2">
-                    <span class="${isCurrent ? 'text-green-600 dark:text-green-400 font-black' : 'text-slate-400 font-bold'} uppercase text-[11px]">${topLeftLabel}</span>
-                    <strong class="font-mono font-black text-xs" style="color: var(--text-main);">${h.hourLabel}</strong>
-                </div>
-
-                <div class="text-xs font-bold py-1 px-2 rounded-md flex items-center justify-center leading-none" style="${badgeStyle}">
-                    ${badgeText}
-                </div>
-
-                <div class="pt-0.5">
-                    <div class="font-mono font-black text-lg sm:text-xl leading-tight" style="color: var(--text-main);">
-                        ${formatCleanCt(pCt)} ct
+            <div class="bg-tractorBg border border-tractorBorder rounded-2xl overflow-hidden shadow-sm flex flex-col justify-between">
+                <div>
+                    <div class="bg-tractorSurface px-3.5 py-2 border-b border-tractorBorder flex justify-between items-center">
+                        <strong class="font-oswald text-sm sm:text-base uppercase tracking-wider" style="color: var(--text-main);">
+                            ${titlePrefix} (${dateStr.slice(8)} d.)
+                        </strong>
+                        <span class="text-xs text-slate-400 font-mono font-bold">${dateStr}</span>
                     </div>
-                    <div class="text-[11px] font-bold text-green-600 dark:text-green-400">
-                        / kWh
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="border-b border-tractorBorder bg-tractorSurface/50 text-[10px] uppercase font-bold text-slate-400">
+                                <th class="py-1.5 px-3">Valanda</th>
+                                <th class="py-1.5 px-2">Nord Pool kaina</th>
+                                <th class="py-1.5 px-3 text-right">Būsena</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${rowsHtml}
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- DIENOS STATISTIKOS APATINĖ EILUTĖ -->
+                <div class="bg-tractorSurface px-3.5 py-2 border-t-2 border-tractorBorder flex flex-wrap items-center justify-between gap-2 text-[11px] font-mono">
+                    <span class="font-oswald uppercase font-bold tracking-wider" style="color: var(--text-main);">📊 PAROS SUVESTINĖ:</span>
+                    <div class="flex items-center gap-3">
+                        <span class="text-green-600 dark:text-green-400 font-bold">Min: ${formatCleanCt(dMin)} ct</span>
+                        <span class="text-amber-500 font-bold">Vid: ${formatCleanCt(dAvg)} ct</span>
+                        <span class="text-red-500 font-bold">Max: ${formatCleanCt(dMax)} ct</span>
                     </div>
                 </div>
             </div>
         `;
-    }).join('');
+    };
 
-    grid.querySelectorAll('.elec-hour-card').forEach(card => {
-        card.onclick = () => {
-            const idx = parseInt(card.getAttribute('data-idx'), 10);
-            const hObj = visibleHours[idx];
+    grid.innerHTML = `
+        ${buildDayTableHtml(todayStr, todayHours, '📅 ŠIANDIEN')}
+        ${buildDayTableHtml(tomorrowStr, tomorrowHours, '⏭️ RYTOJ')}
+    `;
+
+    grid.querySelectorAll('.elec-hour-row').forEach(row => {
+        row.onclick = () => {
+            const dt = row.getAttribute('data-date');
+            const hr = parseInt(row.getAttribute('data-hour'), 10);
+            const hObj = visibleHours.find(h => h.date === dt && h.hour === hr);
             if (hObj) openHourBottomSheet(hObj);
         };
     });
