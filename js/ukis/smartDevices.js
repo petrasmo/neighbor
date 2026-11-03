@@ -410,10 +410,12 @@ function setupSmartDevicesEvents(currentUser) {
                 const res = await fetch(`https://us-central1-neighborpm-b9968.cloudfunctions.net/getDaikinAuthUrl?userId=${currentUser.uid}`);
                 const data = await res.json();
                 if (data && data.url) {
-                    // 🌟 PRIVERSTINIS PRISIJUNGIMAS: Ignoruojame sausainiukus, visada prašome el. pašto ir slaptažodžio!
-                    const separator = data.url.includes('?') ? '&' : '?';
-                    const forcedLoginUrl = `${data.url}${separator}prompt=login&max_age=0`;
-                    window.location.href = forcedLoginUrl;
+                    // 🌟 TIK prompt=login (BE max_age=0!):
+                    // 1. Visada parodo el. pašto ir slaptažodžio įvedimą.
+                    // 2. Suvedus 1 kartą ir paspaudus „Sutinku“, iškart grąžina į JurgisAgro!
+                    const cleanUrl = data.url.replace(/&?max_age=0/g, '').replace(/&?prompt=login/g, '');
+                    const separator = cleanUrl.includes('?') ? '&' : '?';
+                    window.location.href = `${cleanUrl}${separator}prompt=login`;
                 }
             } catch (err) {
                 showBottomToast("Klaida: " + err.message, "error");
