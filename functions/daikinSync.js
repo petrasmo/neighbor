@@ -12,9 +12,10 @@ const DAIKIN_API_BASE = "https://api.onecta.daikineurope.com/v1";
 function getDaikinLoginUrl(userId) {
   const state = userId || "default_user";
   const scope = "openid onecta:basic.integration";
+  // 🌟 prompt=login ir max_age=0 priverčia Daikin visada rodyti el. pašto ir slaptažodžio įvedimo langą!
   return `${DAIKIN_AUTH_URL}?response_type=code&client_id=${encodeURIComponent(
     DAIKIN_CLIENT_ID
-  )}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&scope=${encodeURIComponent(scope)}&state=${encodeURIComponent(state)}`;
+  )}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&scope=${encodeURIComponent(scope)}&state=${encodeURIComponent(state)}&prompt=login&max_age=0`;
 }
 
 async function exchangeCodeForTokens(code) {

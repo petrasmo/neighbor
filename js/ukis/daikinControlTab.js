@@ -11,8 +11,6 @@ export function renderDaikinControlTabHtml(dev, liveTelemetry, currentUser = nul
     const curOffset = Number(liveTelemetry.currentOffset ?? -10);
     const isManualProfile = cfg.modeProfile === 'manual';
 
-    const isAdmin = currentUser && currentUser.email === 'petrasmo@gmail.com';
-
     const outTempText = liveTelemetry.outdoorTemp !== null && liveTelemetry.outdoorTemp !== undefined
         ? `${liveTelemetry.outdoorTemp > 0 ? '+' : ''}${Number(liveTelemetry.outdoorTemp).toFixed(1)} °C`
         : '-- °C';
@@ -35,6 +33,7 @@ export function renderDaikinControlTabHtml(dev, liveTelemetry, currentUser = nul
     const now = new Date();
     const nowTs = now.getTime();
     const isManualApproved = cfg.manualApprovalActive === true && cfg.approvedUntilTimestamp && (nowTs <= cfg.approvedUntilTimestamp);
+    const isFullAuto = cfg.autopilotEnabled === true;
 
     let manualUntilStr = "";
     if (isManualApproved) {
@@ -49,7 +48,26 @@ export function renderDaikinControlTabHtml(dev, liveTelemetry, currentUser = nul
     }
 
     const renderScheduleActionBtn = () => {
-        if (isManualApproved) {
+        if (isFullAuto) {
+            return `
+                <button type="button" id="btn-approve-schedule" 
+                    style="background: linear-gradient(135deg, #15803d 0%, #166534 100%) !important; border: 2px solid #4ade80 !important; box-shadow: 0 0 20px rgba(34, 197, 94, 0.45) !important; color: #FFFFFF !important;"
+                    class="px-5 py-2.5 rounded-2xl transition-all duration-300 cursor-pointer flex items-center gap-3 shrink-0 hover:scale-[1.02] active:scale-95 group">
+                    <span class="relative flex h-3.5 w-3.5 shrink-0">
+                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-300 opacity-90"></span>
+                        <span class="relative inline-flex rounded-full h-3.5 w-3.5 bg-white"></span>
+                    </span>
+                    <div class="text-left leading-tight">
+                        <span id="lbl-approve-btn-main" style="color: #FFFFFF !important;" class="font-extrabold text-xs uppercase tracking-wider block">
+                            🤖 24/7 AUTOPILOTAS AKTYVUS (NERIBOTAI)
+                        </span>
+                        <span style="color: #bbf7d0 !important;" class="text-[10px] font-semibold block">
+                            Katilas valdomas automatiškai 24/7 • Spauskite sustabdymui
+                        </span>
+                    </div>
+                </button>
+            `;
+        } else if (isManualApproved) {
             return `
                 <button type="button" id="btn-approve-schedule" 
                     style="background: linear-gradient(135deg, #15803d 0%, #166534 100%) !important; border: 2px solid #4ade80 !important; box-shadow: 0 0 20px rgba(34, 197, 94, 0.45) !important; color: #FFFFFF !important;"
@@ -77,6 +95,8 @@ export function renderDaikinControlTabHtml(dev, liveTelemetry, currentUser = nul
             `;
         }
     };
+
+    const isAnyScheduleRunning = isManualApproved || isFullAuto;
 
     return `
         <!-- 1. TIESIOGINIS ONECTA VALDYMAS (2 KORTELĖS) -->
@@ -162,12 +182,12 @@ export function renderDaikinControlTabHtml(dev, liveTelemetry, currentUser = nul
         </div>
 
         <!-- 2. GRAFIKO VYKDYMAS IR SAUGUMAS -->
-        <div class="bg-tractorBg border ${isManualApproved ? 'border-green-500/80 ring-1 ring-green-500/30' : 'border-tractorBorder'} p-3.5 sm:p-4 rounded-2xl space-y-3 transition-all">
+        <div class="bg-tractorBg border ${isAnyScheduleRunning ? 'border-green-500/80 ring-1 ring-green-500/30' : 'border-tractorBorder'} p-3.5 sm:p-4 rounded-2xl space-y-3 transition-all">
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-tractorBorder/60 pb-3">
                 <div class="space-y-1">
                     <h3 class="font-oswald text-base sm:text-lg font-bold uppercase tracking-wider flex items-center gap-2" style="color: var(--text-main);">
                         <span>⚡</span> Grafiko Vykdymas ir Saugumas
-                        ${isManualApproved ? `<span class="px-2 py-0.5 text-[10px] rounded-full bg-green-500/20 text-green-600 dark:text-green-400 border border-green-500/40 font-sans font-extrabold">AKTYVUS</span>` : ''}
+                        ${isAnyScheduleRunning ? `<span class="px-2 py-0.5 text-[10px] rounded-full bg-green-500/20 text-green-600 dark:text-green-400 border border-green-500/40 font-sans font-extrabold">AKTYVUS</span>` : ''}
                     </h3>
                     <p class="text-xs text-slate-400 leading-relaxed max-w-2xl">
                         Pagal nutylėjimą katilas vykdo grafiką tik žmogui patvirtinus. Pasibaigus grafikui – katilas <strong>automatiškai atstatomas į pradines reikšmes</strong> (Poslinkis: ${dev.baselineSettings?.offset ?? -10}°C, Šildymas: ${dev.baselineSettings?.climateOnOff || 'off'}).
@@ -177,18 +197,17 @@ export function renderDaikinControlTabHtml(dev, liveTelemetry, currentUser = nul
                 ${renderScheduleActionBtn()}
             </div>
 
-            <!-- 24/7 PILNOS AUTOMATIKOS VARNELĖ IR 3 PROFILIŲ PASIRINKIMAS -->
+            <!-- 🌟 24/7 PILNOS AUTOMATIKOS VARNELĖ (ATIDARYTA VISIEMS VARTOTOJAMS!) -->
             <div class="flex flex-wrap items-center justify-between gap-3 p-3 bg-tractorSurface rounded-xl border border-tractorBorder">
-                <div class="flex items-center gap-3 ${isAdmin ? '' : 'opacity-60 cursor-not-allowed'}" id="box-full-autopilot-wrapper">
-                    <input type="checkbox" id="chk-full-autopilot" class="w-4 h-4 accent-tractorPrimary rounded ${isAdmin ? 'cursor-pointer' : 'cursor-not-allowed pointer-events-none'}" ${isAdmin && cfg.autopilotEnabled ? 'checked' : ''} ${isAdmin ? '' : 'disabled'}>
+                <div class="flex items-center gap-3 cursor-pointer" id="box-full-autopilot-wrapper">
+                    <input type="checkbox" id="chk-full-autopilot" class="w-4 h-4 accent-tractorPrimary rounded cursor-pointer" ${cfg.autopilotEnabled ? 'checked' : ''}>
                     <div>
-                        <label for="chk-full-autopilot" class="font-bold text-xs block ${isAdmin ? 'cursor-pointer' : 'cursor-not-allowed'}" style="color: var(--text-main);">
+                        <label for="chk-full-autopilot" class="font-bold text-xs block cursor-pointer" style="color: var(--text-main);">
                             ⚡ Pilna automatika (24/7 Autopilotas be žmogaus patvirtinimo)
                         </label>
-                        ${isAdmin
-                            ? `<span class="text-[11px] text-amber-500 font-medium">👑 Jūs esate administratorius – galite įjungti nuolatinį 24/7 valdymą be rankinio patvirtinimo.</span>`
-                            : `<span class="text-[11px] text-slate-400 font-medium">🔒 Saugumo sumetimais 24/7 režimas prieinamas tik administratoriui. Spauskite žalią mygtuką „Patvirtinti grafiką (Vykdyti)“ viršuje.</span>`
-                        }
+                        <span class="text-[11px] text-green-600 dark:text-green-400 font-medium">
+                            🤖 Pažymėjus šią varnelę, katilas nuolat 24/7 automatiškai seks Nord Pool arba jūsų komforto grafiką kasdien.
+                        </span>
                     </div>
                 </div>
 
@@ -206,7 +225,7 @@ export function renderDaikinControlTabHtml(dev, liveTelemetry, currentUser = nul
                 </div>
             </div>
 
-            <!-- 🌟 SVERTŲ BLOKAS SU VISADA MATOMU MYGTUKU „💾 IŠSAUGOTI SVERTUS“! -->
+            <!-- SVERTŲ BLOKAS SU VISADA MATOMU MYGTUKU „💾 IŠSAUGOTI SVERTUS“! -->
             ${isManualProfile ? `
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5 text-xs pt-1">
                     <div class="sm:col-span-2 bg-tractorSurface p-3 rounded-xl border border-tractorPrimary/50 flex flex-col justify-center space-y-1">
@@ -291,7 +310,6 @@ function buildDefaultComfortCustomHours() {
 }
 
 export function bindDaikinControlEvents(currentUser, dev, executeDirectCommand, onConfigSaved) {
-    const isAdmin = currentUser && currentUser.email === 'petrasmo@gmail.com';
     const offsetSlider = document.getElementById('inp-sheet-offset');
     const offsetLbl = document.getElementById('lbl-sheet-offset');
 
@@ -345,9 +363,11 @@ export function bindDaikinControlEvents(currentUser, dev, executeDirectCommand, 
         const cfg = dev.config || {};
         const nowTs = Date.now();
         const isApproved = cfg.manualApprovalActive === true && cfg.approvedUntilTimestamp && (nowTs <= cfg.approvedUntilTimestamp);
+        const isFullAuto = cfg.autopilotEnabled === true;
 
-        if (isApproved) {
+        if (isApproved || isFullAuto) {
             cfg.manualApprovalActive = false;
+            cfg.autopilotEnabled = false;
             cfg.approvedUntilTimestamp = null;
             await onConfigSaved(true, cfg);
             showBottomToast("Grafiko vykdymas sustabdytas. Katilas atstatomas į bazinę būseną! 🛑");
@@ -371,24 +391,18 @@ export function bindDaikinControlEvents(currentUser, dev, executeDirectCommand, 
         }
     });
 
+    // 🌟 24/7 PILNOS AUTOMATIKOS VARNELĖ VEIKIA VISIEMS VARTOTOJAMS!
     const chkFullAuto = document.getElementById('chk-full-autopilot');
-    const wrapperFullAuto = document.getElementById('box-full-autopilot-wrapper');
-
-    if (isAdmin && chkFullAuto) {
+    if (chkFullAuto) {
         chkFullAuto.addEventListener('change', async (e) => {
             const isChecked = e.target.checked;
-            if (dev.config) {
-                dev.config.autopilotEnabled = isChecked;
-                if (isChecked) {
-                    dev.config.wasRolledBack = false;
-                }
+            if (!dev.config) dev.config = {};
+            dev.config.autopilotEnabled = isChecked;
+            if (isChecked) {
+                dev.config.wasRolledBack = false;
             }
             await onConfigSaved(true, dev.config);
             showBottomToast(isChecked ? "24/7 Pilna automatika ĮJUNGTA! 🤖⚡" : "24/7 Automatika išjungta.");
-        });
-    } else if (!isAdmin && wrapperFullAuto) {
-        wrapperFullAuto.addEventListener('click', () => {
-            showBottomToast("🔒 Saugumo sumetimais 24/7 autopilotas leidžiamas tik administratoriui. Naudokite žalią mygtuką „Patvirtinti grafiką (Vykdyti)“!", "warning");
         });
     }
 
@@ -396,6 +410,7 @@ export function bindDaikinControlEvents(currentUser, dev, executeDirectCommand, 
     const lblHours = document.getElementById('lbl-sheet-hours');
     const inpCheapOffset = document.getElementById('inp-sheet-cheap-offset');
     const lblCheapOffset = document.getElementById('lbl-sheet-cheap-offset');
+    const selAction = document.getElementById('sel-sheet-action');
 
     inpHours?.addEventListener('input', (e) => {
         if (lblHours) lblHours.textContent = `${e.target.value} val.`;
@@ -410,7 +425,12 @@ export function bindDaikinControlEvents(currentUser, dev, executeDirectCommand, 
         onConfigSaved(false);
     });
 
-    // 🌟 PROFILIO PERJUNGIMAS
+    selAction?.addEventListener('change', (e) => {
+        if (dev.config) dev.config.normalHourAction = e.target.value;
+        onConfigSaved(false);
+    });
+
+    // PROFILIO PERJUNGIMAS
     document.querySelectorAll('.btn-sheet-profile').forEach(btn => {
         btn.onclick = async () => {
             const prof = btn.getAttribute('data-profile');
@@ -434,19 +454,17 @@ export function bindDaikinControlEvents(currentUser, dev, executeDirectCommand, 
         };
     });
 
-    // Standartinio šablono užpildymas (lokaliai ekrane, be šokinėjimo)
     document.getElementById('btn-reset-manual-hours')?.addEventListener('click', () => {
         if (!dev.config) dev.config = {};
         dev.config.customHours = buildDefaultComfortCustomHours();
-        onConfigSaved(false); // Pakeičia tik lentelę ekrane, bet neperkrauna viso lango!
+        onConfigSaved(false);
         showBottomToast("Šablonas paruoštas! Paspauskite „💾 Išsaugoti svertus“, kad įsigaliotų.", "info");
     });
 
-    // 🌟 VIENINTELIS MYGTUKAS, KURIS IŠSAUGO VISUS SVERTUS (IR NORD POOL, IR RANKINIO GRAFIKO VALANDAS!)
     document.getElementById('btn-save-device-config')?.addEventListener('click', async () => {
         const updatedConfig = {
             ...dev.config,
-            autopilotEnabled: isAdmin ? !!dev.config.autopilotEnabled : false,
+            autopilotEnabled: !!dev.config.autopilotEnabled,
         };
 
         if (dev.config.modeProfile !== 'manual') {
@@ -647,8 +665,6 @@ export function renderDaikinScheduleGrid(dev, cachedElecHours) {
         ${buildDayTableHtml(tomorrowStr, '⏭️ RYTOJ')}
     `;
 
-    // 🌟 LOKALUS KEITIMAS BE JOKIO SERVERIO PERKROVIMO!
-    // Vartotojas ramiai susidėlioja visas valandas, o į serverį įrašo tik paspaudęs „💾 Išsaugoti svertus“!
     if (isManualProfile) {
         tablesBox.querySelectorAll('.sel-manual-hour-offset').forEach(sel => {
             sel.onchange = (e) => {
@@ -662,7 +678,6 @@ export function renderDaikinScheduleGrid(dev, cachedElecHours) {
                     dev.config.customHours[hr] = { ...prev, climateOnOff: 'on', offset: parseInt(val, 10) };
                 }
 
-                // Perpiešiame tik pačią lentelę (be jokių DB užklausų ir be puslapio šokinėjimo!)
                 renderDaikinScheduleGrid(dev, cachedElecHours);
             };
         });
@@ -675,7 +690,6 @@ export function renderDaikinScheduleGrid(dev, cachedElecHours) {
 
                 dev.config.customHours[hr] = { ...prev, dhwPowerful: nextPow };
 
-                // Perpiešiame tik lentelę akimirksniu!
                 renderDaikinScheduleGrid(dev, cachedElecHours);
             };
         });

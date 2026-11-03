@@ -410,7 +410,10 @@ function setupSmartDevicesEvents(currentUser) {
                 const res = await fetch(`https://us-central1-neighborpm-b9968.cloudfunctions.net/getDaikinAuthUrl?userId=${currentUser.uid}`);
                 const data = await res.json();
                 if (data && data.url) {
-                    window.location.href = data.url;
+                    // 🌟 PRIVERSTINIS PRISIJUNGIMAS: Ignoruojame sausainiukus, visada prašome el. pašto ir slaptažodžio!
+                    const separator = data.url.includes('?') ? '&' : '?';
+                    const forcedLoginUrl = `${data.url}${separator}prompt=login&max_age=0`;
+                    window.location.href = forcedLoginUrl;
                 }
             } catch (err) {
                 showBottomToast("Klaida: " + err.message, "error");
