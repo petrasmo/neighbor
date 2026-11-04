@@ -393,40 +393,31 @@ function loadHubLivePriceTickers() {
         `;
     }, () => {});
 
-    // 4. Gazolas (Dyzelinas)
-    db.collection("diesel_prices").onSnapshot(snap => {
-        if (snap.empty) return;
-        let minDiesel = Infinity;
-        let latestDate = null;
-
-        snap.forEach(doc => {
-            const d = doc.data();
-            if (d.basePriceNoVat !== undefined) {
-                const disc = d.discounts?.tier20k || 0;
-                const best = d.basePriceNoVat + disc;
-                if (best < minDiesel) minDiesel = best;
-            }
-            if (d.updatedAt && d.updatedAt.toDate) {
-                const dt = d.updatedAt.toDate();
-                if (!latestDate || dt > latestDate) latestDate = dt;
-            }
-        });
-
+    // 4. Gazolas (Dyzelinas) – 🌟 TIKRA GYVA ORLEN LIETUVA DIDMENA!
+    db.collection("diesel_prices").doc("market_benchmark").onSnapshot(doc => {
         const el = document.getElementById('hub-live-diesel');
-        if (!el || minDiesel === Infinity) return;
+        if (!el || !doc.exists) return;
 
-        const timeStr = latestDate 
-            ? latestDate.toLocaleString('lt-LT', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })
-            : "";
+        const d = doc.data();
+        const price = Number(d.officialBasePriceNoVat) || 0;
+        if (price === 0) return;
+
+        let timeStr = "";
+        if (d.updatedAt && d.updatedAt.toDate) {
+            const dt = d.updatedAt.toDate();
+            timeStr = dt.toLocaleString('lt-LT', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
+        } else if (d.priceDate) {
+            timeStr = d.priceDate;
+        }
 
         el.innerHTML = `
             <div class="flex items-center justify-between font-mono font-bold text-white">
-                <span>⛽ Didmena nuo ${minDiesel.toFixed(3)} €/l</span>
+                <span>⛽ ORLEN didmena: ${price.toFixed(3)} €/l</span>
                 <span class="text-[10px] font-sans text-slate-400">(be PVM)</span>
             </div>
             <div class="text-[10px] text-amber-600 dark:text-amber-400 font-semibold flex items-center gap-1.5">
                 <span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-ping"></span>
-                <span>🕒 Atnaujinta: ${timeStr} (${snap.size} bazės)</span>
+                <span>🕒 Atnaujinta: ${timeStr} • 52 kuro bazės</span>
             </div>
         `;
     }, () => {});

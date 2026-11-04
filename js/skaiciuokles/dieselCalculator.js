@@ -5,8 +5,10 @@ import { createCustomSelect } from '../core/customSelect.js';
 import { openAuthModal } from '../core/auth.js';
 import { switchTab } from '../core/ui.js';
 import { refreshSettingsMap } from '../sistema/settings.js';
+import { FARM_PRICES } from '../ukis/cropPlanner.js';
 
 let activeDieselSuppliers = [];
+let officialBenchmark = null; // 🌟 JOKIŲ STATINIŲ KAINŲ! Užkraunama dinamiškai iš ORLEN / LEA
 let unsubscribeDiesel = null;
 let currentDieselCoords = { lat: 54.8985, lng: 23.9036, name: "Apytikslė vieta (Lietuva)" };
 let userGarageCoords = null;
@@ -18,7 +20,6 @@ const dieselState = {
     volumeLiters: 5000,
     isTonsMode: false,
     includeVat: false,
-    includeTransport: true,
     activeQuickVol: 5000
 };
 
@@ -53,28 +54,27 @@ export function renderDieselCalculator(container, currentUser, userData) {
     container.innerHTML = `
         <div class="space-y-4 max-w-6xl mx-auto w-full">
             
-            <div class="bg-tractorSurface border border-tractorBorder rounded-2xl p-3.5 sm:p-5 md:p-6 space-y-3.5 shadow-xl">
+            <div class="bg-tractorSurface border border-tractorBorder rounded-2xl p-3.5 sm:p-5 md:p-6 space-y-4 shadow-xl">
                 
-                <!-- HEADERIS IR KONTROLIAI (KOMPAKTIŠKA) -->
+                <!-- HEADERIS IR PVM PERJUNGIKLIS -->
                 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 border-b border-tractorBorder/70 pb-3">
                     <div class="space-y-0.5">
-                        <h2 class="font-oswald text-lg sm:text-xl md:text-2xl font-bold text-white uppercase tracking-wider flex items-center gap-2">
-                            <span>⛽</span> Žymėto Dyzelino (Gazolio) Užsakymas
+                        <div class="inline-flex items-center gap-1.5 bg-green-500/15 border border-green-500/30 text-green-600 dark:text-green-400 text-[10px] px-2.5 py-0.5 rounded-full font-bold uppercase tracking-wider">
+                            <span class="w-1.5 h-1.5 rounded-full bg-green-500 animate-ping"></span>
+                            <span id="diesel-source-badge">Kraunama ORLEN didmenos bazė...</span>
+                        </div>
+                        <h2 class="font-oswald text-lg sm:text-xl md:text-2xl font-bold text-white uppercase tracking-wider flex items-center gap-2 pt-0.5">
+                            <span>⛽</span> Žymėto Dyzelino (Gazolio) Skaičiuoklė ir Bazės
                         </h2>
                         <p class="text-[11px] sm:text-xs text-slate-300" id="diesel-loc-label">
-                            📍 Pristatymas: <strong class="text-green-400 font-bold">${currentDieselCoords.name}</strong>
+                            📍 Pristatymo taškas: <strong class="text-green-400 font-bold">${currentDieselCoords.name}</strong>
                         </p>
                     </div>
 
-                    <div class="flex flex-wrap items-center gap-2">
-                        <label class="flex items-center gap-1.5 cursor-pointer text-[11px] sm:text-xs font-bold select-none bg-tractorBg px-2.5 py-1.5 rounded-xl border border-tractorBorder hover:border-tractorPrimary transition">
-                            <input type="checkbox" id="diesel-opt-transport" class="accent-tractorPrimary w-3.5 h-3.5 sm:w-4 sm:h-4 cursor-pointer" ${dieselState.includeTransport ? 'checked' : ''}>
-                            <span style="color: var(--text-main);">Atvežimas į kiemą</span>
-                        </label>
-
+                    <div class="flex items-center gap-2 self-start sm:self-auto">
                         <div class="flex items-center gap-0.5 bg-tractorBg p-0.5 rounded-xl border border-tractorBorder">
-                            <button type="button" id="btn-vat-no" class="px-2.5 py-1 rounded-lg text-[11px] sm:text-xs font-bold transition cursor-pointer ${!dieselState.includeVat ? 'bg-tractorPrimary text-white shadow' : 'text-slate-300 hover:text-white'}">Be PVM</button>
-                            <button type="button" id="btn-vat-yes" class="px-2.5 py-1 rounded-lg text-[11px] sm:text-xs font-bold transition cursor-pointer ${dieselState.includeVat ? 'bg-tractorPrimary text-white shadow' : 'text-slate-300 hover:text-white'}">Su PVM</button>
+                            <button type="button" id="btn-vat-no" class="px-3 py-1.5 rounded-lg text-[11px] sm:text-xs font-bold transition cursor-pointer ${!dieselState.includeVat ? 'bg-tractorPrimary text-white shadow' : 'text-slate-300 hover:text-white'}">Be PVM</button>
+                            <button type="button" id="btn-vat-yes" class="px-3 py-1.5 rounded-lg text-[11px] sm:text-xs font-bold transition cursor-pointer ${dieselState.includeVat ? 'bg-tractorPrimary text-white shadow' : 'text-slate-300 hover:text-white'}">Su PVM</button>
                         </div>
                     </div>
                 </div>
@@ -84,8 +84,8 @@ export function renderDieselCalculator(container, currentUser, userData) {
                     <div class="p-3 bg-tractorBg border border-tractorPrimary rounded-xl shadow-sm">
                         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
                             <div class="text-[11px] sm:text-xs text-slate-200">
-                                <strong class="text-green-400 block sm:inline">Norite tikslių kuro atvežimo kainų?</strong>
-                                <span> Nurodykite savo ūkio bazę Nustatymuose, kad sistema automatiškai skaičiuotų autocisternos atstumą iki jūsų kiemo.</span>
+                                <strong class="text-green-400 block sm:inline">Norite matyti arčiausiai jūsų kiemo esančias kuro bazes?</strong>
+                                <span> Nurodykite savo ūkio vietą Nustatymuose, kad sistema tiksliai apskaičiuotų atstumą iki kiekvieno terminalo.</span>
                             </div>
                             <button type="button" id="btn-login-diesel-prompt" class="px-3.5 py-1.5 bg-tractorPrimary hover:bg-tractorPrimaryHover text-white font-black rounded-lg text-xs uppercase tracking-wider shrink-0 transition cursor-pointer">
                                 ${!isLogged ? '🔑 Prisijungti' : '📍 Nurodyti kiemą ➔'}
@@ -94,11 +94,54 @@ export function renderDieselCalculator(container, currentUser, userData) {
                     </div>
                 ` : ''}
 
-                <!-- KIEKIS IR ADRESAS (2 STULPELIAI) -->
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3">
+                <!-- 🌟 OFICIALIOS BAZINĖS KAINOS IR ORIENTACINĖS SUMOS SUVESTINĖ -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    
+                    <!-- 1 KORTELĖ: OFICIALI ORLEN BAZINĖ KAINA -->
+                    <div class="bg-tractorBg border border-tractorBorder p-4 rounded-2xl flex flex-col justify-between space-y-2">
+                        <div class="flex justify-between items-start">
+                            <span class="text-[10px] sm:text-[11px] uppercase font-bold text-slate-400 tracking-wider">
+                                Oficiali didmeninė bazinė kaina
+                            </span>
+                            <span id="benchmark-source-tag" class="text-[10px] font-mono bg-tractorSurface px-2 py-0.5 rounded border border-tractorBorder text-slate-300">
+                                ORLEN Lietuva
+                            </span>
+                        </div>
+                        <div class="flex items-baseline gap-2.5">
+                            <strong id="benchmark-main-price" class="text-2xl sm:text-3xl font-black font-mono text-white animate-pulse">Kraunama...</strong>
+                            <span id="benchmark-sub-price" class="text-xs font-mono text-slate-400"></span>
+                        </div>
+                        <p class="text-[11px] text-slate-400">
+                            Įskaičiuotas lengvatinis žemės ūkio akcizas (<strong id="benchmark-excise-label">0.060 €/l</strong>).
+                        </p>
+                    </div>
+
+                    <!-- 2 KORTELĖ: ORIENTACINĖ UŽSAKYMO SUMA -->
+                    <div class="bg-tractorPrimary/15 border-2 border-tractorPrimary p-4 rounded-2xl flex flex-col justify-between space-y-2 shadow-lg">
+                        <div class="flex justify-between items-start">
+                            <span id="order-calc-title" class="text-[10px] sm:text-[11px] uppercase font-black text-tractorPrimaryLight tracking-wider">
+                                Orientacinė užsakymo suma (${dieselState.volumeLiters.toLocaleString('lt-LT')} l)
+                            </span>
+                            <span id="order-vat-badge" class="text-[10px] font-bold bg-tractorPrimary text-white px-2 py-0.5 rounded-full uppercase">
+                                ${dieselState.includeVat ? 'Su PVM' : 'Be PVM'}
+                            </span>
+                        </div>
+                        <div class="flex items-baseline gap-2.5">
+                            <strong id="order-total-sum" class="text-2xl sm:text-3xl font-black font-mono text-green-400 animate-pulse">Skaičiuojama...</strong>
+                            <span id="order-sub-sum" class="text-xs font-mono text-slate-300"></span>
+                        </div>
+                        <p class="text-[11px] text-slate-300">
+                            Galutinė kaina priklauso nuo pasirinktos kuro bazės nuolaidos tūriui ir atvežimo atstumo.
+                        </p>
+                    </div>
+
+                </div>
+
+                <!-- KIEKIO IR VIETOS ĮVEDIMAS -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3 pt-1">
                     <div class="space-y-1">
                         <div class="flex justify-between items-center text-[10px] sm:text-[11px]">
-                            <label class="font-bold text-tractorPrimaryLight uppercase tracking-wider">Užsakomas kiekis</label>
+                            <label class="font-bold text-tractorPrimaryLight uppercase tracking-wider">Norimas pirkti kiekis į ūkio talpą</label>
                             <div class="flex items-center gap-1.5">
                                 <button type="button" id="btn-unit-liters" class="${!dieselState.isTonsMode ? 'text-green-400 font-bold underline' : 'text-slate-400 hover:text-white'}">Litrai (l)</button>
                                 <span class="text-slate-500">|</span>
@@ -113,37 +156,37 @@ export function renderDieselCalculator(container, currentUser, userData) {
                     </div>
 
                     <div class="space-y-1">
-                        <label class="text-[10px] sm:text-[11px] font-bold text-slate-300 uppercase tracking-wider block">Pristatymo vieta</label>
+                        <label class="text-[10px] sm:text-[11px] font-bold text-slate-300 uppercase tracking-wider block">Jūsų ūkio talpos vieta (atstumo skaičiavimui)</label>
                         <div id="diesel-location-select-box"></div>
                     </div>
                 </div>
 
-                <!-- POPULIARŪS TŪRIAI (VIENA EILUTĖ) -->
-                <div class="flex flex-wrap items-center gap-1.5 pt-1 border-t border-tractorBorder/50">
-                    <span class="text-[10px] sm:text-[11px] font-bold text-slate-400 mr-1">Tūriai:</span>
-                    <button type="button" class="btn-quick-vol px-2.5 py-1 rounded-lg text-[10px] sm:text-xs font-bold transition cursor-pointer border" data-vol="2500">2 500 l</button>
+                <!-- GREITIEJI TŪRIO MYGTUKAI -->
+                <div class="flex flex-wrap items-center gap-1.5 pt-2 border-t border-tractorBorder/50">
+                    <span class="text-[10px] sm:text-[11px] font-bold text-slate-400 mr-1">Populiarūs tūriai:</span>
+                    <button type="button" class="btn-quick-vol px-2.5 py-1 rounded-lg text-[10px] sm:text-xs font-bold transition cursor-pointer border" data-vol="2000">2 000 l</button>
                     <button type="button" class="btn-quick-vol px-2.5 py-1 rounded-lg text-[10px] sm:text-xs font-bold transition cursor-pointer border" data-vol="5000">5 000 l</button>
                     <button type="button" class="btn-quick-vol px-2.5 py-1 rounded-lg text-[10px] sm:text-xs font-bold transition cursor-pointer border" data-vol="10000">10 000 l</button>
-                    <button type="button" class="btn-quick-vol px-2.5 py-1 rounded-lg text-[10px] sm:text-xs font-bold transition cursor-pointer border" data-vol="24000">24 000 l (Cisterna)</button>
+                    <button type="button" class="btn-quick-vol px-2.5 py-1 rounded-lg text-[10px] sm:text-xs font-bold transition cursor-pointer border" data-vol="24000">24 000 l (Pilna cisterna)</button>
                 </div>
 
             </div>
 
-            <!-- TIEKĖJŲ REZULTATAI (KOMPAKTIŠKAS SĄRAŠAS) -->
+            <!-- ARTIMIAUSIŲ KURO BAZIŲ SĄRAŠAS -->
             <div id="diesel-results-container" class="space-y-2.5">
-                <div class="text-center py-6 text-slate-500 text-xs">Kraunamos kuro bazės ir skaičiuojamos kainos...</div>
+                <div class="text-center py-6 text-slate-500 text-xs">Kraunamos kuro bazės...</div>
             </div>
 
         </div>
 
-        <!-- 🌟 PROJEKTO STANDARTO BOTTOM SHEET: IŠKYLA PASPAUDUS ANT TIEKĖJO -->
+        <!-- BOTTOM SHEET: TIEKĖJO KONTAKTAI IR UŽSAKYMO ATMINTINĖ -->
         <div id="diesel-supplier-sheet" class="fixed inset-0 bg-black/80 z-[9999] hidden flex flex-col justify-end items-center p-0 backdrop-blur-sm transition-opacity duration-300">
             <div id="diesel-supplier-panel" class="bg-tractorSurface border-t-2 border-x-2 border-b-0 border-tractorBorder rounded-t-3xl rounded-b-none p-5 sm:p-7 pb-10 max-w-xl w-full space-y-4 shadow-2xl relative max-h-[90vh] overflow-y-auto mb-0 transform translate-y-full transition-transform duration-300">
                 
                 <div class="flex justify-between items-center border-b border-tractorBorder/70 pb-3">
                     <div class="space-y-0.5 min-w-0 pr-2">
                         <div class="flex items-center gap-2">
-                            <span id="sheet-diesel-rank" class="bg-tractorPrimary text-white text-[10px] font-black px-2 py-0.5 rounded-full uppercase">1 VIETA</span>
+                            <span id="sheet-diesel-rank" class="bg-tractorPrimary text-white text-[10px] font-black px-2 py-0.5 rounded-full uppercase">ARTIMIAUSIA BAZĖ</span>
                             <h3 id="sheet-diesel-name" class="font-oswald text-base sm:text-lg font-bold uppercase tracking-wider text-white truncate">Tiekėjas</h3>
                         </div>
                         <p id="sheet-diesel-address" class="text-xs text-slate-400 truncate">Bazė</p>
@@ -154,8 +197,8 @@ export function renderDieselCalculator(container, currentUser, userData) {
                 <div id="diesel-sheet-body" class="space-y-3.5 pt-1"></div>
 
                 <div class="pt-2">
-                    <button type="button" id="btn-ack-diesel-sheet" class="w-full h-11 bg-tractorPrimary hover:bg-tractorPrimaryHover text-white font-extrabold rounded-xl text-xs uppercase tracking-wider shadow transition cursor-pointer flex items-center justify-center">
-                        Supratau 👍
+                    <button type="button" id="btn-ack-diesel-sheet" class="w-full h-11 bg-tractorBg hover:bg-zinc-800 border border-tractorBorder text-slate-200 font-bold rounded-xl text-xs uppercase tracking-wider transition cursor-pointer flex items-center justify-center">
+                        Uždaryti langą
                     </button>
                 </div>
 
@@ -170,14 +213,13 @@ export function renderDieselCalculator(container, currentUser, userData) {
     listenToDieselFirebase();
 }
 
-function setupEvents(currentUser, userData) {
+function setupEvents(currentUser) {
     const input = document.getElementById('diesel-volume-input');
     const unitLabel = document.getElementById('diesel-unit-label');
     const btnLiters = document.getElementById('btn-unit-liters');
     const btnTons = document.getElementById('btn-unit-tons');
     const btnVatNo = document.getElementById('btn-vat-no');
     const btnVatYes = document.getElementById('btn-vat-yes');
-    const transportCb = document.getElementById('diesel-opt-transport');
     const btnLoginPrompt = document.getElementById('btn-login-diesel-prompt');
 
     if (btnLoginPrompt) {
@@ -199,15 +241,11 @@ function setupEvents(currentUser, userData) {
 
         dieselState.activeQuickVol = dieselState.volumeLiters;
         updateQuickVolButtons();
-        renderRankedSuppliers();
+        updateCalculatorSummary();
+        renderNearestSuppliers();
     };
 
     input?.addEventListener('input', updateVolumeFromInput);
-
-    transportCb?.addEventListener('change', (e) => {
-        dieselState.includeTransport = e.target.checked;
-        renderRankedSuppliers();
-    });
 
     btnLiters.onclick = () => {
         dieselState.isTonsMode = false;
@@ -227,16 +265,18 @@ function setupEvents(currentUser, userData) {
 
     btnVatNo.onclick = () => {
         dieselState.includeVat = false;
-        btnVatNo.className = "px-2.5 py-1 rounded-lg text-[11px] sm:text-xs font-bold bg-tractorPrimary text-white shadow";
-        btnVatYes.className = "px-2.5 py-1 rounded-lg text-[11px] sm:text-xs font-bold text-slate-300 hover:text-white";
-        renderRankedSuppliers();
+        btnVatNo.className = "px-3 py-1.5 rounded-lg text-[11px] sm:text-xs font-bold bg-tractorPrimary text-white shadow cursor-pointer";
+        btnVatYes.className = "px-3 py-1.5 rounded-lg text-[11px] sm:text-xs font-bold text-slate-300 hover:text-white cursor-pointer";
+        updateCalculatorSummary();
+        renderNearestSuppliers();
     };
 
     btnVatYes.onclick = () => {
         dieselState.includeVat = true;
-        btnVatYes.className = "px-2.5 py-1 rounded-lg text-[11px] sm:text-xs font-bold bg-tractorPrimary text-white shadow";
-        btnVatNo.className = "px-2.5 py-1 rounded-lg text-[11px] sm:text-xs font-bold text-slate-300 hover:text-white";
-        renderRankedSuppliers();
+        btnVatYes.className = "px-3 py-1.5 rounded-lg text-[11px] sm:text-xs font-bold bg-tractorPrimary text-white shadow cursor-pointer";
+        btnVatNo.className = "px-3 py-1.5 rounded-lg text-[11px] sm:text-xs font-bold text-slate-300 hover:text-white cursor-pointer";
+        updateCalculatorSummary();
+        renderNearestSuppliers();
     };
 
     document.querySelectorAll('.btn-quick-vol').forEach(btn => {
@@ -252,7 +292,8 @@ function setupEvents(currentUser, userData) {
             unitLabel.textContent = `litrų (~${(vol / 1190).toFixed(1)} t)`;
 
             updateQuickVolButtons();
-            renderRankedSuppliers();
+            updateCalculatorSummary();
+            renderNearestSuppliers();
         };
     });
 }
@@ -311,7 +352,7 @@ function setupLocationSelect(currentUser, userData) {
 function initLocationCustomSelect(items, currentUser, userData) {
     const isLogged = !!currentUser;
     const hasGarage = !!(userData?.garageLat && userData?.garageLon && userData.garageLat !== 0);
-    const defaultId = isLogged && hasGarage ? 'garage' : (hasGarage ? 'garage' : 'gps');
+    const defaultId = isLogged && hasGarage ? 'garage' : 'gps';
 
     createCustomSelect({
         containerId: 'diesel-location-select-box',
@@ -330,7 +371,7 @@ function initLocationCustomSelect(items, currentUser, userData) {
             if (item.id === 'garage') {
                 currentDieselCoords = userGarageCoords || { lat: 54.8985, lng: 23.9036, name: "Mano ūkio bazė (garažas)" };
                 updateLocationDisplay();
-                renderRankedSuppliers();
+                renderNearestSuppliers();
             } else if (item.id === 'gps') {
                 if (navigator.geolocation) {
                     const lbl = document.getElementById('diesel-loc-label');
@@ -343,11 +384,11 @@ function initLocationCustomSelect(items, currentUser, userData) {
                             name: "Dabartinė GPS vieta"
                         };
                         updateLocationDisplay();
-                        renderRankedSuppliers();
+                        renderNearestSuppliers();
                     }, () => {
                         currentDieselCoords = { lat: 54.8985, lng: 23.9036, name: "Apytikslė vieta (Lietuva)" };
                         updateLocationDisplay();
-                        renderRankedSuppliers();
+                        renderNearestSuppliers();
                     });
                 }
             } else {
@@ -363,7 +404,7 @@ function initLocationCustomSelect(items, currentUser, userData) {
                         name: `Laukas „${chosenField.name}“`
                     };
                     updateLocationDisplay();
-                    renderRankedSuppliers();
+                    renderNearestSuppliers();
                 }
             }
         }
@@ -375,10 +416,10 @@ function updateLocationDisplay() {
     if (!lbl) return;
 
     const timeText = lastDieselUpdatedFormatted 
-        ? `<span class="block sm:inline sm:ml-2 text-green-400 font-bold">• 🕒 Kainos: ${lastDieselUpdatedFormatted} (kas 6 val.)</span>`
+        ? `<span class="block sm:inline sm:ml-2 text-green-400 font-bold">• 🕒 Duomenys atnaujinti: ${lastDieselUpdatedFormatted}</span>`
         : '';
 
-    lbl.innerHTML = `📍 Pristatymas: <strong class="text-green-400 font-bold">${currentDieselCoords.name}</strong>${timeText}`;
+    lbl.innerHTML = `📍 Pristatymo taškas: <strong class="text-green-400 font-bold">${currentDieselCoords.name}</strong>${timeText}`;
 }
 
 function listenToDieselFirebase() {
@@ -390,7 +431,23 @@ function listenToDieselFirebase() {
 
         snapshot.forEach(doc => {
             const data = doc.data();
-            activeDieselSuppliers.push(data);
+
+            // 🌟 DINAMIŠKAI PASIIMAME REALIĄ BAZINĘ KAINĄ IŠ FIRESTORE
+            if (doc.id === "market_benchmark" || data.isBenchmark) {
+                officialBenchmark = {
+                    officialBasePriceNoVat: Number(data.officialBasePriceNoVat) || 1.582,
+                    officialBasePriceVat: Number(data.officialBasePriceVat) || parseFloat(((Number(data.officialBasePriceNoVat) || 1.582) * 1.21).toFixed(3)),
+                    exciseDutyPerLiter: Number(data.exciseDutyPerLiter) || 0.060,
+                    source: data.source || "AB ORLEN Lietuva (Oficiali didmenos bazė)"
+                };
+
+                // Dinamiškai atnaujiname ūkio gamybos planavimo kuro kainą
+                if (FARM_PRICES) {
+                    FARM_PRICES.diesel = officialBenchmark.officialBasePriceNoVat;
+                }
+            } else {
+                activeDieselSuppliers.push(data);
+            }
 
             if (data.updatedAt) {
                 const docDate = data.updatedAt.toDate ? data.updatedAt.toDate() : new Date(data.updatedAt);
@@ -408,8 +465,70 @@ function listenToDieselFirebase() {
         }
 
         updateLocationDisplay();
-        renderRankedSuppliers();
+        updateCalculatorSummary();
+        renderNearestSuppliers();
     });
+}
+
+function updateCalculatorSummary() {
+    if (!officialBenchmark) return;
+
+    const volume = dieselState.volumeLiters;
+    const baseNoVat = officialBenchmark.officialBasePriceNoVat;
+    const baseVat = officialBenchmark.officialBasePriceVat;
+
+    const sumNoVat = Math.round(volume * baseNoVat);
+    const sumVat = Math.round(volume * baseVat);
+
+    const elBenchMain = document.getElementById('benchmark-main-price');
+    const elBenchSub = document.getElementById('benchmark-sub-price');
+    const elBenchTag = document.getElementById('benchmark-source-tag');
+    const elBenchExcise = document.getElementById('benchmark-excise-label');
+    const elSourceBadge = document.getElementById('diesel-source-badge');
+    const elOrderTitle = document.getElementById('order-calc-title');
+    const elOrderBadge = document.getElementById('order-vat-badge');
+    const elOrderTotal = document.getElementById('order-total-sum');
+    const elOrderSub = document.getElementById('order-sub-sum');
+
+    if (elBenchTag && officialBenchmark.source) {
+        elBenchTag.textContent = officialBenchmark.source.includes('ORLEN') ? 'ORLEN Lietuva' : 'Biržos indeksas';
+    }
+    if (elSourceBadge && officialBenchmark.source) {
+        elSourceBadge.textContent = `Gyva didmena • ${officialBenchmark.source}`;
+    }
+    if (elBenchExcise) {
+        elBenchExcise.textContent = `${officialBenchmark.exciseDutyPerLiter.toFixed(3)} €/l`;
+    }
+
+    if (dieselState.includeVat) {
+        if (elBenchMain) {
+            elBenchMain.classList.remove('animate-pulse');
+            elBenchMain.textContent = `${baseVat.toFixed(3)} €/l`;
+        }
+        if (elBenchSub) elBenchSub.textContent = `(${baseNoVat.toFixed(3)} €/l be PVM)`;
+        if (elOrderBadge) elOrderBadge.textContent = "Su PVM";
+        if (elOrderTotal) {
+            elOrderTotal.classList.remove('animate-pulse');
+            elOrderTotal.textContent = `~${sumVat.toLocaleString('lt-LT')} €`;
+        }
+        if (elOrderSub) elOrderSub.textContent = `(~${sumNoVat.toLocaleString('lt-LT')} € be PVM)`;
+    } else {
+        if (elBenchMain) {
+            elBenchMain.classList.remove('animate-pulse');
+            elBenchMain.textContent = `${baseNoVat.toFixed(3)} €/l`;
+        }
+        if (elBenchSub) elBenchSub.textContent = `(${baseVat.toFixed(3)} €/l su PVM)`;
+        if (elOrderBadge) elOrderBadge.textContent = "Be PVM";
+        if (elOrderTotal) {
+            elOrderTotal.classList.remove('animate-pulse');
+            elOrderTotal.textContent = `~${sumNoVat.toLocaleString('lt-LT')} €`;
+        }
+        if (elOrderSub) elOrderSub.textContent = `(~${sumVat.toLocaleString('lt-LT')} € su PVM)`;
+    }
+
+    if (elOrderTitle) {
+        elOrderTitle.textContent = `Orientacinė užsakymo suma (${volume.toLocaleString('lt-LT')} l)`;
+    }
 }
 
 function setupDieselSheetEvents() {
@@ -434,8 +553,9 @@ function setupDieselSheetEvents() {
     }
 }
 
-// 🌟 IŠKVIENČIAMAS BOTTOM SHEET TIEKĖJUI
 function openDieselBottomSheet(item, rankIndex) {
+    if (!officialBenchmark) return;
+
     const sheet = document.getElementById('diesel-supplier-sheet');
     const panel = document.getElementById('diesel-supplier-panel');
     const nameEl = document.getElementById('sheet-diesel-name');
@@ -445,67 +565,64 @@ function openDieselBottomSheet(item, rankIndex) {
 
     if (!sheet || !bodyEl || !item) return;
 
+    const volume = dieselState.volumeLiters;
+    const baseNoVat = officialBenchmark.officialBasePriceNoVat;
+    const baseVat = officialBenchmark.officialBasePriceVat;
+    const activeBasePrice = dieselState.includeVat ? baseVat : baseNoVat;
+    const activeSum = Math.round(volume * activeBasePrice);
     const vatLabel = dieselState.includeVat ? "su PVM" : "be PVM";
-    const includeTransport = dieselState.includeTransport;
 
     if (nameEl) nameEl.textContent = item.name;
     if (rankEl) {
-        rankEl.textContent = rankIndex === 0 ? "🥇 1 VIETA" : `#${rankIndex + 1}`;
+        rankEl.textContent = rankIndex === 0 ? "📍 ARTIMIAUSIA BAZĖ" : `#${rankIndex + 1} PAGAL ATSTUMĄ`;
         rankEl.className = rankIndex === 0 
             ? "bg-tractorPrimary text-white text-[10px] font-black px-2 py-0.5 rounded-full uppercase"
             : "bg-tractorBg border border-tractorBorder text-slate-300 font-mono text-[10px] font-bold px-2 py-0.5 rounded";
     }
-    if (addressEl) addressEl.textContent = `📍 Bazė: ${item.depotAddress} (${item.region}) • 🚗 ~${item.distKm} km`;
+    if (addressEl) addressEl.textContent = `📍 Adresas: ${item.depotAddress} (${item.region})`;
 
     bodyEl.innerHTML = `
-        <!-- PAGRINDINIS FINANSINIS VERDIKTAS -->
         <div class="bg-myPostBg border-2 border-tractorPrimary rounded-2xl p-4 text-center space-y-1 shadow-lg">
             <span class="text-[10px] text-slate-300 uppercase font-black tracking-wider block">
-                ${includeTransport ? 'GALUTINĖ KAINA KIEME' : 'SUMA TERMINALE'} (${vatLabel})
+                ORIENTACINĖ UŽSAKYMO VERTĖ PAGAL BAZĘ (${vatLabel})
             </span>
             <div class="text-3xl font-black text-green-400 font-mono">
-                ${item.totalDeliveredCost.toLocaleString('lt-LT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €
+                ~${activeSum.toLocaleString('lt-LT')} €
             </div>
             <div class="text-xs font-bold text-slate-200">
-                Savikaina su atvežimu: <strong class="text-green-400 text-sm font-black">${item.pricePerLiterFinal.toFixed(3)} €/l</strong>
+                Didmenos bazė: <strong class="text-green-400 text-sm font-black">${activeBasePrice.toFixed(3)} €/l</strong>
             </div>
         </div>
 
-        <!-- DETALI ĮKAINIŲ SUVESTINĖ -->
         <div class="bg-tractorBg rounded-xl p-3.5 border border-tractorBorder space-y-2 text-xs">
             <div class="flex justify-between items-center border-b border-tractorBorder/60 pb-1.5">
-                <span class="text-slate-400">Bazinė kaina terminale:</span>
-                <strong class="font-mono text-white">${item.effectiveBasePrice.toFixed(3)} €/l</strong>
+                <span class="text-slate-400">Atstumas nuo kuro bazės iki jūsų:</span>
+                <strong class="font-mono text-green-400 font-bold">🚗 ~${item.distKm} km</strong>
             </div>
-
-            ${item.discountPerL > 0 ? `
-                <div class="flex justify-between items-center border-b border-tractorBorder/60 pb-1.5">
-                    <span class="text-slate-400">Tūrio nuolaida:</span>
-                    <strong class="font-mono text-blue-400">-${item.discountPerL.toFixed(3)} €/l</strong>
-                </div>
-            ` : ''}
 
             <div class="flex justify-between items-center border-b border-tractorBorder/60 pb-1.5">
-                <span class="text-slate-400">Autocisternos atvežimas (${item.distKm} km):</span>
-                <strong class="font-mono ${includeTransport ? 'text-amber-400' : 'text-slate-400'}">
-                    ${includeTransport ? '+' + item.transportCost.toFixed(2) + ' €' : 'Savivežis (0 €)'}
-                </strong>
+                <span class="text-slate-400">Planuojamas užsakyti kiekis:</span>
+                <strong class="font-mono text-white font-bold">${volume.toLocaleString('lt-LT')} litrų</strong>
             </div>
 
-            <div class="flex justify-between items-center pt-0.5 text-slate-300">
-                <span>Užsakomas kiekis:</span>
-                <strong class="font-mono text-white font-bold">${dieselState.volumeLiters.toLocaleString('lt-LT')} litrų</strong>
+            <div class="flex justify-between items-center pt-0.5">
+                <span class="text-slate-400">Minimalus pristatymo kiekis:</span>
+                <strong class="font-mono ${volume >= (item.minOrderLiters || 2000) ? 'text-slate-200' : 'text-amber-400'}">
+                    nuo ${(item.minOrderLiters || 2000).toLocaleString('lt-LT')} l
+                </strong>
             </div>
         </div>
 
-        <!-- SKAMBUČIO MYGTUKAS -->
-        ${item.phone ? `
-            <div class="pt-1">
-                <a href="tel:${item.phone}" class="w-full h-12 bg-tractorPrimary hover:bg-tractorPrimaryHover rounded-xl text-xs sm:text-sm font-bold text-white flex items-center justify-center gap-2 shadow-lg transition">
-                    <span>📞</span> <span>Užsakyti / Skambinti tiekėjui (${item.phone})</span>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">
+            ${item.phone ? `
+                <a href="tel:${item.phone}" class="h-12 bg-tractorPrimary hover:bg-tractorPrimaryHover rounded-xl text-xs sm:text-sm font-bold text-white flex items-center justify-center gap-2 shadow-lg transition">
+                    <span>📞</span> <span>Skambinti (${item.phone})</span>
                 </a>
-            </div>
-        ` : ''}
+            ` : ''}
+            <a href="https://www.google.com/maps/dir/?api=1&destination=${item.lat},${item.lng}" target="_blank" class="h-12 bg-tractorBg hover:bg-zinc-800 border border-tractorBorder rounded-xl text-xs sm:text-sm font-bold text-white flex items-center justify-center gap-2 transition">
+                <span>🧭</span> <span>Rodyti žemėlapyje</span>
+            </a>
+        </div>
     `;
 
     sheet.classList.remove('hidden');
@@ -514,73 +631,43 @@ function openDieselBottomSheet(item, rankIndex) {
     }, 15);
 }
 
-// 🌟 KOMPAKTIŠKŲ KORTELIŲ SĄRAŠAS
-function renderRankedSuppliers() {
+function renderNearestSuppliers() {
     const container = document.getElementById('diesel-results-container');
     if (!container || activeDieselSuppliers.length === 0) return;
 
-    const volume = dieselState.volumeLiters;
-    const vatMultiplier = dieselState.includeVat ? 1.21 : 1.0;
-    const vatLabel = dieselState.includeVat ? "su PVM" : "be PVM";
-    const includeTransport = dieselState.includeTransport;
-
     lastRankedDieselList = activeDieselSuppliers.map(s => {
         const distKm = Math.round(calculateDist(currentDieselCoords.lat, currentDieselCoords.lng, s.lat, s.lng));
-
-        let discountPerL = 0;
-        if (volume >= 20000) discountPerL = s.discounts?.tier20k || -0.035;
-        else if (volume >= 10000) discountPerL = s.discounts?.tier10k || -0.025;
-        else if (volume >= 5000) discountPerL = s.discounts?.tier5k || -0.015;
-
-        const effectiveBasePriceNoVat = Math.max(0.70, (s.basePriceNoVat || 0.85) + discountPerL);
-        const fuelCostNoVat = effectiveBasePriceNoVat * volume;
-
-        let transportCostNoVat = 0;
-        if (includeTransport) {
-            const transportRate = s.transportRatePerLKm || 0.0014;
-            transportCostNoVat = Math.max(80, distKm * transportRate * volume);
-        }
-
-        const totalDeliveredNoVat = fuelCostNoVat + transportCostNoVat;
-        const totalDeliveredFinal = totalDeliveredNoVat * vatMultiplier;
-        const pricePerLiterFinal = totalDeliveredFinal / volume;
-
         return {
             ...s,
-            distKm,
-            effectiveBasePrice: effectiveBasePriceNoVat * vatMultiplier,
-            discountPerL: Math.abs(discountPerL) * vatMultiplier,
-            transportCost: transportCostNoVat * vatMultiplier,
-            totalDeliveredCost: totalDeliveredFinal,
-            pricePerLiterFinal
+            distKm
         };
-    }).sort((a, b) => a.totalDeliveredCost - b.totalDeliveredCost);
-
-    const titlePrefix = includeTransport ? "Pigiausi tiekėjai su atvežimu" : "Kainos terminaluose";
+    }).sort((a, b) => a.distKm - b.distKm);
 
     container.innerHTML = `
         <div class="flex items-center justify-between px-1">
             <h4 class="font-oswald text-base sm:text-lg font-bold uppercase tracking-wider text-white">
-                ${titlePrefix} (${volume.toLocaleString('lt-LT')} l • ${vatLabel}):
+                📍 Artimiausios kuro bazės ir didmenininkai (${lastRankedDieselList.length}):
             </h4>
-            <span class="text-[10px] sm:text-xs text-slate-400">Spauskite kortelę užsakymui</span>
+            <span class="text-[10px] sm:text-xs text-slate-400">Surikiuota pagal atstumą nuo jūsų</span>
         </div>
 
         <div class="space-y-2">
             ${lastRankedDieselList.map((item, idx) => {
-                const isBest = idx === 0;
+                const isNearest = idx === 0;
+                const isClose = item.distKm <= 40;
+
                 return `
-                    <div class="diesel-supplier-mini-card p-3 sm:p-3.5 rounded-xl border transition cursor-pointer select-none flex items-center justify-between gap-3 ${
-                        isBest 
+                    <div class="diesel-supplier-mini-card p-3 sm:p-4 rounded-xl border transition cursor-pointer select-none flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${
+                        isNearest 
                         ? 'bg-myPostBg border-tractorPrimary ring-1 ring-tractorPrimary shadow-md' 
                         : 'bg-tractorSurface border-tractorBorder hover:border-slate-400'
                     }" data-index="${idx}">
                         
                         <div class="space-y-1 min-w-0 flex-1">
                             <div class="flex items-center gap-2 flex-wrap leading-tight">
-                                ${isBest ? `
+                                ${isNearest ? `
                                     <span class="bg-tractorPrimary text-white text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider">
-                                        🥇 1 VIETA
+                                        📍 ARTIMIAUSIA BAZĖ
                                     </span>
                                 ` : `
                                     <span class="text-slate-400 font-mono font-bold text-xs bg-tractorBg px-1.5 py-0.5 rounded border border-tractorBorder">#${idx + 1}</span>
@@ -588,20 +675,23 @@ function renderRankedSuppliers() {
                                 <h4 class="font-bold text-sm sm:text-base text-white truncate">${item.name}</h4>
                             </div>
 
-                            <div class="flex items-center gap-2 text-[11px] text-slate-300">
-                                <span class="truncate">📍 ${item.depotAddress ? item.depotAddress.split(',')[0] : item.region}</span>
+                            <div class="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-xs text-slate-300">
+                                <span>📍 ${item.depotAddress}</span>
                                 <span>•</span>
-                                <span class="text-green-400 font-bold shrink-0">🚗 ~${item.distKm} km</span>
+                                <span class="${isClose ? 'text-green-400' : 'text-amber-400'} font-bold">🚗 ~${item.distKm} km nuo jūsų</span>
+                                <span class="text-slate-400 text-[11px]">• Min. užsakymas: ${(item.minOrderLiters || 2000).toLocaleString('lt-LT')} l</span>
                             </div>
                         </div>
 
-                        <div class="text-right shrink-0">
-                            <div class="text-base sm:text-xl font-black font-mono ${isBest ? 'text-green-400' : 'text-white'} leading-tight">
-                                ${item.totalDeliveredCost.toLocaleString('lt-LT', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} €
-                            </div>
-                            <span class="text-[10px] sm:text-xs font-bold ${isBest ? 'text-green-500' : 'text-slate-400'}">
-                                ${item.pricePerLiterFinal.toFixed(3)} €/l ➔
-                            </span>
+                        <div class="flex items-center gap-2 shrink-0 self-end sm:self-center">
+                            ${item.phone ? `
+                                <a href="tel:${item.phone}" onclick="event.stopPropagation()" class="h-10 px-3.5 bg-tractorPrimary hover:bg-tractorPrimaryHover text-white font-bold rounded-xl text-xs flex items-center gap-1.5 shadow transition">
+                                    <span>📞</span> <span>${item.phone}</span>
+                                </a>
+                            ` : ''}
+                            <button type="button" class="h-10 px-3 bg-tractorBg hover:bg-zinc-800 border border-tractorBorder text-slate-200 font-bold rounded-xl text-xs transition cursor-pointer">
+                                Sąmata ➔
+                            </button>
                         </div>
 
                     </div>
@@ -610,7 +700,6 @@ function renderRankedSuppliers() {
         </div>
     `;
 
-    // Pririšame paspaudimą – atidaro Bottom Sheet
     container.querySelectorAll('.diesel-supplier-mini-card').forEach(card => {
         card.onclick = () => {
             const idx = parseInt(card.getAttribute('data-index'));
