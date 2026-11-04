@@ -1,0 +1,16 @@
+@import "tailwindcss";
+
+@theme {
+  --color-tractorBg: var(--bg-main);
+  --color-tractorPrimary: #2E7D32;
+  --color-tractorPrimaryLight: #4CAF50;
+  --color-tractorPrimaryHover: #1B5E20;
+  --color-tractorSurface: var(--bg-surface);
+  --color-tractorCard: var(--bg-card);
+  --color-tractorSecondary: var(--text-muted);
+  --color-tractorBorder: var(--border-color);
+  --color-myPostBg: var(--bg-highlight);
+
+  --font-oswald: 'Oswald', sans-serif;
+  --font-sans: 'Inter', sans-serif;
+}

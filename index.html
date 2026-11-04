@@ -1,17 +1,7 @@
 <!DOCTYPE html>
 <html lang="lt" class="light-theme">
 <head>
-    <meta charset="UTF-8">
-    
-    <!-- 📈 GOOGLE ANALYTICS (GA4) -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-J6ZEGM736H"></script>
-    <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag(){dataLayer.push(arguments);}
-      gtag('js', new Date());
-
-      gtag('config', 'G-J6ZEGM736H');
-    </script>
+    <meta charset="UTF-8">   
 
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="theme-color" content="#2E7D32">
@@ -91,7 +81,8 @@
           "Ūkio gamybos ir GAAB 7 sėjomainos planavimas su 3 metų pasėlių kaita ir NMA GeoJSON eksportu",
           "VRA kintamos normos tręšimo ir kalkinimo žemėlapiai su binariniu Shapefile (.ZIP) eksportu į traktoriaus USB",
           "Privalomas Augalų apsaugos produktų (purškimo) ir trąšų naudojimo apskaitos žurnalas PDF ir Excel formatais",
-          "Lietuvos žemės ūkio renginių, LŽŪKT mokymų, purškimo pažymėjimų kursų, NMA seminarų ir kaimo švenčių kalendorius"
+          "Lietuvos žemės ūkio renginių, LŽŪKT mokymų, purškimo pažymėjimų kursų, NMA seminarų ir kaimo švenčių kalendorius",
+          "Išmaniųjų ūkio ir namų įrenginių bei Daikin Altherma šilumos siurblių automatinis valdymas pagal Nord Pool elektros biržos kainas"
         ],
         "knowsAbout": [
           "Žemės ūkis", "Ūkio valdymas", "Pasėlių deklaravimas", "Grūdų supirkimo kainos", 
@@ -156,30 +147,8 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script defer src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        tractorBg: 'var(--bg-main)',
-                        tractorPrimary: '#2E7D32',
-                        tractorPrimaryLight: '#4CAF50',
-                        tractorPrimaryHover: '#1B5E20',
-                        tractorSurface: 'var(--bg-surface)',
-                        tractorCard: 'var(--bg-card)',
-                        tractorSecondary: 'var(--text-muted)',
-                        tractorBorder: 'var(--border-color)',
-                        myPostBg: 'var(--bg-highlight)'
-                    },
-                    fontFamily: {
-                        oswald: ['Oswald', 'sans-serif'],
-                        sans: ['Inter', 'sans-serif'],
-                    }
-                }
-            }
-        }
-    </script>
+    <link rel="stylesheet" href="css/style.min.css">
+    
     <style>
         :root {
             --bg-main: #0F120F;
@@ -672,7 +641,7 @@
 
                                 <div>
                                     <h3 class="font-bold text-white"><a href="https://jurgisagro.com/" class="hover:text-green-500 underline">3. Žymėtas dyzelinas ūkininkams (Gazolas) į ūkį</a></h3>
-                                    <p>Didmeninė <strong>žymėto dyzelino (žalio dyzelino / gazolio) kaina</strong> iš 36 Lietuvos naftos bazių (<em>ORLEN Lietuva, KN Energies, Jozita, Saurida, Trevena, Alauša, Deglas, Takuras</em> ir kt.). Skaičiuojamos tūrio nuolaidos (nuo 2000 iki 24000 litrų) ir autocisternos pristatymo į ūkio kiemą savikaina su PVM arba be PVM.</p>
+                                    <p>Didmeninė <strong>žymėto dyzelino (žalio dyzelino / gazolio) kaina</strong> iš 53 Lietuvos naftos bazių (<em>ORLEN Lietuva, KN Energies, Jozita, Saurida, Trevena, Alauša, Deglas, Takuras</em> ir kt.). Skaičiuojamos tūrio nuolaidos (nuo 2000 iki 24000 litrų) ir autocisternos pristatymo į ūkio kiemą savikaina su PVM arba be PVM.</p>
                                 </div>
 
                                 <div>
@@ -767,11 +736,21 @@
         </div>
     </div>
 
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-messaging-compat.js"></script>
+    <script defer src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script defer src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+    <script defer src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    <script defer src="https://www.gstatic.com/firebasejs/10.8.0/firebase-messaging-compat.js"></script>
 
     <script type="module" src="js/main.js?v=2.6"></script>
+
+    <!-- 📈 GOOGLE ANALYTICS (GA4) KRAUNAMAS FONE PUSLAPIO GALE -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-J6ZEGM736H"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+
+      gtag('config', 'G-J6ZEGM736H');
+    </script>
 </body>
 </html>
