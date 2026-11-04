@@ -1,16 +1,40 @@
 // js/core/ui.js
 
+// 🌟 ŽODINIŲ ADRESŲ (SLUG) IR TAB INDEX ŽEMĖLAPIS
+export const TAB_SLUGS = {
+    0: '',
+    1: 'orai',
+    2: 'laukai',
+    3: 'tresimas-vra',
+    4: 'kalkinimas-vra',
+    5: 'zurnalas',
+    6: 'ataskaitos',
+    7: 'sos-pagalba',
+    8: 'technika',
+    9: 'nustatymai',
+    10: 'sejomaina',
+    11: 'paseliu-lyga',
+    12: 'renginiai',
+    13: 'ismanieji-irenginiai'
+};
+
+// Atvirkštinis žemėlapis: iš žodžio atpažįsta skaičių
+export const SLUG_TO_TAB = Object.entries(TAB_SLUGS).reduce((acc, [idx, slug]) => {
+    if (slug) acc[slug] = parseInt(idx, 10);
+    return acc;
+}, {});
+
 export function switchTab(tabIndex) {
     const allViews = [
         document.getElementById('view-tab-calculators'), // 0
         document.getElementById('view-tab-weather'),     // 1
-        document.getElementById('view-tab-fields'),      // 2, 3, 4, 5, 13 (Išmanieji įrenginiai, Laukai, Tręšimas, Kalkinimas, Žurnalas)
+        document.getElementById('view-tab-fields'),      // 2, 3, 4, 5, 13
         document.getElementById('view-tab-reports'),     // 6
         document.getElementById('view-tab-feed'),        // 7 (SOS)
         document.getElementById('view-tab-garage'),      // 8 (Technika)
         document.getElementById('view-tab-settings'),    // 9 (Nustatymai)
-        document.getElementById('view-tab-cropplanner'),  // 10 Sėjomainos Planavimas (GAAB 7)
-        document.getElementById('view-tab-league'),       // 11 👈 lyga
+        document.getElementById('view-tab-cropplanner'), // 10 Sėjomainos Planavimas (GAAB 7)
+        document.getElementById('view-tab-league'),       // 11 lyga
         document.getElementById('view-tab-events')       // 12
     ];
 
@@ -23,7 +47,7 @@ export function switchTab(tabIndex) {
     else if (tabIndex === 9) targetView = document.getElementById('view-tab-settings');
     else if (tabIndex === 10) targetView = document.getElementById('view-tab-cropplanner');
     else if (tabIndex === 11) targetView = document.getElementById('view-tab-league');
-    else if (tabIndex === 12) targetView = document.getElementById('view-tab-events'); // 12
+    else if (tabIndex === 12) targetView = document.getElementById('view-tab-events');
 
     allViews.forEach(el => {
         if (!el) return;
@@ -46,7 +70,7 @@ export function switchTab(tabIndex) {
         }
     });
 
-    // 2. 🌟 MOBILI APATINĖ JUOSTA: užtikriname, kad TIK VIENAS mygtukas būtų žalias!
+    // 2. Mobili apatinė juosta
     const isUkis = (tabIndex >= 2 && tabIndex <= 6) || tabIndex === 10 || tabIndex === 13;
     const isBendruomene = tabIndex === 7 || tabIndex === 8 || tabIndex === 11 || tabIndex === 12;
 
@@ -65,27 +89,27 @@ export function switchTab(tabIndex) {
         1: {
             title: "Agro-Orai Purškimui, Įšalo Gylis ir Žiemkenčių Radaras | JurgisAgro",
             desc: "Tikslūs agro-orai ūkininkams: 48 val. purškimo langas, vėjo greitis, dirvos temperatūra, įšalas, T-Sum 200 ir sniego pelėsio rizika.",
-            url: "https://jurgisagro.com/?tab=1"
+            url: "https://jurgisagro.com/?orai"
         },
         7: {
             title: "SOS Pagalba Ūkininkams Laukuose ir Technikos Paieška | JurgisAgro",
             desc: "Skubi ūkininkų savitarpio pagalba sugedus traktoriui, kombainui ar įstrigus laukuose jūsų rajone.",
-            url: "https://jurgisagro.com/?tab=7"
+            url: "https://jurgisagro.com/?sos-pagalba"
         },
         11: {
             title: "Lietuvos Pasėlių Lyga (TOP 10) – Sentinel-2 NDVI Reitingas | JurgisAgro",
             desc: "Kurio ūkininko kviečiai ir rapsai stipriausi jūsų rajone ir Lietuvoje? Palydovinis Sentinel-2 ir Google Earth Engine pasėlių reitingas.",
-            url: "https://jurgisagro.com/?tab=11"
+            url: "https://jurgisagro.com/?paseliu-lyga"
         },
         12: {
             title: "Žemės Ūkio Renginiai, LŽŪKT Mokymai ir Kaimo Šventės | JurgisAgro",
             desc: "Gyvas Lietuvos agro-renginių kalendorius: kaimo šventės, mugės, LŽŪKT kursai, purškimo pažymėjimai, NMA seminarai ir parodos.",
-            url: "https://jurgisagro.com/?tab=12"
+            url: "https://jurgisagro.com/?renginiai"
         },
         13: {
             title: "Išmanieji Ūkio Įrenginiai ir Nord Pool Šilumos Siurblio Valdymas | JurgisAgro",
             desc: "Automatinis Daikin Altherma šilumos siurblių ir ūkio įrenginių valdymas pagal pigiausias Nord Pool elektros biržos valandas.",
-            url: "https://jurgisagro.com/?tab=13"
+            url: "https://jurgisagro.com/?ismanieji-irenginiai"
         }
     };
 
@@ -95,6 +119,14 @@ export function switchTab(tabIndex) {
     if (descMeta) descMeta.setAttribute('content', activeSeo.desc);
     const canonLink = document.querySelector('link[rel="canonical"]');
     if (canonLink) canonLink.setAttribute('href', activeSeo.url);
+
+    // 🌟 ŽODINIS GRAŽUS URL ATNAUJINIMAS (pvz. ?ismanieji-irenginiai arba ?orai)
+    const slug = TAB_SLUGS[tabIndex];
+    const targetUrl = slug ? `?${slug}` : window.location.pathname;
+    
+    if (window.location.search !== (slug ? `?${slug}` : '')) {
+        window.history.pushState({ tab: tabIndex }, activeSeo.title, targetUrl);
+    }
 }
 
 function setMobileBtnActive(id, isActive) {
@@ -109,7 +141,34 @@ function setMobileBtnActive(id, isActive) {
     }
 }
 
-// 🌟 IŠGYDYTA: TOAST PRANEŠIMAS NIEKADA NEBEBLOKUOS JOKIO MYGTUKO!
+// 🌟 Naršyklės mygtukų „Atgal“ / „Pirmyn“ palaikymas
+window.addEventListener('popstate', (e) => {
+    const requestedTab = getRequestedTabFromUrl();
+    switchTab(requestedTab);
+});
+
+export function getRequestedTabFromUrl() {
+    const urlParams = new URLSearchParams(window.location.search);
+    
+    // 1. Tikriname ar yra senas parametras ?tab=13
+    if (urlParams.has('tab')) {
+        return parseInt(urlParams.get('tab'), 10) || 0;
+    }
+    
+    // 2. Tikriname ar yra žodinis parametras pvz. ?ismanieji-irenginiai ar ?orai
+    for (const [slug, tabIdx] of Object.entries(SLUG_TO_TAB)) {
+        if (urlParams.has(slug)) {
+            return tabIdx;
+        }
+    }
+
+    if (urlParams.get('daikin') === 'connected') {
+        return 13;
+    }
+
+    return 0;
+}
+
 export function showBottomToast(message, type = 'success') {
     let toastContainer = document.getElementById('global-bottom-toast');
     if (!toastContainer) {
@@ -160,9 +219,6 @@ export function showBottomToast(message, type = 'success') {
     }, 3200);
 }
 
-/**
- * 🌟 Tikras Bottom Sheet patvirtinimo langas (ir kompiuteryje, ir telefone)
- */
 export function showDialog(title, message, icon = "⚠️", onConfirm = null, showCancel = false) {
     let dialog = document.getElementById('custom-dialog');
     if (!dialog) return;

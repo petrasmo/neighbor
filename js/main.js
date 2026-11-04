@@ -1,7 +1,7 @@
 // js/main.js
 import { auth, db } from './core/firebase.js';
 import { openAuthModal, logoutUser } from './core/auth.js';
-import { switchTab, showDialog, showBottomToast } from './core/ui.js';
+import { switchTab, showDialog, showBottomToast, getRequestedTabFromUrl } from './core/ui.js';
 import { initThemeToggle } from './core/theme.js';
 import { renderGlobalSidebar } from './core/sidebar.js';
 
@@ -42,6 +42,58 @@ const classifierMap = {};
 
 let returnToCalculatorsHub = null;
 
+// 🌟 SKAIČIUOKLIŲ ŽODINIAI ADRESAI (SLUGS) IR SEO APRAŠYMAI
+const CALC_SEO_MAP = {
+    'nordpool-kainos': {
+        title: "Nord Pool Elektros Kainos Pavalandžiui Lietuvoje | JurgisAgro",
+        desc: "Gyvos Nord Pool elektros biržos kainos šiandien ir rytoj pavalandžiui. Sužinokite pigiausias valandas technikai ir šilumos siurbliams."
+    },
+    'matif-birza': {
+        title: "Euronext MATIF Paryžiaus Grūdų ir Rapsų Birža Gyvai | JurgisAgro",
+        desc: "Tiesioginės Euronext MATIF kviečių, rapsų ir kukurūzų biržos kainos, ateities sandoriai ir grafikai realiu laiku."
+    },
+    'grain-supirkimas': {
+        title: "Lietuvos Elevatorių Grūdų Supirkimo Kainos ir Logistika | JurgisAgro",
+        desc: "Kur labiausiai apsimoka vežti derlių: elevatorių kainų palyginimas, džiovinimo nuoskaitos ir transporto kaštai nuo jūsų ūkio."
+    },
+    'dyzelinas-gazolas': {
+        title: "Žymėto Dyzelino (Gazolio) Užsakymas ir 52 Kuro Bazės | JurgisAgro",
+        desc: "Didmeninė žymėto dyzelino kaina ūkininkams iš 52 Lietuvos kuro bazių pagal oficialią ORLEN Lietuva bazę su pristatymu į ūkį."
+    },
+    'grudu-sandelis': {
+        title: "Grūdų Sandėlis, Ventiliavimas (EMC) ir Ekonomika | JurgisAgro",
+        desc: "Parduoti ar laikyti? Grūdų saugojimo savikainos skaičiuoklė bei protingas ventiliavimas pagal ASABE Chung-Pfost formulę."
+    },
+    'nma-terminai': {
+        title: "NMA Terminai, Draudimai ir GAAB Reikalavimai | JurgisAgro",
+        desc: "Oficialūs NMA terminai: mėšlo ir srutų skleidimo draudimai, posėlių išlaikymo datos ir sankcijų prevencija ūkininkams."
+    },
+    'sejos-norma': {
+        title: "Tiksli Sėjos Normos (MTG) Skaičiuoklė Ūkiui | JurgisAgro",
+        desc: "Apskaičiuokite tikslų kg/ha sėklų poreikį pagal 1000 grūdų masę (MTG), daigumą ir švarumą. Didmaišių kiekis ir kaina."
+    },
+    'tarpiniai-paseliai': {
+        title: "Tarpinių Pasėlių (Posėlių) Mišinių Skaičiuoklė | JurgisAgro",
+        desc: "Sudarykite NMA ekoschemas atitinkančius 2–5 augalų posėlių mišinius, normos kg/ha ir sėklų receptas."
+    },
+    'kombaino-nuostoliai': {
+        title: "Kombaino Kūlimo Nuostolių Skaičiuoklė | JurgisAgro",
+        desc: "Kombaino kontrolės įrankis: pagal rastų grūdų skaičių padėkle sužinokite kūlimo nuostolius kg/ha, procentais ir eurais."
+    },
+    'purkstuvas': {
+        title: "Purkštuvo Bako Tirpalo Maišymo Skaičiuoklė | JurgisAgro",
+        desc: "Tikslios chemijos ir trąšų dozės pilnam ir nepilnam purkštuvo bakui. Apsaugokite pasėlius nuo perdozavimo."
+    },
+    'trasu-skaiciuokle': {
+        title: "Trąšų N-P-K ir Azoto Savikainos Skaičiuoklė | JurgisAgro",
+        desc: "Fizinė salietros, KAS-32 ir NPK trąšų norma kg/ha pagal gryną maisto medžiagų poreikį bei 1 kg azoto savikaina."
+    },
+    'trasu-barometras': {
+        title: "Trąšų Rinkos Radaras ir Kainų Barometras | JurgisAgro",
+        desc: "Olandijos TTF gamtinių dujų birža, EUR/USD kursas ir karbamido indeksai: sužinokite, kada palankiausia pirkti trąšas."
+    }
+};
+
 function formatCleanCtHub(val) {
     if (Math.abs(val) < 0.005) return "0";
     if (Math.abs(val) < 0.1) {
@@ -51,11 +103,7 @@ function formatCleanCtHub(val) {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-    const urlParams = new URLSearchParams(window.location.search);
-    let requestedTab = parseInt(urlParams.get('tab')) || 0;
-    if (urlParams.get('daikin') === 'connected') {
-        requestedTab = 13;
-    }
+    let requestedTab = getRequestedTabFromUrl();
 
     renderGlobalSidebar('index', requestedTab);
     initThemeToggle();
@@ -67,7 +115,7 @@ document.addEventListener('DOMContentLoaded', () => {
         btn.addEventListener('click', () => {
             const tabIdx = parseInt(btn.getAttribute('data-tab'));
 
-            // 🔒 Reikalingas prisijungimas visiems ūkio moduliams (įskaitant tab 13 – Išmanieji Įrenginiai)
+            // 🔒 Reikalingas prisijungimas visiems ūkio moduliams
             if (!currentUser && ((tabIdx >= 2 && tabIdx <= 6) || tabIdx === 10 || tabIdx === 13 || tabIdx === 8 || tabIdx === 9)) {
                 showDialog(
                     "Reikalingas prisijungimas",
@@ -278,7 +326,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function loadHubLivePriceTickers() {
-    // 1. Nord Pool Elektra (1 vietoje)
+    // 1. Nord Pool Elektra
     db.collection("electricity_prices").doc("market_data").onSnapshot(doc => {
         if (!doc.exists) return;
         const d = doc.data();
@@ -393,7 +441,7 @@ function loadHubLivePriceTickers() {
         `;
     }, () => {});
 
-    // 4. Gazolas (Dyzelinas) – 🌟 TIKRA GYVA ORLEN LIETUVA DIDMENA!
+    // 4. Gazolas (Dyzelinas) – Gyva ORLEN Lietuva didmena
     db.collection("diesel_prices").doc("market_benchmark").onSnapshot(doc => {
         const el = document.getElementById('hub-live-diesel');
         if (!el || !doc.exists) return;
@@ -494,95 +542,140 @@ function setupCalculatorsHub() {
         barometerView?.classList.add('hidden');
     };
 
-    const returnToHub = () => {
+    // 🌟 DINAMINIS SKAIČIUOKLIŲ URL IR SEO ATNAUJINIMAS
+    const activateCalcView = (calcSlug, viewElement, renderFn) => {
+        hideAll();
+        viewElement?.classList.remove('hidden');
+        if (typeof renderFn === 'function') renderFn();
+
+        const seo = CALC_SEO_MAP[calcSlug];
+        if (seo) {
+            document.title = seo.title;
+            const descMeta = document.querySelector('meta[name="description"]');
+            if (descMeta) descMeta.setAttribute('content', seo.desc);
+        }
+
+        if (window.location.search !== `?${calcSlug}`) {
+            window.history.pushState({ calc: calcSlug }, seo?.title || '', `?${calcSlug}`);
+        }
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    const returnToHub = (updateUrl = true) => {
         hideAll();
         hubView?.classList.remove('hidden');
+        document.title = "JurgisAgro – Ūkininkų Portalas, Grūdų Kainos ir MATIF Birža";
+        if (updateUrl && window.location.search !== '') {
+            window.history.pushState({ tab: 0 }, document.title, window.location.pathname);
+        }
         window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
     returnToCalculatorsHub = returnToHub;
 
+    // Mygtukų paspaudimai
     if (openElectricityBtn) openElectricityBtn.onclick = () => {
-        hideAll();
-        electricityView?.classList.remove('hidden');
-        renderElectricityCalculator(document.getElementById('electricity-calc-content'));
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        activateCalcView('nordpool-kainos', electricityView, () => {
+            renderElectricityCalculator(document.getElementById('electricity-calc-content'));
+        });
     };
 
     if (openGrainBtn) openGrainBtn.onclick = () => {
-        hideAll();
-        grainView?.classList.remove('hidden');
-        initGrainTab(currentUser, userData);
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        activateCalcView('grain-supirkimas', grainView, () => {
+            initGrainTab(currentUser, userData);
+        });
     };
 
     if (openMatifBtn) openMatifBtn.onclick = () => {
-        hideAll();
-        matifView?.classList.remove('hidden');
-        renderMatifSection(document.getElementById('matif-calc-content'));
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        activateCalcView('matif-birza', matifView, () => {
+            renderMatifSection(document.getElementById('matif-calc-content'));
+        });
     };
 
     if (openDieselBtn) openDieselBtn.onclick = () => {
-        hideAll();
-        dieselView?.classList.remove('hidden');
-        renderDieselCalculator(document.getElementById('diesel-calc-content'), currentUser, userData);
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        activateCalcView('dyzelinas-gazolas', dieselView, () => {
+            renderDieselCalculator(document.getElementById('diesel-calc-content'), currentUser, userData);
+        });
     };
 
     if (openSeedBtn) openSeedBtn.onclick = () => {
-        hideAll();
-        seedView?.classList.remove('hidden');
-        renderSeedCalculator(document.getElementById('seed-calc-content'));
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        activateCalcView('sejos-norma', seedView, () => {
+            renderSeedCalculator(document.getElementById('seed-calc-content'));
+        });
     };
 
     if (openCoverBtn) openCoverBtn.onclick = () => {
-        hideAll();
-        coverView?.classList.remove('hidden');
-        renderCoverCropCalculator(document.getElementById('cover-calc-content'));
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        activateCalcView('tarpiniai-paseliai', coverView, () => {
+            renderCoverCropCalculator(document.getElementById('cover-calc-content'));
+        });
     };
 
     if (openCombineBtn) openCombineBtn.onclick = () => {
-        hideAll();
-        combineView?.classList.remove('hidden');
-        renderCombineLossCalculator(document.getElementById('combine-calc-content'));
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        activateCalcView('kombaino-nuostoliai', combineView, () => {
+            renderCombineLossCalculator(document.getElementById('combine-calc-content'));
+        });
     };
 
     if (openSprayBtn) openSprayBtn.onclick = () => {
-        hideAll();
-        sprayView?.classList.remove('hidden');
-        renderSprayerCalculator(document.getElementById('spray-calc-content'));
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        activateCalcView('purkstuvas', sprayView, () => {
+            renderSprayerCalculator(document.getElementById('spray-calc-content'));
+        });
     };
 
     if (openFertBtn) openFertBtn.onclick = () => {
-        hideAll();
-        fertView?.classList.remove('hidden');
-        renderFertilizerCalculator(document.getElementById('fert-calc-content'));
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        activateCalcView('trasu-skaiciuokle', fertView, () => {
+            renderFertilizerCalculator(document.getElementById('fert-calc-content'));
+        });
     };
 
     if (openStorageBtn) openStorageBtn.onclick = () => {
-        hideAll();
-        storageView?.classList.remove('hidden');
-        renderStorageCalculator(document.getElementById('storage-calc-content'), currentUser, userData);
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        activateCalcView('grudu-sandelis', storageView, () => {
+            renderStorageCalculator(document.getElementById('storage-calc-content'), currentUser, userData);
+        });
     };
 
     if (openNmaBtn) openNmaBtn.onclick = () => {
-        hideAll();
-        nmaView?.classList.remove('hidden');
-        renderNmaCalendar(document.getElementById('nma-calc-content'));
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        activateCalcView('nma-terminai', nmaView, () => {
+            renderNmaCalendar(document.getElementById('nma-calc-content'));
+        });
     };
 
     if (openBarometerBtn) openBarometerBtn.onclick = () => {
-        hideAll();
-        barometerView?.classList.remove('hidden');
-        renderFertilizerBarometer(document.getElementById('barometer-calc-content'));
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        activateCalcView('trasu-barometras', barometerView, () => {
+            renderFertilizerBarometer(document.getElementById('barometer-calc-content'));
+        });
     };
+
+    // 🌟 AUTOMATINIS ATIDARYMAS, JEI VARTOTOJAS ATĖJO PER TIESIOGINĘ SKAIČIUOKLĖS NUORODĄ (PVZ. ?nordpool-kainos)
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.has('nordpool-kainos')) openElectricityBtn?.click();
+    else if (urlParams.has('matif-birza')) openMatifBtn?.click();
+    else if (urlParams.has('dyzelinas-gazolas')) openDieselBtn?.click();
+    else if (urlParams.has('grain-supirkimas')) openGrainBtn?.click();
+    else if (urlParams.has('grudu-sandelis')) openStorageBtn?.click();
+    else if (urlParams.has('nma-terminai')) openNmaBtn?.click();
+    else if (urlParams.has('sejos-norma')) openSeedBtn?.click();
+    else if (urlParams.has('tarpiniai-paseliai')) openCoverBtn?.click();
+    else if (urlParams.has('kombaino-nuostoliai')) openCombineBtn?.click();
+    else if (urlParams.has('purkstuvas')) openSprayBtn?.click();
+    else if (urlParams.has('trasu-skaiciuokle')) openFertBtn?.click();
+    else if (urlParams.has('trasu-barometras')) openBarometerBtn?.click();
+
+    // Naršyklės mygtukų Atgal / Pirmyn palaikymas skaičiuoklėms
+    window.addEventListener('popstate', (e) => {
+        const search = window.location.search;
+        if (!search || search === '') {
+            returnToHub(false);
+        } else if (search.includes('nordpool-kainos')) openElectricityBtn?.click();
+        else if (search.includes('matif-birza')) openMatifBtn?.click();
+        else if (search.includes('dyzelinas-gazolas')) openDieselBtn?.click();
+        else if (search.includes('grudu-sandelis')) openStorageBtn?.click();
+        else if (search.includes('nma-terminai')) openNmaBtn?.click();
+        else if (search.includes('sejos-norma')) openSeedBtn?.click();
+        else if (search.includes('tarpiniai-paseliai')) openCoverBtn?.click();
+        else if (search.includes('kombaino-nuostoliai')) openCombineBtn?.click();
+        else if (search.includes('purkstuvas')) openSprayBtn?.click();
+        else if (search.includes('trasu-skaiciuokle')) openFertBtn?.click();
+        else if (search.includes('trasu-barometras')) openBarometerBtn?.click();
+    });
 }
