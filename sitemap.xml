@@ -3,7 +3,7 @@
         xmlns:image="http://www.google.com/schemas/sitemap-image/1.1"
         xmlns:xhtml="http://www.w3.org/1999/xhtml">
 
-    <!-- 1. Pagrindinis portalas: Grūdų kainos, MATIF birža, Gazolas, Trąšų barometras ir Skaičiuoklės -->
+    <!-- 1. Pagrindinis portalas -->
     <url>
         <loc>https://jurgisagro.com/</loc>
         <lastmod>2026-11-04</lastmod>
@@ -18,15 +18,39 @@
         </image:image>
     </url>
 
-    <!-- 2. Išmanieji ūkio įrenginiai ir Daikin šilumos siurblio valdymas pagal Nord Pool biržą -->
+    <!-- 2. Gyva Nord Pool elektros birža -->
     <url>
-        <loc>https://jurgisagro.com/?ismanieji-irenginiai</loc>
+        <loc>https://jurgisagro.com/?nordpool-kainos</loc>
         <lastmod>2026-11-04</lastmod>
         <changefreq>hourly</changefreq>
         <priority>0.9</priority>
     </url>
 
-    <!-- 3. Agro-Orai purškimui, Įšalo gylis, T-Sum ir Sniego pelėsio radaras -->
+    <!-- 3. Euronext MATIF birža -->
+    <url>
+        <loc>https://jurgisagro.com/?matif-birza</loc>
+        <lastmod>2026-11-04</lastmod>
+        <changefreq>hourly</changefreq>
+        <priority>0.9</priority>
+    </url>
+
+    <!-- 4. Žymėtas dyzelinas ir 52 kuro bazės -->
+    <url>
+        <loc>https://jurgisagro.com/?dyzelinas-gazolas</loc>
+        <lastmod>2026-11-04</lastmod>
+        <changefreq>daily</changefreq>
+        <priority>0.9</priority>
+    </url>
+
+    <!-- 5. Išmanieji įrenginiai ir Daikin valdymas -->
+    <url>
+        <loc>https://jurgisagro.com/?ismanieji-irenginiai</loc>
+        <lastmod>2026-11-04</lastmod>
+        <changefreq>daily</changefreq>
+        <priority>0.9</priority>
+    </url>
+
+    <!-- 6. Agro-orai purškimui ir įšalo gylis -->
     <url>
         <loc>https://jurgisagro.com/?orai</loc>
         <lastmod>2026-11-04</lastmod>
@@ -34,15 +58,15 @@
         <priority>0.9</priority>
     </url>
 
-    <!-- 4. Lietuvos Pasėlių Lyga (TOP 10 rajonų derbis pagal Sentinel-2 NDVI) -->
+    <!-- 7. Lietuvos Pasėlių Lyga (Sentinel-2) -->
     <url>
         <loc>https://jurgisagro.com/?paseliu-lyga</loc>
         <lastmod>2026-11-04</lastmod>
         <changefreq>daily</changefreq>
-        <priority>0.9</priority>
+        <priority>0.8</priority>
     </url>
 
-    <!-- 5. Lietuvos žemės ūkio renginių, mokymų ir kaimo švenčių kalendorius -->
+    <!-- 8. Žemės ūkio renginių kalendorius -->
     <url>
         <loc>https://jurgisagro.com/?renginiai</loc>
         <lastmod>2026-11-04</lastmod>
@@ -50,12 +74,28 @@
         <priority>0.8</priority>
     </url>
 
-    <!-- 6. SOS Pagalba ūkininkams laukuose -->
+    <!-- 9. Trąšų rinkos radaras ir barometras -->
+    <url>
+        <loc>https://jurgisagro.com/?trasu-barometras</loc>
+        <lastmod>2026-11-04</lastmod>
+        <changefreq>daily</changefreq>
+        <priority>0.8</priority>
+    </url>
+
+    <!-- 10. Grūdų sandėlis ir bokštų ventiliavimas (EMC) -->
+    <url>
+        <loc>https://jurgisagro.com/?grudu-sandelis</loc>
+        <lastmod>2026-11-04</lastmod>
+        <changefreq>daily</changefreq>
+        <priority>0.8</priority>
+    </url>
+
+    <!-- 11. SOS pagalba ūkininkams laukuose -->
     <url>
         <loc>https://jurgisagro.com/?sos-pagalba</loc>
         <lastmod>2026-11-04</lastmod>
         <changefreq>daily</changefreq>
-        <priority>0.8</priority>
+        <priority>0.7</priority>
     </url>
 
 </urlset>
