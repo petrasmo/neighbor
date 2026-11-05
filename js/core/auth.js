@@ -23,6 +23,64 @@ export function logoutUser() {
     });
 }
 
+/**
+ * 🌟 OFICIALIOS NAUDOJIMO SĄLYGOS IR PRIVATUMO POLITIKA (BDAR / GDPR)
+ */
+export function openLegalModal(type = 'privacy') {
+    if (type === 'terms') {
+        showDialog(
+            "📜 JurgisAgro Naudojimo Sąlygos ir Atsakomybės Ribojimas",
+            `
+            <div class="text-left space-y-3 text-xs leading-relaxed max-h-[65vh] overflow-y-auto pr-1">
+                <p><strong>1. Bendrosios nuostatos</strong><br>
+                Šios naudojimo sąlygos reglamentuoja naudojimąsi „JurgisAgro“ (<strong>jurgisagro.com</strong>) informaciniu portalu, skaičiuoklėmis ir išmaniųjų įrenginių valdymo įrankiais. Naudodamiesi sistema, patvirtinate, kad susipažinote su šiomis sąlygomis ir su jomis sutinkate.</p>
+
+                <p><strong>2. Informacinis pobūdis ir Rinkos kainos</strong><br>
+                Visi portale skelbiami duomenys (grūdų supirkimo kainos, Euronext MATIF biržos kotiruotės, ORLEN Lietuva didmeninės kuro kainos, Nord Pool elektros biržos įkainiai, agro-orų prognozės, NMA terminai ir VRA tręšimo/kalkinimo rekomendacijos) yra <strong>informacinio ir rekomendacinio pobūdžio</strong>. Prieš priimdami finansinius, ūkinius ar agronominius sprendimus, vartotojai privalo savarankiškai įsivertinti galutinę informaciją tiesiogiai su paslaugų tiekėjais ar institucijomis.</p>
+
+                <p><strong>3. Išmaniųjų įrenginių (Daikin Onecta ir kt.) automatika</strong><br>
+                Prijungdamas savo šilumos siurblį ar kitą išmanųjį įrenginį prie „JurgisAgro“ sistemos, vartotojas tai daro savo laisva valia ir pilna atsakomybe. „JurgisAgro“ veikia kaip automatizuotas komandų perdavimo įrankis per oficialų gamintojo (Daikin Europe N.V.) Cloud API. Kūrėjai neatsako už trečiųjų šalių ryšio sutrikimus, elektros tinklo gedimus, Daikin debesijos nepasiekiamumą ar netinkamai vartotojo pasirinktus šildymo parametrus (pvz., per žemą patalpų temperatūrą).</p>
+
+                <p><strong>4. Paskyros saugumas</strong><br>
+                Vartotojas atsako už savo prisijungimo duomenų saugumą ir įsipareigoja nenaudoti platformos neteisėtiems veiksmams ar klaidinančios informacijos (pvz., SOS pagalbos skelbimuose) platinimui.</p>
+
+                <p><strong>5. Kontaktai</strong><br>
+                Visais klausimais dėl platformos veikimo galite kreiptis el. paštu: <strong>petrasmo@gmail.com</strong>.</p>
+            </div>
+            `,
+            "📜"
+        );
+    } else {
+        showDialog(
+            "🛡️ JurgisAgro Privatumo Politika (BDAR / GDPR)",
+            `
+            <div class="text-left space-y-3 text-xs leading-relaxed max-h-[65vh] overflow-y-auto pr-1">
+                <p><strong>1. Duomenų valdytojas ir tikslas</strong><br>
+                „JurgisAgro“ (<strong>jurgisagro.com</strong>) gerbia jūsų privatumą ir tvarko asmens duomenis griežtai laikydamasi Europos Sąjungos Bendrojo duomenų apsaugos reglamento (BDAR / GDPR) reikalavimų.</p>
+
+                <p><strong>2. Kokius duomenis renkame?</strong><br>
+                • <strong>Paskyros duomenys:</strong> Prisijungiant per „Google“ arba el. paštu, saugomas jūsų el. pašto adresas, vardas ir unikalus vartotojo identifikatorius (UID).<br>
+                • <strong>Ūkio ir geografijos duomenys:</strong> Jūsų savanoriškai pažymėtos ūkio bazės (garažo) koordinatės, įbraižytų laukų ribos ir darbų žurnalai. Šie duomenys yra <strong>100% privatūs</strong> ir matomi tik jums.<br>
+                • <strong>Išmaniųjų įrenginių (Daikin) duomenys:</strong> Prijungus Daikin Onecta paskyrą, saugomi šifruoti OAuth2 prieigos raktai (tokens) ir įrenginio telemetrija (temperatūros, kWh sąnaudos) tik tam, kad sistema galėtų vykdyti jūsų pasirinktą šildymo grafiką.</p>
+
+                <p><strong>3. Kur ir kaip saugomi duomenys?</strong><br>
+                Visi duomenys saugomi sertifikuotuose ir šifruotuose <strong>„Google Cloud / Firebase“</strong> serveriuose. Mes <strong>niekada neparduodame, neperduodame ir neatskleidžiame</strong> jūsų asmens ar ūkio laukų duomenų jokioms trečiosioms šalims.</p>
+
+                <p><strong>4. Slapukai (Cookies) ir Analitika</strong><br>
+                Svetainėje naudojami būtini techniniai slapukai prisijungimo sesijai palaikyti bei „Google Analytics (GA4)“ anoniminei lankomumo statistikai rinkti.</p>
+
+                <p><strong>5. Jūsų teisės (Teisė būti pamirštam)</strong><br>
+                Jūs turite teisę bet kuriuo metu peržiūrėti, redaguoti arba visiškai ištrinti savo paskyrą, ūkio laukus ar atjungti išmaniuosius įrenginius tiesiogiai sistemos nustatymuose arba parašę el. paštu <strong>petrasmo@gmail.com</strong>.</p>
+            </div>
+            `,
+            "🛡️"
+        );
+    }
+}
+
+// Padarome pasiekiamą globaliai iš bet kurios HTML vietos (pvz. footerio)
+window.openJurgisLegalModal = openLegalModal;
+
 export function openAuthModal(initialTab = 'login') {
     let modal = document.getElementById('unified-auth-modal');
     if (!modal) {
@@ -150,12 +208,12 @@ function createAuthModalDom() {
                     </button>
                 </form>
 
-                <!-- 🛡️ GOOGLE REIKALAUJAMOS SAUGUMO IR PRIVATUMO NUORODOS -->
+                <!-- 🛡️ AKTYVIOS SAUGUMO IR PRIVATUMO NUORODOS -->
                 <div class="pt-2 border-t border-tractorBorder/50 text-center text-[10px] text-slate-400 leading-normal">
                     <span>Prisijungdami sutinkate su JurgisAgro </span>
-                    <a href="https://jurgisagro.com/" class="text-green-400 hover:underline font-bold">Naudojimo sąlygomis</a>
+                    <button type="button" id="btn-auth-open-terms" class="text-green-400 hover:underline font-bold cursor-pointer bg-transparent border-0 p-0 inline">Naudojimo sąlygomis</button>
                     <span> ir </span>
-                    <a href="https://jurgisagro.com/" class="text-green-400 hover:underline font-bold">Privatumo politika</a>.
+                    <button type="button" id="btn-auth-open-privacy" class="text-green-400 hover:underline font-bold cursor-pointer bg-transparent border-0 p-0 inline">Privatumo politika</button>.
                     <div class="text-slate-500 mt-0.5">Duomenys saugomi šifruotame Google Firebase serveryje.</div>
                 </div>
 
@@ -172,6 +230,9 @@ function createAuthModalDom() {
 
     document.getElementById('btn-close-auth-modal').onclick = closeAuthModal;
     document.getElementById('btn-auth-google').onclick = loginWithGoogle;
+
+    document.getElementById('btn-auth-open-terms')?.addEventListener('click', () => openLegalModal('terms'));
+    document.getElementById('btn-auth-open-privacy')?.addEventListener('click', () => openLegalModal('privacy'));
 
     const tabLogin = document.getElementById('tab-btn-login');
     const tabRegister = document.getElementById('tab-btn-register');
@@ -308,6 +369,10 @@ function clearAuthErrors() {
 
 function getFriendlyErrorMessage(code) {
     switch (code) {
+        case 'auth/unauthorized-domain':
+            return 'Šis domenas neįtrauktas į Firebase Authorized Domains (naudokite localhost).';
+        case 'auth/popup-blocked':
+            return 'Naršyklė užblokavo prisijungimo langą. Leiskite iššokančius langus.';
         case 'auth/user-not-found':
             return 'Vartotojas su šiuo el. pašto adresu nerastas.';
         case 'auth/wrong-password':
