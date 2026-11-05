@@ -193,8 +193,11 @@ document.addEventListener('DOMContentLoaded', () => {
             const items = d.data().items || [];
             items.forEach(it => { classifierMap[it.id] = it.lt || it.en; });
         });
-        initFeedTab(currentUser, userData, classifierMap);
-    });
+        // Kviečiame tik jei vartotojas yra SOS tabe (7)!
+        if (getRequestedTabFromUrl() === 7) {
+            initFeedTab(currentUser, userData, classifierMap);
+        }
+    }).catch(() => {});
 
     auth.onAuthStateChanged(async (user) => {
         const preloader = document.getElementById('app-preloader');
@@ -306,13 +309,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     mobileAuthSlot.querySelector('.login-trigger-btn')?.addEventListener('click', () => openAuthModal('login'));
                 }
 
-                initFeedTab(null, null, classifierMap);
-                initWeatherTab(null, null);
-
                 if (requestedTab === 13) requestedTab = 0;
                 switchTab(requestedTab, true);
-                if (requestedTab === 11) initCropLeagueTab(null, null);
-                if (requestedTab === 12) initEventsTab(null, null);
+                if (requestedTab === 1) initWeatherTab(null, null);
+                else if (requestedTab === 7) initFeedTab(null, null, classifierMap);
+                else if (requestedTab === 11) initCropLeagueTab(null, null);
+                else if (requestedTab === 12) initEventsTab(null, null);
             }
         } catch (globalErr) {
             console.error("Auth klaida:", globalErr);
