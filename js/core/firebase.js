@@ -17,5 +17,6 @@ export const db = firebase.firestore();
 
 // ?? PATAISYMAS: Priverstinis Long-Polling apeina visus tinklo blokus ir ERR_CONNECTION_TIMED_OUT
 db.settings({
-    experimentalForceLongPolling: true
+    experimentalAutoDetectLongPolling: true,
+    merge: true
 });
