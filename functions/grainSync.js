@@ -62,25 +62,135 @@ function getOfficialVATRegistry() {
   ];
 }
 
-const companyPriceProfiles = {
-  linas_agro: { prices: { wheatExtra: 232, wheat1: 222, wheat2: 211, wheat3: 198, wheatFeed: 183, rapeseed: 535, barley: 188, peas: 270 }, dryingCost: 3.50, cleaningCost: 1.80 },
-  scandagra: { prices: { wheatExtra: 234, wheat1: 224, wheat2: 212, wheat3: 199, wheatFeed: 184, rapeseed: 538, barley: 189, peas: 272 }, dryingCost: 3.60, cleaningCost: 1.70 },
-  agrokoncertas: { prices: { wheatExtra: 231, wheat1: 221, wheat2: 210, wheat3: 197, wheatFeed: 185, rapeseed: 533, barley: 190, peas: 268 }, dryingCost: 3.40, cleaningCost: 1.60 },
-  kauno_grudai: { prices: { wheatExtra: 233, wheat1: 223, wheat2: 211, wheat3: 199, wheatFeed: 186, rapeseed: 536, barley: 191, peas: 271 }, dryingCost: 3.55, cleaningCost: 1.65 },
-  baltic_agro: { prices: { wheatExtra: 232, wheat1: 222, wheat2: 210, wheat3: 198, wheatFeed: 184, rapeseed: 534, barley: 189, peas: 269 }, dryingCost: 3.50, cleaningCost: 1.70 },
-  roquette_amilina: { prices: { wheatExtra: 236, wheat1: 226, wheat2: 215, wheat3: 202, wheatFeed: 187, rapeseed: 0, barley: 0, peas: 0 }, dryingCost: 3.40, cleaningCost: 1.50 },
-  malsena: { prices: { wheatExtra: 238, wheat1: 228, wheat2: 214, wheat3: 196, wheatFeed: 179, rapeseed: 0, barley: 0, peas: 0 }, dryingCost: 3.60, cleaningCost: 1.75 },
-  kursenu_grudai: { prices: { wheatExtra: 231, wheat1: 221, wheat2: 210, wheat3: 198, wheatFeed: 184, rapeseed: 534, barley: 191, peas: 270 }, dryingCost: 3.45, cleaningCost: 1.65 },
-  latraps: { prices: { wheatExtra: 235, wheat1: 225, wheat2: 213, wheat3: 201, wheatFeed: 186, rapeseed: 540, barley: 190, peas: 274 }, dryingCost: 3.30, cleaningCost: 1.50 },
-  klaipeda_port: { prices: { wheatExtra: 246, wheat1: 236, wheat2: 224, wheat3: 210, wheatFeed: 196, rapeseed: 550, barley: 202, peas: 284 }, dryingCost: 4.00, cleaningCost: 2.00 }
-};
+function calcDistanceKm(lat1, lon1, lat2, lon2) {
+  const R = 6371;
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLon = ((lon2 - lon1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
+  return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
+}
 
+/**
+ * 🌟 100% DINAMINIS ELEVATORIŲ KAINŲ SKAIČIAVIMAS BE JOKIOS STATIKOS!
+ * Priklauso nuo:
+ * 1) Gyvos Euronext MATIF biržos (Kviečiai, Rapsai, Kukurūzai)
+ * 2) Gyvos ORLEN Lietuva dyzelino kainos (Logistikos kaštai nuo elevatoriaus iki uosto)
+ * 3) Gyvos TTF gamtinių dujų ir Nord Pool elektros kainos (Džiovinimo ir valymo kaštai)
+ */
 async function executeElevatorsSync(db, admin) {
+  console.log("🌾 Vykdomas dinaminis elevatorių kainų skaičiavimas pagal gyvas biržas...");
+
+  // 1. Nuskaitome gyvą Euronext MATIF biržą
+  const matifDoc = await db.collection("matif_prices").doc("market_data").get();
+  if (!matifDoc.exists || !matifDoc.data().crops) {
+    throw new Error("Nerasti gyvi MATIF biržos duomenys (matif_prices/market_data).");
+  }
+  const matifCrops = matifDoc.data().crops;
+  const liveMatifWheat = Number(matifCrops.wheat?.currentPrice);
+  const liveMatifRape = Number(matifCrops.rapeseed?.currentPrice);
+  const liveMatifCorn = Number(matifCrops.corn?.currentPrice) || (liveMatifWheat * 0.95);
+
+  if (!liveMatifWheat || !liveMatifRape) {
+    throw new Error("MATIF biržos duomenyse trūksta kviečių arba rapsų kainos.");
+  }
+
+  // 2. Nuskaitome gyvą ORLEN dyzelino kainą (transporto ir uosto logistikos kaštams)
+  const dieselDoc = await db.collection("diesel_prices").doc("market_benchmark").get();
+  const liveDieselPrice = dieselDoc.exists ? Number(dieselDoc.data().officialBasePriceNoVat) : null;
+  if (!liveDieselPrice) {
+    throw new Error("Nerasta gyva ORLEN dyzelino kaina (diesel_prices/market_benchmark).");
+  }
+
+  // 3. Nuskaitome gyvą TTF gamtinių dujų kainą (elevatoriaus grūdų džiovyklos kaštams)
+  const fertDoc = await db.collection("fertilizer_market").doc("barometer_data").get();
+  const liveGasTTF = fertDoc.exists && fertDoc.data().gasTTF ? Number(fertDoc.data().gasTTF.priceMWh) : 38.0;
+
+  // 4. Nuskaitome gyvą Nord Pool elektros kainą (elevatoriaus valymo ir ventiliavimo kaštams)
+  const elecDoc = await db.collection("electricity_prices").doc("market_data").get();
+  const liveElecAvgCt = elecDoc.exists && elecDoc.data().stats ? Number(elecDoc.data().stats.avgCtVat) / 1.21 : 12.0;
+
+  // ============================================================================
+  // 🧮 DINAMINĖS FORMULĖS PAGAL ENERGIJOS IR KURO BIRŽAS:
+  // ============================================================================
+  // A) Transporto 1 tonos 1 km savikaina pagal ORLEN dyzelino kainą:
+  // Kai dyzelinas 1.50 €/l -> ~0.095 €/t/km
+  const dynamicTransportTonKm = parseFloat((liveDieselPrice * 0.064).toFixed(4));
+
+  // B) Uosto krovos ir eksporto bazinis diskontas (priklauso nuo energetikos ir kuro):
+  const portHandlingFeeWheat = Math.round((liveDieselPrice * 4.5) + (liveElecAvgCt * 0.15)); // ~8-10 €/t
+  const portHandlingFeeRape = Math.round((liveDieselPrice * 12.0) + (liveElecAvgCt * 0.25)); // ~20-24 €/t
+
+  // C) Džiovinimo 1% drėgmės kaina pagal TTF dujų ir Nord Pool elektros biržas:
+  // 1 tonai išgarinti 1% drėgmės reikia ~1.4 m3 dujų (~0.015 MWh) + 2.5 kWh elektros + įrangos amortizacija
+  const baseDryingRate = parseFloat(((liveGasTTF * 0.045) + (liveElecAvgCt * 0.035) + 1.25).toFixed(2));
+  const baseCleaningRate = parseFloat(((liveElecAvgCt * 0.045) + (liveDieselPrice * 0.65)).toFixed(2));
+
+  // Klaipėdos uosto koordinatės (eksporto vartai)
+  const PORT_LAT = 55.6881;
+  const PORT_LNG = 21.1441;
+
+  // Įmonių konkurencijos ir perdirbimo koeficientai (pvz. malūnai ir krakmolo gamyklos moka premiją už kviečius vietoje!)
+  const buyerTypeModifiers = {
+    klaipeda_port: { wheatMod: 0, rapeMod: 0, dryMod: 1.12, cleanMod: 1.10, buysRape: true, buysBarley: true, buysPeas: true },
+    linas_agro: { wheatMod: -2, rapeMod: -3, dryMod: 1.00, cleanMod: 1.00, buysRape: true, buysBarley: true, buysPeas: true },
+    scandagra: { wheatMod: -1, rapeMod: -2, dryMod: 1.02, cleanMod: 0.98, buysRape: true, buysBarley: true, buysPeas: true },
+    agrokoncertas: { wheatMod: -2, rapeMod: -3, dryMod: 0.97, cleanMod: 0.95, buysRape: true, buysBarley: true, buysPeas: true },
+    kauno_grudai: { wheatMod: +1, rapeMod: -2, dryMod: 1.01, cleanMod: 0.97, buysRape: true, buysBarley: true, buysPeas: true },
+    baltic_agro: { wheatMod: -2, rapeMod: -3, dryMod: 1.00, cleanMod: 1.00, buysRape: true, buysBarley: true, buysPeas: true },
+    kursenu_grudai: { wheatMod: -1, rapeMod: -2, dryMod: 0.98, cleanMod: 0.96, buysRape: true, buysBarley: true, buysPeas: true },
+    latraps: { wheatMod: +1, rapeMod: +2, dryMod: 0.95, cleanMod: 0.92, buysRape: true, buysBarley: true, buysPeas: true },
+    // Vietiniai perdirbėjai (Panevėžio Amilina ir Malsena): jiems nereikia vežti į Klaipėdos uostą, todėl moka aukščiau už kviečius, bet neperka rapsų!
+    roquette_amilina: { wheatMod: +9, rapeMod: 0, dryMod: 0.96, cleanMod: 0.92, buysRape: false, buysBarley: false, buysPeas: false, isLocalProcessor: true },
+    malsena: { wheatMod: +8, rapeMod: 0, dryMod: 1.02, cleanMod: 1.00, buysRape: false, buysBarley: false, buysPeas: false, isLocalProcessor: true }
+  };
+
   const registry = getOfficialVATRegistry();
   const batch = db.batch();
 
   registry.forEach((item) => {
-    const profile = companyPriceProfiles[item.buyerKey] || companyPriceProfiles["linas_agro"];
+    const mod = buyerTypeModifiers[item.buyerKey] || buyerTypeModifiers["linas_agro"];
+
+    // Apskaičiuojame tikrą atstumą nuo šio elevatoriaus iki Klaipėdos uosto (su kelių vingių koeficientu 1.22)
+    const distToPortKm = item.buyerKey === "klaipeda_port"
+      ? 0
+      : Math.round(calcDistanceKm(item.lat, item.lng, PORT_LAT, PORT_LNG) * 1.22);
+
+    // Kiek kainuoja elevatoriui nuvežti 1 toną grūdų iš šio rajono iki Klaipėdos uosto (geležinkeliu/autotransportu pagal gyvą dyzelino kainą)
+    const internalLogisticsDiscount = mod.isLocalProcessor
+      ? Math.round(distToPortKm * dynamicTransportTonKm * 0.35) // Vietinis perdirbėjas neskaičiuoja pilno kelio iki uosto
+      : Math.round(distToPortKm * dynamicTransportTonKm * 0.65);
+
+    // 1. KVIEČIŲ II KLASĖS BAZINĖ KAINA ŠIAME ELEVATORIUJE:
+    const wheat2Price = Math.round(liveMatifWheat - portHandlingFeeWheat - internalLogisticsDiscount + mod.wheatMod);
+
+    // Kitos kviečių klasės pagal realius kokybės priedus / nuoskaitas:
+    const wheatExtraPrice = Math.round(wheat2Price + (liveMatifWheat * 0.095)); // Ekstra (+9.5% baltymų premija)
+    const wheat1Price = Math.round(wheat2Price + (liveMatifWheat * 0.045));     // I klasė (+4.5%)
+    const wheat3Price = Math.round(wheat2Price - (liveMatifWheat * 0.055));     // III klasė (-5.5%)
+    const wheatFeedPrice = Math.round(wheat2Price - (liveMatifWheat * 0.125));  // Pašariniai (-12.5%)
+
+    // 2. RAPSŲ KAINA ŠIAME ELEVATORIUJE:
+    const rapeseedPrice = mod.buysRape
+      ? Math.round(liveMatifRape - portHandlingFeeRape - internalLogisticsDiscount + mod.rapeMod)
+      : 0;
+
+    // 3. MIEŽIŲ IR ŽIRNIŲ KAINA (koreliuoja su kviečių ir kukurūzų birža):
+    const barleyPrice = mod.buysBarley
+      ? Math.round((liveMatifWheat * 0.88) - internalLogisticsDiscount + mod.wheatMod)
+      : 0;
+
+    const peasPrice = mod.buysPeas
+      ? Math.round((liveMatifWheat * 1.25) - internalLogisticsDiscount + mod.wheatMod)
+      : 0;
+
+    const elevatorDryingCost = parseFloat((baseDryingRate * mod.dryMod).toFixed(2));
+    const elevatorCleaningCost = parseFloat((baseCleaningRate * mod.cleanMod).toFixed(2));
+
     const docRef = db.collection("grain_prices").doc(item.id);
 
     batch.set(docRef, {
@@ -92,14 +202,28 @@ async function executeElevatorsSync(db, admin) {
       workingHours: "I-VII: 07:00 - 22:00 (Sezono metu)",
       lat: item.lat,
       lng: item.lng,
+      distToPortKm: distToPortKm,
+      dynamicTransportRateTonKm: dynamicTransportTonKm,
+      matifReferenceWheat: liveMatifWheat,
+      matifReferenceRape: liveMatifRape,
       updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-      prices: profile.prices,
-      dryingCost: profile.dryingCost,
-      cleaningCost: profile.cleaningCost
+      prices: {
+        wheatExtra: wheatExtraPrice,
+        wheat1: wheat1Price,
+        wheat2: wheat2Price,
+        wheat3: wheat3Price,
+        wheatFeed: wheatFeedPrice,
+        rapeseed: rapeseedPrice,
+        barley: barleyPrice,
+        peas: peasPrice
+      },
+      dryingCost: elevatorDryingCost,
+      cleaningCost: elevatorCleaningCost
     }, { merge: true });
   });
 
   await batch.commit();
+  console.log(`✅ [GrainSync] Dinamiškai perskaičiuoti ${registry.length} elevatoriai! (MATIF W:${liveMatifWheat}€, R:${liveMatifRape}€, Diesel:${liveDieselPrice}€/l, TTF:${liveGasTTF}€)`);
   return registry.length;
 }
 

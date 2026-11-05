@@ -529,6 +529,11 @@ function listenToGrainPrices() {
             const data = doc.data();
             activeMarketData.push(data);
 
+            // 🌟 Dinamiškai atnaujiname transporto įkainį pagal gyvą ORLEN dyzelino kainą!
+            if (data.dynamicTransportRateTonKm) {
+                state.transportRatePerTonKm = Number(data.dynamicTransportRateTonKm);
+            }
+
             if (data.updatedAt) {
                 const docDate = data.updatedAt.toDate ? data.updatedAt.toDate() : new Date(data.updatedAt);
                 if (!latestTimestamp || docDate > latestTimestamp) {

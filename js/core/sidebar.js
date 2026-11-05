@@ -218,9 +218,9 @@ export function renderGlobalSidebar(activePage = 'index', activeTab = 0) {
                         <button class="mobile-calc-trigger text-left p-3 rounded-xl bg-tractorBg hover:bg-tractorPrimary/20 border border-tractorBorder flex items-center gap-3 font-bold text-white transition cursor-pointer" data-target="btn-open-matif-calc">
                             <span>📈</span> <span>MATIF birža (Paryžius – gyvi grafikai)</span>
                         </button>
-                        <!--<button class="mobile-calc-trigger text-left p-3 rounded-xl bg-tractorBg hover:bg-tractorPrimary/20 border border-tractorBorder flex items-center gap-3 font-bold text-white transition cursor-pointer" data-target="btn-open-grain-calc">
+                        <button class="mobile-calc-trigger text-left p-3 rounded-xl bg-tractorBg hover:bg-tractorPrimary/20 border border-tractorBorder flex items-center gap-3 font-bold text-white transition cursor-pointer" data-target="btn-open-grain-calc">
                             <span>🌾</span> <span>Grūdų supirkimas (Elevatoriai su logistika)</span>
-                        </button>-->
+                        </button>
                         <button class="mobile-calc-trigger text-left p-3 rounded-xl bg-tractorBg hover:bg-tractorPrimary/20 border border-tractorBorder flex items-center gap-3 font-bold text-white transition cursor-pointer" data-target="btn-open-diesel-calc">
                             <span>⛽</span> <span>Dyzelinas / Gazolas (36 tiekėjų bazės)</span>
                         </button>
