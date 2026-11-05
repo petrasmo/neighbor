@@ -1,7 +1,7 @@
 // js/main.js
 import { auth, db } from './core/firebase.js';
 import { openAuthModal, logoutUser } from './core/auth.js';
-import { switchTab, showDialog, showBottomToast, getRequestedTabFromUrl } from './core/ui.js';
+import { switchTab, showDialog, showBottomToast, getRequestedTabFromUrl, updateSeoMetaTags, getActiveCalcSlugFromUrl } from './core/ui.js';
 import { initThemeToggle } from './core/theme.js';
 import { renderGlobalSidebar } from './core/sidebar.js';
 
@@ -42,7 +42,7 @@ const classifierMap = {};
 
 let returnToCalculatorsHub = null;
 
-// 🌟 SKAIČIUOKLIŲ ŽODINIAI ADRESAI (SLUGS) IR SEO APRAŠYMAI
+// 🌟 SKAIČIUOKLIŲ ŽODINIAI ADRESAI (SLUGS) IR PILNAS SEO (SU CANONICAL!)
 const CALC_SEO_MAP = {
     'nordpool-kainos': {
         title: "Nord Pool Elektros Kainos Pavalandžiui Lietuvoje | JurgisAgro",
@@ -57,8 +57,8 @@ const CALC_SEO_MAP = {
         desc: "Kur labiausiai apsimoka vežti derlių: elevatorių kainų palyginimas, džiovinimo nuoskaitos ir transporto kaštai nuo jūsų ūkio."
     },
     'dyzelinas-gazolas': {
-        title: "Žymėto Dyzelino (Gazolio) Užsakymas ir 52 Kuro Bazės | JurgisAgro",
-        desc: "Didmeninė žymėto dyzelino kaina ūkininkams iš 52 Lietuvos kuro bazių pagal oficialią ORLEN Lietuva bazę su pristatymu į ūkį."
+        title: "Žymėto Dyzelino (Gazolio) Užsakymas ir 53 Kuro Bazės | JurgisAgro",
+        desc: "Didmeninė žymėto dyzelino kaina ūkininkams iš 53 Lietuvos kuro bazių pagal oficialią ORLEN Lietuva bazę su pristatymu į ūkį."
     },
     'grudu-sandelis': {
         title: "Grūdų Sandėlis, Ventiliavimas (EMC) ir Ekonomika | JurgisAgro",
@@ -115,7 +115,6 @@ document.addEventListener('DOMContentLoaded', () => {
         btn.addEventListener('click', () => {
             const tabIdx = parseInt(btn.getAttribute('data-tab'));
 
-            // 🔒 Reikalingas prisijungimas visiems ūkio moduliams
             if (!currentUser && ((tabIdx >= 2 && tabIdx <= 6) || tabIdx === 10 || tabIdx === 13 || tabIdx === 8 || tabIdx === 9)) {
                 showDialog(
                     "Reikalingas prisijungimas",
@@ -127,10 +126,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
-            switchTab(tabIdx);
+            switchTab(tabIdx, false);
 
             if (tabIdx === 0 && typeof returnToCalculatorsHub === 'function') {
-                returnToCalculatorsHub();
+                returnToCalculatorsHub(true);
             } else if (tabIdx === 1) {
                 initWeatherTab(currentUser, userData);
             } else if (tabIdx === 13) {
@@ -271,7 +270,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         );
                     }, 200);
                 } else {
-                    switchTab(requestedTab);
+                    // 🌟 preserveCalcSlug = true: kad neištrintų ?nordpool-kainos, jei atėjo per tiesioginę nuorodą!
+                    switchTab(requestedTab, true);
                     if (requestedTab === 13) initSmartDevicesTab(currentUser, userData);
                     else if (requestedTab === 2) { initFieldsManager(currentUser, userData); refreshFieldsMap(); }
                     else if (requestedTab === 10) initCropPlannerTab(currentUser, userData);
@@ -310,7 +310,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 initWeatherTab(null, null);
 
                 if (requestedTab === 13) requestedTab = 0;
-                switchTab(requestedTab);
+                switchTab(requestedTab, true);
                 if (requestedTab === 11) initCropLeagueTab(null, null);
                 if (requestedTab === 12) initEventsTab(null, null);
             }
@@ -441,7 +441,7 @@ function loadHubLivePriceTickers() {
         `;
     }, () => {});
 
-    // 4. Gazolas (Dyzelinas) – Gyva ORLEN Lietuva didmena
+    // 4. Gazolas (Dyzelinas)
     db.collection("diesel_prices").doc("market_benchmark").onSnapshot(doc => {
         const el = document.getElementById('hub-live-diesel');
         if (!el || !doc.exists) return;
@@ -465,7 +465,7 @@ function loadHubLivePriceTickers() {
             </div>
             <div class="text-[10px] text-amber-600 dark:text-amber-400 font-semibold flex items-center gap-1.5">
                 <span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-ping"></span>
-                <span>🕒 Atnaujinta: ${timeStr} • 52 kuro bazės</span>
+                <span>🕒 Atnaujinta: ${timeStr} • 53 kuro bazės</span>
             </div>
         `;
     }, () => {});
@@ -542,7 +542,7 @@ function setupCalculatorsHub() {
         barometerView?.classList.add('hidden');
     };
 
-    // 🌟 DINAMINIS SKAIČIUOKLIŲ URL IR SEO ATNAUJINIMAS
+    // 🌟 PILNAS SEO IR CANONICAL ATNAUJINIMAS SKAIČIUOKLĖMS!
     const activateCalcView = (calcSlug, viewElement, renderFn) => {
         hideAll();
         viewElement?.classList.remove('hidden');
@@ -553,6 +553,9 @@ function setupCalculatorsHub() {
             document.title = seo.title;
             const descMeta = document.querySelector('meta[name="description"]');
             if (descMeta) descMeta.setAttribute('content', seo.desc);
+            // 🌟 ATNAUJINAME IR CANONICAL NUORODĄ GOOGLE ROBOTAMS!
+            const canonLink = document.querySelector('link[rel="canonical"]');
+            if (canonLink) canonLink.setAttribute('href', `https://jurgisagro.com/?${calcSlug}`);
         }
 
         if (window.location.search !== `?${calcSlug}`) {
@@ -565,6 +568,11 @@ function setupCalculatorsHub() {
         hideAll();
         hubView?.classList.remove('hidden');
         document.title = "JurgisAgro – Ūkininkų Portalas, Grūdų Kainos ir MATIF Birža";
+        const descMeta = document.querySelector('meta[name="description"]');
+        if (descMeta) descMeta.setAttribute('content', "Lietuvos ūkininkų portalas ir programa: gyvos grūdų supirkimo kainos, MATIF birža, gazolio kuras, agro-orai purškimui ir Pasėlių Lyga.");
+        const canonLink = document.querySelector('link[rel="canonical"]');
+        if (canonLink) canonLink.setAttribute('href', "https://jurgisagro.com/");
+
         if (updateUrl && window.location.search !== '') {
             window.history.pushState({ tab: 0 }, document.title, window.location.pathname);
         }
@@ -573,7 +581,6 @@ function setupCalculatorsHub() {
 
     returnToCalculatorsHub = returnToHub;
 
-    // Mygtukų paspaudimai
     if (openElectricityBtn) openElectricityBtn.onclick = () => {
         activateCalcView('nordpool-kainos', electricityView, () => {
             renderElectricityCalculator(document.getElementById('electricity-calc-content'));
@@ -646,36 +653,37 @@ function setupCalculatorsHub() {
         });
     };
 
-    // 🌟 AUTOMATINIS ATIDARYMAS, JEI VARTOTOJAS ATĖJO PER TIESIOGINĘ SKAIČIUOKLĖS NUORODĄ (PVZ. ?nordpool-kainos)
-    const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.has('nordpool-kainos')) openElectricityBtn?.click();
-    else if (urlParams.has('matif-birza')) openMatifBtn?.click();
-    else if (urlParams.has('dyzelinas-gazolas')) openDieselBtn?.click();
-    else if (urlParams.has('grain-supirkimas')) openGrainBtn?.click();
-    else if (urlParams.has('grudu-sandelis')) openStorageBtn?.click();
-    else if (urlParams.has('nma-terminai')) openNmaBtn?.click();
-    else if (urlParams.has('sejos-norma')) openSeedBtn?.click();
-    else if (urlParams.has('tarpiniai-paseliai')) openCoverBtn?.click();
-    else if (urlParams.has('kombaino-nuostoliai')) openCombineBtn?.click();
-    else if (urlParams.has('purkstuvas')) openSprayBtn?.click();
-    else if (urlParams.has('trasu-skaiciuokle')) openFertBtn?.click();
-    else if (urlParams.has('trasu-barometras')) openBarometerBtn?.click();
+    const openCalcBySlug = (slug) => {
+        if (slug === 'nordpool-kainos') openElectricityBtn?.click();
+        else if (slug === 'matif-birza') openMatifBtn?.click();
+        else if (slug === 'dyzelinas-gazolas') openDieselBtn?.click();
+        else if (slug === 'grain-supirkimas') openGrainBtn?.click();
+        else if (slug === 'grudu-sandelis') openStorageBtn?.click();
+        else if (slug === 'nma-terminai') openNmaBtn?.click();
+        else if (slug === 'sejos-norma') openSeedBtn?.click();
+        else if (slug === 'tarpiniai-paseliai') openCoverBtn?.click();
+        else if (slug === 'kombaino-nuostoliai') openCombineBtn?.click();
+        else if (slug === 'purkstuvas') openSprayBtn?.click();
+        else if (slug === 'trasu-skaiciuokle') openFertBtn?.click();
+        else if (slug === 'trasu-barometras') openBarometerBtn?.click();
+    };
 
-    // Naršyklės mygtukų Atgal / Pirmyn palaikymas skaičiuoklėms
-    window.addEventListener('popstate', (e) => {
-        const search = window.location.search;
-        if (!search || search === '') {
-            returnToHub(false);
-        } else if (search.includes('nordpool-kainos')) openElectricityBtn?.click();
-        else if (search.includes('matif-birza')) openMatifBtn?.click();
-        else if (search.includes('dyzelinas-gazolas')) openDieselBtn?.click();
-        else if (search.includes('grudu-sandelis')) openStorageBtn?.click();
-        else if (search.includes('nma-terminai')) openNmaBtn?.click();
-        else if (search.includes('sejos-norma')) openSeedBtn?.click();
-        else if (search.includes('tarpiniai-paseliai')) openCoverBtn?.click();
-        else if (search.includes('kombaino-nuostoliai')) openCombineBtn?.click();
-        else if (search.includes('purkstuvas')) openSprayBtn?.click();
-        else if (search.includes('trasu-skaiciuokle')) openFertBtn?.click();
-        else if (search.includes('trasu-barometras')) openBarometerBtn?.click();
+    // Jei puslapis atidaromas iš tiesioginės skaičiuoklės nuorodos
+    const initialCalcSlug = getActiveCalcSlugFromUrl();
+    if (initialCalcSlug) {
+        openCalcBySlug(initialCalcSlug);
+    }
+
+    // 🌟 VIENINGAS NARŠYKLĖS „ATGAL / PIRMYN“ VALDIKLIS (Tiek tabams, tiek skaičiuoklėms!)
+    window.addEventListener('popstate', () => {
+        const calcSlug = getActiveCalcSlugFromUrl();
+        if (calcSlug) {
+            switchTab(0, true);
+            openCalcBySlug(calcSlug);
+        } else {
+            const tabIdx = getRequestedTabFromUrl();
+            switchTab(tabIdx, false);
+            if (tabIdx === 0) returnToHub(false);
+        }
     });
 }

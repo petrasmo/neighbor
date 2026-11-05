@@ -1,6 +1,5 @@
 // js/core/ui.js
 
-// 🌟 ŽODINIŲ ADRESŲ (SLUG) IR TAB INDEX ŽEMĖLAPIS
 export const TAB_SLUGS = {
     0: '',
     1: 'orai',
@@ -18,13 +17,36 @@ export const TAB_SLUGS = {
     13: 'ismanieji-irenginiai'
 };
 
-// Atvirkštinis žemėlapis: iš žodžio atpažįsta skaičių
 export const SLUG_TO_TAB = Object.entries(TAB_SLUGS).reduce((acc, [idx, slug]) => {
     if (slug) acc[slug] = parseInt(idx, 10);
     return acc;
 }, {});
 
-export function switchTab(tabIndex) {
+// Skaičiuoklių slugų sąrašas, kad switchTab(0) jų netyčia neištrintų!
+export const CALC_SLUGS_SET = new Set([
+    'nordpool-kainos',
+    'matif-birza',
+    'grain-supirkimas',
+    'dyzelinas-gazolas',
+    'grudu-sandelis',
+    'nma-terminai',
+    'sejos-norma',
+    'tarpiniai-paseliai',
+    'kombaino-nuostoliai',
+    'purkstuvas',
+    'trasu-skaiciuokle',
+    'trasu-barometras'
+]);
+
+export function getActiveCalcSlugFromUrl() {
+    const params = new URLSearchParams(window.location.search);
+    for (const slug of CALC_SLUGS_SET) {
+        if (params.has(slug)) return slug;
+    }
+    return null;
+}
+
+export function switchTab(tabIndex, preserveCalcSlug = false) {
     const allViews = [
         document.getElementById('view-tab-calculators'), // 0
         document.getElementById('view-tab-weather'),     // 1
@@ -33,9 +55,9 @@ export function switchTab(tabIndex) {
         document.getElementById('view-tab-feed'),        // 7 (SOS)
         document.getElementById('view-tab-garage'),      // 8 (Technika)
         document.getElementById('view-tab-settings'),    // 9 (Nustatymai)
-        document.getElementById('view-tab-cropplanner'), // 10 Sėjomainos Planavimas (GAAB 7)
-        document.getElementById('view-tab-league'),       // 11 lyga
-        document.getElementById('view-tab-events')       // 12
+        document.getElementById('view-tab-cropplanner'), // 10 Sėjomaina
+        document.getElementById('view-tab-league'),      // 11 Lyga
+        document.getElementById('view-tab-events')       // 12 Renginiai
     ];
 
     let targetView = document.getElementById('view-tab-calculators');
@@ -80,6 +102,11 @@ export function switchTab(tabIndex) {
     setMobileBtnActive('btn-mobile-bendruomene-menu', isBendruomene);
     setMobileBtnActive('btn-mobile-settings-nav', tabIndex === 9);
 
+    // 🌟 Jei esame Tab 0 ir atidaryta konkreti skaičiuoklė – neliečiame jos SEO ir URL!
+    if (tabIndex === 0 && preserveCalcSlug && getActiveCalcSlugFromUrl()) {
+        return;
+    }
+
     const seoMap = {
         0: {
             title: "JurgisAgro – Ūkininkų Portalas, Grūdų Kainos ir MATIF Birža",
@@ -91,10 +118,50 @@ export function switchTab(tabIndex) {
             desc: "Tikslūs agro-orai ūkininkams: 48 val. purškimo langas, vėjo greitis, dirvos temperatūra, įšalas, T-Sum 200 ir sniego pelėsio rizika.",
             url: "https://jurgisagro.com/?orai"
         },
+        2: {
+            title: "Mano Ūkio Laukai, NMA Žemėlapis ir Sentinel-2 NDVI Palydovas | JurgisAgro",
+            desc: "Interaktyvus ūkio laukų žemėlapis su automatinėmis NMA KŽS ribomis ir Copernicus Sentinel-2 NDVI pasėlių būklės stebėsena.",
+            url: "https://jurgisagro.com/?laukai"
+        },
+        3: {
+            title: "VRA Kintamos Normos Tręšimo Žemėlapiai Traktoriui (Shapefile) | JurgisAgro",
+            desc: "Tikslusis kintamos normos (VRA) tręšimas pagal palydovinį NDVI indeksą su Shapefile (.ZIP) eksportu į traktoriaus terminalą.",
+            url: "https://jurgisagro.com/?tresimas-vra"
+        },
+        4: {
+            title: "VRA Dirvos Kalkinimas ir Dirvožemio pH Tyrimų Tinklelis | JurgisAgro",
+            desc: "Dirvožemio ėminių tinklelio generavimas, pH žemėlapiai ir kintamos normos kalkinimo užduotys barstytuvui.",
+            url: "https://jurgisagro.com/?kalkinimas-vra"
+        },
+        5: {
+            title: "Ūkio Lauko Darbų, Purškimų ir Tręšimų Žurnalas | JurgisAgro",
+            desc: "Skaitmeninis ūkio operacijų registravimas: sėja, purškimas, tręšimas, žemės dirbimas ir derliaus apskaita.",
+            url: "https://jurgisagro.com/?zurnalas"
+        },
+        6: {
+            title: "NMA Purškimo (AAP) ir Trąšų Apskaitos Žurnalai (PDF / Excel) | JurgisAgro",
+            desc: "Oficialių NMA ir VAT patikroms privalomų Augalų apsaugos produktų bei trąšų naudojimo žurnalų generavimas vienu paspaudimu.",
+            url: "https://jurgisagro.com/?ataskaitos"
+        },
         7: {
             title: "SOS Pagalba Ūkininkams Laukuose ir Technikos Paieška | JurgisAgro",
             desc: "Skubi ūkininkų savitarpio pagalba sugedus traktoriui, kombainui ar įstrigus laukuose jūsų rajone.",
             url: "https://jurgisagro.com/?sos-pagalba"
+        },
+        8: {
+            title: "Ūkio Technikos Parkas ir Garažas | JurgisAgro",
+            desc: "Valdykite savo ūkio traktorių, kombainų ir padargų parką bei raskite pagalbą kaimynystėje.",
+            url: "https://jurgisagro.com/?technika"
+        },
+        9: {
+            title: "Ūkio Bazės Vietos ir Pranešimų Nustatymai | JurgisAgro",
+            desc: "Pažymėkite savo ūkio bazės vietą žemėlapyje, kad visos skaičiuoklės ir orų radarai veiktų tiksliai jūsų kiemui.",
+            url: "https://jurgisagro.com/?nustatymai"
+        },
+        10: {
+            title: "Sėjomainos Planavimas (GAAB 7) ir Ūkio Gamybos Planas | JurgisAgro",
+            desc: "Automatinis 3 metų pasėlių kaitos (GAAB 7) tikrinimas, sėklų, trąšų ir kuro poreikio planavimas bei NMA GeoJSON eksportas.",
+            url: "https://jurgisagro.com/?sejomaina"
         },
         11: {
             title: "Lietuvos Pasėlių Lyga (TOP 10) – Sentinel-2 NDVI Reitingas | JurgisAgro",
@@ -113,6 +180,16 @@ export function switchTab(tabIndex) {
         }
     };
 
+    const calcSlugs = [
+        'nordpool-kainos', 'matif-birza', 'grain-supirkimas', 'dyzelinas-gazolas',
+        'grudu-sandelis', 'nma-terminai', 'sejos-norma', 'tarpiniai-paseliai',
+        'kombaino-nuostoliai', 'purkstuvas', 'trasu-skaiciuokle', 'trasu-barometras'
+    ];
+    const currentSearchClean = window.location.search.replace('?', '');
+    if (tabIndex === 0 && calcSlugs.includes(currentSearchClean)) {
+        return;
+    }
+
     const activeSeo = seoMap[tabIndex] || seoMap[0];
     document.title = activeSeo.title;
     const descMeta = document.querySelector('meta[name="description"]');
@@ -120,13 +197,26 @@ export function switchTab(tabIndex) {
     const canonLink = document.querySelector('link[rel="canonical"]');
     if (canonLink) canonLink.setAttribute('href', activeSeo.url);
 
-    // 🌟 ŽODINIS GRAŽUS URL ATNAUJINIMAS (pvz. ?ismanieji-irenginiai arba ?orai)
     const slug = TAB_SLUGS[tabIndex];
     const targetUrl = slug ? `?${slug}` : window.location.pathname;
     
     if (window.location.search !== (slug ? `?${slug}` : '')) {
         window.history.pushState({ tab: tabIndex }, activeSeo.title, targetUrl);
     }
+}
+
+export function updateSeoMetaTags(title, desc, canonicalUrl) {
+    document.title = title;
+    const descMeta = document.querySelector('meta[name="description"]');
+    if (descMeta) descMeta.setAttribute('content', desc);
+    const canonLink = document.querySelector('link[rel="canonical"]');
+    if (canonLink) canonLink.setAttribute('href', canonicalUrl);
+    const ogTitle = document.querySelector('meta[property="og:title"]');
+    if (ogTitle) ogTitle.setAttribute('content', title);
+    const ogDesc = document.querySelector('meta[property="og:description"]');
+    if (ogDesc) ogDesc.setAttribute('content', desc);
+    const ogUrl = document.querySelector('meta[property="og:url"]');
+    if (ogUrl) ogUrl.setAttribute('content', canonicalUrl);
 }
 
 function setMobileBtnActive(id, isActive) {
@@ -141,21 +231,13 @@ function setMobileBtnActive(id, isActive) {
     }
 }
 
-// 🌟 Naršyklės mygtukų „Atgal“ / „Pirmyn“ palaikymas
-window.addEventListener('popstate', (e) => {
-    const requestedTab = getRequestedTabFromUrl();
-    switchTab(requestedTab);
-});
-
 export function getRequestedTabFromUrl() {
     const urlParams = new URLSearchParams(window.location.search);
     
-    // 1. Tikriname ar yra senas parametras ?tab=13
     if (urlParams.has('tab')) {
         return parseInt(urlParams.get('tab'), 10) || 0;
     }
     
-    // 2. Tikriname ar yra žodinis parametras pvz. ?ismanieji-irenginiai ar ?orai
     for (const [slug, tabIdx] of Object.entries(SLUG_TO_TAB)) {
         if (urlParams.has(slug)) {
             return tabIdx;
