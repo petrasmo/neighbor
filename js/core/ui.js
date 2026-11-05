@@ -71,6 +71,11 @@ export function switchTab(tabIndex, preserveCalcSlug = false) {
     else if (tabIndex === 11) targetView = document.getElementById('view-tab-league');
     else if (tabIndex === 12) targetView = document.getElementById('view-tab-events');
 
+    const seoBlock = document.getElementById('seo-knowledge-block');
+    if (seoBlock) {
+        if (tabIndex === 0) seoBlock.classList.remove('hidden');
+        else seoBlock.classList.add('hidden');
+    }
     allViews.forEach(el => {
         if (!el) return;
         if (el === targetView) {

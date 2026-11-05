@@ -540,6 +540,7 @@ function setupCalculatorsHub() {
         storageView?.classList.add('hidden');
         nmaView?.classList.add('hidden');
         barometerView?.classList.add('hidden');
+        document.getElementById('seo-knowledge-block')?.classList.add('hidden');
     };
 
     // 🌟 PILNAS SEO IR CANONICAL ATNAUJINIMAS SKAIČIUOKLĖMS!
@@ -566,6 +567,7 @@ function setupCalculatorsHub() {
 
     const returnToHub = (updateUrl = true) => {
         hideAll();
+        document.getElementById('seo-knowledge-block')?.classList.remove('hidden');
         hubView?.classList.remove('hidden');
         document.title = "JurgisAgro – Ūkininkų Portalas, Grūdų Kainos ir MATIF Birža";
         const descMeta = document.querySelector('meta[name="description"]');
