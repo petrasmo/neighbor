@@ -38,7 +38,7 @@ export function renderGlobalSidebar(activePage = 'index', activeTab = 0) {
                             <button id="help-btn-desktop" class="p-2 bg-tractorBg hover:bg-tractorCard border border-tractorBorder rounded-xl text-sm transition cursor-pointer" title="Pagalba ir instrukcija">
                                 <span>📖</span>
                             </button>
-                            <button class="btn-theme-toggle p-2 bg-tractorBg hover:bg-tractorCard border border-tractorBorder rounded-xl text-sm transition cursor-pointer" title="Perjungti temą">
+                            <button class="btn-theme-toggle p-2 bg-tractorBg hover:bg-tractorCard border border-tractorBorder aria-label="Perjungti temą" rounded-xl text-sm transition cursor-pointer" title="Perjungti temą">
                                 <span class="theme-toggle-icon">☀️</span>
                             </button>
                         </div>
