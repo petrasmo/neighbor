@@ -580,10 +580,10 @@ function renderCategoryData(catData) {
                             ${displayName}
                         </div>
 
-                        <div class="text-xs sm:text-sm font-bold flex items-center justify-center gap-1.5 text-slate-800 dark:text-slate-200 font-mono pt-0.5">
-                            <span class="font-bold">${f.areaHa} ha</span>
-                            <span class="text-slate-400 font-normal">•</span>
-                            <span class="text-slate-700 dark:text-slate-300">🛰️ ${f.satDate || '10-03'}</span>
+                        <div class="text-xs sm:text-sm font-bold flex items-center justify-center gap-1.5 font-mono pt-0.5" style="color: var(--text-main);">
+                            <span class="font-extrabold">${f.areaHa} ha</span>
+                            <span style="color: var(--text-muted);">•</span>
+                            <span class="font-bold">🛰️ ${f.satDate || '10-03'}</span>
                         </div>
                     </div>
 
@@ -627,17 +627,17 @@ function renderCategoryData(catData) {
             }" style="animation-delay: ${animDelay}ms;">
                 
                 <div class="flex items-center gap-3 min-w-0 flex-1">
-                    <span class="font-mono font-black text-sm sm:text-base w-8 text-center shrink-0 text-slate-700 dark:text-slate-300">#${f.rank}</span>
+                    <span class="font-mono font-black text-sm sm:text-base w-8 text-center shrink-0" style="color: var(--text-main);">#${f.rank}</span>
                     <div class="min-w-0 flex-1 space-y-1">
                         <div class="flex items-center gap-2 flex-wrap">
                             <span class="font-extrabold text-sm sm:text-base truncate tracking-wide" style="color: var(--text-main);">${displayName}</span>
                             ${myBadge}
                         </div>
                         
-                        <div class="flex items-center gap-2 text-xs sm:text-sm font-mono font-semibold text-slate-800 dark:text-slate-200">
-                            <span class="font-bold">${f.areaHa} ha</span>
-                            <span class="text-slate-400 font-normal">•</span>
-                            <span class="text-slate-700 dark:text-slate-300">🛰️ ${f.satDate || '10-03'}</span>
+                        <div class="flex items-center gap-2 text-xs sm:text-sm font-mono font-bold" style="color: var(--text-main);">
+                            <span class="font-extrabold">${f.areaHa} ha</span>
+                            <span style="color: var(--text-muted);">•</span>
+                            <span class="font-bold">🛰️ ${f.satDate || '10-03'}</span>
                         </div>
                     </div>
                 </div>
@@ -680,17 +680,17 @@ function renderCategoryData(catData) {
             return `
                 <div class="animate-league-item p-3.5 sm:p-4 rounded-2xl border-2 border-tractorPrimary bg-tractorPrimary/20 shadow-xl flex items-center justify-between gap-3 text-xs" style="animation-delay: ${pinnedDelay}ms;">
                     <div class="flex items-center gap-3 min-w-0 flex-1">
-                        <span class="font-mono font-black text-base text-green-700 dark:text-tractorPrimaryLight w-8 text-center shrink-0">#${m.rank}</span>
+                        <span class="font-mono font-black text-base w-8 text-center shrink-0" style="color: var(--text-main);">#${m.rank}</span>
                         <div class="min-w-0 flex-1 space-y-1">
                             <div class="flex items-center gap-2">
                                 <strong class="font-bold text-sm sm:text-base truncate" style="color: var(--text-main);">${m.name}</strong>
                                 <span class="bg-tractorPrimary text-white text-xs px-2 py-0.5 rounded-full font-black uppercase tracking-wider" style="color: #FFFFFF !important;">Jūs</span>
                             </div>
-                            <div class="flex items-center gap-2 text-xs sm:text-sm font-mono font-bold text-slate-800 dark:text-slate-200">
-                                <span>${m.areaHa} ha</span>
-                                <span class="text-slate-400 font-normal">•</span>
-                                <span class="text-slate-700 dark:text-slate-300">🛰️ ${m.satDate || '10-03'}</span>
-                                ${gap > 0 ? `<span class="text-amber-600 dark:text-amber-400 font-extrabold">(Iki TOP 3: -${gap} balo)</span>` : ''}
+                            <div class="flex items-center gap-2 text-xs sm:text-sm font-mono font-bold" style="color: var(--text-main);">
+                                <span class="font-extrabold">${m.areaHa} ha</span>
+                                <span style="color: var(--text-muted);">•</span>
+                                <span class="font-bold">🛰️ ${m.satDate || '10-03'}</span>
+                                ${gap > 0 ? `<span class="text-amber-500 font-extrabold">(Iki TOP 3: -${gap} balo)</span>` : ''}
                             </div>
                         </div>
                     </div>

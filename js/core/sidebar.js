@@ -23,22 +23,22 @@ export function renderGlobalSidebar(activePage = 'index', activeTab = 0) {
         sidebarContainer.innerHTML = `
             <aside class="flex flex-col justify-between w-72 bg-tractorSurface border-r border-tractorBorder p-5 h-full shrink-0 overflow-y-auto">
                 <div class="space-y-4">
-                    <div class="flex items-center justify-between border-b border-tractorBorder/70 pb-4">
-                        <a href="index.html" class="flex items-center gap-3">
-                            <div class="w-10 h-10 rounded-xl bg-tractorPrimary/20 border border-tractorPrimary/40 flex items-center justify-center text-xl">
+                    <div class="flex items-center justify-between gap-2 border-b border-tractorBorder/70 pb-4">
+                        <a href="index.html" class="flex items-center gap-2.5 min-w-0">
+                            <div class="w-9 h-9 rounded-xl bg-tractorPrimary/20 border border-tractorPrimary/40 flex items-center justify-center text-lg shrink-0">
                                 🚜
                             </div>
-                            <div>
-                                <span class="font-oswald text-2xl font-black tracking-wider block" style="color: var(--text-main);">JURGISAGRO</span>
-                                <span class="text-[10px] text-green-500 font-bold uppercase tracking-widest">Ūkininkų portalas</span>
+                            <div class="min-w-0">
+                                <span class="font-oswald text-xl font-black tracking-wider block leading-tight truncate" style="color: var(--text-main);">JURGISAGRO</span>
+                                <span class="text-[10px] text-green-500 font-bold uppercase tracking-widest block">Ūkininkų portalas</span>
                             </div>
                         </a>
 
-                        <div class="flex items-center gap-1.5">
-                            <button id="help-btn-desktop" class="p-2 bg-tractorBg hover:bg-tractorCard border border-tractorBorder rounded-xl text-sm transition cursor-pointer" title="Pagalba ir instrukcija">
+                        <div class="flex items-center gap-1 shrink-0">
+                            <button id="help-btn-desktop" class="w-8 h-8 flex items-center justify-center bg-tractorBg hover:bg-tractorCard border border-tractorBorder rounded-xl text-xs transition cursor-pointer" title="Pagalba ir instrukcija">
                                 <span>📖</span>
                             </button>
-                            <button class="btn-theme-toggle p-2 bg-tractorBg hover:bg-tractorCard border border-tractorBorder aria-label="Perjungti temą" rounded-xl text-sm transition cursor-pointer" title="Perjungti temą">
+                            <button class="btn-theme-toggle w-8 h-8 flex items-center justify-center bg-tractorBg hover:bg-tractorCard border border-tractorBorder rounded-xl text-xs transition cursor-pointer" aria-label="Perjungti temą" title="Perjungti temą">
                                 <span class="theme-toggle-icon">☀️</span>
                             </button>
                         </div>

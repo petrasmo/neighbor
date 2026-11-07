@@ -156,8 +156,8 @@ function renderEventsLayout(container) {
 
             <!-- 🌟 INFINITE SCROLL KROVIKLIS / MYGTUKAS -->
             <div id="events-load-more-box" class="pt-2 pb-8 flex justify-center hidden">
-                <button type="button" id="btn-events-load-more" class="px-6 py-2.5 bg-tractorSurface hover:bg-zinc-800 border border-tractorBorder rounded-xl text-xs font-bold transition cursor-pointer flex items-center gap-2 shadow-sm text-slate-200">
-                    <span>🔄</span> <span>Rodyti dar 20 renginių...</span>
+                <button type="button" id="btn-events-load-more" style="color: var(--text-main) !important;" class="px-6 py-2.5 bg-tractorSurface hover:bg-tractorBg border border-tractorBorder rounded-xl text-xs font-bold transition cursor-pointer flex items-center gap-2 shadow-sm">
+                    <span>🔄</span> <span style="color: var(--text-main) !important;">Rodyti dar 20 renginių...</span>
                 </button>
             </div>
 
@@ -169,7 +169,7 @@ function renderEventsLayout(container) {
                 <div class="flex justify-between items-center border-b border-tractorBorder/70 pb-3">
                     <div class="flex items-center gap-2">
                         <span id="sheet-event-icon" class="text-xl">📅</span>
-                        <h3 id="sheet-event-title" class="font-oswald text-base sm:text-lg font-bold uppercase tracking-wider text-white">
+                        <h3 id="sheet-event-title" class="font-oswald text-base sm:text-lg font-bold uppercase tracking-wider" style="color: var(--text-main);">
                             Renginio informacija
                         </h3>
                     </div>
@@ -213,7 +213,7 @@ function setupEventsTabListeners() {
             btnOnline.className = "px-2 sm:px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer bg-tractorPrimary text-white shadow";
             districtBox?.classList.add('hidden');
         }
-        visibleLimit = PAGE_SIZE; // Nustatome iš naujo į 20
+        visibleLimit = PAGE_SIZE;
         renderFilteredEvents();
     };
 
@@ -316,7 +316,7 @@ function renderFilteredEvents() {
         container.innerHTML = `
             <div class="bg-tractorSurface border border-tractorBorder rounded-2xl p-10 text-center space-y-2">
                 <span class="text-4xl block">🌾</span>
-                <h4 class="font-bold text-white text-sm sm:text-base">Pagal pasirinktus filtrus renginių nerasta</h4>
+                <h4 class="font-bold text-sm sm:text-base" style="color: var(--text-main);">Pagal pasirinktus filtrus renginių nerasta</h4>
                 <p class="text-xs text-slate-400">Pabandykite pasirinkti „Visa Lietuva“ arba kitą kategoriją.</p>
             </div>
         `;
@@ -416,21 +416,21 @@ function renderFilteredEvents() {
                     </div>
                 </div>
 
-                <!-- VEIKSMŲ MYGTUKAI -->
+                <!-- VEIKSMŲ MYGTUKAI (SU PRIVERSTINIU RYŠKIU TEKSTU) -->
                 <div class="flex items-center gap-1.5 shrink-0 pt-2 md:pt-0 border-t md:border-t-0 border-tractorBorder/60 self-end md:self-center">
                     ${ev.phone ? `
-                        <a href="tel:${ev.phone}" class="btn-event-action h-9 px-3 bg-tractorBg hover:bg-tractorSurface border border-tractorBorder text-slate-800 dark:text-white rounded-xl text-xs font-bold transition flex items-center gap-1" title="Skambinti organizatoriui" onclick="event.stopPropagation()">
-                            <span>📞</span> <span class="hidden sm:inline">Skambinti</span>
+                        <a href="tel:${ev.phone}" style="color: var(--text-main) !important;" class="btn-event-action h-9 px-3 bg-tractorBg hover:bg-tractorSurface border border-tractorBorder rounded-xl text-xs font-bold transition flex items-center gap-1" title="Skambinti organizatoriui" onclick="event.stopPropagation()">
+                            <span>📞</span> <span class="hidden sm:inline" style="color: var(--text-main) !important;">Skambinti</span>
                         </a>
                     ` : ''}
                     ${!ev.isOnline && ev.latitude && ev.longitude ? `
-                        <a href="https://www.google.com/maps/dir/?api=1&destination=${ev.latitude},${ev.longitude}" target="_blank" class="btn-event-action h-9 px-3 bg-tractorBg hover:bg-tractorSurface border border-tractorBorder text-slate-800 dark:text-white rounded-xl text-xs font-bold transition flex items-center gap-1" title="Naviguoti į vietą" onclick="event.stopPropagation()">
-                            <span>🧭</span> <span class="hidden sm:inline">Naviguoti</span>
+                        <a href="https://www.google.com/maps/dir/?api=1&destination=${ev.latitude},${ev.longitude}" target="_blank" style="color: var(--text-main) !important;" class="btn-event-action h-9 px-3 bg-tractorBg hover:bg-tractorSurface border border-tractorBorder rounded-xl text-xs font-bold transition flex items-center gap-1" title="Naviguoti į vietą" onclick="event.stopPropagation()">
+                            <span>🧭</span> <span class="hidden sm:inline" style="color: var(--text-main) !important;">Naviguoti</span>
                         </a>
                     ` : ''}
                     ${ev.sourceUrl ? `
-                        <a href="${ev.sourceUrl}" target="_blank" class="btn-event-action h-9 px-3.5 bg-tractorPrimary hover:bg-tractorPrimaryHover text-white rounded-xl text-xs font-bold transition flex items-center gap-1 shadow-sm" onclick="event.stopPropagation()">
-                            <span>🔗</span> <span>Plačiau</span>
+                        <a href="${ev.sourceUrl}" target="_blank" style="color: #FFFFFF !important;" class="btn-event-action h-9 px-3.5 bg-tractorPrimary hover:bg-tractorPrimaryHover text-white rounded-xl text-xs font-bold transition flex items-center gap-1 shadow-sm" onclick="event.stopPropagation()">
+                            <span>🔗</span> <span style="color: #FFFFFF !important;">Plačiau</span>
                         </a>
                     ` : ''}
                 </div>
@@ -495,36 +495,36 @@ function openEventBottomSheet(ev) {
     bodyEl.innerHTML = `
         <div class="bg-tractorBg p-4 rounded-2xl border border-tractorBorder space-y-2.5">
             <div class="flex flex-wrap items-center justify-between gap-2 border-b border-tractorBorder/60 pb-2">
-                <span class="font-bold text-xs text-tractorPrimaryLight">📅 ${ev.dateReadable || ev.dateISO}</span>
+                <span class="font-bold text-xs text-green-600 dark:text-tractorPrimaryLight">📅 ${ev.dateReadable || ev.dateISO}</span>
                 <span class="font-bold text-xs ${ev.isFree ? 'text-green-500' : 'text-amber-500'}">
                     ${ev.isFree ? '🟢 Nemokamas' : 'Su registracija'}
                 </span>
             </div>
 
             <div class="space-y-1 text-xs">
-                <div><span class="text-slate-400">Vieta:</span> <strong class="text-white">${ev.location} (${ev.district})</strong> ${distText}</div>
-                ${ev.organizer ? `<div><span class="text-slate-400">Organizatorius:</span> <strong class="text-white">${ev.organizer}</strong></div>` : ''}
-                ${ev.phone ? `<div><span class="text-slate-400">Telefonas:</span> <a href="tel:${ev.phone}" class="text-green-400 font-bold hover:underline">${ev.phone}</a></div>` : ''}
-                <div><span class="text-slate-400">Kategorija:</span> <strong class="text-amber-400">${ev.category}</strong></div>
+                <div><span class="text-slate-400">Vieta:</span> <strong style="color: var(--text-main);">${ev.location} (${ev.district})</strong> ${distText}</div>
+                ${ev.organizer ? `<div><span class="text-slate-400">Organizatorius:</span> <strong style="color: var(--text-main);">${ev.organizer}</strong></div>` : ''}
+                ${ev.phone ? `<div><span class="text-slate-400">Telefonas:</span> <a href="tel:${ev.phone}" class="text-green-600 dark:text-green-400 font-bold hover:underline">${ev.phone}</a></div>` : ''}
+                <div><span class="text-slate-400">Kategorija:</span> <strong class="text-amber-500">${ev.category}</strong></div>
             </div>
         </div>
 
         ${ev.description ? `
             <div class="space-y-1">
                 <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400 block">Apie renginį:</span>
-                <p class="text-xs leading-relaxed text-slate-200 bg-tractorBg p-3.5 rounded-xl border border-tractorBorder">${ev.description}</p>
+                <p class="text-xs leading-relaxed bg-tractorBg p-3.5 rounded-xl border border-tractorBorder" style="color: var(--text-main);">${ev.description}</p>
             </div>
         ` : ''}
 
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
             ${ev.sourceUrl ? `
-                <a href="${ev.sourceUrl}" target="_blank" class="h-11 bg-tractorPrimary hover:bg-tractorPrimaryHover text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 shadow transition">
-                    <span>🔗</span> <span>Atidaryti registracijos puslapį</span>
+                <a href="${ev.sourceUrl}" target="_blank" style="color: #FFFFFF !important;" class="h-11 bg-tractorPrimary hover:bg-tractorPrimaryHover text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 shadow transition">
+                    <span>🔗</span> <span style="color: #FFFFFF !important;">Atidaryti registracijos puslapį</span>
                 </a>
             ` : ''}
             ${!ev.isOnline && ev.latitude && ev.longitude ? `
-                <a href="https://www.google.com/maps/dir/?api=1&destination=${ev.latitude},${ev.longitude}" target="_blank" class="h-11 bg-tractorBg hover:bg-zinc-800 border border-tractorBorder text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition">
-                    <span>🧭</span> <span>Naviguoti (Google Maps)</span>
+                <a href="https://www.google.com/maps/dir/?api=1&destination=${ev.latitude},${ev.longitude}" target="_blank" style="color: var(--text-main) !important;" class="h-11 bg-tractorBg hover:bg-tractorSurface border border-tractorBorder rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition">
+                    <span>🧭</span> <span style="color: var(--text-main) !important;">Naviguoti (Google Maps)</span>
                 </a>
             ` : ''}
         </div>

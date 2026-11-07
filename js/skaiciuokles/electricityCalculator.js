@@ -139,6 +139,10 @@ function setupElectricityEvents() {
     document.getElementById('btn-close-elec-sheet')?.addEventListener('click', closeSheet);
     document.getElementById('btn-ack-elec-sheet')?.addEventListener('click', closeSheet);
     if (sheet) sheet.onclick = (e) => { if (e.target === sheet) closeSheet(); };
+
+    document.querySelectorAll('.btn-theme-toggle').forEach(b => {
+        b.addEventListener('click', () => setTimeout(renderElectricityUI, 20));
+    });
 }
 
 function listenToElectricityFirebase() {
@@ -174,6 +178,8 @@ function formatCleanCt(val) {
 function renderElectricityUI() {
     const grid = document.getElementById('elec-hourly-grid');
     if (!grid || !cachedElecData || !cachedElecData.hours) return;
+
+    const isLight = document.documentElement.classList.contains('light-theme');
 
     const now = new Date();
     let todayStr = now.toLocaleDateString('lt-LT', { timeZone: 'Europe/Vilnius', year: 'numeric', month: '2-digit', day: '2-digit' });
@@ -268,8 +274,10 @@ function renderElectricityUI() {
             let priceDot = `<span class="w-2 h-2 rounded-full bg-amber-500 inline-block shrink-0"></span>`;
             let priceColorClass = `text-amber-600 dark:text-amber-400`;
             let rowBgClass = `hover:bg-tractorSurface/70`;
+
             let statusBadge = `
-                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30 font-bold text-[11px]">
+                <span style="${isLight ? 'background-color: rgba(245, 158, 11, 0.18); color: #92400E; border: 1px solid rgba(245, 158, 11, 0.5);' : ''}" 
+                      class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md bg-amber-500/15 text-amber-400 border border-amber-500/30 font-bold text-xs">
                     <span>🟡</span> <span>Vidutinė</span>
                 </span>
             `;
@@ -279,7 +287,8 @@ function renderElectricityUI() {
                 priceColorClass = `text-blue-600 dark:text-blue-400`;
                 rowBgClass = `bg-blue-500/[0.06] hover:bg-blue-500/[0.12]`;
                 statusBadge = `
-                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-blue-500/20 text-blue-600 dark:text-blue-300 border border-blue-500/40 font-extrabold text-[11px]">
+                    <span style="${isLight ? 'background-color: rgba(59, 130, 246, 0.18); color: #1E40AF; border: 1px solid rgba(59, 130, 246, 0.5);' : ''}" 
+                          class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md bg-blue-500/20 text-blue-300 border border-blue-500/40 font-extrabold text-xs">
                         <span>💎</span> <span>Nemokama / 0 ct</span>
                     </span>
                 `;
@@ -288,7 +297,8 @@ function renderElectricityUI() {
                 priceColorClass = `text-green-600 dark:text-green-400`;
                 rowBgClass = `bg-green-500/[0.06] hover:bg-green-500/[0.12]`;
                 statusBadge = `
-                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-green-500/20 text-green-700 dark:text-green-300 border border-green-500/40 font-extrabold text-[11px]">
+                    <span style="${isLight ? 'background-color: rgba(34, 197, 94, 0.20); color: #14532D; border: 1px solid rgba(34, 197, 94, 0.55);' : ''}" 
+                          class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md bg-green-500/20 text-green-300 border border-green-500/40 font-extrabold text-xs">
                         <span>🟢</span> <span>Pigu (Palanki)</span>
                     </span>
                 `;
@@ -297,7 +307,8 @@ function renderElectricityUI() {
                 priceColorClass = `text-red-600 dark:text-red-400`;
                 rowBgClass = `bg-red-500/[0.04] hover:bg-red-500/[0.09]`;
                 statusBadge = `
-                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-red-500/15 text-red-600 dark:text-red-400 border border-red-500/30 font-bold text-[11px]">
+                    <span style="${isLight ? 'background-color: rgba(239, 68, 68, 0.18); color: #991B1B; border: 1px solid rgba(239, 68, 68, 0.5);' : ''}" 
+                          class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md bg-red-500/15 text-red-400 border border-red-500/30 font-bold text-xs">
                         <span>🔴</span> <span>Brangu</span>
                     </span>
                 `;
@@ -332,11 +343,13 @@ function renderElectricityUI() {
         return `
             <div class="bg-tractorBg border border-tractorBorder rounded-2xl overflow-hidden shadow-sm flex flex-col justify-between">
                 <div>
-                    <div class="bg-tractorSurface px-3.5 py-2 border-b border-tractorBorder flex justify-between items-center">
+                    <div class="bg-tractorSurface px-3.5 py-2.5 border-b border-tractorBorder flex justify-between items-center">
                         <strong class="font-oswald text-sm sm:text-base uppercase tracking-wider" style="color: var(--text-main);">
                             ${titlePrefix} (${dateStr.slice(8)} d.)
                         </strong>
-                        <span class="text-xs text-slate-400 font-mono font-bold">${dateStr}</span>
+                        <span class="text-sm sm:text-base font-mono font-black px-2.5 py-0.5 rounded-lg bg-tractorBg border border-tractorBorder" style="color: var(--text-main);">
+                            📅 ${dateStr}
+                        </span>
                     </div>
                     <table class="w-full text-left border-collapse">
                         <thead>
@@ -353,14 +366,15 @@ function renderElectricityUI() {
                 </div>
 
                 <!-- DIENOS STATISTIKOS APATINĖ EILUTĖ -->
-                <div class="bg-tractorSurface px-3.5 py-2 border-t-2 border-tractorBorder flex flex-wrap items-center justify-between gap-2 text-[11px] font-mono">
-                    <span class="font-oswald uppercase font-bold tracking-wider" style="color: var(--text-main);">📊 PAROS SUVESTINĖ:</span>
-                    <div class="flex items-center gap-3">
-                        <span class="text-green-600 dark:text-green-400 font-bold">Min: ${formatCleanCt(dMin)} ct</span>
-                        <span class="text-amber-500 font-bold">Vid: ${formatCleanCt(dAvg)} ct</span>
-                        <span class="text-red-500 font-bold">Max: ${formatCleanCt(dMax)} ct</span>
+                <div class="bg-tractorSurface px-3.5 py-3 border-t-2 border-tractorBorder flex flex-wrap items-center justify-between gap-2 font-mono">
+                    <span class="font-oswald text-sm sm:text-base uppercase font-extrabold tracking-wider" style="color: var(--text-main);">📊 PAROS SUVESTINĖ:</span>
+                    <div class="flex items-center gap-3 sm:gap-4 text-xs sm:text-sm">
+                        <span style="color: ${isLight ? '#15803D' : '#4ADE80'};" class="font-black">Min: ${formatCleanCt(dMin)} ct</span>
+                        <span style="color: ${isLight ? '#D97706' : '#FBBF24'};" class="font-black">Vid: ${formatCleanCt(dAvg)} ct</span>
+                        <span style="color: ${isLight ? '#DC2626' : '#F87171'};" class="font-black">Max: ${formatCleanCt(dMax)} ct</span>
                     </div>
                 </div>
+                
             </div>
         `;
     };
