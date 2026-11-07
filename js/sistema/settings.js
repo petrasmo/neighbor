@@ -304,7 +304,7 @@ function ensureModalsInBody(notifPrefs) {
                         <div class="topic-row flex items-start gap-3 p-3.5 bg-tractorBg rounded-xl border border-tractorBorder cursor-pointer transition select-none" data-type="diesel">
                             <input type="checkbox" id="modal-notif-diesel" class="w-4 h-4 mt-0.5 accent-tractorPrimary cursor-pointer pointer-events-none">
                             <div>
-                                <strong class="text-xs block" style="color: var(--text-main);">⛽ Gazolio kainos šuoliai (virš ±2%)</strong>
+                                <strong class="text-xs block" style="color: var(--text-main);">⛽ Gazolio kainos šuoliai (virš ±4%)</strong>
                                 <span class="text-[11px] block mt-0.5" style="color: var(--text-muted);">Pranešti, kai didmeninė žymėto dyzelino kaina Lietuvoje per dieną staigiai atpinga arba pabrangsta daugiau nei 2%.</span>
                             </div>
                         </div>

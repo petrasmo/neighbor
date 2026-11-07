@@ -530,18 +530,18 @@ function updateHourlyGrid() {
                         ${frostBadge}
                     </div>
 
-                    <div class="font-black font-mono text-xs sm:text-sm whitespace-nowrap leading-tight ${tempC < 0 ? 'text-blue-400' : 'text-slate-800 dark:text-slate-100'}">
+                    <div class="font-black font-mono text-xs sm:text-sm whitespace-nowrap leading-tight ${tempC < 0 ? 'text-blue-500' : ''}" style="${tempC < 0 ? '' : 'color: var(--text-main);'}">
                         🌡️ ${tempC > 0 ? '+' : ''}${tempC}°C
                     </div>
 
-                    <div class="space-y-0.5 sm:space-y-1 text-[9px] sm:text-xs font-mono pt-1 border-t border-tractorBorder/50 text-slate-300 leading-tight">
+                    <div class="space-y-0.5 sm:space-y-1 text-[9px] sm:text-xs font-mono pt-1 border-t border-tractorBorder/50 leading-tight">
                         <div class="flex items-center justify-between">
                             <span class="text-slate-400">🌱 Mazgas:</span>
-                            <strong class="${soil6cm < 0 ? 'text-blue-400 font-black' : 'text-green-600 dark:text-green-400 font-bold'}">${soil6cm > 0 ? '+' : ''}${soil6cm}°C</strong>
+                            <strong class="${soil6cm < 0 ? 'text-blue-500 font-black' : 'text-green-600 dark:text-green-400 font-bold'}">${soil6cm > 0 ? '+' : ''}${soil6cm}°C</strong>
                         </div>
                         <div class="flex items-center justify-between">
                             <span class="text-slate-400">❄️ Sniegas:</span>
-                            <strong class="text-slate-800 dark:text-white font-bold">${snowCm} cm</strong>
+                            <strong class="font-bold" style="color: var(--text-main);">${snowCm} cm</strong>
                         </div>
                     </div>
 

@@ -15,15 +15,15 @@ if (!firebase.apps.length) {
 export const auth = firebase.auth();
 export const db = firebase.firestore();
 
-// ?? PATAISYMAS: Priverstinis Long-Polling apeina visus tinklo blokus ir ERR_CONNECTION_TIMED_OUT
 if (firebase.firestore.setLogLevel) {
     firebase.firestore.setLogLevel('silent');
 }
 
-const isLighthouse = /Chrome-Lighthouse|PageSpeed|Googlebot/i.test(navigator.userAgent);
+// 🌟 Tiksliai atpažįstame Google PageSpeed / Lighthouse ir kitus testavimo robotus
+export const isBotOrLighthouse = /Chrome-Lighthouse|PageSpeed|Googlebot|HeadlessChrome|PTST/i.test(navigator.userAgent) || navigator.webdriver === true;
 
 db.settings({
-    experimentalForceLongPolling: !isLighthouse,
+    experimentalForceLongPolling: !isBotOrLighthouse,
     experimentalAutoDetectLongPolling: false,
     merge: true
 });

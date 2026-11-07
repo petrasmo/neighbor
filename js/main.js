@@ -193,7 +193,6 @@ document.addEventListener('DOMContentLoaded', () => {
             const items = d.data().items || [];
             items.forEach(it => { classifierMap[it.id] = it.lt || it.en; });
         });
-        // Kviečiame tik jei vartotojas yra SOS tabe (7)!
         if (getRequestedTabFromUrl() === 7) {
             initFeedTab(currentUser, userData, classifierMap);
         }
@@ -250,10 +249,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     document.getElementById('btn-logout-mobile')?.addEventListener('click', logoutUser);
                 }
 
-                db.collection("user_fields").where("userId", "==", user.uid).onSnapshot(snap => {
+                db.collection("user_fields").where("userId", "==", user.uid).get().then(snap => {
                     cachedFieldsList = [];
                     snap.forEach(d => cachedFieldsList.push(d.data()));
-                }, err => console.warn("Laukų klausymosi klaida:", err));
+                }).catch(() => {});
 
                 initFeedTab(currentUser, userData, classifierMap);
                 initGarageTab(currentUser, userData);
@@ -273,7 +272,6 @@ document.addEventListener('DOMContentLoaded', () => {
                         );
                     }, 200);
                 } else {
-                    // 🌟 preserveCalcSlug = true: kad neištrintų ?nordpool-kainos, jei atėjo per tiesioginę nuorodą!
                     switchTab(requestedTab, true);
                     if (requestedTab === 13) initSmartDevicesTab(currentUser, userData);
                     else if (requestedTab === 2) { initFieldsManager(currentUser, userData); refreshFieldsMap(); }
@@ -327,6 +325,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 
+// 🌟 ŽAIBIŠKAS VIENKARTINIS (.get) PRADINIO PUSLAPIO KORTELIŲ UŽKROVIMAS (JOKIŲ KABANČIŲ LISTEN KANALŲ!)
 function loadHubLivePriceTickers() {
     // 1. Nord Pool Elektra (1 vietoje)
     db.collection("electricity_prices").doc("market_data").get().then(doc => {
@@ -500,128 +499,6 @@ function loadHubLivePriceTickers() {
     }).catch(() => {});
 }
 
-    // 2. MATIF birža
-    db.collection("matif_prices").doc("market_data").onSnapshot(doc => {
-        if (!doc.exists) return;
-        const d = doc.data();
-        const w = d.crops?.wheat;
-        const r = d.crops?.rapeseed;
-        const el = document.getElementById('hub-live-matif');
-        if (!el || !w || !r || w.currentPrice === undefined || r.currentPrice === undefined) return;
-
-        let timeStr = "";
-        if (d.updatedAt && d.updatedAt.toDate) {
-            const dt = d.updatedAt.toDate();
-            timeStr = dt.toLocaleString('lt-LT', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
-        }
-
-        el.innerHTML = `
-            <div class="flex items-center justify-between font-mono font-bold text-white">
-                <span>🌾 ${Number(w.currentPrice).toFixed(2)} € <span class="${w.isPositive ? 'text-green-500' : 'text-red-500'} text-[10px]">(${w.change || ''})</span></span>
-                <span>🌱 ${Number(r.currentPrice).toFixed(2)} € <span class="${r.isPositive ? 'text-green-500' : 'text-red-500'} text-[10px]">(${r.change || ''})</span></span>
-            </div>
-            <div class="text-[10px] text-green-600 dark:text-green-400 font-semibold flex items-center gap-1.5">
-                <span class="w-1.5 h-1.5 rounded-full bg-green-500 animate-ping"></span>
-                <span>🕒 Atnaujinta: ${timeStr}</span>
-            </div>
-        `;
-    }, () => {});
-
-    // 3. Elevatoriai (Grūdai)
-    db.collection("grain_prices").onSnapshot(snap => {
-        if (snap.empty) return;
-        let maxWheat = 0;
-        let maxRape = 0;
-        let latestDate = null;
-
-        snap.forEach(doc => {
-            const p = doc.data();
-            const w = p.prices?.wheatExtra || p.prices?.wheat2 || 0;
-            const r = p.prices?.rapeseed || 0;
-            if (w > maxWheat) maxWheat = w;
-            if (r > maxRape) maxRape = r;
-            if (p.updatedAt && p.updatedAt.toDate) {
-                const dt = p.updatedAt.toDate();
-                if (!latestDate || dt > latestDate) latestDate = dt;
-            }
-        });
-
-        const el = document.getElementById('hub-live-grain');
-        if (!el || maxWheat === 0) return;
-
-        const timeStr = latestDate 
-            ? latestDate.toLocaleString('lt-LT', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })
-            : "";
-
-        el.innerHTML = `
-            <div class="flex items-center justify-between font-mono font-bold text-white">
-                <span>🌾 Kviečiai iki ${maxWheat} €/t</span>
-                <span>🌱 Rapsai iki ${maxRape} €/t</span>
-            </div>
-            <div class="text-[10px] text-green-600 dark:text-green-400 font-semibold flex items-center gap-1.5">
-                <span class="w-1.5 h-1.5 rounded-full bg-green-500 animate-ping"></span>
-                <span>🕒 Atnaujinta: ${timeStr} (${snap.size} elev.)</span>
-            </div>
-        `;
-    }, () => {});
-
-    // 4. Gazolas (Dyzelinas)
-    db.collection("diesel_prices").doc("market_benchmark").onSnapshot(doc => {
-        const el = document.getElementById('hub-live-diesel');
-        if (!el || !doc.exists) return;
-
-        const d = doc.data();
-        const price = Number(d.officialBasePriceNoVat) || 0;
-        if (price === 0) return;
-
-        let timeStr = "";
-        if (d.updatedAt && d.updatedAt.toDate) {
-            const dt = d.updatedAt.toDate();
-            timeStr = dt.toLocaleString('lt-LT', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
-        } else if (d.priceDate) {
-            timeStr = d.priceDate;
-        }
-
-        el.innerHTML = `
-            <div class="flex items-center justify-between font-mono font-bold text-white">
-                <span>⛽ ORLEN didmena: ${price.toFixed(3)} €/l</span>
-                <span class="text-[10px] font-sans text-slate-400">(be PVM)</span>
-            </div>
-            <div class="text-[10px] text-amber-600 dark:text-amber-400 font-semibold flex items-center gap-1.5">
-                <span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-ping"></span>
-                <span>🕒 Atnaujinta: ${timeStr} • 53 kuro bazės</span>
-            </div>
-        `;
-    }, () => {});
-
-    // 5. Trąšų barometras
-    db.collection("fertilizer_market").doc("barometer_data").onSnapshot(doc => {
-        if (!doc.exists) return;
-        const d = doc.data();
-        const sal = d.indicators?.estimatedSalietra;
-        const gas = d.gasTTF?.priceMWh;
-        const el = document.getElementById('hub-live-baro');
-        if (!el || sal === undefined || gas === undefined) return;
-
-        let timeStr = "";
-        if (d.updatedAt && d.updatedAt.toDate) {
-            const dt = d.updatedAt.toDate();
-            timeStr = dt.toLocaleString('lt-LT', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
-        }
-
-        el.innerHTML = `
-            <div class="flex items-center justify-between font-mono font-bold text-white">
-                <span>🧪 Salietra ~${sal} €/t</span>
-                <span>⚡ TTF: ${gas} €/MWh</span>
-            </div>
-            <div class="text-[10px] text-green-600 dark:text-green-400 font-semibold flex items-center gap-1.5">
-                <span class="w-1.5 h-1.5 rounded-full bg-green-500 animate-ping"></span>
-                <span>🕒 Atnaujinta: ${timeStr}</span>
-            </div>
-        `;
-    }, () => {});
-
-
 function setupCalculatorsHub() {
     const hubView = document.getElementById('view-calculators-hub');
     const electricityView = document.getElementById('view-tab-electricity-embed');
@@ -667,7 +544,6 @@ function setupCalculatorsHub() {
         document.getElementById('seo-knowledge-block')?.classList.add('hidden');
     };
 
-    // 🌟 PILNAS SEO IR CANONICAL ATNAUJINIMAS SKAIČIUOKLĖMS!
     const activateCalcView = (calcSlug, viewElement, renderFn) => {
         hideAll();
         viewElement?.classList.remove('hidden');
@@ -678,7 +554,6 @@ function setupCalculatorsHub() {
             document.title = seo.title;
             const descMeta = document.querySelector('meta[name="description"]');
             if (descMeta) descMeta.setAttribute('content', seo.desc);
-            // 🌟 ATNAUJINAME IR CANONICAL NUORODĄ GOOGLE ROBOTAMS!
             const canonLink = document.querySelector('link[rel="canonical"]');
             if (canonLink) canonLink.setAttribute('href', `https://jurgisagro.com/?${calcSlug}`);
         }
@@ -794,13 +669,11 @@ function setupCalculatorsHub() {
         else if (slug === 'trasu-barometras') openBarometerBtn?.click();
     };
 
-    // Jei puslapis atidaromas iš tiesioginės skaičiuoklės nuorodos
     const initialCalcSlug = getActiveCalcSlugFromUrl();
     if (initialCalcSlug) {
         openCalcBySlug(initialCalcSlug);
     }
 
-    // 🌟 VIENINGAS NARŠYKLĖS „ATGAL / PIRMYN“ VALDIKLIS (Tiek tabams, tiek skaičiuoklėms!)
     window.addEventListener('popstate', () => {
         const calcSlug = getActiveCalcSlugFromUrl();
         if (calcSlug) {
