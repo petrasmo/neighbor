@@ -20,7 +20,7 @@ if (firebase.firestore.setLogLevel) {
     firebase.firestore.setLogLevel('silent');
 }
 
-const isLighthouse = /Chrome-Lighthouse|PageSpeed|Googlebot/i.test(navigator.userAgent);
+export const isLighthouse = /Chrome-Lighthouse|PageSpeed|Googlebot/i.test(navigator.userAgent);
 
 db.settings({
     experimentalForceLongPolling: !isLighthouse,
