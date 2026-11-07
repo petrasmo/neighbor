@@ -15,7 +15,6 @@ if (!firebase.apps.length) {
 export const auth = firebase.auth();
 export const db = firebase.firestore();
 
-// ?? PATAISYMAS: Priverstinis Long-Polling apeina visus tinklo blokus ir ERR_CONNECTION_TIMED_OUT
 if (firebase.firestore.setLogLevel) {
     firebase.firestore.setLogLevel('silent');
 }

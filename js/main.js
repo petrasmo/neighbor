@@ -1,5 +1,5 @@
 // js/main.js
-import { auth, db, isLighthouse } from './core/firebase.js';
+import { auth, db } from './core/firebase.js';
 import { openAuthModal, logoutUser } from './core/auth.js';
 import { switchTab, showDialog, showBottomToast, getRequestedTabFromUrl, updateSeoMetaTags, getActiveCalcSlugFromUrl } from './core/ui.js';
 import { initThemeToggle } from './core/theme.js';
@@ -325,9 +325,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 
-// 🌟 ŽAIBIŠKAS VIENKARTINIS (.get) PRADINIO PUSLAPIO KORTELIŲ UŽKROVIMAS (JOKIŲ KABANČIŲ LISTEN KANALŲ!)
 function loadHubLivePriceTickers() {
-    if (isLighthouse) return;
     // 1. Nord Pool Elektra (1 vietoje)
     db.collection("electricity_prices").doc("market_data").get().then(doc => {
         if (!doc.exists) return;
