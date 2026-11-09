@@ -124,67 +124,67 @@ export function switchTab(tabIndex, preserveCalcSlug = false) {
         1: {
             title: "Agro-Orai Purškimui, Įšalo Gylis ir Žiemkenčių Radaras | JurgisAgro",
             desc: "Tikslūs agro-orai ūkininkams: 48 val. purškimo langas, vėjo greitis, dirvos temperatūra, įšalas, T-Sum 200 ir sniego pelėsio rizika.",
-            url: "https://jurgisagro.com/?orai"
+            url: "https://jurgisagro.com/orai"
         },
         2: {
             title: "Mano Ūkio Laukai, NMA Žemėlapis ir Sentinel-2 NDVI Palydovas | JurgisAgro",
             desc: "Interaktyvus ūkio laukų žemėlapis su automatinėmis NMA KŽS ribomis ir Copernicus Sentinel-2 NDVI pasėlių būklės stebėsena.",
-            url: "https://jurgisagro.com/?laukai"
+            url: "https://jurgisagro.com/laukai"
         },
         3: {
             title: "VRA Kintamos Normos Tręšimo Žemėlapiai Traktoriui (Shapefile) | JurgisAgro",
             desc: "Tikslusis kintamos normos (VRA) tręšimas pagal palydovinį NDVI indeksą su Shapefile (.ZIP) eksportu į traktoriaus terminalą.",
-            url: "https://jurgisagro.com/?tresimas-vra"
+            url: "https://jurgisagro.com/tresimas-vra"
         },
         4: {
             title: "VRA Dirvos Kalkinimas ir Dirvožemio pH Tyrimų Tinklelis | JurgisAgro",
             desc: "Dirvožemio ėminių tinklelio generavimas, pH žemėlapiai ir kintamos normos kalkinimo užduotys barstytuvui.",
-            url: "https://jurgisagro.com/?kalkinimas-vra"
+            url: "https://jurgisagro.com/kalkinimas-vra"
         },
         5: {
             title: "Ūkio Lauko Darbų, Purškimų ir Tręšimų Žurnalas | JurgisAgro",
             desc: "Skaitmeninis ūkio operacijų registravimas: sėja, purškimas, tręšimas, žemės dirbimas ir derliaus apskaita.",
-            url: "https://jurgisagro.com/?zurnalas"
+            url: "https://jurgisagro.com/zurnalas"
         },
         6: {
             title: "NMA Purškimo (AAP) ir Trąšų Apskaitos Žurnalai (PDF / Excel) | JurgisAgro",
             desc: "Oficialių NMA ir VAT patikroms privalomų Augalų apsaugos produktų bei trąšų naudojimo žurnalų generavimas vienu paspaudimu.",
-            url: "https://jurgisagro.com/?ataskaitos"
+            url: "https://jurgisagro.com/ataskaitos"
         },
         7: {
             title: "SOS Pagalba Ūkininkams Laukuose ir Technikos Paieška | JurgisAgro",
             desc: "Skubi ūkininkų savitarpio pagalba sugedus traktoriui, kombainui ar įstrigus laukuose jūsų rajone.",
-            url: "https://jurgisagro.com/?sos-pagalba"
+            url: "https://jurgisagro.com/sos-pagalba"
         },
         8: {
             title: "Ūkio Technikos Parkas ir Garažas | JurgisAgro",
             desc: "Valdykite savo ūkio traktorių, kombainų ir padargų parką bei raskite pagalbą kaimynystėje.",
-            url: "https://jurgisagro.com/?technika"
+            url: "https://jurgisagro.com/technika"
         },
         9: {
             title: "Ūkio Bazės Vietos ir Pranešimų Nustatymai | JurgisAgro",
             desc: "Pažymėkite savo ūkio bazės vietą žemėlapyje, kad visos skaičiuoklės ir orų radarai veiktų tiksliai jūsų kiemui.",
-            url: "https://jurgisagro.com/?nustatymai"
+            url: "https://jurgisagro.com/nustatymai"
         },
         10: {
             title: "Sėjomainos Planavimas (GAAB 7) ir Ūkio Gamybos Planas | JurgisAgro",
             desc: "Automatinis 3 metų pasėlių kaitos (GAAB 7) tikrinimas, sėklų, trąšų ir kuro poreikio planavimas bei NMA GeoJSON eksportas.",
-            url: "https://jurgisagro.com/?sejomaina"
+            url: "https://jurgisagro.com/sejomaina"
         },
         11: {
             title: "Lietuvos Pasėlių Lyga (TOP 10) – Sentinel-2 NDVI Reitingas | JurgisAgro",
             desc: "Kurio ūkininko kviečiai ir rapsai stipriausi jūsų rajone ir Lietuvoje? Palydovinis Sentinel-2 ir Google Earth Engine pasėlių reitingas.",
-            url: "https://jurgisagro.com/?paseliu-lyga"
+            url: "https://jurgisagro.com/paseliu-lyga"
         },
         12: {
             title: "Žemės Ūkio Renginiai, LŽŪKT Mokymai ir Kaimo Šventės | JurgisAgro",
             desc: "Gyvas Lietuvos agro-renginių kalendorius: kaimo šventės, mugės, LŽŪKT kursai, purškimo pažymėjimai, NMA seminarai ir parodos.",
-            url: "https://jurgisagro.com/?renginiai"
+            url: "https://jurgisagro.com/renginiai"
         },
         13: {
             title: "Išmanieji Ūkio Įrenginiai ir Nord Pool Šilumos Siurblio Valdymas | JurgisAgro",
             desc: "Automatinis Daikin Altherma šilumos siurblių ir ūkio įrenginių valdymas pagal pigiausias Nord Pool elektros biržos valandas.",
-            url: "https://jurgisagro.com/?ismanieji-irenginiai"
+            url: "https://jurgisagro.com/ismanieji-irenginiai"
         }
     };
 
