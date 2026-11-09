@@ -546,7 +546,6 @@ function setupCalculatorsHub() {
     const activateCalcView = (calcSlug, viewElement, renderFn) => {
         hideAll();
         viewElement?.classList.remove('hidden');
-        if (typeof renderFn === 'function') renderFn();
 
         const seo = CALC_SEO_MAP[calcSlug];
         if (seo) {
@@ -554,12 +553,14 @@ function setupCalculatorsHub() {
             const descMeta = document.querySelector('meta[name="description"]');
             if (descMeta) descMeta.setAttribute('content', seo.desc);
             const canonLink = document.querySelector('link[rel="canonical"]');
-            if (canonLink) canonLink.setAttribute('href', `https://jurgisagro.com/?${calcSlug}`);
+            if (canonLink) canonLink.setAttribute('href', `https://jurgisagro.com/${calcSlug}`);
         }
 
-        if (window.location.search !== `?${calcSlug}`) {
-            window.history.pushState({ calc: calcSlug }, seo?.title || '', `?${calcSlug}`);
+        if (window.location.pathname !== `/${calcSlug}`) {
+            window.history.pushState({ calc: calcSlug }, seo?.title || '', `/${calcSlug}`);
         }
+
+        if (typeof renderFn === 'function') renderFn();
         window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 

@@ -13,6 +13,7 @@
       "y/**",
       "exportFields20Ha.js",
       "fixAllGrids.js",
+      "generateSeoPages.js",
       "localSync.js",
       "readDbf.js",
       "testTtf.js",
@@ -23,7 +24,7 @@
     ],
     "headers": [
       {
-        "source": "**/*.@(js|css)",
+        "source": "**/*.js",
         "headers": [
           {
             "key": "Cache-Control",
@@ -32,7 +33,16 @@
         ]
       },
       {
-        "source": "**/*.@(png|jpg|jpeg|gif|webp|svg|ico|woff|woff2)",
+        "source": "**/*.css",
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "public, max-age=2592000"
+          }
+        ]
+      },
+      {
+        "source": "**/*.{png,jpg,jpeg,gif,webp,svg,ico,woff,woff2}",
         "headers": [
           {
             "key": "Cache-Control",
@@ -41,7 +51,7 @@
         ]
       },
       {
-        "source": "/index.html",
+        "source": "/**/*.html",
         "headers": [
           {
             "key": "Cache-Control",
@@ -54,18 +64,16 @@
   "extensions": {
     "firestore-stripe-payments": "stripe/firestore-stripe-payments@0.3.4"
   },
-  "functions": [
-    {
-      "source": "functions",
-      "codebase": "default",
-      "disallowLegacyRuntimeConfig": true,
-      "ignore": [
-        "node_modules",
-        ".git",
-        "firebase-debug.log",
-        "firebase-debug.*.log",
-        "*.local"
-      ]
-    }
-  ]
+  "functions": {
+    "source": "functions",
+    "codebase": "default",
+    "disallowLegacyRuntimeConfig": true,
+    "ignore": [
+      "node_modules",
+      ".git",
+      "firebase-debug.log",
+      "firebase-debug.*.log",
+      "*.local"
+    ]
+  }
 }

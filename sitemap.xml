@@ -3,10 +3,9 @@
         xmlns:image="http://www.google.com/schemas/sitemap-image/1.1"
         xmlns:xhtml="http://www.w3.org/1999/xhtml">
 
-    <!-- 1. Pagrindinis portalas -->
     <url>
         <loc>https://jurgisagro.com/</loc>
-        <lastmod>2026-11-04</lastmod>
+        <lastmod>2026-11-07</lastmod>
         <changefreq>daily</changefreq>
         <priority>1.0</priority>
         <xhtml:link rel="alternate" hreflang="lt" href="https://jurgisagro.com/"/>
@@ -18,132 +17,27 @@
         </image:image>
     </url>
 
-    <!-- 2. Gyva Nord Pool elektros birža pavalandžiui -->
-    <url>
-        <loc>https://jurgisagro.com/?nordpool-kainos</loc>
-        <lastmod>2026-11-04</lastmod>
-        <changefreq>hourly</changefreq>
-        <priority>0.9</priority>
-    </url>
-
-    <!-- 3. Euronext MATIF grūdų ir rapsų birža -->
-    <url>
-        <loc>https://jurgisagro.com/?matif-birza</loc>
-        <lastmod>2026-11-04</lastmod>
-        <changefreq>hourly</changefreq>
-        <priority>0.9</priority>
-    </url>
-
-    <!-- 4. Žymėtas dyzelinas (Gazolas) ir 53 Lietuvos kuro bazės -->
-    <url>
-        <loc>https://jurgisagro.com/?dyzelinas-gazolas</loc>
-        <lastmod>2026-11-04</lastmod>
-        <changefreq>daily</changefreq>
-        <priority>0.9</priority>
-    </url>
-
-    <!-- 5. Išmanieji įrenginiai ir Daikin šilumos siurblio valdymas pagal Nord Pool -->
-    <url>
-        <loc>https://jurgisagro.com/?ismanieji-irenginiai</loc>
-        <lastmod>2026-11-04</lastmod>
-        <changefreq>daily</changefreq>
-        <priority>0.9</priority>
-    </url>
-
-    <!-- 6. Agro-Orai purškimui, Įšalo gylis ir T-Sum radaras -->
-    <url>
-        <loc>https://jurgisagro.com/?orai</loc>
-        <lastmod>2026-11-04</lastmod>
-        <changefreq>hourly</changefreq>
-        <priority>0.9</priority>
-    </url>
-
-    <!-- 7. Lietuvos Pasėlių Lyga (TOP 10 rajonų derbis pagal Sentinel-2 NDVI) -->
-    <url>
-        <loc>https://jurgisagro.com/?paseliu-lyga</loc>
-        <lastmod>2026-11-04</lastmod>
-        <changefreq>daily</changefreq>
-        <priority>0.9</priority>
-    </url>
-
-    <!-- 8. Trąšų rinkos radaras ir kainų barometras -->
-    <url>
-        <loc>https://jurgisagro.com/?trasu-barometras</loc>
-        <lastmod>2026-11-04</lastmod>
-        <changefreq>daily</changefreq>
-        <priority>0.8</priority>
-    </url>
-
-    <!-- 9. Grūdų sandėlis ir bokštų ventiliavimas (EMC) -->
-    <url>
-        <loc>https://jurgisagro.com/?grudu-sandelis</loc>
-        <lastmod>2026-11-04</lastmod>
-        <changefreq>daily</changefreq>
-        <priority>0.8</priority>
-    </url>
-
-    <!-- 10. Lietuvos žemės ūkio renginių, mokymų ir kaimo švenčių kalendorius -->
-    <url>
-        <loc>https://jurgisagro.com/?renginiai</loc>
-        <lastmod>2026-11-04</lastmod>
-        <changefreq>daily</changefreq>
-        <priority>0.8</priority>
-    </url>
-
-    <!-- 11. NMA terminai, draudimai ir GAAB reikalavimai -->
-    <url>
-        <loc>https://jurgisagro.com/?nma-terminai</loc>
-        <lastmod>2026-11-04</lastmod>
-        <changefreq>weekly</changefreq>
-        <priority>0.8</priority>
-    </url>
-
-    <!-- 12. Tiksli sėjos normos (MTG) skaičiuoklė -->
-    <url>
-        <loc>https://jurgisagro.com/?sejos-norma</loc>
-        <lastmod>2026-11-04</lastmod>
-        <changefreq>weekly</changefreq>
-        <priority>0.8</priority>
-    </url>
-
-    <!-- 13. Tarpinių pasėlių (posėlių) mišinių skaičiuoklė -->
-    <url>
-        <loc>https://jurgisagro.com/?tarpiniai-paseliai</loc>
-        <lastmod>2026-11-04</lastmod>
-        <changefreq>weekly</changefreq>
-        <priority>0.8</priority>
-    </url>
-
-    <!-- 14. Trąšų N-P-K ir azoto savikainos skaičiuoklė -->
-    <url>
-        <loc>https://jurgisagro.com/?trasu-skaiciuokle</loc>
-        <lastmod>2026-11-04</lastmod>
-        <changefreq>weekly</changefreq>
-        <priority>0.8</priority>
-    </url>
-
-    <!-- 15. Purkštuvo bako tirpalo maišymo skaičiuoklė -->
-    <url>
-        <loc>https://jurgisagro.com/?purkstuvas</loc>
-        <lastmod>2026-11-04</lastmod>
-        <changefreq>weekly</changefreq>
-        <priority>0.8</priority>
-    </url>
-
-    <!-- 16. Kombaino grūdų nuostolių skaičiuoklė -->
-    <url>
-        <loc>https://jurgisagro.com/?kombaino-nuostoliai</loc>
-        <lastmod>2026-11-04</lastmod>
-        <changefreq>weekly</changefreq>
-        <priority>0.8</priority>
-    </url>
-
-    <!-- 17. SOS Pagalba ūkininkams laukuose -->
-    <url>
-        <loc>https://jurgisagro.com/?sos-pagalba</loc>
-        <lastmod>2026-11-04</lastmod>
-        <changefreq>daily</changefreq>
-        <priority>0.8</priority>
-    </url>
+    <url><loc>https://jurgisagro.com/nordpool-kainos</loc><lastmod>2026-11-07</lastmod><changefreq>hourly</changefreq><priority>0.9</priority></url>
+    <url><loc>https://jurgisagro.com/matif-birza</loc><lastmod>2026-11-07</lastmod><changefreq>hourly</changefreq><priority>0.9</priority></url>
+    <url><loc>https://jurgisagro.com/grain-supirkimas</loc><lastmod>2026-11-07</lastmod><changefreq>hourly</changefreq><priority>0.9</priority></url>
+    <url><loc>https://jurgisagro.com/dyzelinas-gazolas</loc><lastmod>2026-11-07</lastmod><changefreq>daily</changefreq><priority>0.9</priority></url>
+    <url><loc>https://jurgisagro.com/ismanieji-irenginiai</loc><lastmod>2026-11-07</lastmod><changefreq>daily</changefreq><priority>0.9</priority></url>
+    <url><loc>https://jurgisagro.com/orai</loc><lastmod>2026-11-07</lastmod><changefreq>hourly</changefreq><priority>0.9</priority></url>
+    <url><loc>https://jurgisagro.com/paseliu-lyga</loc><lastmod>2026-11-07</lastmod><changefreq>daily</changefreq><priority>0.9</priority></url>
+    <url><loc>https://jurgisagro.com/laukai</loc><lastmod>2026-11-07</lastmod><changefreq>daily</changefreq><priority>0.9</priority></url>
+    <url><loc>https://jurgisagro.com/sejomaina</loc><lastmod>2026-11-07</lastmod><changefreq>weekly</changefreq><priority>0.8</priority></url>
+    <url><loc>https://jurgisagro.com/tresimas-vra</loc><lastmod>2026-11-07</lastmod><changefreq>weekly</changefreq><priority>0.8</priority></url>
+    <url><loc>https://jurgisagro.com/kalkinimas-vra</loc><lastmod>2026-11-07</lastmod><changefreq>weekly</changefreq><priority>0.8</priority></url>
+    <url><loc>https://jurgisagro.com/ataskaitos</loc><lastmod>2026-11-07</lastmod><changefreq>weekly</changefreq><priority>0.8</priority></url>
+    <url><loc>https://jurgisagro.com/trasu-barometras</loc><lastmod>2026-11-07</lastmod><changefreq>daily</changefreq><priority>0.8</priority></url>
+    <url><loc>https://jurgisagro.com/grudu-sandelis</loc><lastmod>2026-11-07</lastmod><changefreq>daily</changefreq><priority>0.8</priority></url>
+    <url><loc>https://jurgisagro.com/renginiai</loc><lastmod>2026-11-07</lastmod><changefreq>daily</changefreq><priority>0.8</priority></url>
+    <url><loc>https://jurgisagro.com/nma-terminai</loc><lastmod>2026-11-07</lastmod><changefreq>weekly</changefreq><priority>0.8</priority></url>
+    <url><loc>https://jurgisagro.com/sejos-norma</loc><lastmod>2026-11-07</lastmod><changefreq>weekly</changefreq><priority>0.8</priority></url>
+    <url><loc>https://jurgisagro.com/tarpiniai-paseliai</loc><lastmod>2026-11-07</lastmod><changefreq>weekly</changefreq><priority>0.8</priority></url>
+    <url><loc>https://jurgisagro.com/trasu-skaiciuokle</loc><lastmod>2026-11-07</lastmod><changefreq>weekly</changefreq><priority>0.8</priority></url>
+    <url><loc>https://jurgisagro.com/purkstuvas</loc><lastmod>2026-11-07</lastmod><changefreq>weekly</changefreq><priority>0.8</priority></url>
+    <url><loc>https://jurgisagro.com/kombaino-nuostoliai</loc><lastmod>2026-11-07</lastmod><changefreq>weekly</changefreq><priority>0.8</priority></url>
+    <url><loc>https://jurgisagro.com/sos-pagalba</loc><lastmod>2026-11-07</lastmod><changefreq>daily</changefreq><priority>0.8</priority></url>
 
 </urlset>

@@ -39,6 +39,9 @@ export const CALC_SLUGS_SET = new Set([
 ]);
 
 export function getActiveCalcSlugFromUrl() {
+    const cleanPath = window.location.pathname.replace(/^\/+|\/+$/g, '').replace(/\.html$/i, '');
+    if (CALC_SLUGS_SET.has(cleanPath)) return cleanPath;
+
     const params = new URLSearchParams(window.location.search);
     for (const slug of CALC_SLUGS_SET) {
         if (params.has(slug)) return slug;
@@ -185,13 +188,7 @@ export function switchTab(tabIndex, preserveCalcSlug = false) {
         }
     };
 
-    const calcSlugs = [
-        'nordpool-kainos', 'matif-birza', 'grain-supirkimas', 'dyzelinas-gazolas',
-        'grudu-sandelis', 'nma-terminai', 'sejos-norma', 'tarpiniai-paseliai',
-        'kombaino-nuostoliai', 'purkstuvas', 'trasu-skaiciuokle', 'trasu-barometras'
-    ];
-    const currentSearchClean = window.location.search.replace('?', '');
-    if (tabIndex === 0 && calcSlugs.includes(currentSearchClean)) {
+    if (tabIndex === 0 && getActiveCalcSlugFromUrl()) {
         return;
     }
 
@@ -203,9 +200,9 @@ export function switchTab(tabIndex, preserveCalcSlug = false) {
     if (canonLink) canonLink.setAttribute('href', activeSeo.url);
 
     const slug = TAB_SLUGS[tabIndex];
-    const targetUrl = slug ? `?${slug}` : window.location.pathname;
+    const targetUrl = slug ? `/${slug}` : '/';
     
-    if (window.location.search !== (slug ? `?${slug}` : '')) {
+    if (window.location.pathname !== targetUrl) {
         window.history.pushState({ tab: tabIndex }, activeSeo.title, targetUrl);
     }
 }
@@ -237,6 +234,11 @@ function setMobileBtnActive(id, isActive) {
 }
 
 export function getRequestedTabFromUrl() {
+    const cleanPath = window.location.pathname.replace(/^\/+|\/+$/g, '').replace(/\.html$/i, '');
+    if (SLUG_TO_TAB[cleanPath] !== undefined) {
+        return SLUG_TO_TAB[cleanPath];
+    }
+
     const urlParams = new URLSearchParams(window.location.search);
     
     if (urlParams.has('tab')) {

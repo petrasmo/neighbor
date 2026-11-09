@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="lt" class="light-theme">
+<head>
+    <meta charset="UTF-8">   
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#2E7D32">
+
+    <!-- 📱 PWA MOBILIOSIOS PROGRAMĖLĖS NUSTATYMAI -->
+    <link rel="manifest" href="/manifest.json">
+    <link rel="apple-touch-icon" href="/logo.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="JurgisAgro">
+    <meta name="mobile-web-app-capable" content="yes">
+      
+    <!-- 🎯 MAKSIMALUS SEO IR META ŽYMĖS -->
+    <title>Sėjomainos Planavimas (GAAB 7) ir Ūkio Gamybos Planas | JurgisAgro</title>
+    <meta name="description" content="Automatinis 3 metų pasėlių kaitos (GAAB 7) tikrinimas, sėklų didmaišių, trąšų ir kuro poreikio planavimas bei NMA deklaravimo GeoJSON eksportas.">
+    <meta name="keywords" content="ūkininkų portalas, ūkininkų programa, žemės ūkis, grūdų supirkimo kainos, matif birža, matif kviečių kaina, matif rapsai, gazolio kaina, žymėtas dyzelinas, agro orai, orai purškimui, dirvos kalkinimas, VRA tręšimas, pasėlių lyga, žemės ūkio renginiai, kaimo šventės, trąšų kainos, amonio salietra, sėjos normos skaičiuoklė, NMA žurnalai, JurgisAgro">
+    <meta name="author" content="Petrasmo Studios">
+    <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1">
+    <link rel="canonical" href="https://jurgisagro.com/sejomaina">
+    <link rel="alternate" hreflang="lt" href="https://jurgisagro.com/sejomaina">
+    <link rel="alternate" hreflang="x-default" href="https://jurgisagro.com/sejomaina">
+
+    <!-- ⚡ CORE WEB VITALS SPARTINIMAS -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="dns-prefetch" href="https://www.gstatic.com">
+    <link rel="dns-prefetch" href="https://api.open-meteo.com">
+    <link rel="dns-prefetch" href="https://unpkg.com">
+
+    <!-- 📍 GEO ŽYMĖS (LIETUVA) -->
+    <meta name="geo.region" content="LT">
+    <meta name="geo.placename" content="Lietuva">
+    <meta name="geo.position" content="55.2885;23.9745">
+    <meta name="ICBM" content="55.2885, 23.9745">
+
+    <!-- 🌐 OPEN GRAPH (FACEBOOK, LINKEDIN, VIBER) -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://jurgisagro.com/sejomaina">
+    <meta property="og:site_name" content="JurgisAgro">
+    <meta property="og:title" content="Sėjomainos Planavimas (GAAB 7) ir Ūkio Gamybos Planas | JurgisAgro">
+    <meta property="og:description" content="Automatinis 3 metų pasėlių kaitos (GAAB 7) tikrinimas, sėklų didmaišių, trąšų ir kuro poreikio planavimas bei NMA deklaravimo GeoJSON eksportas.">
+    <meta property="og:image" content="https://jurgisagro.com/jurgisagro-logo.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:alt" content="JurgisAgro ūkininkų portalas ir programa">
+    <meta property="og:locale" content="lt_LT">
+
+    <!-- 🐦 TWITTER / X -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="JurgisAgro 🚜 – Lietuvos Ūkininkų Portalas ir Programa">
+    <meta name="twitter:description" content="Grūdų supirkimo kainos, MATIF birža, agro-orai, Pasėlių Lyga ir žemės ūkio skaičiuoklės.">
+    <meta name="twitter:image" content="https://jurgisagro.com/jurgisagro-logo.png">
+
+    <!-- 🤖 GOOGLE IR AI STRUKTŪRIZUOTI DUOMENYS (SCHEMA.ORG JSON-LD + GEO/AI FEATURELIST) -->
+    <script type="application/ld+json">
+    [
+      {
+        "@context": "https://schema.org",
+        "@type": "SoftwareApplication",
+        "name": "JurgisAgro – Lietuvos Ūkininkų Portalas ir Programa",
+        "url": "https://jurgisagro.com/",
+        "sameAs": [
+        "https://www.youtube.com/@jurgisagro",
+        "https://www.tiktok.com/@jurgisagro",
+        "https://www.facebook.com/people/JurgisAgro/61594036239247/"
+        ],
+        "description": "Nemokama profesionali Lietuvos žemės ūkio valdymo programa ir portalas ūkininkams: grūdų supirkimo kainos, Euronext MATIF birža, žymėto dyzelino (gazolio) užsakymas, agro-orai purškimui, VRA kintamos normos tręšimas ir kalkinimas, sėjomainos planavimas (GAAB 7), grūdų sandėlis (EMC), Sentinel-2 NDVI Pasėlių Lyga, žemės ūkio renginių kalendorius ir oficialūs NMA žurnalai.",
+        "applicationCategory": "BusinessApplication, AgriculturalTechnology",
+        "operatingSystem": "Web, Android, iOS, Windows, macOS",
+        "inLanguage": "lt-LT",
+        "featureList": [
+          "Lietuvos elevatorių grūdų ir rapsų supirkimo kainų palyginimas su transporto kaštais (Linas Agro, Scandagra, Agrokoncertas, Kauno Grūdai, Baltic Agro, Malsena, Roquette Amilina)",
+          "Tiesioginė Euronext MATIF Paryžiaus grūdų birža ir ateities sandoriai gyvai",
+          "53 Lietuvos bazių žymėto dyzelino (gazolio) didmeninių kainų skaičiuoklė su pristatymu į ūkį",
+          "Lietuvos Pasėlių Lyga: žiemkenčių biomasės reitingas 49 rajonuose pagal Sentinel-2 ir Google Earth Engine",
+          "Agro-Orai purškimui (48 val. vėjo, gūsių, lietaus langas, dirvos temperatūra 6 cm, sniego pelėsio ir T-Sum radaras)",
+          "Grūdų sandėliavimo ekonomika ir bokštų ventiliavimas pagal ASABE Chung-Pfost EMC drėgmės formulę",
+          "Ūkio gamybos ir GAAB 7 sėjomainos planavimas su 3 metų pasėlių kaita ir NMA GeoJSON eksportu",
+          "VRA kintamos normos tręšimo ir kalkinimo žemėlapiai su binariniu Shapefile (.ZIP) eksportu į traktoriaus USB",
+          "Privalomas Augalų apsaugos produktų (purškimo) ir trąšų naudojimo apskaitos žurnalas PDF ir Excel formatais",
+          "Lietuvos žemės ūkio renginių, LŽŪKT mokymų, purškimo pažymėjimų kursų, NMA seminarų ir kaimo švenčių kalendorius",
+          "Išmaniųjų ūkio ir namų įrenginių bei Daikin Altherma šilumos siurblių automatinis valdymas pagal Nord Pool elektros biržos kainas"
+        ],
+        "knowsAbout": [
+          "Žemės ūkis", "Ūkio valdymas", "Pasėlių deklaravimas", "Grūdų supirkimo kainos", 
+          "Euronext MATIF birža", "Žymėtas dyzelinas", "Sėjomaina GAAB 7", "VRA tręšimas", 
+          "Dirvos kalkinimas", "Sentinel-2 NDVI", "Agro orai"
+        ],
+        "aggregateRating": {
+          "@type": "AggregateRating",
+          "ratingValue": "4.9",
+          "reviewCount": "142",
+          "bestRating": "5",
+          "worstRating": "1"
+        },
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "EUR"
+        },
+        "author": {
+          "@type": "Organization",
+          "name": "Petrasmo Studios",
+          "url": "https://petrasmo.com"
+        }
+      },
+      {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "Kokia yra nemokama profesionali ūkio valdymo programa ir portalas Lietuvoje?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "JurgisAgro (https://jurgisagro.com) yra nemokama profesionali lietuviška ūkio valdymo programa ir portalas, suteikiantis GAAB 7 sėjomainos planavimą, grūdų sandėlio ir bokštų ventiliavimo (EMC) apskaitą, VRA kintamos normos tręšimo ir kalkinimo Shapefile užduotis traktoriams, tiesioginę MATIF biržą, elevatorių kainas bei Sentinel-2 pasėlių stebėseną be jokių mokesčių."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Kur rasti gyvas grūdų supirkimo kainas ir MATIF biržą Lietuvoje?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "JurgisAgro portale realiu laiku lyginamos didžiausių Lietuvos elevatorių (Linas Agro, Scandagra, Agrokoncertas, Kauno Grūdai, Baltic Agro, Malsena, Roquette Amilina ir Klaipėdos uosto) grūdų bei rapsų supirkimo kainos kartu su transporto ir džiovinimo kaštų skaičiuokle bei tiesioginiais Paryžiaus MATIF biržos grafikais."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Kaip veikia VRA tręšimas, dirvos kalkinimas ir NMA žurnalų generavimas?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "JurgisAgro leidžia vienu paspaudimu pažymėti NMA laukus žemėlapyje, sugeneruoti dirvožemio pH ėminių tinklelį kalkinimui bei kintamos normos (VRA) tręšimo žemėlapius pagal Sentinel-2 NDVI biomasę ir eksportuoti Shapefile (.ZIP) failus į traktoriaus USB terminalą. Taip pat vienu mygtuku paruošiami oficialūs purškimo, trąšų ir GAAB 7 sėjomainos žurnalai PDF ir Excel formatais."
+            }
+          }
+        ]
+      }
+    ]
+    </script>
+
+    <!-- 🚜 FAVICON IKONA -->
+    <link rel="icon" type="image/svg+xml" href="/logo.svg">
+
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;600;700&family=Inter:wght@300;400;500;600;700;800;900&display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;600;700&family=Inter:wght@300;400;500;600;700;800;900&display=swap" media="print" onload="this.media='all'">
+
+    <!-- ⚡ VIENINTELIS SUJUNGTAS CSS IR LEAFLET JS -->
+    <link rel="preload" href="css/style.min.css" as="style">
+    <link rel="stylesheet" href="css/style.min.css">
+    <script defer src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <!-- ⚡ MINIMALUS KRITINIS PRELOADERIO STILIUS AKIMIRKSNIO UŽKROVIMUI -->
+    <style>
+        html.light-theme body { background-color: #F4F6F4; color: #0F172A; }
+        body { background-color: #0F120F; color: #F1F5F9; margin: 0; }
+    </style>
+</head>
+<body class="font-sans antialiased h-[100dvh] w-screen overflow-hidden flex flex-col">
+
+    <div id="app-preloader" class="hidden fixed inset-0 bg-tractorBg z-[200] flex flex-col items-center justify-center space-y-4 transition-opacity duration-300">
+        <div class="relative flex items-center justify-center">
+            <div class="w-16 h-16 rounded-full border-4 border-tractorBorder border-t-tractorPrimaryLight animate-spin"></div>
+            <span class="text-3xl absolute">🚜</span>
+        </div>
+        <div class="text-center space-y-1">
+            <h2 class="font-oswald text-2xl font-bold tracking-widest text-tractorPrimaryLight uppercase">JURGISAGRO</h2>
+            <p class="text-xs text-slate-400 font-medium animate-pulse">Kraunamas ūkininkų portalas...</p>
+        </div>
+    </div>
+
+    <div class="flex flex-col md:flex-row h-full w-full overflow-hidden">
+        
+        <div id="global-mobile-header" class="md:hidden shrink-0 min-h-[56px] w-full bg-tractorSurface border-b border-tractorBorder"></div>
+        <div id="global-sidebar" class="hidden md:flex md:w-72 md:h-full shrink-0 bg-tractorSurface border-r border-tractorBorder"></div>
+
+        <main class="flex-1 h-full overflow-y-auto p-2 sm:p-3 md:p-3 pb-20 md:pb-8 w-full">
+            <div class="w-full">
+                
+                <!-- TAB 0: SKAIČIUOKLĖS -->
+                <section id="view-tab-calculators" class="tab-view space-y-6">
+                    
+                    <div id="view-calculators-hub" class="space-y-6">
+                        
+                        <div class="border-b border-tractorBorder pb-4">
+                            <h1 class="font-oswald text-2xl md:text-3xl font-bold uppercase tracking-wider text-white flex items-center gap-2">🌱 Ūkio Gamybos, Sėklų, Trąšų ir GAAB 7 Sėjomainos Planavimas</h1>
+                            <p class="text-xs md:text-sm text-slate-300 mt-1">
+                                Išmanusis Lietuvos ūkininkų portalas ir nemokama ūkio valdymo programa: Nord Pool elektra, MATIF birža, žymėtas dyzelinas (gazolas), agro-orai ir NMA įrankiai.
+                            </p>
+                        </div>
+
+                        <!-- 12 SKAIČIUOKLIŲ KORTELĖS -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            
+                            <!-- 1. NORD POOL ELEKTROS BIRŽA (1 VIETOJE) -->
+                            <div class="bg-tractorSurface border border-tractorBorder hover:border-tractorPrimary rounded-2xl p-5 shadow-xl flex flex-col justify-between space-y-3 transition group">
+                                <div class="space-y-2">
+                                    <div class="flex justify-between items-start">
+                                        <span class="text-2xl bg-tractorBg p-2.5 rounded-xl border border-tractorBorder block w-fit">⚡</span>
+                                        <span class="text-[10px] bg-green-950/40 text-green-400 border border-green-800/60 px-2 py-0.5 rounded-full font-bold">Nord Pool LT</span>
+                                    </div>
+                                    <h2 class="font-oswald text-lg font-bold text-white tracking-wide group-hover:text-green-500 transition">Nord Pool Elektros Kainos Pavalandžiui</h2>
+                                    <p class="text-xs text-slate-300 leading-relaxed">Valandinės šiandienos ir rytojaus elektros kainos. Sužinokite pigiausias valandas bokštų ventiliavimui ir technikai.</p>
+
+                                    <div id="hub-live-electricity" class="bg-tractorBg border border-tractorBorder rounded-xl px-3 py-2 text-[11px] space-y-0.5 mt-2 min-h-[52px] flex flex-col justify-center">
+                                        <div class="text-slate-400 font-mono text-[10px] animate-pulse">Kraunama Nord Pool birža...</div>
+                                    </div>
+                                </div>
+                                <button id="btn-open-electricity-calc" class="w-full h-10 bg-tractorPrimary hover:bg-tractorPrimaryHover text-white font-extrabold rounded-xl text-xs uppercase tracking-wider shadow-lg flex items-center justify-center gap-1.5 transition cursor-pointer">
+                                    <span>Atidaryti biržą</span> <span>→</span>
+                                </button>
+                            </div>
+
+                            <!-- 2. MATIF BIRŽA (2 VIETOJE) -->
+                            <div class="bg-tractorSurface border border-tractorBorder hover:border-tractorPrimary rounded-2xl p-5 shadow-xl flex flex-col justify-between space-y-3 transition group">
+                                <div class="space-y-2">
+                                    <div class="flex justify-between items-start">
+                                        <span class="text-2xl bg-tractorBg p-2.5 rounded-xl border border-tractorBorder block w-fit">📈</span>
+                                        <span class="text-[10px] bg-green-950/40 text-green-400 border border-green-800/60 px-2 py-0.5 rounded-full font-bold">Paryžiaus birža</span>
+                                    </div>
+                                    <h2 class="font-oswald text-lg font-bold text-white tracking-wide group-hover:text-green-500 transition">MATIF Biržos Kainos ir Grafikai</h2>
+                                    <p class="text-xs text-slate-300 leading-relaxed">Gyva Euronext birža: kviečių, rapsų ir kukurūzų dinamika bei sandoriai.</p>
+
+                                    <div id="hub-live-matif" class="bg-tractorBg border border-tractorBorder rounded-xl px-3 py-2 text-[11px] space-y-0.5 mt-2  min-h-[52px] flex flex-col justify-center">
+                                        <div class="text-slate-400 font-mono text-[10px] animate-pulse">Kraunama Euronext MATIF birža...</div>
+                                    </div>
+                                </div>
+                                <button id="btn-open-matif-calc" class="w-full h-10 bg-tractorPrimary hover:bg-tractorPrimaryHover text-white font-extrabold rounded-xl text-xs uppercase tracking-wider shadow-lg flex items-center justify-center gap-1.5 transition cursor-pointer">
+                                    <span>Atidaryti biržą</span> <span>→</span>
+                                </button>
+                            </div>
+
+                            <!-- 3. GRŪDŲ SUPIRKIMAS (3 VIETOJE) -->
+                            <div class="bg-tractorSurface border border-tractorBorder hover:border-tractorPrimary rounded-2xl p-5 shadow-xl flex flex-col justify-between space-y-3 transition group">
+                                <div class="space-y-2">
+                                    <div class="flex justify-between items-start">
+                                        <span class="text-2xl bg-tractorBg p-2.5 rounded-xl border border-tractorBorder block w-fit">🌾</span>
+                                        <span class="text-[10px] bg-green-950/40 text-green-400 border border-green-800/60 px-2 py-0.5 rounded-full font-bold">Gyvos kainos</span>
+                                    </div>
+                                    <h2 class="font-oswald text-lg font-bold text-white tracking-wide group-hover:text-green-500 transition">Grūdų Supirkimas ir Elevatoriai</h2>
+                                    <p class="text-xs text-slate-300 leading-relaxed">Kur apsimoka vežti derlių. Gyvos kainos, atstumai nuo ūkio, džiovinimo nuoskaitos.</p>
+                                    
+                                    <div id="hub-live-grain" class="bg-tractorBg border border-tractorBorder rounded-xl px-3 py-2 text-[11px] space-y-0.5 mt-2 min-h-[52px] flex flex-col justify-center">
+                                        <div class="text-slate-400 font-mono text-[10px] animate-pulse">Kraunamos elevatorių kainos...</div>
+                                    </div>
+                                </div>
+                                <button id="btn-open-grain-calc" class="w-full h-10 bg-tractorPrimary hover:bg-tractorPrimaryHover text-white font-extrabold rounded-xl text-xs uppercase tracking-wider shadow-lg flex items-center justify-center gap-1.5 transition cursor-pointer">
+                                    <span>Atidaryti</span> <span>→</span>
+                                </button>
+                            </div>
+
+                            <!-- 4. GAZOLIO SKAIČIUOKLĖ -->
+                            <div class="bg-tractorSurface border border-tractorBorder hover:border-tractorPrimary rounded-2xl p-5 shadow-xl flex flex-col justify-between space-y-3 transition group">
+                                <div class="space-y-2">
+                                    <div class="flex justify-between items-start">
+                                        <span class="text-2xl bg-tractorBg p-2.5 rounded-xl border border-tractorBorder block w-fit">⛽</span>
+                                        <span class="text-[10px] bg-amber-950/40 text-amber-400 border border-amber-800/60 px-2 py-0.5 rounded-full font-bold">Kuras į kiemą</span>
+                                    </div>
+                                    <h2 class="font-oswald text-lg font-bold text-white tracking-wide group-hover:text-green-500 transition">Gazolio (Dyzelino) Užsakymas</h2>
+                                    <p class="text-xs text-slate-300 leading-relaxed">53 Lietuvos kuro bazės. Gyva ORLEN didmenos bazė, atstumai nuo ūkio kiemo ir kontaktai.</p>
+
+                                    <div id="hub-live-diesel" class="bg-tractorBg border border-tractorBorder rounded-xl px-3 py-2 text-[11px] space-y-0.5 mt-2 min-h-[52px] flex flex-col justify-center">
+                                        <div class="text-slate-400 font-mono text-[10px] animate-pulse">Kraunama ORLEN didmenos bazė...</div>
+                                    </div>
+                                </div>
+                                <button id="btn-open-diesel-calc" class="w-full h-10 bg-tractorPrimary hover:bg-tractorPrimaryHover text-white font-extrabold rounded-xl text-xs uppercase tracking-wider shadow-lg flex items-center justify-center gap-1.5 transition cursor-pointer">
+                                    <span>Skaičiuoti kurą</span> <span>→</span>
+                                </button>
+                            </div>
+
+                            <!-- 5. GRŪDŲ SANDĖLIAVIMAS IR VENTILIAVIMAS -->
+                            <div class="bg-tractorSurface border border-tractorBorder hover:border-tractorPrimary rounded-2xl p-5 shadow-xl flex flex-col justify-between space-y-3 transition group">
+                                <div class="space-y-2">
+                                    <div class="flex justify-between items-start">
+                                        <span class="text-2xl bg-tractorBg p-2.5 rounded-xl border border-tractorBorder block w-fit">🌾</span>
+                                        <span class="text-[10px] bg-amber-950/40 text-amber-400 border border-amber-800/60 px-2 py-0.5 rounded-full font-bold uppercase tracking-wider">Ekonomika & Bokštai</span>
+                                    </div>
+                                    <h2 class="font-oswald text-lg font-bold text-white tracking-wide group-hover:text-green-500 transition">Grūdų Sandėlis ir Ventiliavimas (EMC)</h2>
+                                    <p class="text-xs text-slate-300 leading-relaxed">„Parduoti ar laikyti?“ savikaina bei kada saugu jungti ventiliatorius pagal EMC oro drėgmę.</p>
+                                </div>
+                                <button id="btn-open-storage-calc" class="w-full h-10 bg-tractorPrimary hover:bg-tractorPrimaryHover text-white font-extrabold rounded-xl text-xs uppercase tracking-wider shadow-lg flex items-center justify-center gap-1.5 transition cursor-pointer">
+                                    <span>Atidaryti sandėlį</span> <span>→</span>
+                                </button>
+                            </div>
+
+                            <!-- 6. NMA TERMINAI IR DRAUDIMAI -->
+                            <div class="bg-tractorSurface border border-tractorBorder hover:border-tractorPrimary rounded-2xl p-5 shadow-xl flex flex-col justify-between space-y-3 transition group">
+                                <div class="space-y-2">
+                                    <div class="flex justify-between items-start">
+                                        <span class="text-2xl bg-tractorBg p-2.5 rounded-xl border border-tractorBorder block w-fit">📜</span>
+                                        <span class="text-[10px] bg-red-950/40 text-red-400 border border-red-800/60 px-2 py-0.5 rounded-full font-bold">NMA & GAAB</span>
+                                    </div>
+                                    <h2 class="font-oswald text-lg font-bold text-white tracking-wide group-hover:text-green-500 transition">NMA Terminai ir Draudimai</h2>
+                                    <p class="text-xs text-slate-300 leading-relaxed">Mėšlo skleidimo draudimas, tarpinių pasėlių išlaikymas ir sankcijų prevencija.</p>
+                                </div>
+                                <button id="btn-open-nma-calc" class="w-full h-10 bg-tractorPrimary hover:bg-tractorPrimaryHover text-white font-extrabold rounded-xl text-xs uppercase tracking-wider shadow-lg flex items-center justify-center gap-1.5 transition cursor-pointer">
+                                    <span>Tikrinti terminus</span> <span>→</span>
+                                </button>
+                            </div>
+
+                            <!-- 7. SĖJOS NORMA -->
+                            <div class="bg-tractorSurface border border-tractorBorder hover:border-tractorPrimary rounded-2xl p-5 shadow-xl flex flex-col justify-between space-y-3 transition group">
+                                <div class="space-y-2">
+                                    <div class="flex justify-between items-start">
+                                        <span class="text-2xl bg-tractorBg p-2.5 rounded-xl border border-tractorBorder block w-fit">🌱</span>
+                                        <span class="text-[10px] bg-green-950/40 text-green-400 border border-green-800/60 px-2 py-0.5 rounded-full font-bold">Sėjos norma</span>
+                                    </div>
+                                    <h2 class="font-oswald text-lg font-bold text-white tracking-wide group-hover:text-green-500 transition">Tiksli Sėjos Normos Skaičiuoklė</h2>
+                                    <p class="text-xs text-slate-300 leading-relaxed">Tikslus kg/ha poreikis pagal MTG ir daigumą. Didmaišių kiekis ir biudžetas.</p>
+                                </div>
+                                <button id="btn-open-seed-calc" class="w-full h-10 bg-tractorPrimary hover:bg-tractorPrimaryHover text-white font-extrabold rounded-xl text-xs uppercase tracking-wider shadow-lg flex items-center justify-center gap-1.5 transition cursor-pointer">
+                                    <span>Atidaryti</span> <span>→</span>
+                                </button>
+                            </div>
+
+                            <!-- 8. TARPINIAI PASĖLIAI -->
+                            <div class="bg-tractorSurface border border-tractorBorder hover:border-tractorPrimary rounded-2xl p-5 shadow-xl flex flex-col justify-between space-y-3 transition group">
+                                <div class="space-y-2">
+                                    <div class="flex justify-between items-start">
+                                        <span class="text-2xl bg-tractorBg p-2.5 rounded-xl border border-tractorBorder block w-fit">🌿</span>
+                                        <span class="text-[10px] bg-green-950/40 text-green-400 border border-green-800/60 px-2 py-0.5 rounded-full font-bold">NMA Ekoschemos</span>
+                                    </div>
+                                    <h2 class="font-oswald text-lg font-bold text-white tracking-wide group-hover:text-green-500 transition">Tarpinių Pasėlių Mišiniai</h2>
+                                    <p class="text-xs text-slate-300 leading-relaxed">2–5 augalų posėlių normos kg/ha, NMA taisyklių atitiktis bei maišymo receptas.</p>
+                                </div>
+                                <button id="btn-open-cover-calc" class="w-full h-10 bg-tractorPrimary hover:bg-tractorPrimaryHover text-white font-extrabold rounded-xl text-xs uppercase tracking-wider shadow-lg flex items-center justify-center gap-1.5 transition cursor-pointer">
+                                    <span>Atidaryti</span> <span>→</span>
+                                </button>
+                            </div>
+
+                            <!-- 9. KOMBAINO NUOSTOLIAI -->
+                            <div class="bg-tractorSurface border border-tractorBorder hover:border-tractorPrimary rounded-2xl p-5 shadow-xl flex flex-col justify-between space-y-3 transition group">
+                                <div class="space-y-2">
+                                    <div class="flex justify-between items-start">
+                                        <span class="text-2xl bg-tractorBg p-2.5 rounded-xl border border-tractorBorder block w-fit">🚜</span>
+                                        <span class="text-[10px] bg-amber-950/40 text-amber-400 border border-amber-800/60 px-2 py-0.5 rounded-full font-bold">Kombaino kontrolė</span>
+                                    </div>
+                                    <h2 class="font-oswald text-lg font-bold text-white tracking-wide group-hover:text-green-500 transition">Kombaino Nuostolių Skaičiuoklė</h2>
+                                    <p class="text-xs text-slate-300 leading-relaxed">Pagal grūdų skaičių padėkle sužinokite praradimus kg/ha, % ir eurais.</p>
+                                </div>
+                                <button id="btn-open-combine-calc" class="w-full h-10 bg-tractorPrimary hover:bg-tractorPrimaryHover text-white font-extrabold rounded-xl text-xs uppercase tracking-wider shadow-lg flex items-center justify-center gap-1.5 transition cursor-pointer">
+                                    <span>Atidaryti</span> <span>→</span>
+                                </button>
+                            </div>
+
+                            <!-- 10. PURKŠTUVAS -->
+                            <div class="bg-tractorSurface border border-tractorBorder hover:border-tractorPrimary rounded-2xl p-5 shadow-xl flex flex-col justify-between space-y-3 transition group">
+                                <div class="space-y-2">
+                                    <div class="flex justify-between items-start">
+                                        <span class="text-2xl bg-tractorBg p-2.5 rounded-xl border border-tractorBorder block w-fit">💦</span>
+                                        <span class="text-[10px] bg-blue-950/40 text-blue-400 border border-blue-800/60 px-2 py-0.5 rounded-full font-bold">Purškimas</span>
+                                    </div>
+                                    <h2 class="font-oswald text-lg font-bold text-white tracking-wide group-hover:text-green-500 transition">Purkštuvo Bako Skaičiuoklė</h2>
+                                    <p class="text-xs text-slate-300 leading-relaxed">Tikslios dozės pilnam ir nepilnam bakui. Chemikalų ir trąšų maišymas.</p>
+                                </div>
+                                <button id="btn-open-spray-calc" class="w-full h-10 bg-tractorPrimary hover:bg-tractorPrimaryHover text-white font-extrabold rounded-xl text-xs uppercase tracking-wider shadow-lg flex items-center justify-center gap-1.5 transition cursor-pointer">
+                                    <span>Atidaryti</span> <span>→</span>
+                                </button>
+                            </div>
+
+                            <!-- 11. TRĄŠŲ N-P-K SKAIČIUOKLĖ -->
+                            <div class="bg-tractorSurface border border-tractorBorder hover:border-tractorPrimary rounded-2xl p-5 shadow-xl flex flex-col justify-between space-y-3 transition group">
+                                <div class="space-y-2">
+                                    <div class="flex justify-between items-start">
+                                        <span class="text-2xl bg-tractorBg p-2.5 rounded-xl border border-tractorBorder block w-fit">🧪</span>
+                                        <span class="text-[10px] bg-amber-950/40 text-amber-400 border border-amber-800/60 px-2 py-0.5 rounded-full font-bold">N-P-K ir Kaina</span>
+                                    </div>
+                                    <h2 class="font-oswald text-lg font-bold text-white tracking-wide group-hover:text-green-500 transition">Trąšų N-P-K Skaičiuoklė</h2>
+                                    <p class="text-xs text-slate-300 leading-relaxed">Fizinė norma (kg/ha) pagal gryną NPK poreikį. 1 kg azoto savikaina.</p>
+                                </div>
+                                <button id="btn-open-fert-calc" class="w-full h-10 bg-tractorPrimary hover:bg-tractorPrimaryHover text-white font-extrabold rounded-xl text-xs uppercase tracking-wider shadow-lg flex items-center justify-center gap-1.5 transition cursor-pointer">
+                                    <span>Atidaryti</span> <span>→</span>
+                                </button>
+                            </div>
+
+                            <!-- 12. TRĄŠŲ RINKOS RADARAS IR BAROMETRAS -->
+                            <div class="bg-tractorSurface border border-tractorBorder hover:border-tractorPrimary rounded-2xl p-5 shadow-xl flex flex-col justify-between space-y-3 transition group">
+                                <div class="space-y-2">
+                                    <div class="flex justify-between items-start">
+                                        <span class="text-2xl bg-tractorBg p-2.5 rounded-xl border border-tractorBorder block w-fit">🧭</span>
+                                        <span class="text-[10px] bg-green-950/40 text-green-400 border border-green-800/60 px-2 py-0.5 rounded-full font-bold">Rinkos prognozė</span>
+                                    </div>
+                                    <h2 class="font-oswald text-lg font-bold text-white tracking-wide group-hover:text-green-500 transition">Trąšų Kainų Radaras ir Barometras</h2>
+                                    <p class="text-xs text-slate-300 leading-relaxed">Olandijos TTF dujų, EUR/USD valiutos ir karbamido indeksai. Sužinokite, kada palankiausia pirkti trąšas.</p>
+
+                                    <div id="hub-live-baro" class="bg-tractorBg border border-tractorBorder rounded-xl px-3 py-2 text-[11px] space-y-0.5 mt-2 min-h-[52px] flex flex-col justify-center">
+                                        <div class="text-slate-400 font-mono text-[10px] animate-pulse">Kraunamas trąšų barometras...</div>
+                                    </div>
+                                </div>
+                                <button id="btn-open-barometer-calc" class="w-full h-10 bg-tractorPrimary hover:bg-tractorPrimaryHover text-white font-extrabold rounded-xl text-xs uppercase tracking-wider shadow-lg flex items-center justify-center gap-1.5 transition cursor-pointer">
+                                    <span>Atidaryti radarą</span> <span>→</span>
+                                </button>
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                    <!-- VIDINIAI SKAIČIUOKLIŲ BLOKAI -->
+                    <div id="view-tab-electricity-embed" class="hidden !mt-0">
+                        <div id="electricity-calc-content"></div>
+                    </div>
+
+                    <div id="view-tab-matif-embed" class="hidden !mt-0">
+                        <div id="matif-calc-content"></div>
+                    </div>
+
+                    <div id="view-tab-grain-embed" class="hidden !mt-0">
+                        <div id="grain-calc-content"></div>
+                    </div>
+
+                    <div id="view-tab-diesel-embed" class="hidden !mt-0">
+                        <div id="diesel-calc-content"></div>
+                    </div>
+
+                    <div id="view-tab-storage-embed" class="hidden !mt-0">
+                        <div id="storage-calc-content"></div>
+                    </div>
+
+                    <div id="view-tab-nma-embed" class="hidden !mt-0">
+                        <div id="nma-calc-content"></div>
+                    </div>
+
+                    <div id="view-tab-seed-embed" class="hidden !mt-0">
+                        <div id="seed-calc-content"></div>
+                    </div>
+
+                    <div id="view-tab-cover-embed" class="hidden !mt-0">
+                        <div id="cover-calc-content"></div>
+                    </div>
+
+                    <div id="view-tab-combine-embed" class="hidden !mt-0">
+                        <div id="combine-calc-content"></div>
+                    </div>
+
+                    <div id="view-tab-spray-embed" class="hidden !mt-0">
+                        <div id="spray-calc-content"></div>
+                    </div>
+
+                    <div id="view-tab-fert-embed" class="hidden !mt-0">
+                        <div id="fert-calc-content"></div>
+                    </div>
+
+                    <div id="view-tab-barometer-embed" class="hidden !mt-0">
+                        <div id="barometer-calc-content"></div>
+                    </div>
+
+                </section>
+
+                <section id="view-tab-weather" class="tab-view space-y-6 hidden"></section>
+                <section id="view-tab-fields" class="tab-view space-y-6 hidden"></section>
+                <section id="view-tab-cropplanner" class="tab-view space-y-6 hidden"></section>
+                <section id="view-tab-reports" class="tab-view space-y-6 hidden"></section>
+                <section id="view-tab-garage" class="tab-view space-y-6 hidden"></section>
+                <section id="view-tab-feed" class="tab-view space-y-6 hidden"></section>
+                <section id="view-tab-settings" class="tab-view space-y-6 hidden"></section>
+                <section id="view-tab-league" class="tab-view space-y-6 hidden"></section>
+                <section id="view-tab-events" class="tab-view space-y-6 hidden"></section>
+
+                <!-- PILNA SEO ŽINIŲ BAZĖ SU TIKROMIS <a href> NUORODOMIS PRIEŠ FOOTERĮ -->
+                <footer class="pt-8 pb-4 border-t border-tractorBorder/50 mt-12 space-y-3">
+                    
+                    <details id="seo-knowledge-block" open class="group bg-tractorSurface/60 border border-tractorBorder/60 rounded-xl px-4 py-2.5 text-left transition">
+                        <summary class="text-xs text-slate-400 hover:text-white font-semibold cursor-pointer flex items-center justify-between list-none select-none">
+                            <span>ℹ️ Apie JurgisAgro ūkininkų portalą, ūkio valdymo programą ir pagrindines skaitmenines funkcijas</span>
+                            <span class="text-[10px] group-open:rotate-180 transition-transform">▼</span>
+                        </summary>
+
+                        <div class="pt-4 mt-3 border-t border-tractorBorder/50 space-y-4 text-[11px] text-slate-400 leading-relaxed">
+                            <div>
+                                <h2 class="text-xs font-bold text-white uppercase tracking-wider mb-1">
+                                    JurgisAgro.com – Skaitmeninis Lietuvos Ūkininkų Portalas ir Nemokama Ūkio Valdymo Programa
+                                </h2>
+                                <p>
+                                    <strong>JurgisAgro</strong> yra pažangus Lietuvos <strong>ūkininkų portalas</strong> ir internetinė <strong>ūkininkų programa</strong>, sukurta moderniam <strong>žemės ūkiui</strong>. Platforma vienoje vietoje apjungia rinkos kainų analitiką, tiksliąją žemdirbystę, kosminę palydovų stebėseną, agro-meteorologiją, NMA dokumentų ruošimą bei ūkininkų bendruomenės įrankius.
+                                </p>
+                            </div>
+
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <h3 class="font-bold text-white"><a href="https://jurgisagro.com/?grain-supirkimas" class="hover:text-green-500 underline">1. Grūdų supirkimo kainos ir Lietuvos elevatoriai</a></h3>
+                                    <p>Gyvas grūdų supirkimo kainų palyginimas tarp didžiausių Lietuvos supirkėjų: <strong>Linas Agro, Scandagra, Agrokoncertas, Kauno Grūdai, Baltic Agro, Malsena, Roquette Amilina, Kuršėnų grūdai</strong> bei Klaipėdos uosto terminalų (BKT, BEGA). Skaičiuoklė automatiškai įvertina kviečių (ekstra, I, II klasės, pašarinių), rapsų, miežių, žirnių ir pupų drėgmės bei šiukšlių nuoskaitas, džiovinimo įkainius ir transporto logistiką nuo jūsų ūkio bazės.</p>
+                                </div>
+
+                                <div>
+                                    <h3 class="font-bold text-white"><a href="https://jurgisagro.com/?matif-birza" class="hover:text-green-500 underline">2. Euronext MATIF grūdų ir rapsų birža gyvai</a></h3>
+                                    <p>Tiesioginiai <strong>Paryžiaus biržos (Euronext MATIF)</strong> kviečių, rapsų ir kukurūzų kainų grafikai, dienos pokyčiai eurais bei būsimo derliaus fiksuotų ateities sandorių (futures) kotiruotės.</p>
+                                </div>
+
+                                <div>
+                                    <h3 class="font-bold text-white"><a href="https://jurgisagro.com/?dyzelinas-gazolas" class="hover:text-green-500 underline">3. Žymėtas dyzelinas ūkininkams (Gazolas) į ūkį</a></h3>
+                                    <p>Didmeninė <strong>žymėto dyzelino (žalio dyzelino / gazolio) kaina</strong> iš 53 Lietuvos naftos bazių (<em>ORLEN Lietuva, KN Energies, Jozita, Saurida, Trevena, Alauša, Deglas, Takuras</em> ir kt.). Skaičiuojamos tūrio nuolaidos (nuo 2000 iki 24000 litrų) ir autocisternos pristatymo į ūkio kiemą savikaina su PVM arba be PVM.</p>
+                                </div>
+
+                                <div>
+                                    <h3 class="font-bold text-white"><a href="https://jurgisagro.com/?grudu-sandelis" class="hover:text-green-500 underline">4. Grūdų sandėliavimo ekonomika ir bokštų ventiliavimas (EMC)</a></h3>
+                                    <p>Skaičiuoklė „Laikyti ar parduoti?“ įvertina grūdų saugojimo nuosavame bokšte ar elevatoriuje kaštus (ventiliavimo elektrą, natūralų svorio nudžiūvimą ir banko palūkanas). <strong>Protingo ventiliavimo (EMC)</strong> modulis pagal ASABE Chung-Pfost termodinaminę formulę ir 48 val. oro drėgmę parodo saugias valandas, kada jungti bokštų ventiliatorius, kad grūdai nesudrėktų.</p>
+                                </div>
+
+                                <div>
+                                    <h3 class="font-bold text-white"><a href="https://jurgisagro.com/?trasu-barometras" class="hover:text-green-500 underline">5. Trąšų kainų radaras, barometras ir N-P-K skaičiuoklė</a></h3>
+                                    <p>5 rinkos piliastrų <strong>trąšų kainų barometras</strong>: seka Olandijos TTF gamtinių dujų biržą, EUR/USD valiutos kursą, pasaulinį karbamido (Urea FOB) indeksą ir kviečių/trąšų santykį. N-P-K skaičiuoklė apskaičiuoja fizinę <strong>amonio salietros, KAS-32, karbamido, amonio sulfato, DAP ir NPK trąšų</strong> normą (kg/ha ir l/ha) bei 1 kg gryno azoto savikainą.</p>
+                                </div>
+
+                                <div>
+                                    <h3 class="font-bold text-white"><a href="https://jurgisagro.com/?sejos-norma" class="hover:text-green-500 underline">6. Tiksli sėjos normos (MTG) ir tarpinių pasėlių skaičiuoklė</a></h3>
+                                    <p>Apskaičiuokite tikslią kviečių, rapsų, miežių, žirnių, pupų ir avižų sėjos normą (kg/ha) pagal 1000 grūdų masę (MTG), daigumą ir švarumą. <strong>Tarpinių pasėlių (posėlių) mišinių skaičiuoklė</strong> padeda sudaryti NMA ekoschemų reikalavimus atitinkančius garstyčių, ridikų, avižų, vikių, facelijų ir dobilų mišinius.</p>
+                                </div>
+
+                                <div>
+                                    <h3 class="font-bold text-white"><a href="https://jurgisagro.com/?kombaino-nuostoliai" class="hover:text-green-500 underline">7. Kombaino grūdų nuostolių ir purkštuvo bako skaičiuoklės</a></h3>
+                                    <p>Kombaino kontrolės įrankis pagal rastų grūdų skaičių padėkle apskaičiuoja kūlimo nuostolius kilogramais iš hektaro (kg/ha), procentais ir eurais. <strong>Purkštuvo bako maišymo skaičiuoklė</strong> tiksliai suskaičiuoja pilnų ir paskutinio nepilno bako vandens bei herbicidų, fungicidų ir mikroelementų normas.</p>
+                                </div>
+
+                                <div>
+                                    <h3 class="font-bold text-white"><a href="https://jurgisagro.com/?orai" class="hover:text-green-500 underline">8. Agro-Orai: Purškimo langas, Įšalas, T-Sum ir Sniego pelėsis</a></h3>
+                                    <p>Tikslūs <strong>agro-orai purškimui</strong> kiekvienam ūkio laukui: 48 val. vėjo greičio, gūsių, kritulių ir temperatūros šviesoforas. Žiemos ir pavasario radarai stebi <strong>dirvos temperatūrą 0 cm ir 6 cm (augimo mazgo) gylyje, įšalo gylį, plikšalio pavojų, sniego pelėsio ir ledo plutos (asfiksijos) riziką</strong> bei pavasario vegetacijos starto <strong>„T-Sum 200 / 250“</strong> šilumos sumą.</p>
+                                </div>
+
+                                <div>
+                                    <h3 class="font-bold text-white"><a href="https://jurgisagro.com/?laukai" class="hover:text-green-500 underline">9. Mano Laukai: NMA žemėlapis ir Sentinel-2 NDVI palydovas</a></h3>
+                                    <p>Interaktyvus <strong>ūkio laukų žemėlapis</strong> su tiesioginiu Europos Kosmoso Agentūros (<strong>Copernicus Sentinel-2</strong>) NDVI vegetacijos indekso, tikrų spalvų ir dirvos drėgmės sluoksniais. Vienu paspaudimu ant lauko <strong>ūkininkų programa</strong> automatiškai atpažįsta NMA kontrolinio žemės sklypo (KŽS) bloko numerį ir tikslias ribas.</p>
+                                </div>
+
+                                <div>
+                                    <h3 class="font-bold text-white"><a href="https://jurgisagro.com/?sejomaina" class="hover:text-green-500 underline">10. Ūkio gamybos ir GAAB 7 sėjomainos planavimas</a></h3>
+                                    <p>Automatizuotas ūkio sėjos, technologijų, purškimų, sėklų didmaišių, trąšų ir gazolio poreikio planavimas. <strong>GAAB 7 sėjomainos šviesoforas</strong> tikrina 3 metų pasėlių kaitą (min. 35% ariamos žemės) ir monokultūros draudimus bei leidžia eksportuoti paruoštą <strong>NMA pasėlių deklaravimo GeoJSON</strong> failą.</p>
+                                </div>
+
+                                <div>
+                                    <h3 class="font-bold text-white"><a href="https://jurgisagro.com/?tresimas-vra" class="hover:text-green-500 underline">11. VRA kintamos normos tręšimas traktoriui (Shapefile į USB)</a></h3>
+                                    <p>Kurkite tiksliuosius <strong>kintamos normos (VRA) tręšimo žemėlapius</strong> pagal palydovinį NDVI biomasės spektrą ir vienu paspaudimu atsisiųskite standartinį binarinį <strong>Shapefile (.shp, .shx, .dbf, .prj) archyvą (.ZIP)</strong> į USB atmintuką, tinkantį <em>John Deere, Amazone, Bogballe, Rauch, Kverneland, Trimble</em> ir kitiems terminalams.</p>
+                                </div>
+
+                                <div>
+                                    <h3 class="font-bold text-white"><a href="https://jurgisagro.com/?kalkinimas-vra" class="hover:text-green-500 underline">12. VRA dirvos kalkinimas ir dirvožemio pH tyrimų centras</a></h3>
+                                    <p>Automatinis <strong>dirvožemio ėminių tinklelio generavimas</strong> (kas 1.5, 3 arba 5 ha) su tiesiogine Google Maps GPS navigacija iki kiekvieno ėminio taško lauke. Suvedus laboratorijos pH rezultatus, sistema apskaičiuoja kintamą kalkių normą rūgščioms zonoms ir paruošia kalkinimo Shapefile užduotį barstytuvui.</p>
+                                </div>
+
+                                <div>
+                                    <h3 class="font-bold text-white"><a href="https://jurgisagro.com/?ataskaitos" class="hover:text-green-500 underline">13. Lauko darbų žurnalas ir NMA ataskaitos (PDF / Excel)</a></h3>
+                                    <p>Registruokite sėjos, tręšimo, purškimo, žemės dirbimo ir kūlimo darbus. Vienu paspaudimu sugeneruokite NMA ir VAT patikroms privalomą <strong>Augalų apsaugos produktų (purškimo) naudojimo apskaitos žurnalą</strong>, <strong>Trąšų naudojimo žurnalą</strong> bei ūkio derlingumo ir savikainos suvestinę A4 spausdinimui (PDF) arba Excel (.XLS) formatu.</p>
+                                </div>
+
+                                <div>
+                                    <h3 class="font-bold text-white"><a href="https://jurgisagro.com/?paseliu-lyga" class="hover:text-green-500 underline">14. Lietuvos Pasėlių Lyga (TOP 10 rajonų derbis)</a></h3>
+                                    <p>Nacionalinis ir rajoninis pasėlių čempionatas, kuriame <strong>Google Earth Engine</strong> superkompiuteriai vertina žieminių kviečių, rapsų bei ankštinių augalų būklę visuose 49 Lietuvos rajonuose pagal „Aukso vidurio“ NDVI metodiką.</p>
+                                </div>
+
+                                <div>
+                                    <h3 class="font-bold text-white"><a href="https://jurgisagro.com/?renginiai" class="hover:text-green-500 underline">15. Lietuvos žemės ūkio renginių ir kaimo švenčių kalendorius</a></h3>
+                                    <p>Dirbtinio intelekto (AI) kasnakt atnaujinamas <strong>žemės ūkio renginių kalendorius</strong>: <strong>LŽŪKT mokymai, augalų apsaugos (purškimo) pažymėjimų kursai, traktorininkų mokymai, NMA ir ŽŪM seminarai, parodos „Ką pasėsi...“ ir „Agrovizija“, lauko dienos bei kaimo bendruomenių šventės ir mugės</strong> jūsų rajone.</p>
+                                </div>
+
+                                <div>
+                                    <h3 class="font-bold text-white"><a href="https://jurgisagro.com/?ismanieji-irenginiai" class="hover:text-green-500 underline">16. Išmanieji įrenginiai (Daikin Nord Pool), SOS pagalba ir NMA terminai</a></h3>
+                                    <p>Valdykite Daikin Altherma šilumos siurblius pagal pigiausias Nord Pool elektros valandas. Sugedus traktoriui ar įstrigus laukuose, išsiųskite skubų <strong>SOS pranešimą</strong> aplinkiniams ūkininkams. Sekite oficialų <strong>NMA teisinių terminų ir draudimų šviesoforą</strong> ir gaukite išmaniuosius pranešimus tiesiai į telefoną.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </details>
+
+                    <div class="text-center text-xs text-slate-400 space-y-1.5">
+                        <p>&copy; 2026 JurgisAgro.com • Lietuvos ūkininkų portalas ir programa • Sukurta: <a href="https://petrasmo.com" target="_blank" class="hover:text-green-600 font-bold underline decoration-slate-400">Petrasmo Studios</a></p>
+                        <div class="flex items-center justify-center gap-3 text-[11px]">
+                            <button type="button" onclick="window.openJurgisLegalModal && window.openJurgisLegalModal('privacy')" class="text-slate-400 hover:text-green-500 underline cursor-pointer bg-transparent border-0 p-0">
+                                🛡️ Privatumo politika (BDAR)
+                            </button>
+                            <span>•</span>
+                            <button type="button" onclick="window.openJurgisLegalModal && window.openJurgisLegalModal('terms')" class="text-slate-400 hover:text-green-500 underline cursor-pointer bg-transparent border-0 p-0">
+                                📜 Naudojimo sąlygos
+                            </button>
+                        </div>
+                    </div>
+                </footer>
+            </div>
+        </main>
+
+        <div id="global-mobile-nav" class="md:hidden"></div>
+
+    </div>
+
+    <!-- DIALOGAS -->
+    <div id="custom-dialog" class="fixed inset-0 bg-black/80 flex items-center justify-center z-[120] hidden p-4 backdrop-blur-sm">
+        <div class="bg-tractorSurface border border-tractorBorder p-6 md:p-8 rounded-2xl max-w-xl w-full text-center space-y-4 shadow-2xl max-h-[90vh] overflow-y-auto">
+            <span id="dialog-icon" class="text-4xl block">⚠️</span>
+            <h3 id="dialog-title" class="font-oswald text-xl md:text-2xl font-bold uppercase tracking-wider text-white">Dėmesio</h3>
+            <div id="dialog-message" class="text-xs md:text-sm leading-relaxed text-slate-300"></div>
+            <div class="flex gap-3 pt-2">
+                <button id="dialog-cancel-btn" class="flex-1 h-11 bg-tractorBg border border-tractorBorder rounded-xl font-bold text-xs hover:bg-zinc-800 transition hidden">Atšaukti</button>
+                <button id="dialog-confirm-btn" class="flex-1 h-11 bg-tractorPrimary hover:bg-tractorPrimaryHover text-white font-bold rounded-xl text-xs transition cursor-pointer">Supratau 👍</button>
+            </div>
+        </div>
+    </div>
+
+    <script defer src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script defer src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+    <script defer src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    <script defer src="https://www.gstatic.com/firebasejs/10.8.0/firebase-messaging-compat.js"></script>
+
+    <script type="module" src="js/main.js?v=2.8"></script>
+
+    <!-- 📈 GOOGLE ANALYTICS (GA4) – IŠMANUS UŽKROVIMAS PO 3 SEK., KAD NEAPKRAUTŲ PRADŽIOS! -->
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      setTimeout(() => {
+        const s = document.createElement('script');
+        s.src = 'https://www.googletagmanager.com/gtag/js?id=G-J6ZEGM736H';
+        s.async = true;
+        document.body.appendChild(s);
+        gtag('js', new Date());
+        gtag('config', 'G-J6ZEGM736H');
+      }, 6000);
+    </script>
+</body>
+</html>
