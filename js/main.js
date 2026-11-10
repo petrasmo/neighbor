@@ -3,6 +3,7 @@ import { auth, db } from './core/firebase.js';
 import { openAuthModal, logoutUser } from './core/auth.js';
 import { switchTab, showDialog, showBottomToast, getRequestedTabFromUrl, updateSeoMetaTags, getActiveCalcSlugFromUrl } from './core/ui.js';
 import { initThemeToggle } from './core/theme.js';
+import { initLanguageEngine } from './core/i18n.js';
 import { renderGlobalSidebar } from './core/sidebar.js';
 
 import { initFeedTab } from './bendruomene/feed.js';
@@ -107,6 +108,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     renderGlobalSidebar('index', requestedTab);
     initThemeToggle();
+    renderGlobalSidebar('index', requestedTab);
+    initThemeToggle();
+    initLanguageEngine();
     loadHubLivePriceTickers();
 
     document.querySelectorAll('.login-trigger-btn').forEach(btn => btn.addEventListener('click', () => openAuthModal('login')));

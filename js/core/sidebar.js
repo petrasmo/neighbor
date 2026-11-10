@@ -22,15 +22,17 @@ export function renderGlobalSidebar(activePage = 'index', activeTab = 0) {
     if (sidebarContainer) {
         sidebarContainer.innerHTML = `
             <aside class="flex flex-col justify-between w-72 bg-tractorSurface border-r border-tractorBorder p-5 h-full shrink-0 overflow-y-auto">
-                <div class="space-y-4">
-                    <div class="flex items-center justify-between gap-2 border-b border-tractorBorder/70 pb-4">
+                <div class="space-y-3.5">
+                    
+                    <!-- LOGOTIPAS IR PAGALBOS / TEMOS MYGTUKAI (PILNAI TELPA!) -->
+                    <div class="flex items-center justify-between gap-2 pb-1">
                         <a href="index.html" class="flex items-center gap-2.5 min-w-0">
                             <div class="w-9 h-9 rounded-xl bg-tractorPrimary/20 border border-tractorPrimary/40 flex items-center justify-center text-lg shrink-0">
                                 🚜
                             </div>
                             <div class="min-w-0">
-                                <span class="font-oswald text-xl font-black tracking-wider block leading-tight truncate" style="color: var(--text-main);">JURGISAGRO</span>
-                                <span class="text-[10px] text-green-500 font-bold uppercase tracking-widest block">Ūkininkų portalas</span>
+                                <span class="font-oswald text-xl font-black tracking-wider block leading-tight" style="color: var(--text-main);">JURGISAGRO</span>
+                                <span class="text-[10px] text-green-500 font-bold uppercase tracking-widest block leading-tight">Ūkininkų portalas</span>
                             </div>
                         </a>
 
@@ -43,8 +45,21 @@ export function renderGlobalSidebar(activePage = 'index', activeTab = 0) {
                             </button>
                         </div>
                     </div>
+
+                    <!-- 🌍 GRAŽI KALBŲ PERJUNGIMO JUOSTELĖ PO LOGOTIPU -->
+                    <div class="flex items-center justify-between bg-tractorBg border border-tractorBorder rounded-xl px-3 py-1.5 border-b border-tractorBorder/70">
+                        <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+                            <span>🌍</span> <span>Kalba:</span>
+                        </span>
+                        <select class="lang-switcher-select h-6 px-2 bg-tractorSurface border border-tractorBorder rounded-lg text-[11px] font-extrabold outline-none cursor-pointer transition" style="color: var(--text-main);" title="Kalba / Language">
+                            <option value="lt">Lietuvių (LT)</option>
+                            <option value="en">English (EN)</option>
+                            <option value="lv">Latviešu (LV)</option>
+                            <option value="et">Eesti (ET)</option>
+                        </select>
+                    </div>
                     
-                    <nav class="space-y-3 text-xs">
+                    <nav class="space-y-3 text-xs pt-1 border-t border-tractorBorder/70">
                         
                         <!-- 1. SKAIČIUOKLĖS -->
                         <div class="space-y-1">
@@ -150,20 +165,26 @@ export function renderGlobalSidebar(activePage = 'index', activeTab = 0) {
     // 2. MOBILI VIRŠUTINĖ JUOSTA
     if (mobileHeaderContainer) {
         mobileHeaderContainer.innerHTML = `
-            <div class="bg-tractorSurface border-b border-tractorBorder w-full px-4 py-3 flex justify-between items-center relative z-[150] shadow-sm shrink-0">
-                <a href="index.html" class="flex items-center gap-2">
-                    <span class="text-xl">🚜</span>
-                    <span class="font-oswald text-xl font-bold tracking-wider text-green-500">JURGISAGRO</span>
+            <div class="bg-tractorSurface border-b border-tractorBorder w-full px-3 py-2.5 flex justify-between items-center relative z-[150] shadow-sm shrink-0">
+                <a href="index.html" class="flex items-center gap-1.5">
+                    <span class="text-lg">🚜</span>
+                    <span class="font-oswald text-lg font-bold tracking-wider text-green-500">JURGISAGRO</span>
                 </a>
-                <div class="flex items-center gap-2">
-                    <button id="help-btn-mobile" class="px-2.5 py-1 bg-tractorBg border border-tractorBorder rounded-lg text-xs font-bold" title="Pagalba">
+                <div class="flex items-center gap-1.5">
+                    <select class="lang-switcher-select h-7 px-1.5 bg-tractorBg border border-tractorBorder rounded-lg text-[11px] font-bold outline-none cursor-pointer" style="color: var(--text-main);" title="Kalba / Language">
+                        <option value="lt">LT</option>
+                        <option value="en">EN</option>
+                        <option value="lv">LV</option>
+                        <option value="et">ET</option>
+                    </select>
+                    <button id="help-btn-mobile" class="px-2 py-1 bg-tractorBg border border-tractorBorder rounded-lg text-xs font-bold" title="Pagalba">
                         <span>📖</span>
                     </button>
-                    <button class="btn-theme-toggle px-2.5 py-1 bg-tractorBg border border-tractorBorder rounded-lg text-xs font-bold">
+                    <button class="btn-theme-toggle px-2 py-1 bg-tractorBg border border-tractorBorder rounded-lg text-xs font-bold">
                         <span class="theme-toggle-icon">☀️</span>
                     </button>
                     <div id="auth-status-mobile">
-                        <button class="login-trigger-btn px-3 py-1 bg-tractorPrimary text-white rounded-lg text-xs font-bold">
+                        <button class="login-trigger-btn px-2.5 py-1 bg-tractorPrimary text-white rounded-lg text-xs font-bold">
                             Prisijungti
                         </button>
                     </div>
