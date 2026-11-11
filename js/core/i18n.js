@@ -3,7 +3,24 @@
 const STORAGE_KEY = 'jurgis_lang';
 const CACHE_KEY_PREFIX = 'jurgis_i18n_cache_v1_';
 
-let currentLang = localStorage.getItem(STORAGE_KEY) || 'lt';
+function detectInitialLanguage() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const paramLang = urlParams.get('lang');
+    if (paramLang && ['lt', 'en', 'lv', 'et'].includes(paramLang)) {
+        localStorage.setItem(STORAGE_KEY, paramLang);
+        return paramLang;
+    }
+    if (window.location.pathname === '/en' || window.location.pathname.startsWith('/en/')) {
+        localStorage.setItem(STORAGE_KEY, 'en');
+        return 'en';
+    }
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) return saved;
+    return 'lt';
+}
+
+let currentLang = detectInitialLanguage();
+
 let observer = null;
 let pendingNodes = new Map();
 let batchTimer = null;

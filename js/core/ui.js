@@ -39,7 +39,10 @@ export const CALC_SLUGS_SET = new Set([
 ]);
 
 export function getActiveCalcSlugFromUrl() {
-    const cleanPath = window.location.pathname.replace(/^\/+|\/+$/g, '').replace(/\.html$/i, '');
+    const cleanPath = window.location.pathname
+        .replace(/^\/+|\/+$/g, '')
+        .replace(/^en\/?/i, '')
+        .replace(/\.html$/i, '');
     if (CALC_SLUGS_SET.has(cleanPath)) return cleanPath;
 
     const params = new URLSearchParams(window.location.search);
@@ -234,7 +237,10 @@ function setMobileBtnActive(id, isActive) {
 }
 
 export function getRequestedTabFromUrl() {
-    const cleanPath = window.location.pathname.replace(/^\/+|\/+$/g, '').replace(/\.html$/i, '');
+    const cleanPath = window.location.pathname
+        .replace(/^\/+|\/+$/g, '')
+        .replace(/^en\/?/i, '')
+        .replace(/\.html$/i, '');
     if (SLUG_TO_TAB[cleanPath] !== undefined) {
         return SLUG_TO_TAB[cleanPath];
     }
