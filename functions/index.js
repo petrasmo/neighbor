@@ -23,6 +23,12 @@ const {
   executeHourlyDaikinAutopilot,
 } = require("./daikinSync");
 
+const {
+  syncUserShellyTelemetry,
+  sendShellyCommand,
+  executeHourlySiloAutopilot,
+} = require("./shellySync");
+
 // Importuojame Išmaniųjų Pranešimų pagalbininką
 const { 
   checkAndSendMatifAlerts, 
@@ -106,6 +112,7 @@ exports.scheduledHourlyDaikinAutopilot = onSchedule(
   { schedule: "0 * * * *", timeZone: "Europe/Vilnius" },
   async (event) => {
     await executeHourlyDaikinAutopilot(db, admin);
+    await executeHourlySiloAutopilot(db, admin);
   }
 );
 
@@ -864,6 +871,95 @@ exports.seedElectricityFilesNow = onRequest(
 Nuo šiol kasdien 15:00 val. šie failai pasipildys automatiškai!`);
     } catch (err) {
       res.status(500).send("Klaida: " + err.message);
+    }
+  }
+);
+
+// ========================================================
+// 🛢️ 20. GRŪDŲ BOKŠTO VENTILIATORIAUS VALDYMAS (SHELLY CLOUD IOT)
+// ========================================================
+exports.connectShellySilo = onRequest(
+  { cors: true, invoker: "public" },
+  async (req, res) => {
+    try {
+      const body = typeof req.body === "string" ? JSON.parse(req.body) : req.body;
+      const { userId, name, shellyDeviceId, authKey, serverUri, lat, lng } = body;
+
+      if (!userId || !shellyDeviceId || !authKey) {
+        return res.status(400).json({ error: "Trūksta Shelly Device ID arba Auth Key." });
+      }
+
+      const cleanId = String(shellyDeviceId).trim();
+      const deviceDocId = `shelly_${cleanId}`;
+
+      // 1. Išsaugome privačius Shelly raktus
+      await db.collection("shelly_secrets").doc(deviceDocId).set({
+        userId: userId,
+        shellyDeviceId: cleanId,
+        authKey: String(authKey).trim(),
+        serverUri: String(serverUri || "https://shelly-103-eu.shelly.cloud").trim(),
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      });
+
+      // 2. Sukuriame įrenginio kortelę user_smart_devices kolekcijoje
+      const defaultConfig = {
+        autopilotEnabled: false,
+        manualApprovalActive: false,
+        approvedUntilTimestamp: null,
+        modeProfile: "cooling", // 'cooling', 'drying', 'manual'
+        cropKey: "wheat",
+        grainMoisture: 14.5,
+        grainTemp: 15.0,
+        maxPriceCt: 18.0,
+        fanPowerKw: 11.0,
+        lat: lat || 55.2885,
+        lng: lng || 23.9745,
+      };
+
+      await db.collection("user_smart_devices").doc(deviceDocId).set(
+        {
+          id: deviceDocId,
+          userId: userId,
+          type: "silo_fan",
+          brand: "shelly",
+          name: name || "Grūdų bokštas #1",
+          config: defaultConfig,
+          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        },
+        { merge: true }
+      );
+
+      // 3. Iškart patikriname ryšį su Shelly Cloud!
+      const tel = await syncUserShellyTelemetry(db, admin, userId, deviceDocId);
+      res.json({ success: true, deviceId: deviceDocId, telemetry: tel });
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  }
+);
+
+exports.refreshShellyStatus = onRequest(
+  { cors: true, invoker: "public" },
+  async (req, res) => {
+    try {
+      const { userId, deviceDocId } = req.query;
+      const tel = await syncUserShellyTelemetry(db, admin, userId, deviceDocId);
+      res.json({ success: true, telemetry: tel });
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  }
+);
+
+exports.controlShellySilo = onRequest(
+  { cors: true, invoker: "public" },
+  async (req, res) => {
+    try {
+      const body = typeof req.body === "string" ? JSON.parse(req.body) : req.body;
+      const tel = await sendShellyCommand(db, admin, body.userId, body);
+      res.json({ success: true, telemetry: tel });
+    } catch (err) {
+      res.status(500).json({ error: err.message });
     }
   }
 );
