@@ -106,12 +106,11 @@ function formatCleanCtHub(val) {
 document.addEventListener('DOMContentLoaded', () => {
     let requestedTab = getRequestedTabFromUrl();
 
-    renderGlobalSidebar('index', requestedTab);
-    initThemeToggle();
+   
     renderGlobalSidebar('index', requestedTab);
     initThemeToggle();
     initLanguageEngine();
-    loadHubLivePriceTickers();
+    setTimeout(() => loadHubLivePriceTickers(), 1800);
 
     document.querySelectorAll('.login-trigger-btn').forEach(btn => btn.addEventListener('click', () => openAuthModal('login')));
 
@@ -192,15 +191,17 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('help-btn-desktop')?.addEventListener('click', openHelp);
     document.getElementById('help-btn-mobile')?.addEventListener('click', openHelp);
 
-    db.collection("tech_classifier").get().then(classSnap => {
-        classSnap.forEach(d => {
-            const items = d.data().items || [];
-            items.forEach(it => { classifierMap[it.id] = it.lt || it.en; });
-        });
-        if (getRequestedTabFromUrl() === 7) {
-            initFeedTab(currentUser, userData, classifierMap);
-        }
-    }).catch(() => {});
+    setTimeout(() => {
+        db.collection("tech_classifier").get().then(classSnap => {
+            classSnap.forEach(d => {
+                const items = d.data().items || [];
+                items.forEach(it => { classifierMap[it.id] = it.lt || it.en; });
+            });
+            if (getRequestedTabFromUrl() === 7) {
+                initFeedTab(currentUser, userData, classifierMap);
+            }
+        }).catch(() => {});
+    }, 2500);
 
     auth.onAuthStateChanged(async (user) => {
         const preloader = document.getElementById('app-preloader');

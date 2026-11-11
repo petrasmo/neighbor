@@ -102,7 +102,6 @@ export function getCurrentLang() {
 export function initLanguageEngine() {
     updateLangSelectUI(currentLang);
 
-    // Pririšame kalbos pasirinkimo meniu įvykius
     document.querySelectorAll('.lang-switcher-select').forEach(sel => {
         sel.value = currentLang;
         sel.onchange = (e) => {
@@ -110,32 +109,34 @@ export function initLanguageEngine() {
         };
     });
 
+    // ⚡ Jei kalba yra numatytoji lietuvių ('lt') – NEapkrauname naršyklės jokiu MutationObserver!
     if (currentLang !== 'lt') {
+        ensureDomObserverStarted();
         translateEntirePage(currentLang);
     }
+}
 
-    // Stebime bet kokius dinaminius DOM pasikeitimus (kai atsidaro skaičiuoklės, modalai, lentelės)
-    if (!observer) {
-        observer = new MutationObserver((mutations) => {
-            if (currentLang === 'lt') return;
-            for (const m of mutations) {
-                if (m.type === 'childList') {
-                    m.addedNodes.forEach(node => {
-                        if (node.nodeType === 1) {
-                            scanAndQueueElement(node, currentLang);
-                        } else if (node.nodeType === 3) {
-                            queueTextNode(node, currentLang);
-                        }
-                    });
-                }
+function ensureDomObserverStarted() {
+    if (observer) return;
+    observer = new MutationObserver((mutations) => {
+        if (currentLang === 'lt') return;
+        for (const m of mutations) {
+            if (m.type === 'childList') {
+                m.addedNodes.forEach(node => {
+                    if (node.nodeType === 1) {
+                        scanAndQueueElement(node, currentLang);
+                    } else if (node.nodeType === 3) {
+                        queueTextNode(node, currentLang);
+                    }
+                });
             }
-        });
+        }
+    });
 
-        observer.observe(document.body, {
-            childList: true,
-            subtree: true
-        });
-    }
+    observer.observe(document.body, {
+        childList: true,
+        subtree: true
+    });
 }
 
 export function setLanguage(lang) {
@@ -144,8 +145,13 @@ export function setLanguage(lang) {
     updateLangSelectUI(lang);
 
     if (lang === 'lt') {
+        if (observer) {
+            observer.disconnect();
+            observer = null;
+        }
         restoreOriginalLithuanian(document.body);
     } else {
+        ensureDomObserverStarted();
         translateEntirePage(lang);
     }
 }
