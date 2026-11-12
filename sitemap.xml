@@ -6,7 +6,7 @@
     <!-- Pagrindinis LT -->
     <url>
         <loc>https://jurgisagro.com/</loc>
-        <lastmod>2026-11-11</lastmod>
+        <lastmod>2026-11-12</lastmod>
         <changefreq>daily</changefreq>
         <priority>1.0</priority>
         <xhtml:link rel="alternate" hreflang="lt" href="https://jurgisagro.com/"/>
@@ -21,7 +21,7 @@
     <!-- Main EN -->
     <url>
         <loc>https://jurgisagro.com/en</loc>
-        <lastmod>2026-11-11</lastmod>
+        <lastmod>2026-11-12</lastmod>
         <changefreq>daily</changefreq>
         <priority>1.0</priority>
         <xhtml:link rel="alternate" hreflang="lt" href="https://jurgisagro.com/"/>
@@ -31,7 +31,7 @@
 
     <url>
         <loc>https://jurgisagro.com/nordpool-kainos</loc>
-        <lastmod>2026-11-11</lastmod>
+        <lastmod>2026-11-12</lastmod>
         <changefreq>hourly</changefreq>
         <priority>0.9</priority>
         <xhtml:link rel="alternate" hreflang="lt" href="https://jurgisagro.com/nordpool-kainos"/>
@@ -40,7 +40,7 @@
     </url>
     <url>
         <loc>https://jurgisagro.com/en/nordpool-kainos</loc>
-        <lastmod>2026-11-11</lastmod>
+        <lastmod>2026-11-12</lastmod>
         <changefreq>hourly</changefreq>
         <priority>0.9</priority>
         <xhtml:link rel="alternate" hreflang="lt" href="https://jurgisagro.com/nordpool-kainos"/>
@@ -49,7 +49,7 @@
     </url>
     <url>
         <loc>https://jurgisagro.com/matif-birza</loc>
-        <lastmod>2026-11-11</lastmod>
+        <lastmod>2026-11-12</lastmod>
         <changefreq>hourly</changefreq>
         <priority>0.9</priority>
         <xhtml:link rel="alternate" hreflang="lt" href="https://jurgisagro.com/matif-birza"/>
@@ -58,7 +58,7 @@
     </url>
     <url>
         <loc>https://jurgisagro.com/en/matif-birza</loc>
-        <lastmod>2026-11-11</lastmod>
+        <lastmod>2026-11-12</lastmod>
         <changefreq>hourly</changefreq>
         <priority>0.9</priority>
         <xhtml:link rel="alternate" hreflang="lt" href="https://jurgisagro.com/matif-birza"/>
@@ -67,7 +67,7 @@
     </url>
     <url>
         <loc>https://jurgisagro.com/grain-supirkimas</loc>
-        <lastmod>2026-11-11</lastmod>
+        <lastmod>2026-11-12</lastmod>
         <changefreq>hourly</changefreq>
         <priority>0.9</priority>
         <xhtml:link rel="alternate" hreflang="lt" href="https://jurgisagro.com/grain-supirkimas"/>
@@ -76,7 +76,7 @@
     </url>
     <url>
         <loc>https://jurgisagro.com/en/grain-supirkimas</loc>
-        <lastmod>2026-11-11</lastmod>
+        <lastmod>2026-11-12</lastmod>
         <changefreq>hourly</changefreq>
         <priority>0.9</priority>
         <xhtml:link rel="alternate" hreflang="lt" href="https://jurgisagro.com/grain-supirkimas"/>
@@ -85,7 +85,7 @@
     </url>
     <url>
         <loc>https://jurgisagro.com/dyzelinas-gazolas</loc>
-        <lastmod>2026-11-11</lastmod>
+        <lastmod>2026-11-12</lastmod>
         <changefreq>daily</changefreq>
         <priority>0.9</priority>
         <xhtml:link rel="alternate" hreflang="lt" href="https://jurgisagro.com/dyzelinas-gazolas"/>
@@ -94,7 +94,7 @@
     </url>
     <url>
         <loc>https://jurgisagro.com/en/dyzelinas-gazolas</loc>
-        <lastmod>2026-11-11</lastmod>
+        <lastmod>2026-11-12</lastmod>
         <changefreq>daily</changefreq>
         <priority>0.9</priority>
         <xhtml:link rel="alternate" hreflang="lt" href="https://jurgisagro.com/dyzelinas-gazolas"/>
@@ -103,7 +103,7 @@
     </url>
     <url>
         <loc>https://jurgisagro.com/grudu-sandelis</loc>
-        <lastmod>2026-11-11</lastmod>
+        <lastmod>2026-11-12</lastmod>
         <changefreq>daily</changefreq>
         <priority>0.8</priority>
         <xhtml:link rel="alternate" hreflang="lt" href="https://jurgisagro.com/grudu-sandelis"/>
@@ -112,7 +112,7 @@
     </url>
     <url>
         <loc>https://jurgisagro.com/en/grudu-sandelis</loc>
-        <lastmod>2026-11-11</lastmod>
+        <lastmod>2026-11-12</lastmod>
         <changefreq>daily</changefreq>
         <priority>0.8</priority>
         <xhtml:link rel="alternate" hreflang="lt" href="https://jurgisagro.com/grudu-sandelis"/>
@@ -121,7 +121,7 @@
     </url>
     <url>
         <loc>https://jurgisagro.com/nma-terminai</loc>
-        <lastmod>2026-11-11</lastmod>
+        <lastmod>2026-11-12</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.8</priority>
         <xhtml:link rel="alternate" hreflang="lt" href="https://jurgisagro.com/nma-terminai"/>
@@ -130,7 +130,7 @@
     </url>
     <url>
         <loc>https://jurgisagro.com/en/nma-terminai</loc>
-        <lastmod>2026-11-11</lastmod>
+        <lastmod>2026-11-12</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.8</priority>
         <xhtml:link rel="alternate" hreflang="lt" href="https://jurgisagro.com/nma-terminai"/>
@@ -139,7 +139,7 @@
     </url>
     <url>
         <loc>https://jurgisagro.com/sejos-norma</loc>
-        <lastmod>2026-11-11</lastmod>
+        <lastmod>2026-11-12</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.8</priority>
         <xhtml:link rel="alternate" hreflang="lt" href="https://jurgisagro.com/sejos-norma"/>
@@ -148,7 +148,7 @@
     </url>
     <url>
         <loc>https://jurgisagro.com/en/sejos-norma</loc>
-        <lastmod>2026-11-11</lastmod>
+        <lastmod>2026-11-12</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.8</priority>
         <xhtml:link rel="alternate" hreflang="lt" href="https://jurgisagro.com/sejos-norma"/>
@@ -157,7 +157,7 @@
     </url>
     <url>
         <loc>https://jurgisagro.com/tarpiniai-paseliai</loc>
-        <lastmod>2026-11-11</lastmod>
+        <lastmod>2026-11-12</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.8</priority>
         <xhtml:link rel="alternate" hreflang="lt" href="https://jurgisagro.com/tarpiniai-paseliai"/>
@@ -166,7 +166,7 @@
     </url>
     <url>
         <loc>https://jurgisagro.com/en/tarpiniai-paseliai</loc>
-        <lastmod>2026-11-11</lastmod>
+        <lastmod>2026-11-12</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.8</priority>
         <xhtml:link rel="alternate" hreflang="lt" href="https://jurgisagro.com/tarpiniai-paseliai"/>
@@ -175,7 +175,7 @@
     </url>
     <url>
         <loc>https://jurgisagro.com/kombaino-nuostoliai</loc>
-        <lastmod>2026-11-11</lastmod>
+        <lastmod>2026-11-12</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.8</priority>
         <xhtml:link rel="alternate" hreflang="lt" href="https://jurgisagro.com/kombaino-nuostoliai"/>
@@ -184,7 +184,7 @@
     </url>
     <url>
         <loc>https://jurgisagro.com/en/kombaino-nuostoliai</loc>
-        <lastmod>2026-11-11</lastmod>
+        <lastmod>2026-11-12</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.8</priority>
         <xhtml:link rel="alternate" hreflang="lt" href="https://jurgisagro.com/kombaino-nuostoliai"/>
@@ -193,7 +193,7 @@
     </url>
     <url>
         <loc>https://jurgisagro.com/purkstuvas</loc>
-        <lastmod>2026-11-11</lastmod>
+        <lastmod>2026-11-12</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.8</priority>
         <xhtml:link rel="alternate" hreflang="lt" href="https://jurgisagro.com/purkstuvas"/>
@@ -202,7 +202,7 @@
     </url>
     <url>
         <loc>https://jurgisagro.com/en/purkstuvas</loc>
-        <lastmod>2026-11-11</lastmod>
+        <lastmod>2026-11-12</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.8</priority>
         <xhtml:link rel="alternate" hreflang="lt" href="https://jurgisagro.com/purkstuvas"/>
@@ -211,7 +211,7 @@
     </url>
     <url>
         <loc>https://jurgisagro.com/trasu-skaiciuokle</loc>
-        <lastmod>2026-11-11</lastmod>
+        <lastmod>2026-11-12</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.8</priority>
         <xhtml:link rel="alternate" hreflang="lt" href="https://jurgisagro.com/trasu-skaiciuokle"/>
@@ -220,7 +220,7 @@
     </url>
     <url>
         <loc>https://jurgisagro.com/en/trasu-skaiciuokle</loc>
-        <lastmod>2026-11-11</lastmod>
+        <lastmod>2026-11-12</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.8</priority>
         <xhtml:link rel="alternate" hreflang="lt" href="https://jurgisagro.com/trasu-skaiciuokle"/>
@@ -229,7 +229,7 @@
     </url>
     <url>
         <loc>https://jurgisagro.com/trasu-barometras</loc>
-        <lastmod>2026-11-11</lastmod>
+        <lastmod>2026-11-12</lastmod>
         <changefreq>daily</changefreq>
         <priority>0.8</priority>
         <xhtml:link rel="alternate" hreflang="lt" href="https://jurgisagro.com/trasu-barometras"/>
@@ -238,7 +238,7 @@
     </url>
     <url>
         <loc>https://jurgisagro.com/en/trasu-barometras</loc>
-        <lastmod>2026-11-11</lastmod>
+        <lastmod>2026-11-12</lastmod>
         <changefreq>daily</changefreq>
         <priority>0.8</priority>
         <xhtml:link rel="alternate" hreflang="lt" href="https://jurgisagro.com/trasu-barometras"/>
@@ -247,7 +247,7 @@
     </url>
     <url>
         <loc>https://jurgisagro.com/orai</loc>
-        <lastmod>2026-11-11</lastmod>
+        <lastmod>2026-11-12</lastmod>
         <changefreq>hourly</changefreq>
         <priority>0.9</priority>
         <xhtml:link rel="alternate" hreflang="lt" href="https://jurgisagro.com/orai"/>
@@ -256,7 +256,7 @@
     </url>
     <url>
         <loc>https://jurgisagro.com/en/orai</loc>
-        <lastmod>2026-11-11</lastmod>
+        <lastmod>2026-11-12</lastmod>
         <changefreq>hourly</changefreq>
         <priority>0.9</priority>
         <xhtml:link rel="alternate" hreflang="lt" href="https://jurgisagro.com/orai"/>
@@ -265,7 +265,7 @@
     </url>
     <url>
         <loc>https://jurgisagro.com/laukai</loc>
-        <lastmod>2026-11-11</lastmod>
+        <lastmod>2026-11-12</lastmod>
         <changefreq>daily</changefreq>
         <priority>0.9</priority>
         <xhtml:link rel="alternate" hreflang="lt" href="https://jurgisagro.com/laukai"/>
@@ -274,7 +274,7 @@
     </url>
     <url>
         <loc>https://jurgisagro.com/en/laukai</loc>
-        <lastmod>2026-11-11</lastmod>
+        <lastmod>2026-11-12</lastmod>
         <changefreq>daily</changefreq>
         <priority>0.9</priority>
         <xhtml:link rel="alternate" hreflang="lt" href="https://jurgisagro.com/laukai"/>
@@ -283,7 +283,7 @@
     </url>
     <url>
         <loc>https://jurgisagro.com/sejomaina</loc>
-        <lastmod>2026-11-11</lastmod>
+        <lastmod>2026-11-12</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.8</priority>
         <xhtml:link rel="alternate" hreflang="lt" href="https://jurgisagro.com/sejomaina"/>
@@ -292,7 +292,7 @@
     </url>
     <url>
         <loc>https://jurgisagro.com/en/sejomaina</loc>
-        <lastmod>2026-11-11</lastmod>
+        <lastmod>2026-11-12</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.8</priority>
         <xhtml:link rel="alternate" hreflang="lt" href="https://jurgisagro.com/sejomaina"/>
@@ -301,7 +301,7 @@
     </url>
     <url>
         <loc>https://jurgisagro.com/tresimas-vra</loc>
-        <lastmod>2026-11-11</lastmod>
+        <lastmod>2026-11-12</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.9</priority>
         <xhtml:link rel="alternate" hreflang="lt" href="https://jurgisagro.com/tresimas-vra"/>
@@ -310,7 +310,7 @@
     </url>
     <url>
         <loc>https://jurgisagro.com/en/tresimas-vra</loc>
-        <lastmod>2026-11-11</lastmod>
+        <lastmod>2026-11-12</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.9</priority>
         <xhtml:link rel="alternate" hreflang="lt" href="https://jurgisagro.com/tresimas-vra"/>
@@ -319,7 +319,7 @@
     </url>
     <url>
         <loc>https://jurgisagro.com/kalkinimas-vra</loc>
-        <lastmod>2026-11-11</lastmod>
+        <lastmod>2026-11-12</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.8</priority>
         <xhtml:link rel="alternate" hreflang="lt" href="https://jurgisagro.com/kalkinimas-vra"/>
@@ -328,7 +328,7 @@
     </url>
     <url>
         <loc>https://jurgisagro.com/en/kalkinimas-vra</loc>
-        <lastmod>2026-11-11</lastmod>
+        <lastmod>2026-11-12</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.8</priority>
         <xhtml:link rel="alternate" hreflang="lt" href="https://jurgisagro.com/kalkinimas-vra"/>
@@ -337,7 +337,7 @@
     </url>
     <url>
         <loc>https://jurgisagro.com/ataskaitos</loc>
-        <lastmod>2026-11-11</lastmod>
+        <lastmod>2026-11-12</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.8</priority>
         <xhtml:link rel="alternate" hreflang="lt" href="https://jurgisagro.com/ataskaitos"/>
@@ -346,7 +346,7 @@
     </url>
     <url>
         <loc>https://jurgisagro.com/en/ataskaitos</loc>
-        <lastmod>2026-11-11</lastmod>
+        <lastmod>2026-11-12</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.8</priority>
         <xhtml:link rel="alternate" hreflang="lt" href="https://jurgisagro.com/ataskaitos"/>
@@ -355,7 +355,7 @@
     </url>
     <url>
         <loc>https://jurgisagro.com/paseliu-lyga</loc>
-        <lastmod>2026-11-11</lastmod>
+        <lastmod>2026-11-12</lastmod>
         <changefreq>daily</changefreq>
         <priority>0.9</priority>
         <xhtml:link rel="alternate" hreflang="lt" href="https://jurgisagro.com/paseliu-lyga"/>
@@ -364,7 +364,7 @@
     </url>
     <url>
         <loc>https://jurgisagro.com/en/paseliu-lyga</loc>
-        <lastmod>2026-11-11</lastmod>
+        <lastmod>2026-11-12</lastmod>
         <changefreq>daily</changefreq>
         <priority>0.9</priority>
         <xhtml:link rel="alternate" hreflang="lt" href="https://jurgisagro.com/paseliu-lyga"/>
@@ -373,7 +373,7 @@
     </url>
     <url>
         <loc>https://jurgisagro.com/renginiai</loc>
-        <lastmod>2026-11-11</lastmod>
+        <lastmod>2026-11-12</lastmod>
         <changefreq>daily</changefreq>
         <priority>0.8</priority>
         <xhtml:link rel="alternate" hreflang="lt" href="https://jurgisagro.com/renginiai"/>
@@ -382,7 +382,7 @@
     </url>
     <url>
         <loc>https://jurgisagro.com/en/renginiai</loc>
-        <lastmod>2026-11-11</lastmod>
+        <lastmod>2026-11-12</lastmod>
         <changefreq>daily</changefreq>
         <priority>0.8</priority>
         <xhtml:link rel="alternate" hreflang="lt" href="https://jurgisagro.com/renginiai"/>
@@ -391,7 +391,7 @@
     </url>
     <url>
         <loc>https://jurgisagro.com/ismanieji-irenginiai</loc>
-        <lastmod>2026-11-11</lastmod>
+        <lastmod>2026-11-12</lastmod>
         <changefreq>daily</changefreq>
         <priority>0.9</priority>
         <xhtml:link rel="alternate" hreflang="lt" href="https://jurgisagro.com/ismanieji-irenginiai"/>
@@ -400,7 +400,7 @@
     </url>
     <url>
         <loc>https://jurgisagro.com/en/ismanieji-irenginiai</loc>
-        <lastmod>2026-11-11</lastmod>
+        <lastmod>2026-11-12</lastmod>
         <changefreq>daily</changefreq>
         <priority>0.9</priority>
         <xhtml:link rel="alternate" hreflang="lt" href="https://jurgisagro.com/ismanieji-irenginiai"/>
@@ -409,7 +409,7 @@
     </url>
     <url>
         <loc>https://jurgisagro.com/sos-pagalba</loc>
-        <lastmod>2026-11-11</lastmod>
+        <lastmod>2026-11-12</lastmod>
         <changefreq>daily</changefreq>
         <priority>0.8</priority>
         <xhtml:link rel="alternate" hreflang="lt" href="https://jurgisagro.com/sos-pagalba"/>
@@ -418,7 +418,7 @@
     </url>
     <url>
         <loc>https://jurgisagro.com/en/sos-pagalba</loc>
-        <lastmod>2026-11-11</lastmod>
+        <lastmod>2026-11-12</lastmod>
         <changefreq>daily</changefreq>
         <priority>0.8</priority>
         <xhtml:link rel="alternate" hreflang="lt" href="https://jurgisagro.com/sos-pagalba"/>
