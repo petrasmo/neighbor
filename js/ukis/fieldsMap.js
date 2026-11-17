@@ -1,4 +1,6 @@
 // js/ukis/fieldsMap.js
+import { db, auth } from '../core/firebase.js';
+import { showBottomToast } from '../core/ui.js';
 
 const CDSE_INSTANCE_ID = "2ecdf3ed-4338-4577-a502-11dd5b2df254";
 const CDSE_WMS_URL = `https://sh.dataspace.copernicus.eu/ogc/wms/${CDSE_INSTANCE_ID}`;
@@ -15,6 +17,10 @@ let cachedSelectedId = null;
 let cachedCallback = null;
 let cachedUserData = null;
 let hasCenteredOnGarage = false;
+
+// Būsenos: pilnas ekranas ir bokštų / saulės elektrinių žymėjimas
+let isMapFullscreen = false;
+let placingInfraType = null; // 'silo' arba 'solar'
 
 // 🌟 PIRMO TAŠKO PRANEŠĖJAS
 let onFirstPointCallback = null;
@@ -85,10 +91,10 @@ export function initOrRefreshMap(coords, userData) {
     window._leafletFieldsMapInstance = fieldsMap;
 
     esriBaseLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-		attribution: '&copy; Esri | Ⓒ NMA KPS (Geoportal.lt, 2026-09)', // 👈 PRIDĖTA NMA AUTORYSTĖ
-		maxNativeZoom: 17,
-		maxZoom: 18
-	});
+        attribution: '&copy; Esri | Ⓒ NMA KPS (Geoportal.lt, 2026-09)',
+        maxNativeZoom: 17,
+        maxZoom: 18
+    });
 
     sentinelNdviWmsLayer = L.tileLayer.wms(CDSE_WMS_URL, {
         layers: 'VEGETATION_INDEX',
@@ -134,8 +140,33 @@ export function initOrRefreshMap(coords, userData) {
     fieldsMap.addLayer(garageMarkerLayer);
 
     addLayerSwitchControl();
+    addToolsAndFullscreenControl();
     addNdviLegendControl();
     addFloatingActionControl();
+    ensureInfraModalExists();
+
+    // Paspaudimas ant žemėlapio, kai dedamas Bokštas arba Saulės elektrinė
+    fieldsMap.on('click', (e) => {
+        if (!placingInfraType) return;
+        const typeToPlace = placingInfraType;
+        placingInfraType = null;
+        fieldsMap.getContainer().style.cursor = '';
+        resetInfraButtonsStyle();
+        openAddInfraModal(typeToPlace, e.latlng.lat, e.latlng.lng);
+    });
+
+    // Paspaudimas ant ištrynimo mygtuko iššokančiame bokšto/saulės debesėlyje
+    fieldsMap.on('popupopen', (e) => {
+        const delBtn = e.popup._contentNode.querySelector('.btn-delete-map-infra');
+        if (delBtn) {
+            delBtn.onclick = async () => {
+                const infraId = delBtn.getAttribute('data-id');
+                const infraType = delBtn.getAttribute('data-type');
+                await deleteInfraItem(infraType, infraId);
+                fieldsMap.closePopup();
+            };
+        }
+    });
 
     setTimeout(() => {
         if (fieldsMap) {
@@ -146,6 +177,295 @@ export function initOrRefreshMap(coords, userData) {
             }
         }
     }, 150);
+}
+
+// 🌟 KAIRYSIS VALDYMO BLOKAS: PILNAS EKRANAS + BOKŠTO IR SAULĖS ELEKTRINĖS ŽYMĖJIMAS
+function addToolsAndFullscreenControl() {
+    const ToolsControl = L.Control.extend({
+        options: { position: 'topleft' },
+        onAdd: function () {
+            const container = L.DomUtil.create('div', 'leaflet-bar leaflet-control');
+            container.style.border = 'none';
+            container.style.background = 'transparent';
+
+            container.innerHTML = `
+                <div style="display: flex; flex-direction: column; gap: 6px; margin-top: 6px;">
+                    <button type="button" id="btn-map-fullscreen" style="background: rgba(15,18,15,0.95); color: #FFFFFF; border: 2px solid #2E7D32; padding: 6px 10px; border-radius: 10px; font-weight: 800; font-size: 11px; cursor: pointer; box-shadow: 0 4px 14px rgba(0,0,0,0.7); display: flex; align-items: center; gap: 6px; white-space: nowrap;">
+                        <span id="fs-icon" style="font-size: 14px;">⛶</span> <span id="fs-text">Pilnas ekranas</span>
+                    </button>
+
+                    <button type="button" id="btn-map-place-silo" style="background: rgba(15,18,15,0.95); color: #38BDF8; border: 1.5px solid #0284C7; padding: 6px 10px; border-radius: 10px; font-weight: 800; font-size: 11px; cursor: pointer; box-shadow: 0 4px 14px rgba(0,0,0,0.7); display: flex; align-items: center; gap: 6px; white-space: nowrap;">
+                        <span style="font-size: 14px;">🛢️</span> <span>+Bokštas</span>
+                    </button>
+
+                    <button type="button" id="btn-map-place-solar" style="background: rgba(15,18,15,0.95); color: #FBBF24; border: 1.5px solid #D97706; padding: 6px 10px; border-radius: 10px; font-weight: 800; font-size: 11px; cursor: pointer; box-shadow: 0 4px 14px rgba(0,0,0,0.7); display: flex; align-items: center; gap: 6px; white-space: nowrap;">
+                        <span style="font-size: 14px;">☀️</span> <span>+Saulės el.</span>
+                    </button>
+                </div>
+            `;
+
+            L.DomEvent.disableClickPropagation(container);
+
+            setTimeout(() => {
+                const fsBtn = document.getElementById('btn-map-fullscreen');
+                const siloBtn = document.getElementById('btn-map-place-silo');
+                const solarBtn = document.getElementById('btn-map-place-solar');
+
+                if (fsBtn) {
+                    fsBtn.onclick = () => toggleMapFullscreen();
+                }
+
+                if (siloBtn) {
+                    siloBtn.onclick = () => {
+                        if (!auth.currentUser) {
+                            showBottomToast("Prisijunkite, kad galėtumėte pažymėti grūdų bokštą!", "warning");
+                            return;
+                        }
+                        if (placingInfraType === 'silo') {
+                            placingInfraType = null;
+                            fieldsMap.getContainer().style.cursor = '';
+                            resetInfraButtonsStyle();
+                        } else {
+                            stopDrawing();
+                            placingInfraType = 'silo';
+                            fieldsMap.getContainer().style.cursor = 'crosshair';
+                            resetInfraButtonsStyle();
+                            siloBtn.style.background = '#0284C7';
+                            siloBtn.style.color = '#FFFFFF';
+                            showBottomToast("🛢️ Spustelėkite ant žemėlapio, kur stovi jūsų Grūdų bokštas!", "info");
+                        }
+                    };
+                }
+
+                if (solarBtn) {
+                    solarBtn.onclick = () => {
+                        if (!auth.currentUser) {
+                            showBottomToast("Prisijunkite, kad galėtumėte pažymėti saulės elektrinę!", "warning");
+                            return;
+                        }
+                        if (placingInfraType === 'solar') {
+                            placingInfraType = null;
+                            fieldsMap.getContainer().style.cursor = '';
+                            resetInfraButtonsStyle();
+                        } else {
+                            stopDrawing();
+                            placingInfraType = 'solar';
+                            fieldsMap.getContainer().style.cursor = 'crosshair';
+                            resetInfraButtonsStyle();
+                            solarBtn.style.background = '#D97706';
+                            solarBtn.style.color = '#FFFFFF';
+                            showBottomToast("☀️ Spustelėkite ant žemėlapio, kur yra jūsų Saulės elektrinė!", "info");
+                        }
+                    };
+                }
+            }, 100);
+
+            return container;
+        }
+    });
+
+    fieldsMap.addControl(new ToolsControl());
+}
+
+function resetInfraButtonsStyle() {
+    const siloBtn = document.getElementById('btn-map-place-silo');
+    const solarBtn = document.getElementById('btn-map-place-solar');
+    if (siloBtn) {
+        siloBtn.style.background = 'rgba(15,18,15,0.95)';
+        siloBtn.style.color = '#38BDF8';
+    }
+    if (solarBtn) {
+        solarBtn.style.background = 'rgba(15,18,15,0.95)';
+        solarBtn.style.color = '#FBBF24';
+    }
+}
+
+function toggleMapFullscreen() {
+    const mapEl = document.getElementById('fields-map');
+    const fsIcon = document.getElementById('fs-icon');
+    const fsText = document.getElementById('fs-text');
+    const fsBtn = document.getElementById('btn-map-fullscreen');
+    if (!mapEl || !fieldsMap) return;
+
+    isMapFullscreen = !isMapFullscreen;
+
+    if (isMapFullscreen) {
+        mapEl.style.position = 'fixed';
+        mapEl.style.top = '0';
+        mapEl.style.left = '0';
+        mapEl.style.right = '0';
+        mapEl.style.bottom = '0';
+        mapEl.style.width = '100vw';
+        mapEl.style.height = '100vh';
+        mapEl.style.zIndex = '9990';
+        mapEl.style.borderRadius = '0';
+        if (fsIcon) fsIcon.textContent = '✕';
+        if (fsText) fsText.textContent = 'Sumažinti ekraną';
+        if (fsBtn) fsBtn.style.background = '#DC2626';
+    } else {
+        mapEl.style.position = 'relative';
+        mapEl.style.top = '';
+        mapEl.style.left = '';
+        mapEl.style.right = '';
+        mapEl.style.bottom = '';
+        mapEl.style.width = '100%';
+        mapEl.style.height = '520px';
+        mapEl.style.zIndex = '0';
+        mapEl.style.borderRadius = '0.75rem';
+        if (fsIcon) fsIcon.textContent = '⛶';
+        if (fsText) fsText.textContent = 'Pilnas ekranas';
+        if (fsBtn) fsBtn.style.background = 'rgba(15,18,15,0.95)';
+    }
+
+    setTimeout(() => {
+        if (fieldsMap) fieldsMap.invalidateSize();
+    }, 150);
+}
+
+// ESC klavišas išėjimui iš pilno ekrano
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && isMapFullscreen) {
+        toggleMapFullscreen();
+    }
+});
+
+// MODALAS NAUJAM BOKŠTUI ARBA SAULĖS ELEKTRINEI IŠSAUGOTI
+function ensureInfraModalExists() {
+    if (document.getElementById('map-infra-modal')) return;
+
+    const modalHtml = `
+        <div id="map-infra-modal" class="fixed inset-0 bg-black/80 z-[10000] hidden flex items-center justify-center p-4 backdrop-blur-sm">
+            <div class="bg-tractorSurface border-2 border-tractorBorder rounded-2xl p-6 max-w-md w-full space-y-4 shadow-2xl">
+                <div class="flex justify-between items-center border-b border-tractorBorder pb-3">
+                    <div class="flex items-center gap-2">
+                        <span id="infra-modal-icon" class="text-2xl">🛢️</span>
+                        <h3 id="infra-modal-title" class="font-oswald text-lg font-bold uppercase tracking-wider" style="color: var(--text-main);">
+                            Pridėti objektą
+                        </h3>
+                    </div>
+                    <button type="button" id="btn-close-infra-modal" class="text-slate-400 hover:text-white text-2xl font-bold cursor-pointer leading-none">&times;</button>
+                </div>
+
+                <form id="map-infra-form" class="space-y-3.5 text-xs">
+                    <input type="hidden" id="infra-type-input" value="silo">
+                    <input type="hidden" id="infra-lat-input" value="0">
+                    <input type="hidden" id="infra-lng-input" value="0">
+
+                    <div class="space-y-1">
+                        <label id="infra-name-label" class="font-bold uppercase text-slate-400 block">Pavadinimas *</label>
+                        <input id="infra-name-input" type="text" required placeholder="Pvz.: Bokštas #1 (500t)"
+                            class="w-full h-11 bg-tractorBg border border-tractorBorder focus:border-tractorPrimary rounded-xl px-3.5 text-xs font-bold outline-none" style="color: var(--text-main);">
+                    </div>
+
+                    <div id="infra-extra-box" class="space-y-1 hidden">
+                        <label class="font-bold uppercase text-amber-500 block">Galia (kW / kWp)</label>
+                        <input id="infra-power-input" type="number" step="0.5" value="7.0"
+                            class="w-full h-11 bg-tractorBg border border-tractorBorder rounded-xl px-3.5 text-xs font-mono font-bold outline-none" style="color: var(--text-main);">
+                    </div>
+
+                    <div class="pt-2 flex gap-2">
+                        <button type="submit" class="w-full h-11 bg-tractorPrimary hover:bg-tractorPrimaryHover text-white font-extrabold rounded-xl text-xs uppercase tracking-wider shadow cursor-pointer transition">
+                            💾 Išsaugoti žemėlapyje
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    `;
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+
+    const modal = document.getElementById('map-infra-modal');
+    const closeBtn = document.getElementById('btn-close-infra-modal');
+    const form = document.getElementById('map-infra-form');
+
+    if (closeBtn) closeBtn.onclick = () => modal.classList.add('hidden');
+    if (modal) modal.onclick = (e) => { if (e.target === modal) modal.classList.add('hidden'); };
+
+    if (form) {
+        form.onsubmit = async (e) => {
+            e.preventDefault();
+            const user = auth.currentUser;
+            if (!user) return;
+
+            const type = document.getElementById('infra-type-input').value;
+            const lat = parseFloat(document.getElementById('infra-lat-input').value);
+            const lng = parseFloat(document.getElementById('infra-lng-input').value);
+            const name = document.getElementById('infra-name-input').value.trim();
+            const powerKw = parseFloat(document.getElementById('infra-power-input').value) || 7.0;
+
+            if (!cachedUserData) cachedUserData = {};
+
+            if (type === 'silo') {
+                if (!Array.isArray(cachedUserData.silos)) cachedUserData.silos = [];
+                cachedUserData.silos.push({
+                    id: 'silo_' + Date.now(),
+                    name: name || 'Grūdų bokštas',
+                    lat,
+                    lng
+                });
+                await db.collection("users").doc(user.uid).update({ silos: cachedUserData.silos });
+                showBottomToast(`🛢️ Bokštas „${name}“ pažymėtas žemėlapyje!`);
+            } else {
+                if (!Array.isArray(cachedUserData.solarPlants)) cachedUserData.solarPlants = [];
+                cachedUserData.solarPlants.push({
+                    id: 'solar_' + Date.now(),
+                    name: name || 'Saulės elektrinė',
+                    powerKw: powerKw,
+                    lat,
+                    lng
+                });
+                await db.collection("users").doc(user.uid).update({ solarPlants: cachedUserData.solarPlants });
+                showBottomToast(`☀️ Saulės elektrinė „${name}“ (${powerKw} kW) pažymėta žemėlapyje!`);
+            }
+
+            modal.classList.add('hidden');
+            renderGarageMarker();
+        };
+    }
+}
+
+function openAddInfraModal(type, lat, lng) {
+    ensureInfraModalExists();
+    const modal = document.getElementById('map-infra-modal');
+    const iconEl = document.getElementById('infra-modal-icon');
+    const titleEl = document.getElementById('infra-modal-title');
+    const nameInp = document.getElementById('infra-name-input');
+    const extraBox = document.getElementById('infra-extra-box');
+
+    document.getElementById('infra-type-input').value = type;
+    document.getElementById('infra-lat-input').value = lat;
+    document.getElementById('infra-lng-input').value = lng;
+
+    if (type === 'silo') {
+        if (iconEl) iconEl.textContent = '🛢️';
+        if (titleEl) titleEl.textContent = 'Naujas Grūdų Bokštas';
+        if (nameInp) nameInp.value = `Bokštas #${(cachedUserData?.silos?.length || 0) + 1}`;
+        extraBox?.classList.add('hidden');
+    } else {
+        if (iconEl) iconEl.textContent = '☀️';
+        if (titleEl) titleEl.textContent = 'Nauja Saulės Elektrinė';
+        if (nameInp) nameInp.value = `Saulės elektrinė #${(cachedUserData?.solarPlants?.length || 0) + 1}`;
+        extraBox?.classList.remove('hidden');
+    }
+
+    modal?.classList.remove('hidden');
+    setTimeout(() => nameInp?.focus(), 50);
+}
+
+async function deleteInfraItem(type, id) {
+    const user = auth.currentUser;
+    if (!user || !cachedUserData) return;
+
+    if (type === 'silo' && Array.isArray(cachedUserData.silos)) {
+        cachedUserData.silos = cachedUserData.silos.filter(s => s.id !== id);
+        await db.collection("users").doc(user.uid).update({ silos: cachedUserData.silos });
+        showBottomToast("🛢️ Bokštas pašalintas iš žemėlapio.");
+    } else if (type === 'solar' && Array.isArray(cachedUserData.solarPlants)) {
+        cachedUserData.solarPlants = cachedUserData.solarPlants.filter(s => s.id !== id);
+        await db.collection("users").doc(user.uid).update({ solarPlants: cachedUserData.solarPlants });
+        showBottomToast("☀️ Saulės elektrinė pašalinta iš žemėlapio.");
+    }
+    renderGarageMarker();
 }
 
 // 🌟 PLAUKIOJANTIS MYGTUKAS ŽEMĖLAPYJE [➕] -> [✓] [✕]
@@ -368,10 +688,12 @@ function addNdviLegendControl() {
     fieldsMap.addControl(new legendControl());
 }
 
+// 🌟 PIEŠIA ŪKIO BAZĘ (🏠), GRŪDŲ BOKŠTUS (🛢️) IR SAULĖS ELEKTRINES (☀️)
 export function renderGarageMarker() {
     if (!garageMarkerLayer || !fieldsMap) return;
     garageMarkerLayer.clearLayers();
 
+    // 1. ŪKIO BAZĖ (GARAŽAS)
     if (cachedUserData?.garageLat && cachedUserData?.garageLon && cachedUserData.garageLat !== 0) {
         const lat = parseFloat(cachedUserData.garageLat);
         const lng = parseFloat(cachedUserData.garageLon);
@@ -396,6 +718,67 @@ export function renderGarageMarker() {
             hasCenteredOnGarage = true;
         }
     }
+
+    // 2. GRŪDŲ BOKŠTAI (🛢️)
+    const silos = cachedUserData?.silos || [];
+    silos.forEach(silo => {
+        if (!silo.lat || !silo.lng) return;
+        const siloIcon = L.divIcon({
+            className: 'custom-silo-map-icon',
+            html: `<div style="background: #0F172A; border: 2.5px solid #38BDF8; border-radius: 50%; width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; font-size: 17px; box-shadow: 0 4px 12px rgba(0,0,0,0.85); cursor: pointer;">🛢️</div>`,
+            iconSize: [34, 34],
+            iconAnchor: [17, 17]
+        });
+
+        const sMarker = L.marker([parseFloat(silo.lat), parseFloat(silo.lng)], { icon: siloIcon }).addTo(garageMarkerLayer);
+
+        sMarker.bindTooltip(`
+            <div style="background: rgba(15,23,42,0.92); color: #38BDF8; padding: 3px 7px; border-radius: 6px; border: 1px solid #38BDF8; font-weight: 800; font-size: 10px; text-align: center;">
+                🛢️ ${silo.name}
+            </div>
+        `, { permanent: true, direction: 'top', offset: [0, -14] });
+
+        sMarker.bindPopup(`
+            <div style="font-family: sans-serif; font-size: 12px; min-width: 150px; padding: 2px;">
+                <strong style="display: block; color: #0284C7; margin-bottom: 4px;">🛢️ ${silo.name}</strong>
+                <div style="font-size: 10px; color: #64748B; margin-bottom: 8px;">GPS: ${Number(silo.lat).toFixed(4)}, ${Number(silo.lng).toFixed(4)}</div>
+                <button type="button" class="btn-delete-map-infra" data-type="silo" data-id="${silo.id}" style="width: 100%; background: #DC2626; color: #fff; border: none; padding: 5px 8px; border-radius: 6px; font-weight: bold; font-size: 11px; cursor: pointer;">
+                    🗑️ Pašalinti bokštą
+                </button>
+            </div>
+        `);
+    });
+
+    // 3. SAULĖS ELEKTRINĖS (☀️)
+    const solarPlants = cachedUserData?.solarPlants || [];
+    solarPlants.forEach(sol => {
+        if (!sol.lat || !sol.lng) return;
+        const solarIcon = L.divIcon({
+            className: 'custom-solar-map-icon',
+            html: `<div style="background: #1C1917; border: 2.5px solid #FBBF24; border-radius: 50%; width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; font-size: 17px; box-shadow: 0 4px 12px rgba(0,0,0,0.85); cursor: pointer;">☀️</div>`,
+            iconSize: [34, 34],
+            iconAnchor: [17, 17]
+        });
+
+        const solMarker = L.marker([parseFloat(sol.lat), parseFloat(sol.lng)], { icon: solarIcon }).addTo(garageMarkerLayer);
+
+        solMarker.bindTooltip(`
+            <div style="background: rgba(28,25,23,0.92); color: #FBBF24; padding: 3px 7px; border-radius: 6px; border: 1px solid #FBBF24; font-weight: 800; font-size: 10px; text-align: center;">
+                ☀️ ${sol.name} ${sol.powerKw ? `(${sol.powerKw} kW)` : ''}
+            </div>
+        `, { permanent: true, direction: 'top', offset: [0, -14] });
+
+        solMarker.bindPopup(`
+            <div style="font-family: sans-serif; font-size: 12px; min-width: 160px; padding: 2px;">
+                <strong style="display: block; color: #D97706; margin-bottom: 4px;">☀️ ${sol.name}</strong>
+                <div style="font-size: 11px; font-weight: bold; color: #1E293B; margin-bottom: 2px;">Galia: ${sol.powerKw || 7} kW</div>
+                <div style="font-size: 10px; color: #64748B; margin-bottom: 8px;">GPS: ${Number(sol.lat).toFixed(4)}, ${Number(sol.lng).toFixed(4)}</div>
+                <button type="button" class="btn-delete-map-infra" data-type="solar" data-id="${sol.id}" style="width: 100%; background: #DC2626; color: #fff; border: none; padding: 5px 8px; border-radius: 6px; font-weight: bold; font-size: 11px; cursor: pointer;">
+                    🗑️ Pašalinti elektrinę
+                </button>
+            </div>
+        `);
+    });
 }
 
 export function drawFieldsOnMap(fieldsList, selectedFieldId, onFieldClick) {
@@ -504,6 +887,8 @@ function fitAllBounds() {
 
 // 🌟 BRAIŽYMO FUNKCIJOS
 export function startDrawing() {
+    placingInfraType = null;
+    resetInfraButtonsStyle();
     drawingPoints = [];
     tempMarkers.forEach(m => fieldsMap.removeLayer(m));
     tempMarkers = [];
@@ -528,7 +913,6 @@ export function stopDrawing() {
     fieldsMap.getContainer().style.cursor = '';
 }
 
-// 🌟 AUTOMATINIS NMA POLIGONO UŽBRAUKIMAS ŽEMĖLAPYJE
 export function drawExternalPolygon(coords) {
     if (!fieldsMap || !coords || coords.length < 3) return;
     stopDrawing();
@@ -542,7 +926,6 @@ export function getDrawingPoints() {
     return drawingPoints;
 }
 
-// 🌟 STATOMI TAŠKAI ŽEMĖLAPYJE
 function onMapClick(e) {
     const latLng = e.latlng;
     drawingPoints.push(latLng);
@@ -555,7 +938,6 @@ function onMapClick(e) {
         currentDrawingPolygon = L.polygon(drawingPoints, { color: '#00FF66', fill: false, fillOpacity: 0, weight: 2.5 }).addTo(fieldsMap);
     }
 
-    // 🌟 PIRMASIS TAŠKAS: PRANEŠAME VALDIKLIUI TIKRINTI VIETINĮ NMA TINKLELĮ!
     if (drawingPoints.length === 1 && typeof onFirstPointCallback === 'function') {
         onFirstPointCallback(latLng);
     }
