@@ -14,7 +14,8 @@ export const TAB_SLUGS = {
     10: 'sejomaina',
     11: 'paseliu-lyga',
     12: 'renginiai',
-    13: 'ismanieji-irenginiai'
+    13: 'ismanieji-irenginiai',
+    14: 'traktoriai'
 };
 
 export const SLUG_TO_TAB = Object.entries(TAB_SLUGS).reduce((acc, [idx, slug]) => {
@@ -68,7 +69,7 @@ export function switchTab(tabIndex, preserveCalcSlug = false) {
 
     let targetView = document.getElementById('view-tab-calculators');
     if (tabIndex === 1) targetView = document.getElementById('view-tab-weather');
-    else if ((tabIndex >= 2 && tabIndex <= 5) || tabIndex === 13) targetView = document.getElementById('view-tab-fields');
+    else if ((tabIndex >= 2 && tabIndex <= 5) || tabIndex === 13 || tabIndex === 14) targetView = document.getElementById('view-tab-fields');
     else if (tabIndex === 6) targetView = document.getElementById('view-tab-reports');
     else if (tabIndex === 7) targetView = document.getElementById('view-tab-feed');
     else if (tabIndex === 8) targetView = document.getElementById('view-tab-garage');
@@ -104,12 +105,14 @@ export function switchTab(tabIndex, preserveCalcSlug = false) {
     });
 
     // 2. Mobili apatinė juosta
-    const isUkis = (tabIndex >= 2 && tabIndex <= 6) || tabIndex === 10 || tabIndex === 13;
+    const isUkis = (tabIndex >= 2 && tabIndex <= 6) || tabIndex === 10;
+    const isTechnika = tabIndex === 13 || tabIndex === 14;
     const isBendruomene = tabIndex === 7 || tabIndex === 8 || tabIndex === 11 || tabIndex === 12;
 
     setMobileBtnActive('btn-mobile-skaiciuokles-menu', tabIndex === 0);
     setMobileBtnActive('btn-mobile-weather-nav', tabIndex === 1);
     setMobileBtnActive('btn-mobile-ukis-menu', isUkis);
+    setMobileBtnActive('btn-mobile-technika-menu', isTechnika);
     setMobileBtnActive('btn-mobile-bendruomene-menu', isBendruomene);
     setMobileBtnActive('btn-mobile-settings-nav', tabIndex === 9);
 
@@ -188,6 +191,11 @@ export function switchTab(tabIndex, preserveCalcSlug = false) {
             title: "Išmanieji Ūkio Įrenginiai ir Nord Pool Šilumos Siurblio Valdymas | JurgisAgro",
             desc: "Automatinis Daikin Altherma šilumos siurblių ir ūkio įrenginių valdymas pagal pigiausias Nord Pool elektros biržos valandas.",
             url: "https://jurgisagro.com/ismanieji-irenginiai"
+        },
+        14: {
+            title: "Savaeigė technika (John Deere Cloud / JDLink) | JurgisAgro",
+            desc: "Ūkio savaeigės technikos telemetrija, belaidis VRA užduočių siuntimas į kabiną ir darbų sinchronizavimas.",
+            url: "https://jurgisagro.com/traktoriai"
         }
     };
 

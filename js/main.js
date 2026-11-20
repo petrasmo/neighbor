@@ -35,6 +35,7 @@ import { autoRegisterFcmToken } from './core/notifications.js';
 import { renderFertilizerBarometer } from './skaiciuokles/fertilizerBarometer.js';
 import { initCropLeagueTab } from './bendruomene/cropLeague.js';
 import { initEventsTab } from './bendruomene/events.js';
+import { initTractorsTab } from './traktoriai/tractorsTab.js';
 
 let currentUser = null;
 let userData = null;
@@ -117,8 +118,18 @@ document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('.nav-tab-btn').forEach(btn => {
         btn.addEventListener('click', () => {
             const tabIdx = parseInt(btn.getAttribute('data-tab'));
+            const isAdmin = currentUser && (userData?.role === 'admin' || currentUser.email === 'petrasmo@gmail.com');
 
-            if (!currentUser && ((tabIdx >= 2 && tabIdx <= 6) || tabIdx === 10 || tabIdx === 13 || tabIdx === 8 || tabIdx === 9)) {
+            if (tabIdx === 14 && !isAdmin) {
+                showDialog(
+                    "Prieiga ribojama",
+                    "Skiltis „Savaeigė technika“ šiuo metu yra testuojama ir pasiekiama tik administratoriams.",
+                    "🔒"
+                );
+                return;
+            }
+
+            if (!currentUser && ((tabIdx >= 2 && tabIdx <= 6) || tabIdx === 10 || tabIdx === 13 || tabIdx === 14 || tabIdx === 8 || tabIdx === 9)) {
                 showDialog(
                     "Reikalingas prisijungimas",
                     "Norėdami valdyti išmaniuosius įrenginius, laukus, sėjomainą, tręšimą, ataskaitas ar nustatymus, prisijunkite prie savo ūkio paskyros.",
@@ -137,7 +148,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 initWeatherTab(currentUser, userData);
             } else if (tabIdx === 13) {
                 initSmartDevicesTab(currentUser, userData);
-            } else if (tabIdx === 2) {
+            } else if (tabIdx === 14) {
+                initTractorsTab(currentUser, userData); 
+            }else if (tabIdx === 2) {
                 initFieldsManager(currentUser, userData);
                 setTimeout(() => refreshFieldsMap(), 150);
             } else if (tabIdx === 10) {
@@ -264,6 +277,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 initSettingsTab(currentUser, userData);
                 initWeatherTab(currentUser, userData);
 
+                const isAdmin = (userData?.role === 'admin') || (user.email === 'petrasmo@gmail.com');
+                
+                document.querySelectorAll('.admin-only-nav').forEach(el => {
+                    if (isAdmin) el.classList.remove('hidden');
+                    else el.classList.add('hidden');
+                });
+
+
+
                 const hasValidGarage = userData && userData.isSetupComplete && userData.garageLat && userData.garageLon && userData.garageLat !== 0;
 
                 if (!hasValidGarage) {
@@ -277,6 +299,9 @@ document.addEventListener('DOMContentLoaded', () => {
                         );
                     }, 200);
                 } else {
+                    if (requestedTab === 14 && !isAdmin) {
+                        requestedTab = 0;
+                    }
                     switchTab(requestedTab, true);
                     if (requestedTab === 13) initSmartDevicesTab(currentUser, userData);
                     else if (requestedTab === 2) { initFieldsManager(currentUser, userData); refreshFieldsMap(); }
@@ -288,6 +313,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     else if (requestedTab === 5) initOperationsJournalTab(currentUser, userData);
                     else if (requestedTab === 1) initWeatherTab(currentUser, userData);
                     else if (requestedTab === 6) initReportsTab(cachedFieldsList, userData);
+                    else if (requestedTab === 14) initTractorsTab(currentUser, userData);
                 }
 
             } else {
@@ -312,7 +338,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     mobileAuthSlot.querySelector('.login-trigger-btn')?.addEventListener('click', () => openAuthModal('login'));
                 }
 
-                if (requestedTab === 13) requestedTab = 0;
+                if (requestedTab === 13 || requestedTab === 14) requestedTab = 0;
                 switchTab(requestedTab, true);
                 if (requestedTab === 1) initWeatherTab(null, null);
                 else if (requestedTab === 7) initFeedTab(null, null, classifierMap);

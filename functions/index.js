@@ -29,6 +29,14 @@ const {
   executeHourlySiloAutopilot,
 } = require("./shellySync");
 
+const {
+  getJohnDeereLoginUrl,
+  exchangeDeereCode,
+  syncJohnDeereData,
+  pushFieldsToJohnDeere,
+  uploadVraZipToJohnDeere,
+} = require("./johnDeereSync");
+
 // Importuojame Išmaniųjų Pranešimų pagalbininką
 const { 
   checkAndSendMatifAlerts, 
@@ -960,6 +968,105 @@ exports.controlShellySilo = onRequest(
       res.json({ success: true, telemetry: tel });
     } catch (err) {
       res.status(500).json({ error: err.message });
+    }
+  }
+);
+// ========================================================
+// 🦌 22. JOHN DEERE OPERATIONS CENTER (SANDBOX & PRODUCTION)
+// ========================================================
+exports.getJohnDeereAuthUrl = onRequest(
+  { cors: true, invoker: "public" },
+  async (req, res) => {
+    const userId = req.query.userId || "anonymous";
+    const origin = req.query.origin || "https://jurgisagro.com";
+    res.json({ success: true, url: getJohnDeereLoginUrl(userId, origin) });
+  }
+);
+
+exports.johnDeereAuthCallback = onRequest(
+  { cors: true, invoker: "public" },
+  async (req, res) => {
+    const { code, state, error, error_description } = req.query;
+
+    let userId = "anonymous";
+    let redirectOrigin = "https://jurgisagro.com";
+    try {
+      const parsed = JSON.parse(Buffer.from(decodeURIComponent(state), "base64").toString("utf-8"));
+      if (parsed.uid) userId = parsed.uid;
+      if (parsed.origin) redirectOrigin = parsed.origin;
+    } catch (e) {
+      if (state) userId = state;
+    }
+
+    if (error) {
+      return res.redirect(`${redirectOrigin}/?tab=14&jd_error=${encodeURIComponent(error_description || error)}`);
+    }
+
+    if (!code) {
+      return res.status(400).send("Trūksta autorizacijos kodo iš John Deere.");
+    }
+
+    try {
+      const tokens = await exchangeDeereCode(code);
+
+      await db.collection("johndeere_secrets").doc(userId).set({
+        userId: userId,
+        accessToken: tokens.access_token,
+        refreshToken: tokens.refresh_token || null,
+        expiresAt: Date.now() + (tokens.expires_in || 3600) * 1000,
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      });
+
+      try {
+        await syncJohnDeereData(db, admin, userId);
+      } catch (syncErr) {
+        console.warn("John Deere duomenų nuskaitymo įspėjimas:", syncErr.message);
+      }
+
+      return res.redirect(`${redirectOrigin}/?tab=14&jd=connected`);
+    } catch (err) {
+      const msg = err.response?.data ? JSON.stringify(err.response.data) : err.message;
+      return res.redirect(`${redirectOrigin}/?tab=14&jd_error=${encodeURIComponent(msg)}`);
+    }
+  }
+);
+
+exports.getJohnDeereData = onRequest(
+  { cors: true, invoker: "public" },
+  async (req, res) => {
+    try {
+      const userId = req.query.userId;
+      if (!userId) return res.status(400).json({ error: "Trūksta userId" });
+      const data = await syncJohnDeereData(db, admin, userId);
+      res.json({ success: true, ...data });
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  }
+);
+
+exports.syncFieldsToJohnDeere = onRequest(
+  { cors: true, invoker: "public" },
+  async (req, res) => {
+    try {
+      const body = typeof req.body === "string" ? JSON.parse(req.body) : req.body;
+      const result = await pushFieldsToJohnDeere(db, admin, body.userId, body.orgId, body.fields || []);
+      res.json({ success: true, ...result });
+    } catch (err) {
+      res.status(500).json({ error: err.response?.data ? JSON.stringify(err.response.data) : err.message });
+    }
+  }
+);
+
+exports.sendVraFileToJohnDeere = onRequest(
+  { cors: true, invoker: "public" },
+  async (req, res) => {
+    try {
+      const body = typeof req.body === "string" ? JSON.parse(req.body) : req.body;
+      const task = await uploadVraZipToJohnDeere(db, admin, body.userId, body.orgId, body);
+      res.json({ success: true, task });
+    } catch (err) {
+      res.status(500).json({ error: err.response?.data ? JSON.stringify(err.response.data) : err.message });
     }
   }
 );

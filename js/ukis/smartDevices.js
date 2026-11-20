@@ -180,22 +180,69 @@ function listenToSmartDevices(currentUser) {
 }
 
 function renderDevicesListHtml() {
-    if (userDevicesList.length === 0) {
+    // 🌟 Atfiltruojame: šiame lange rodomi TIK stacionarūs įrenginiai (Bokštai, Saulė, Katilai), jokių traktorių!
+    const iotDevices = userDevicesList.filter(dev => dev.type !== 'tractor_cloud');
+
+    if (iotDevices.length === 0) {
         return `
             <div class="py-10 text-center space-y-3 bg-tractorBg rounded-2xl border border-tractorBorder p-6">
                 <span class="text-4xl block">🔌</span>
                 <h4 class="font-bold text-base" style="color: var(--text-main);">Dar neturite prijungtų išmaniųjų įrenginių</h4>
                 <p class="text-xs text-slate-400 max-w-md mx-auto">
-                    Spauskite <strong>„➕ Pridėti išmanųjį įrenginį“</strong> viršuje ir prijunkite savo <strong>Grūdų bokšto ventiliatorių (Shelly)</strong> arba <strong>Daikin šilumos siurblį</strong>.
+                    Spauskite <strong>„➕ Pridėti išmanųjį įrenginį“</strong> viršuje ir prijunkite savo <strong>Grūdų bokšto ventiliatorių (Shelly)</strong>, <strong>Saulės elektrinę (Growatt)</strong> arba <strong>Daikin šilumos siurblį</strong>.
                 </p>
             </div>
         `;
     }
 
-    return userDevicesList.map(dev => {
+    return iotDevices.map(dev => {
         const tel = dev.telemetry || {};
         const cfg = dev.config || {};
 
+        // 1. ☀️ SAULĖS ELEKTRINĖS KORTELĖ (GROWATT)
+        if (dev.type === 'solar') {
+            const curKw = Number(tel.currentPowerKw ?? 0).toFixed(2);
+            const todayKwh = Number(tel.todayKwh ?? 0).toFixed(2);
+            const totalMwh = (Number(tel.totalKwh ?? 0) / 1000).toFixed(2);
+
+            return `
+                <div class="card-open-device-sheet bg-tractorBg border-2 border-tractorBorder hover:border-amber-500 rounded-2xl p-4 sm:p-5 flex flex-col lg:flex-row lg:items-center justify-between gap-4 transition cursor-pointer shadow-md" data-dev-id="${dev.id}">
+                    <div class="space-y-2 flex-1">
+                        <div class="flex flex-wrap items-center gap-2.5">
+                            <span class="text-2xl">☀️</span>
+                            <h4 class="font-oswald text-lg sm:text-xl font-bold uppercase tracking-wide" style="color: var(--text-main);">
+                                ${dev.name || 'Saulės elektrinė'}
+                            </h4>
+                            <span class="text-xs bg-tractorSurface px-2.5 py-0.5 rounded-lg font-mono font-bold text-amber-500 border border-tractorBorder">
+                                ${tel.modelInfo || 'Growatt 15kW (7kWp)'}
+                            </span>
+                            <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-green-500/15 text-green-600 dark:text-green-400 border border-green-500/30">
+                                🟢 Growatt Cloud
+                            </span>
+                        </div>
+
+                        <div class="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs sm:text-sm pt-0.5">
+                            <span>☀️ Dabar gamina: <strong class="text-amber-500 font-mono">${curKw} kW</strong></span>
+                            <span>•</span>
+                            <span>📅 Šiandien: <strong class="text-green-500 font-mono">${todayKwh} kWh</strong></span>
+                            <span>•</span>
+                            <span>🏆 Viso: <strong class="font-mono" style="color: var(--text-main);">${totalMwh} MWh</strong></span>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center gap-2 shrink-0 pt-2 lg:pt-0 border-t lg:border-t-0 border-tractorBorder/60">
+                        <button type="button" class="btn-open-panel-action h-10 px-4 bg-tractorPrimary hover:bg-tractorPrimaryHover text-white font-extrabold rounded-xl text-xs uppercase tracking-wider flex items-center gap-1.5 shadow transition cursor-pointer">
+                            <span>☀️</span> <span>Saulės radaras ➔</span>
+                        </button>
+                        <button type="button" class="btn-delete-device-action h-10 px-3 bg-red-950/20 hover:bg-red-950/40 border border-red-800/40 text-red-500 rounded-xl text-xs font-bold transition cursor-pointer flex items-center justify-center" data-dev-id="${dev.id}" title="Pašalinti įrenginį">
+                            <span>🗑️</span>
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
+        // 2. 🛢️ GRŪDŲ BOKŠTO KORTELĖ (SHELLY)
         if (dev.type === 'silo_fan') {
             const isFanOn = tel.fanOnOff === 'on';
             const powerW = Number(tel.powerW ?? 0);
@@ -210,7 +257,7 @@ function renderDevicesListHtml() {
                                 ${dev.name || 'Grūdų bokštas'}
                             </h4>
                             <span class="text-xs bg-tractorSurface px-2.5 py-0.5 rounded-lg font-mono font-bold text-slate-400 border border-tractorBorder">
-                                ${tel.modelInfo || 'Shelly 1PM Mini Gen3'}
+                                ${tel.modelInfo || 'Shelly Gen3 / Gen4'}
                             </span>
                             <span class="px-2.5 py-0.5 rounded-full text-xs font-bold ${tel.isOnline ? 'bg-green-500/15 text-green-600 dark:text-green-400 border border-green-500/30' : 'bg-slate-700 text-slate-300'}">
                                 ${tel.isOnline ? '🟢 Online' : '⚪ Offline'}
@@ -240,7 +287,7 @@ function renderDevicesListHtml() {
             `;
         }
 
-        // DAIKIN KORTELĖ
+        // 3. 🔥 DAIKIN ŠILUMOS SIURBLYS
         const isClimOn = tel.climateOnOff === 'on';
         const isDhwOn = tel.dhwOnOff === 'on';
         const waterTemp = tel.leavingWaterTemp !== null && tel.leavingWaterTemp !== undefined ? `${Number(tel.leavingWaterTemp).toFixed(1)} °C` : '-- °C';
@@ -253,7 +300,7 @@ function renderDevicesListHtml() {
                     <div class="flex flex-wrap items-center gap-2.5">
                         <span class="text-2xl">🔥</span>
                         <h4 class="font-oswald text-lg sm:text-xl font-bold uppercase tracking-wide" style="color: var(--text-main);">
-                            ${dev.name || 'Išmanusis įrenginys'}
+                            ${dev.name || 'Šilumos siurblys'}
                         </h4>
                         <span class="text-xs bg-tractorSurface px-2.5 py-0.5 rounded-lg font-mono font-bold text-slate-400 border border-tractorBorder">
                             ${tel.modelInfo || 'Altherma 3'}
@@ -327,28 +374,32 @@ function renderDeviceControlPanel(currentUser) {
     const dev = selectedDevice;
     const tel = dev.telemetry || {};
     const isSilo = dev.type === 'silo_fan';
+    const isSolar = dev.type === 'solar';
 
     let updatedTimeStr = "";
     if (tel.updatedAt && tel.updatedAt.toDate) {
         updatedTimeStr = tel.updatedAt.toDate().toLocaleTimeString('lt-LT', { hour: '2-digit', minute: '2-digit' });
     }
 
+    const headerIcon = isSolar ? '☀️' : (isSilo ? '🛢️' : '🔥');
+    const cloudLabel = isSolar ? 'Growatt Cloud Ryšys Aktyvus' : (isSilo ? 'Shelly Cloud Ryšys Aktyvus' : 'Daikin Cloud Ryšys Aktyvus');
+
     panel.innerHTML = `
         <div class="shrink-0 bg-tractorSurface border-b border-tractorBorder px-4 sm:px-6 py-3.5 flex flex-wrap items-center justify-between gap-3 z-20">
             <div class="flex flex-wrap items-center gap-2.5">
-                <span class="text-2xl">${isSilo ? '🛢️' : '🔥'}</span>
+                <span class="text-2xl">${headerIcon}</span>
                 <div>
                     <h3 class="font-oswald text-lg sm:text-xl font-bold uppercase tracking-wider leading-tight" style="color: var(--text-main);">
-                        ${dev.name} (${tel.modelInfo || (isSilo ? 'Shelly Gen3' : 'EHBH08EF9W')})
+                        ${dev.name} (${tel.modelInfo || (isSolar ? 'Growatt 15kW' : (isSilo ? 'Shelly Gen3/Gen4' : 'EHBH08EF9W'))})
                     </h3>
                     <span class="text-xs text-green-600 dark:text-green-400 font-bold">
-                        🟢 ${isSilo ? 'Shelly Cloud Ryšys Aktyvus' : 'Daikin Cloud Ryšys Aktyvus'} ${updatedTimeStr ? `<span class="text-slate-400 font-normal ml-1">(Atnaujinta ${updatedTimeStr})</span>` : ''}
+                        🟢 ${cloudLabel} ${updatedTimeStr ? `<span class="text-slate-400 font-normal ml-1">(Atnaujinta ${updatedTimeStr})</span>` : ''}
                     </span>
                 </div>
             </div>
 
             <div class="flex items-center gap-2">
-                ${!isSilo ? `
+                ${(!isSilo && !isSolar) ? `
                 <div class="flex items-center gap-1 bg-tractorBg p-1 rounded-xl border border-tractorBorder">
                     <button type="button" id="btn-subtab-control" class="px-3.5 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${activeModalSubTab === 'control' ? 'bg-tractorPrimary text-white shadow' : 'text-slate-400 hover:text-white'}">
                         🎛️ Katilo Valdymas
@@ -367,11 +418,13 @@ function renderDeviceControlPanel(currentUser) {
         </div>
 
         <div id="subtab-content-container" class="flex-1 overflow-y-auto px-4 sm:px-6 py-4 pb-10 space-y-3.5">
-            ${isSilo
-                ? renderSiloControlTabHtml(dev, tel)
-                : (activeModalSubTab === 'control'
-                    ? renderDaikinControlTabHtml(dev, tel, currentUser)
-                    : renderDaikinEnergyTabHtml(dev, cachedElecHours))
+            ${isSolar
+                ? renderSolarControlTabHtml(dev, tel)
+                : (isSilo
+                    ? renderSiloControlTabHtml(dev, tel)
+                    : (activeModalSubTab === 'control'
+                        ? renderDaikinControlTabHtml(dev, tel, currentUser)
+                        : renderDaikinEnergyTabHtml(dev, cachedElecHours)))
             }
         </div>
     `;
@@ -384,9 +437,11 @@ function renderDeviceControlPanel(currentUser) {
         if (!currentUser) return;
         showBottomToast("Nuskaitoma įrenginio būsena... 🔄", "info");
         try {
-            const url = isSilo
-                ? `https://us-central1-neighborpm-b9968.cloudfunctions.net/refreshShellyStatus?userId=${currentUser.uid}&deviceDocId=${dev.id}`
-                : `https://us-central1-neighborpm-b9968.cloudfunctions.net/refreshDaikinStatus?userId=${currentUser.uid}`;
+            const url = isSolar
+                ? `https://us-central1-neighborpm-b9968.cloudfunctions.net/refreshGrowattStatus?userId=${currentUser.uid}&deviceDocId=${dev.id}`
+                : (isSilo
+                    ? `https://us-central1-neighborpm-b9968.cloudfunctions.net/refreshShellyStatus?userId=${currentUser.uid}&deviceDocId=${dev.id}`
+                    : `https://us-central1-neighborpm-b9968.cloudfunctions.net/refreshDaikinStatus?userId=${currentUser.uid}`);
             const res = await fetch(url);
             const data = await res.json();
             if (data && data.success) {
@@ -397,7 +452,19 @@ function renderDeviceControlPanel(currentUser) {
         }
     });
 
-    if (isSilo) {
+    if (isSolar) {
+        bindSolarControlEvents(
+            currentUser,
+            dev,
+            async (shouldSaveToDb, updatedConfig = null) => {
+                if (shouldSaveToDb && updatedConfig) {
+                    await db.collection("user_smart_devices").doc(dev.id).update({ config: updatedConfig });
+                }
+                renderSolarScheduleGrid(dev, cachedElecHours);
+            },
+            cachedElecHours
+        );
+    } else if (isSilo) {
         bindSiloControlEvents(
             currentUser,
             dev,

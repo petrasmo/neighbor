@@ -15,7 +15,8 @@ export function renderGlobalSidebar(activePage = 'index', activeTab = 0) {
         }
     };
 
-    const isUkisActive = (activeTab >= 2 && activeTab <= 6) || activeTab === 10 || activeTab === 13;
+    const isUkisActive = (activeTab >= 2 && activeTab <= 6) || activeTab === 10;
+    const isTechnikaActive = activeTab === 13 || activeTab === 14;
     const isBendruomeneActive = (activeTab >= 7 && activeTab <= 8) || activeTab === 11 || activeTab === 12;
 
     // 1. DESKTOP ŠONINIS MENIU
@@ -24,7 +25,7 @@ export function renderGlobalSidebar(activePage = 'index', activeTab = 0) {
             <aside class="flex flex-col justify-between w-72 bg-tractorSurface border-r border-tractorBorder p-5 h-full shrink-0 overflow-y-auto">
                 <div class="space-y-3.5">
                     
-                    <!-- LOGOTIPAS IR PAGALBOS / TEMOS MYGTUKAI (PILNAI TELPA!) -->
+                    <!-- LOGOTIPAS IR PAGALBOS / TEMOS MYGTUKAI -->
                     <div class="flex items-center justify-between gap-2 pb-1">
                         <a href="index.html" class="flex items-center gap-2.5 min-w-0">
                             <div class="w-9 h-9 rounded-xl bg-tractorPrimary/20 border border-tractorPrimary/40 flex items-center justify-center text-lg shrink-0">
@@ -46,7 +47,7 @@ export function renderGlobalSidebar(activePage = 'index', activeTab = 0) {
                         </div>
                     </div>
 
-                    <!-- 🌍 GRAŽI KALBŲ PERJUNGIMO JUOSTELĖ PO LOGOTIPU -->
+                    <!-- KALBŲ PERJUNGIMO JUOSTELĖ -->
                     <div class="flex items-center justify-between bg-tractorBg border border-tractorBorder rounded-xl px-3 py-1.5 border-b border-tractorBorder/70">
                         <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
                             <span>🌍</span> <span>Kalba:</span>
@@ -59,7 +60,7 @@ export function renderGlobalSidebar(activePage = 'index', activeTab = 0) {
                         </select>
                     </div>
                     
-                    <nav class="space-y-3 text-xs pt-1 border-t border-tractorBorder/70">
+                    <nav class="space-y-2.5 text-xs pt-1 border-t border-tractorBorder/70">
                         
                         <!-- 1. SKAIČIUOKLĖS -->
                         <div class="space-y-1">
@@ -75,17 +76,13 @@ export function renderGlobalSidebar(activePage = 'index', activeTab = 0) {
                             </button>
                         </div>
 
-                        <!-- 3. ŪKIS IR LAUKAI -->
+                        <!-- 3. ŪKIS IR LAUKAI (ŠVARI AGRONOMIJA) -->
                         <div class="sidebar-category space-y-1 border border-tractorBorder/60 rounded-xl p-1.5 bg-tractorBg/40">
                             <div class="sidebar-cat-header flex items-center justify-between px-3 py-1.5 font-bold text-slate-400 uppercase tracking-wider text-[10px] cursor-pointer hover:text-white transition select-none">
-                                <span>🚜 Ūkis ir Laukai</span>
+                                <span>🌾 Ūkis ir Laukai</span>
                                 <span class="cat-arrow text-[10px] transform transition-transform duration-200 ${isUkisActive ? 'rotate-180' : ''}">▼</span>
                             </div>
                             <div class="sidebar-cat-body space-y-1 ${isUkisActive ? '' : 'hidden'}">
-                                <!-- 🌟 1 VIETOJE: IŠMANIEJI ĮRENGINIAI -->
-                                <button class="nav-tab-btn w-full text-left px-3 py-2 rounded-lg font-semibold transition flex items-center gap-2.5 cursor-pointer ${activeTab === 13 ? 'bg-tractorPrimary text-white shadow' : 'text-slate-300 hover:text-white hover:bg-tractorCard'}" ${getNavClickAction(13)}>
-                                    <span>⚡</span> <span>Išmanieji Įrenginiai</span>
-                                </button>
                                 <button class="nav-tab-btn w-full text-left px-3 py-2 rounded-lg font-semibold transition flex items-center gap-2.5 cursor-pointer ${activeTab === 2 ? 'bg-tractorPrimary text-white shadow' : 'text-slate-300 hover:text-white hover:bg-tractorCard'}" ${getNavClickAction(2)}>
                                     <span>🗺️</span> <span>Mano Laukai (Žemėlapis)</span>
                                 </button>
@@ -107,7 +104,23 @@ export function renderGlobalSidebar(activePage = 'index', activeTab = 0) {
                             </div>
                         </div>
 
-                        <!-- 4. BENDRUOMENĖ IR PARKAS -->
+                        <!-- 4. 🌟 NAUJA KATEGORIJA: MANO TECHNIKA IR ĮRANGA -->
+                        <div class="sidebar-category space-y-1 border border-tractorBorder/60 rounded-xl p-1.5 bg-tractorBg/40">
+                            <div class="sidebar-cat-header flex items-center justify-between px-3 py-1.5 font-bold text-slate-400 uppercase tracking-wider text-[10px] cursor-pointer hover:text-white transition select-none">
+                                <span>🚜 Mano Technika ir Įranga</span>
+                                <span class="cat-arrow text-[10px] transform transition-transform duration-200 ${isTechnikaActive ? 'rotate-180' : ''}">▼</span>
+                            </div>
+                            <div class="sidebar-cat-body space-y-1 ${isTechnikaActive ? '' : 'hidden'}">
+                                <button class="nav-tab-btn admin-only-nav hidden w-full text-left px-3 py-2 rounded-lg font-semibold transition flex items-center gap-2.5 cursor-pointer ${activeTab === 14 ? 'bg-tractorPrimary text-white shadow' : 'text-slate-300 hover:text-white hover:bg-tractorCard'}" ${getNavClickAction(14)}>
+                                 <span>🦌</span> <span>Savaeigė technika</span>
+                                </button>
+                                <button class="nav-tab-btn w-full text-left px-3 py-2 rounded-lg font-semibold transition flex items-center gap-2.5 cursor-pointer ${activeTab === 13 ? 'bg-tractorPrimary text-white shadow' : 'text-slate-300 hover:text-white hover:bg-tractorCard'}" ${getNavClickAction(13)}>
+                                    <span>⚡</span> <span>Išmanieji Įrenginiai</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- 5. BENDRUOMENĖ IR PARKAS (GARAŽAS PALIKTAS ČIA) -->
                         <div class="sidebar-category space-y-1 border border-tractorBorder/60 rounded-xl p-1.5 bg-tractorBg/40">
                             <div class="sidebar-cat-header flex items-center justify-between px-3 py-1.5 font-bold text-slate-400 uppercase tracking-wider text-[10px] cursor-pointer hover:text-white transition select-none">
                                 <span>🤝 Bendruomenė ir Parkas</span>
@@ -129,7 +142,7 @@ export function renderGlobalSidebar(activePage = 'index', activeTab = 0) {
                             </div>
                         </div>
 
-                        <!-- 5. SISTEMA -->
+                        <!-- 6. SISTEMA -->
                         <div class="space-y-1">
                             <button class="nav-tab-btn w-full text-left px-3.5 py-2.5 rounded-xl font-semibold transition flex items-center gap-3 cursor-pointer ${activeTab === 9 ? 'bg-tractorPrimary text-white shadow' : 'text-slate-300 hover:text-white hover:bg-tractorCard'}" ${getNavClickAction(9)}>
                                 <span class="text-base">⚙️</span> <span>Nustatymai</span>
@@ -162,7 +175,7 @@ export function renderGlobalSidebar(activePage = 'index', activeTab = 0) {
         }, 50);
     }
 
-    // 2. MOBILI VIRŠUTINĖ JUOSTA
+    // 2. MOBILI VIRŠUTINĖ JUOSTA (su ⚙️ Nustatymais viršuje!)
     if (mobileHeaderContainer) {
         mobileHeaderContainer.innerHTML = `
             <div class="bg-tractorSurface border-b border-tractorBorder w-full px-3 py-2.5 flex justify-between items-center relative z-[150] shadow-sm shrink-0">
@@ -170,8 +183,8 @@ export function renderGlobalSidebar(activePage = 'index', activeTab = 0) {
                     <span class="text-lg">🚜</span>
                     <span class="font-oswald text-lg font-bold tracking-wider text-green-500">JURGISAGRO</span>
                 </a>
-                <div class="flex items-center gap-1.5">
-                    <select class="lang-switcher-select h-7 px-1.5 bg-tractorBg border border-tractorBorder rounded-lg text-[11px] font-bold outline-none cursor-pointer" style="color: var(--text-main);" title="Kalba / Language">
+                <div class="flex items-center gap-1">
+                    <select class="lang-switcher-select h-7 px-1 bg-tractorBg border border-tractorBorder rounded-lg text-[10px] font-bold outline-none cursor-pointer" style="color: var(--text-main);" title="Kalba / Language">
                         <option value="lt">LT</option>
                         <option value="en">EN</option>
                         <option value="lv">LV</option>
@@ -183,8 +196,11 @@ export function renderGlobalSidebar(activePage = 'index', activeTab = 0) {
                     <button class="btn-theme-toggle px-2 py-1 bg-tractorBg border border-tractorBorder rounded-lg text-xs font-bold">
                         <span class="theme-toggle-icon">☀️</span>
                     </button>
+                    <button id="btn-mobile-settings-nav" class="nav-tab-btn px-2 py-1 bg-tractorBg border border-tractorBorder rounded-lg text-xs font-bold ${activeTab === 9 ? 'bg-tractorPrimary text-white' : ''}" ${getNavClickAction(9)} title="Nustatymai">
+                        <span>⚙️</span>
+                    </button>
                     <div id="auth-status-mobile">
-                        <button class="login-trigger-btn px-2.5 py-1 bg-tractorPrimary text-white rounded-lg text-xs font-bold">
+                        <button class="login-trigger-btn px-2 py-1 bg-tractorPrimary text-white rounded-lg text-[11px] font-bold">
                             Prisijungti
                         </button>
                     </div>
@@ -193,10 +209,10 @@ export function renderGlobalSidebar(activePage = 'index', activeTab = 0) {
         `;
     }
 
-    // 3. MOBILI APATINĖ JUOSTA
+    // 3. MOBILI APATINĖ JUOSTA (5 aiškūs mygtukai: Skaičiuoklės | Orai | Laukai | Technika | Bendruomenė)
     if (mobileNavContainer) {
         mobileNavContainer.innerHTML = `
-            <nav class="fixed bottom-0 left-0 right-0 bg-tractorSurface border-t border-tractorBorder h-16 px-2 flex justify-around items-center z-50 shadow-2xl">
+            <nav class="fixed bottom-0 left-0 right-0 bg-tractorSurface border-t border-tractorBorder h-16 px-1.5 flex justify-around items-center z-50 shadow-2xl">
                 <button id="btn-mobile-skaiciuokles-menu" class="flex flex-col items-center justify-center py-1.5 px-2 rounded-xl transition cursor-pointer ${activeTab === 0 ? 'text-white bg-tractorPrimary shadow' : 'text-slate-300 hover:text-white'}">
                     <span class="text-base">🧮</span>
                     <span class="mt-0.5 font-bold text-[9px] leading-none">Skaičiuoklės</span>
@@ -208,21 +224,22 @@ export function renderGlobalSidebar(activePage = 'index', activeTab = 0) {
                 </button>
                 
                 <button id="btn-mobile-ukis-menu" class="flex flex-col items-center justify-center py-1.5 px-2 rounded-xl transition cursor-pointer ${isUkisActive ? 'text-white bg-tractorPrimary shadow' : 'text-slate-300 hover:text-white'}">
+                    <span class="text-base">🌾</span>
+                    <span class="mt-0.5 font-bold text-[9px] leading-none">Laukai</span>
+                </button>
+
+                <button id="btn-mobile-technika-menu" class="flex flex-col items-center justify-center py-1.5 px-2 rounded-xl transition cursor-pointer ${isTechnikaActive ? 'text-white bg-tractorPrimary shadow' : 'text-slate-300 hover:text-white'}">
                     <span class="text-base">🚜</span>
-                    <span class="mt-0.5 font-bold text-[9px] leading-none">Laukai / Ūkis</span>
+                    <span class="mt-0.5 font-bold text-[9px] leading-none">Technika</span>
                 </button>
 
                 <button id="btn-mobile-bendruomene-menu" class="flex flex-col items-center justify-center py-1.5 px-2 rounded-xl transition cursor-pointer ${isBendruomeneActive ? 'text-white bg-tractorPrimary shadow' : 'text-slate-300 hover:text-white'}">
                     <span class="text-base">🤝</span>
                     <span class="mt-0.5 font-bold text-[9px] leading-none">Bendruomenė</span>
                 </button>
-
-                <button id="btn-mobile-settings-nav" class="nav-tab-btn flex flex-col items-center justify-center py-1.5 px-2 rounded-xl transition cursor-pointer ${activeTab === 9 ? 'text-white bg-tractorPrimary shadow' : 'text-slate-300 hover:text-white'}" ${getNavClickAction(9)}>
-                    <span class="text-base">⚙️</span>
-                    <span class="mt-0.5 font-bold text-[9px] leading-none">Nustatymai</span>
-                </button>
             </nav>
 
+            <!-- SKAIČIUOKLIŲ LAPAS -->
             <div id="mobile-skaiciuokles-sheet" class="fixed inset-0 bg-black/80 z-[150] hidden flex flex-col justify-end backdrop-blur-sm transition-all">
                 <div class="bg-tractorSurface border-t border-tractorBorder p-6 rounded-t-3xl space-y-4 max-h-[85vh] overflow-y-auto shadow-2xl">
                     <div class="flex justify-between items-center border-b border-tractorBorder/70 pb-3">
@@ -243,7 +260,7 @@ export function renderGlobalSidebar(activePage = 'index', activeTab = 0) {
                             <span>🌾</span> <span>Grūdų supirkimas (Elevatoriai su logistika)</span>
                         </button>
                         <button class="mobile-calc-trigger text-left p-3 rounded-xl bg-tractorBg hover:bg-tractorPrimary/20 border border-tractorBorder flex items-center gap-3 font-bold text-white transition cursor-pointer" data-target="btn-open-diesel-calc">
-                            <span>⛽</span> <span>Dyzelinas / Gazolas (36 tiekėjų bazės)</span>
+                            <span>⛽</span> <span>Dyzelinas / Gazolas (52 tiekėjų bazės)</span>
                         </button>
                         <button class="mobile-calc-trigger text-left p-3 rounded-xl bg-tractorBg hover:bg-tractorPrimary/20 border border-tractorBorder flex items-center gap-3 font-bold text-white transition cursor-pointer" data-target="btn-open-storage-calc">
                             <span>🌾</span> <span>Grūdų sandėlis ir bokštų ventiliavimas (EMC)</span>
@@ -273,20 +290,17 @@ export function renderGlobalSidebar(activePage = 'index', activeTab = 0) {
                 </div>
             </div>
 
+            <!-- 🌾 LAUKAI IR AGRONOMIJA LAPAS -->
             <div id="mobile-ukis-sheet" class="fixed inset-0 bg-black/80 z-[150] hidden flex flex-col justify-end backdrop-blur-sm transition-all">
                 <div class="bg-tractorSurface border-t border-tractorBorder p-6 rounded-t-3xl space-y-4 max-h-[80vh] overflow-y-auto shadow-2xl">
                     <div class="flex justify-between items-center border-b border-tractorBorder/70 pb-3">
                         <div class="flex items-center gap-2">
-                            <span class="text-xl">🚜</span>
+                            <span class="text-xl">🌾</span>
                             <h3 class="font-oswald text-lg font-bold text-white uppercase tracking-wider">Ūkis ir Laukai</h3>
                         </div>
                         <button id="btn-close-ukis-sheet" class="text-slate-400 hover:text-white text-xl font-bold cursor-pointer">✕</button>
                     </div>
                     <div class="grid grid-cols-1 gap-2.5 text-xs">
-                        <!-- 🌟 1 VIETOJE MOBILIAJAME MENIU: IŠMANIEJI ĮRENGINIAI -->
-                        <button class="nav-tab-btn text-left p-3.5 rounded-xl bg-tractorBg hover:bg-tractorPrimary/20 border border-tractorBorder flex items-center gap-3 font-bold text-white transition cursor-pointer ${activeTab === 13 ? 'border-tractorPrimary bg-tractorPrimary/20 text-green-400' : ''}" ${getNavClickAction(13)}>
-                            <span class="text-base">⚡</span> <span>Išmanieji Įrenginiai</span>
-                        </button>
                         <button class="nav-tab-btn text-left p-3.5 rounded-xl bg-tractorBg hover:bg-tractorPrimary/20 border border-tractorBorder flex items-center gap-3 font-bold text-white transition cursor-pointer ${activeTab === 2 ? 'border-tractorPrimary bg-tractorPrimary/20 text-green-400' : ''}" ${getNavClickAction(2)}>
                             <span class="text-base">🗺️</span> <span>Mano Laukai (Žemėlapis)</span>
                         </button>
@@ -309,6 +323,28 @@ export function renderGlobalSidebar(activePage = 'index', activeTab = 0) {
                 </div>
             </div>
 
+            <!-- 🚜 NAUJAS MOBILUS LAPAS: MANO TECHNIKA IR ĮRANGA -->
+            <div id="mobile-technika-sheet" class="fixed inset-0 bg-black/80 z-[150] hidden flex flex-col justify-end backdrop-blur-sm transition-all">
+                <div class="bg-tractorSurface border-t border-tractorBorder p-6 rounded-t-3xl space-y-4 max-h-[80vh] overflow-y-auto shadow-2xl">
+                    <div class="flex justify-between items-center border-b border-tractorBorder/70 pb-3">
+                        <div class="flex items-center gap-2">
+                            <span class="text-xl">🚜</span>
+                            <h3 class="font-oswald text-lg font-bold text-white uppercase tracking-wider">Mano Technika ir Įranga</h3>
+                        </div>
+                        <button id="btn-close-technika-sheet" class="text-slate-400 hover:text-white text-xl font-bold cursor-pointer">✕</button>
+                    </div>
+                    <div class="grid grid-cols-1 gap-2.5 text-xs">
+                        <button class="nav-tab-btn admin-only-nav hidden text-left p-3.5 rounded-xl bg-tractorBg hover:bg-tractorPrimary/20 border border-tractorBorder flex items-center gap-3 font-bold text-white transition cursor-pointer ${activeTab === 14 ? 'border-tractorPrimary bg-tractorPrimary/20 text-green-400' : ''}" ${getNavClickAction(14)}>
+                            <span class="text-base">🦌</span> <span>Savaeigė technika</span>
+                        </button>
+                        <button class="nav-tab-btn text-left p-3.5 rounded-xl bg-tractorBg hover:bg-tractorPrimary/20 border border-tractorBorder flex items-center gap-3 font-bold text-white transition cursor-pointer ${activeTab === 13 ? 'border-tractorPrimary bg-tractorPrimary/20 text-green-400' : ''}" ${getNavClickAction(13)}>
+                            <span class="text-base">⚡</span> <span>Išmanieji Įrenginiai</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 🤝 BENDRUOMENĖ IR PARKAS LAPAS (GARAŽAS PALIKTAS ČIA) -->
             <div id="mobile-bendruomene-sheet" class="fixed inset-0 bg-black/80 z-[150] hidden flex flex-col justify-end backdrop-blur-sm transition-all">
                 <div class="bg-tractorSurface border-t border-tractorBorder p-6 rounded-t-3xl space-y-4 max-h-[80vh] overflow-y-auto shadow-2xl">
                     <div class="flex justify-between items-center border-b border-tractorBorder/70 pb-3">
@@ -368,35 +404,32 @@ export function renderGlobalSidebar(activePage = 'index', activeTab = 0) {
             const ukisSheet = document.getElementById('mobile-ukis-sheet');
             const closeUkisBtn = document.getElementById('btn-close-ukis-sheet');
 
-            if (ukisBtn && ukisSheet) {
-                ukisBtn.onclick = () => ukisSheet.classList.remove('hidden');
-            }
-            if (closeUkisBtn && ukisSheet) {
-                closeUkisBtn.onclick = () => ukisSheet.classList.add('hidden');
-            }
-            ukisSheet?.addEventListener('click', (e) => {
-                if (e.target === ukisSheet) ukisSheet.classList.add('hidden');
-            });
+            if (ukisBtn && ukisSheet) ukisBtn.onclick = () => ukisSheet.classList.remove('hidden');
+            if (closeUkisBtn && ukisSheet) closeUkisBtn.onclick = () => ukisSheet.classList.add('hidden');
+            ukisSheet?.addEventListener('click', (e) => { if (e.target === ukisSheet) ukisSheet.classList.add('hidden'); });
+
+            const techBtn = document.getElementById('btn-mobile-technika-menu');
+            const techSheet = document.getElementById('mobile-technika-sheet');
+            const closeTechBtn = document.getElementById('btn-close-technika-sheet');
+
+            if (techBtn && techSheet) techBtn.onclick = () => techSheet.classList.remove('hidden');
+            if (closeTechBtn && techSheet) closeTechBtn.onclick = () => techSheet.classList.add('hidden');
+            techSheet?.addEventListener('click', (e) => { if (e.target === techSheet) techSheet.classList.add('hidden'); });
 
             const bendruomeneBtn = document.getElementById('btn-mobile-bendruomene-menu');
             const bendruomeneSheet = document.getElementById('mobile-bendruomene-sheet');
             const closeBendruomeneBtn = document.getElementById('btn-close-bendruomene-sheet');
 
-            if (bendruomeneBtn && bendruomeneSheet) {
-                bendruomeneBtn.onclick = () => bendruomeneSheet.classList.remove('hidden');
-            }
-            if (closeBendruomeneBtn && bendruomeneSheet) {
-                closeBendruomeneBtn.onclick = () => bendruomeneSheet.classList.add('hidden');
-            }
-            bendruomeneSheet?.addEventListener('click', (e) => {
-                if (e.target === bendruomeneSheet) bendruomeneSheet.classList.add('hidden');
-            });
+            if (bendruomeneBtn && bendruomeneSheet) bendruomeneBtn.onclick = () => bendruomeneSheet.classList.remove('hidden');
+            if (closeBendruomeneBtn && bendruomeneSheet) closeBendruomeneBtn.onclick = () => bendruomeneSheet.classList.add('hidden');
+            bendruomeneSheet?.addEventListener('click', (e) => { if (e.target === bendruomeneSheet) bendruomeneSheet.classList.add('hidden'); });
 
-            document.querySelectorAll('#mobile-ukis-sheet .nav-tab-btn, #mobile-bendruomene-sheet .nav-tab-btn').forEach(btn => {
-                btn.onclick = () => {
+            document.querySelectorAll('#mobile-ukis-sheet .nav-tab-btn, #mobile-technika-sheet .nav-tab-btn, #mobile-bendruomene-sheet .nav-tab-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
                     ukisSheet?.classList.add('hidden');
+                    techSheet?.classList.add('hidden');
                     bendruomeneSheet?.classList.add('hidden');
-                };
+                });
             });
         }, 50);
     }
