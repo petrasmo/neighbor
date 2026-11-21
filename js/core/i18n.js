@@ -1,7 +1,12 @@
 // js/core/i18n.js
 
 const STORAGE_KEY = 'jurgis_lang';
-const CACHE_KEY_PREFIX = 'jurgis_i18n_cache_v1_';
+const CACHE_KEY_PREFIX = 'jurgis_i18n_cache_v2_';
+
+// Išvalome seną v1 kešą, kuriame galėjo likti išsikraipę emoji
+try {
+    ['en', 'lv', 'et'].forEach(l => localStorage.removeItem('jurgis_i18n_cache_v1_' + l));
+} catch (e) {}
 
 function detectInitialLanguage() {
     const urlParams = new URLSearchParams(window.location.search);
@@ -37,15 +42,22 @@ const EXACT_DICTIONARY = {
     "Skaičiuoklės": { en: "Calculators", lv: "Kalkulatori", et: "Kalkulaatorid" },
     "Agro-Orai ir Įšalas": { en: "Agro-Weather & Frost", lv: "Agro-laikapstākļi un sals", et: "Agro-ilm ja külmumine" },
     "Orai": { en: "Weather", lv: "Laikapstākļi", et: "Ilm" },
+    "Ūkis ir Laukai": { en: "Farm & Fields", lv: "Saimniecība un lauki", et: "Talu ja põllud" },
+    "🌾 Ūkis ir Laukai": { en: "🌾 Farm & Fields", lv: "🌾 Saimniecība un lauki", et: "🌾 Talu ja põllud" },
     "🚜 Ūkis ir Laukai": { en: "🚜 Farm & Fields", lv: "🚜 Saimniecība un lauki", et: "🚜 Talu ja põllud" },
+    "Mano Technika ir Įranga": { en: "My Machinery & Equipment", lv: "Mana tehnika un aprīkojums", et: "Minu tehnika ja seadmed" },
     "Laukai / Ūkis": { en: "Fields / Farm", lv: "Lauki / Saimniecība", et: "Põllud / Talu" },
+    "Laukai": { en: "Fields", lv: "Lauki", et: "Põllud" },
+    "Technika": { en: "Machinery", lv: "Tehnika", et: "Tehnika" },
     "Išmanieji Įrenginiai": { en: "Smart IoT Devices", lv: "Viedās ierīces", et: "Nutiseadmed" },
+    "Savaeigė technika": { en: "Self-propelled Machinery", lv: "Pašgājēja tehnika", et: "Iseliikuv tehnika" },
     "Mano Laukai (Žemėlapis)": { en: "My Fields (GIS Map)", lv: "Mani lauki (Karte)", et: "Minu põllud (Kaart)" },
     "Sėjomainos Planavimas (GAAB 7)": { en: "Crop Rotation (GAEC 7)", lv: "Augu maiņa (LLV 7)", et: "Viljavaheldus (HPK 7)" },
     "Tręšimas (VRA Traktoriui)": { en: "VRA Fertilization (Shapefile)", lv: "VRA mēslošana (Traktoram)", et: "VRA väetamine (Traktorile)" },
     "Kalkinimas (VRA traktoriui)": { en: "VRA Liming & Soil pH", lv: "VRA kaļķošana un pH", et: "VRA lupjamine ja pH" },
     "Kitos operacijos ir Žurnalas": { en: "Operations & Field Log", lv: "Lauka darbu žurnāls", et: "Põllutööde päevik" },
     "NMA Žurnalai ir Ataskaitos": { en: "Official Logs & Reports", lv: "Oficiālie žurnāli un atskaites", et: "Ametlikud aruanded" },
+    "Bendruomenė ir Parkas": { en: "Community & Fleet", lv: "Kopiena un tehnika", et: "Kogukond ja tehnika" },
     "🤝 Bendruomenė ir Parkas": { en: "🤝 Community & Fleet", lv: "🤝 Kopiena un tehnika", et: "🤝 Kogukond ja tehnika" },
     "Bendruomenė": { en: "Community", lv: "Kopiena", et: "Kogukond" },
     "Pasėlių Lyga (TOP 10)": { en: "Crop League (TOP 10)", lv: "Sējumu līga (TOP 10)", et: "Põllukultuuride liiga (TOP 10)" },
@@ -106,9 +118,23 @@ function shouldSkipText(str) {
     if (!str) return true;
     const clean = str.trim();
     if (clean.length < 2) return true;
-    // Praleidžiame grynus skaičius, datas, kainas, kodus
-    if (/^[0-9.,:+\-–—€$%/\s()°CchaktlMWhkW#•📡🕒📅⚡🌾🌱🚜⛽🧪🍋🏠🛢️🟢🟡🔴⚪🥇🥈🥉]+$/i.test(clean)) return true;
+    // Praleidžiame VISUS tekstus be nė vienos raidės (emoji, skaičiai, datos, kainos, simboliai)
+    if (!/\p{L}/u.test(clean)) return true;
+    // Praleidžiame grynus matavimo vienetus su skaičiais
+    if (/^[0-9.,:+\-–—€$%/\s()°CchaktlMWhkW#•]+$/i.test(clean)) return true;
     if (clean === 'JURGISAGRO' || clean === 'JurgisAgro') return true;
+    return false;
+}
+
+function isIgnoredElement(parent) {
+    if (!parent) return true;
+    const tag = parent.tagName;
+    if (tag === 'SCRIPT' || tag === 'STYLE' || tag === 'NOSCRIPT' || tag === 'CODE') {
+        return true;
+    }
+    if (parent.closest?.('.lang-switcher-select, .notranslate, [translate="no"]')) {
+        return true;
+    }
     return false;
 }
 
@@ -117,6 +143,7 @@ export function getCurrentLang() {
 }
 
 export function initLanguageEngine() {
+    document.documentElement.lang = currentLang;
     updateLangSelectUI(currentLang);
 
     document.querySelectorAll('.lang-switcher-select').forEach(sel => {
@@ -158,8 +185,15 @@ function ensureDomObserverStarted() {
 
 export function setLanguage(lang) {
     currentLang = lang;
+    document.documentElement.lang = lang;
     localStorage.setItem(STORAGE_KEY, lang);
     updateLangSelectUI(lang);
+
+    pendingNodes.clear();
+    if (batchTimer) {
+        clearTimeout(batchTimer);
+        batchTimer = null;
+    }
 
     if (lang === 'lt') {
         if (observer) {
@@ -203,18 +237,12 @@ function translateEntirePage(lang) {
 }
 
 function scanAndQueueElement(rootEl, lang) {
-    if (!rootEl) return;
+    if (!rootEl || isIgnoredElement(rootEl)) return;
 
     // 1. Tekstiniai mazgai
     const walker = document.createTreeWalker(rootEl, NodeFilter.SHOW_TEXT, {
         acceptNode: (node) => {
-            const parent = node.parentElement;
-            if (!parent) return NodeFilter.FILTER_REJECT;
-            const tag = parent.tagName;
-            if (tag === 'SCRIPT' || tag === 'STYLE' || tag === 'NOSCRIPT' || tag === 'CODE') {
-                return NodeFilter.FILTER_REJECT;
-            }
-            if (parent.closest?.('.lang-switcher-select')) {
+            if (isIgnoredElement(node.parentElement)) {
                 return NodeFilter.FILTER_REJECT;
             }
             return NodeFilter.FILTER_ACCEPT;
@@ -229,13 +257,14 @@ function scanAndQueueElement(rootEl, lang) {
     // 2. Placeholderiai
     if (rootEl.querySelectorAll) {
         rootEl.querySelectorAll('[placeholder]').forEach(el => {
+            if (isIgnoredElement(el)) return;
             if (!originalPlaceholderMap.has(el)) {
                 originalPlaceholderMap.set(el, el.getAttribute('placeholder'));
             }
             const orig = originalPlaceholderMap.get(el);
             if (!shouldSkipText(orig)) {
                 applyOrQueueTranslation(orig, lang, (translated) => {
-                    el.setAttribute('placeholder', translated);
+                    if (currentLang === lang) el.setAttribute('placeholder', translated);
                 });
             }
         });
@@ -243,6 +272,8 @@ function scanAndQueueElement(rootEl, lang) {
 }
 
 function queueTextNode(node, lang) {
+    if (isIgnoredElement(node.parentElement)) return;
+
     if (!originalTextMap.has(node)) {
         const currentVal = node.nodeValue;
         if (shouldSkipText(currentVal)) return;
@@ -272,6 +303,7 @@ function queueTextNode(node, lang) {
 
     // 3. Dedame į greitą grupinę (batch) užklausą
     applyOrQueueTranslation(trimmed, lang, (translated) => {
+        if (currentLang !== lang) return;
         const targetVal = leadingSpace + translated + trailingSpace;
         if (node.nodeValue !== targetVal) {
             node.nodeValue = targetVal;
@@ -300,17 +332,30 @@ function applyOrQueueTranslation(text, lang, callback) {
     }, 45);
 }
 
+async function translateSingleText(origText, lang) {
+    const cleanForApi = origText.replace(/\r?\n+/g, ' ');
+    const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=lt&tl=${lang}&dt=t&q=${encodeURIComponent(cleanForApi)}`;
+    const res = await fetch(url);
+    const data = await res.json();
+    if (data && Array.isArray(data[0])) {
+        return data[0].map(part => part[0]).join('').trim();
+    }
+    return origText;
+}
+
 async function flushTranslationQueue(lang) {
-    if (pendingNodes.size === 0) return;
+    if (pendingNodes.size === 0 || currentLang !== lang) return;
 
     const entries = Array.from(pendingNodes.entries());
     pendingNodes.clear();
 
-    // Siunčiame grupėmis po 25 frazes vienu ypu (sujungtas per ' ||| '), kad išverstų per 0.15 sek.!
     const CHUNK_SIZE = 25;
     for (let i = 0; i < entries.length; i += CHUNK_SIZE) {
+        if (currentLang !== lang) return;
+
         const chunk = entries.slice(i, i + CHUNK_SIZE);
-        const textsToTranslate = chunk.map(item => item[0]);
+        // Pašaliname vidinius \n prieš siunčiant, kad nesugriūtų eilučių skaičius
+        const textsToTranslate = chunk.map(item => item[0].replace(/\r?\n+/g, ' '));
         const joinedText = textsToTranslate.join('\n');
 
         try {
@@ -318,18 +363,34 @@ async function flushTranslationQueue(lang) {
             const res = await fetch(url);
             const data = await res.json();
 
+            if (currentLang !== lang) return;
+
             if (data && Array.isArray(data[0])) {
                 const fullTranslated = data[0].map(part => part[0]).join('');
                 const splitLines = fullTranslated.split('\n');
 
-                chunk.forEach(([origText, callbacks], idx) => {
-                    const transLine = (splitLines[idx] || origText).trim();
-                    if (!memoryCache[lang]) memoryCache[lang] = {};
-                    memoryCache[lang][origText] = transLine;
-                    callbacks.forEach(cb => cb(transLine));
-                });
-
-                saveLangCache(lang, memoryCache[lang]);
+                // Tikriname ar eilučių skaičius tiksliai sutampa, kad niekada neįvyktų poslinkis
+                if (splitLines.length === chunk.length) {
+                    chunk.forEach(([origText, callbacks], idx) => {
+                        const transLine = (splitLines[idx] || origText).trim();
+                        if (!memoryCache[lang]) memoryCache[lang] = {};
+                        memoryCache[lang][origText] = transLine;
+                        callbacks.forEach(cb => cb(transLine));
+                    });
+                    saveLangCache(lang, memoryCache[lang]);
+                } else {
+                    // Atsarginis variantas: jei Google grąžino kitokį eilučių skaičių, verčiame po vieną
+                    await Promise.all(chunk.map(async ([origText, callbacks]) => {
+                        try {
+                            const transLine = await translateSingleText(origText, lang);
+                            if (currentLang !== lang) return;
+                            if (!memoryCache[lang]) memoryCache[lang] = {};
+                            memoryCache[lang][origText] = transLine;
+                            callbacks.forEach(cb => cb(transLine));
+                        } catch (e) {}
+                    }));
+                    saveLangCache(lang, memoryCache[lang]);
+                }
             }
         } catch (err) {
             console.warn("Vertimo klaida:", err);
