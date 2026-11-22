@@ -57,7 +57,7 @@ export function switchTab(tabIndex, preserveCalcSlug = false) {
     const allViews = [
         document.getElementById('view-tab-calculators'), // 0
         document.getElementById('view-tab-weather'),     // 1
-        document.getElementById('view-tab-fields'),      // 2, 3, 4, 5, 13
+        document.getElementById('view-tab-fields'),      // 2, 3, 4, 5, 13, 14
         document.getElementById('view-tab-reports'),     // 6
         document.getElementById('view-tab-feed'),        // 7 (SOS)
         document.getElementById('view-tab-garage'),      // 8 (Technika)
@@ -210,10 +210,14 @@ export function switchTab(tabIndex, preserveCalcSlug = false) {
     const canonLink = document.querySelector('link[rel="canonical"]');
     if (canonLink) canonLink.setAttribute('href', activeSeo.url);
 
+    // Saugome OAuth callback parametrus (jd, jd_error, daikin), kad switchTab jų nenutrintų prieš modulio init!
+    const urlParams = new URLSearchParams(window.location.search);
+    const hasOAuthReturn = urlParams.has('jd') || urlParams.has('jd_error') || urlParams.has('daikin');
+
     const slug = TAB_SLUGS[tabIndex];
     const targetUrl = slug ? `/${slug}` : '/';
     
-    if (window.location.pathname !== targetUrl) {
+    if (!hasOAuthReturn && window.location.pathname !== targetUrl) {
         window.history.pushState({ tab: tabIndex }, activeSeo.title, targetUrl);
     }
 }
@@ -245,6 +249,20 @@ function setMobileBtnActive(id, isActive) {
 }
 
 export function getRequestedTabFromUrl() {
+    const urlParams = new URLSearchParams(window.location.search);
+
+    if (urlParams.get('jd') === 'connected' || urlParams.has('jd_error')) {
+        return 14;
+    }
+
+    if (urlParams.get('daikin') === 'connected') {
+        return 13;
+    }
+
+    if (urlParams.has('tab')) {
+        return parseInt(urlParams.get('tab'), 10) || 0;
+    }
+
     const cleanPath = window.location.pathname
         .replace(/^\/+|\/+$/g, '')
         .replace(/^en\/?/i, '')
@@ -253,20 +271,10 @@ export function getRequestedTabFromUrl() {
         return SLUG_TO_TAB[cleanPath];
     }
 
-    const urlParams = new URLSearchParams(window.location.search);
-    
-    if (urlParams.has('tab')) {
-        return parseInt(urlParams.get('tab'), 10) || 0;
-    }
-    
     for (const [slug, tabIdx] of Object.entries(SLUG_TO_TAB)) {
         if (urlParams.has(slug)) {
             return tabIdx;
         }
-    }
-
-    if (urlParams.get('daikin') === 'connected') {
-        return 13;
     }
 
     return 0;

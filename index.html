@@ -605,7 +605,7 @@
 
     <script type="module" src="js/main.js?v=2.8"></script>
 
-    <!-- 📈 GOOGLE ANALYTICS (GA4) – IŠMANUS UŽKROVIMAS PO 3 SEK., KAD NEAPKRAUTŲ PRADŽIOS! -->
+    <!-- 📈 GOOGLE ANALYTICS (GA4) – IŠMANUS UŽKROVIMAS PO 6 SEK., KAD NEAPKRAUTŲ PRADŽIOS! -->
     <script>
       window.dataLayer = window.dataLayer || [];
       function gtag(){dataLayer.push(arguments);}
@@ -618,6 +618,7 @@
         gtag('config', 'G-J6ZEGM736H');
       }, 6000);
     </script>
+
     <!-- 🍪 BDAR / GDPR STANDARTINĖ SLAPUKŲ (COOKIES) JUOSTELĖ -->
     <div id="gdpr-cookie-banner" class="fixed bottom-0 left-0 right-0 z-[99999] bg-tractorSurface border-t-2 border-tractorBorder p-4 sm:p-5 shadow-2xl backdrop-blur-md hidden">
         <div class="max-w-6xl mx-auto flex flex-col lg:flex-row items-center justify-between gap-4">
@@ -738,189 +739,6 @@
             }
         })();
     </script>
-    <!-- 🎂 JURGIO GIMTADIENIO SVEIKINIMAS (RODOMAS TIK LAPKRIČIO 22 D.) -->
-    <style>
-        #jurgis-bday-overlay {
-            position: fixed;
-            inset: 0;
-            z-index: 100005;
-            background: rgba(10, 14, 10, 0.86);
-            backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
-            display: none;
-            align-items: center;
-            justify-content: center;
-            padding: 16px;
-            opacity: 0;
-            transition: opacity 0.35s ease;
-        }
-        #jurgis-bday-overlay.is-visible {
-            display: flex;
-            opacity: 1;
-        }
-        #jurgis-bday-card {
-            position: relative;
-            width: 100%;
-            max-width: 520px;
-            max-height: 92dvh;
-            overflow-y: auto;
-            background: linear-gradient(180deg, #172117 0%, #101510 100%);
-            border: 2px solid #2E7D32;
-            box-shadow: 0 24px 60px rgba(0, 0, 0, 0.75), 0 0 35px rgba(46, 125, 50, 0.35);
-            border-radius: 22px;
-            padding: 22px 20px 20px;
-            text-align: center;
-            color: #F8FAFC;
-            animation: jurgisPopIn 0.45s cubic-bezier(0.16, 1, 0.3, 1);
-        }
-        @keyframes jurgisPopIn {
-            from { transform: scale(0.92) translateY(16px); opacity: 0; }
-            to { transform: scale(1) translateY(0); opacity: 1; }
-        }
-        #jurgis-bday-close-x {
-            position: absolute;
-            top: 12px;
-            right: 12px;
-            width: 34px;
-            height: 34px;
-            border-radius: 50%;
-            border: 1px solid rgba(255, 255, 255, 0.16);
-            background: rgba(255, 255, 255, 0.08);
-            color: #CBD5E1;
-            font-size: 20px;
-            line-height: 1;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: background 0.2s, color 0.2s;
-        }
-        #jurgis-bday-close-x:hover {
-            background: rgba(255, 255, 255, 0.2);
-            color: #FFFFFF;
-        }
-        .jurgis-bday-badge {
-            display: inline-block;
-            background: rgba(245, 158, 11, 0.16);
-            color: #FBBF24;
-            border: 1px solid rgba(245, 158, 11, 0.45);
-            font-size: 11px;
-            font-weight: 800;
-            letter-spacing: 0.08em;
-            text-transform: uppercase;
-            padding: 4px 12px;
-            border-radius: 999px;
-            margin-bottom: 10px;
-        }
-        .jurgis-bday-title {
-            font-family: 'Oswald', sans-serif;
-            font-size: clamp(24px, 5vw, 32px);
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.04em;
-            color: #FFFFFF;
-            margin: 0 0 14px 0;
-            line-height: 1.15;
-        }
-        .jurgis-bday-video-wrap {
-            position: relative;
-            width: 100%;
-            border-radius: 16px;
-            overflow: hidden;
-            background: #000000;
-            border: 1px solid rgba(74, 222, 128, 0.35);
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
-            margin-bottom: 16px;
-        }
-        #jurgis-bday-video {
-            width: 100%;
-            max-height: 40vh;
-            object-fit: contain;
-            display: block;
-            margin: 0 auto;
-        }
-        #jurgis-bday-sound-btn {
-            position: absolute;
-            bottom: 10px;
-            right: 10px;
-            background: rgba(15, 23, 42, 0.82);
-            color: #FFFFFF;
-            border: 1px solid rgba(255, 255, 255, 0.25);
-            border-radius: 999px;
-            padding: 6px 12px;
-            font-size: 12px;
-            font-weight: 700;
-            cursor: pointer;
-            backdrop-filter: blur(4px);
-            transition: background 0.2s, transform 0.15s;
-        }
-        #jurgis-bday-sound-btn:hover {
-            background: #2E7D32;
-            transform: scale(1.03);
-        }
-        .jurgis-bday-text {
-            font-family: 'Inter', sans-serif;
-            font-size: 14px;
-            line-height: 1.6;
-            color: #E2E8F0;
-            margin: 0 0 18px 0;
-            text-align: center;
-        }
-        .jurgis-bday-text p {
-            margin: 0 0 8px 0;
-        }
-        .jurgis-bday-text p:last-child {
-            margin-bottom: 0;
-        }
-        .jurgis-bday-love {
-            color: #4ADE80;
-            font-weight: 700;
-            font-size: 15px;
-        }
-        #jurgis-bday-skip-btn {
-            width: 100%;
-            height: 46px;
-            border: none;
-            border-radius: 12px;
-            background: #2E7D32;
-            color: #FFFFFF;
-            font-family: 'Inter', sans-serif;
-            font-size: 14px;
-            font-weight: 800;
-            text-transform: uppercase;
-            letter-spacing: 0.06em;
-            cursor: pointer;
-            box-shadow: 0 6px 18px rgba(46, 125, 50, 0.4);
-            transition: background 0.2s, transform 0.15s;
-        }
-        #jurgis-bday-skip-btn:hover {
-            background: #256628;
-            transform: translateY(-1px);
-        }
-    </style>
-
-    <div id="jurgis-bday-overlay" role="dialog" aria-modal="true" aria-labelledby="jurgis-bday-heading">
-        <div id="jurgis-bday-card">
-            <button type="button" id="jurgis-bday-close-x" aria-label="Praleisti">&times;</button>
-            
-            <div class="jurgis-bday-badge">🎂 Šventinė JurgisAgro diena 🚜</div>
-            <h2 id="jurgis-bday-heading" class="jurgis-bday-title">🎉 Jurgi, šiandien Tau 4! 🎉</h2>
-
-            <div class="jurgis-bday-video-wrap">
-                <video id="jurgis-bday-video" autoplay loop muted playsinline preload="none"></video>
-                <button type="button" id="jurgis-bday-sound-btn">🔇 Įjungti garsą</button>
-            </div>
-
-            <div class="jurgis-bday-text">
-                <p><strong>Su gimtadieniu, krikšto sūnau!</strong></p>
-                <p>Kad ir kaip retai susitinkame, visada apie Tave pagalvoju, niekada Tavęs nepamiršau ir labai Tavęs ilgiuosi.</p>
-                <p class="jurgis-bday-love">Labai Tave myliu! ❤️</p>
-                <p>Tegul šis šokantis traktoriukas iš „JurgisAgro“ padaro Tavo gimtadienį patį linksmiausią! 🚜🎈</p>
-            </div>
-
-            <button type="button" id="jurgis-bday-skip-btn">Praleisti →</button>
-        </div>
-    </div>
 
     <!-- 🎂 JURGIO GIMTADIENIO SVEIKINIMAS (RODOMAS VISĄ LAPKRIČIO 22 D. LIETUVOS LAIKU) -->
     <style>
@@ -1143,7 +961,8 @@
             var isBirthday = (ltNow.month === 11 && ltNow.day === 22);
             var isTestMode = window.location.search.indexOf('jurgiui=1') !== -1;
 
-            var storageKey = 'jurgis_bday_skipped_' + ltNow.year;
+            // Naujas raktas: įrašomas TIK paspaudus apatinį mygtuką "Praleisti ->"
+            var storageKey = 'jurgis_bday_skip_btn_' + ltNow.year;
             var alreadySkipped = false;
             try {
                 alreadySkipped = localStorage.getItem(storageKey) === '1';
@@ -1182,22 +1001,34 @@
                 };
             }
 
-            function dismissGreeting() {
+            function closeGreetingModal(savePermanentSkip) {
                 overlay.classList.remove('is-visible');
                 video.pause();
                 video.muted = true;
                 video.removeAttribute('src');
                 video.load();
 
-                if (!isTestMode) {
+                // Įrašome į localStorage TIK tada, kai paspaustas mygtukas "Praleisti ->" (savePermanentSkip === true)
+                if (savePermanentSkip && !isTestMode) {
                     try {
                         localStorage.setItem(storageKey, '1');
                     } catch (e) {}
                 }
             }
 
-            if (skipBtn) skipBtn.onclick = dismissGreeting;
-            if (closeX) closeX.onclick = dismissGreeting;
+            // Apatinis mygtukas "Praleisti ->" – paslepia visam laikui
+            if (skipBtn) {
+                skipBtn.onclick = function() {
+                    closeGreetingModal(true);
+                };
+            }
+
+            // Viršutinis kryžiukas "×" – tik uždaro šį kartą, bet atėjus vėl rodys!
+            if (closeX) {
+                closeX.onclick = function() {
+                    closeGreetingModal(false);
+                };
+            }
         })();
     </script>
 </body>

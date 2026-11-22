@@ -9,6 +9,8 @@ const DEERE_AUTH_URL = "https://signin.johndeere.com/oauth2/aus78tnlaysMraFhC1t7
 const DEERE_TOKEN_URL = "https://signin.johndeere.com/oauth2/aus78tnlaysMraFhC1t7/v1/token";
 const DEERE_API_BASE = "https://sandboxapi.deere.com/platform";
 
+const DEFAULT_CONNECTIONS_URL = `https://connections.deere.com/connections/${DEERE_CLIENT_ID}/select-organizations`;
+
 function getBasicAuthHeader() {
   const creds = Buffer.from(`${DEERE_CLIENT_ID}:${DEERE_CLIENT_SECRET}`).toString("base64");
   return `Basic ${creds}`;
@@ -94,12 +96,20 @@ async function getValidDeereToken(db, admin, userId) {
 }
 
 /**
- * Nuskaito organizacijas, techniką ir laukus iš John Deere Sandbox API
+ * Nuskaito organizacijas, techniką, jos GPS koordinates (locationHistory), moto-valandas, klaidas ir laukus
  */
 async function syncJohnDeereData(db, admin, userId) {
   const secretDoc = await db.collection("johndeere_secrets").doc(userId).get();
   if (!secretDoc.exists) {
-    return { isConnected: false, organizations: [], machines: [], fields: [], connectionsUrl: null };
+    return {
+      isConnected: false,
+      needsOrgConnection: false,
+      organizations: [],
+      machines: [],
+      fields: [],
+      connectionsUrl: null,
+      manageConnectionsUrl: DEFAULT_CONNECTIONS_URL,
+    };
   }
 
   const token = await getValidDeereToken(db, admin, userId);
@@ -110,6 +120,7 @@ async function syncJohnDeereData(db, admin, userId) {
 
   let orgs = [];
   let connectionsUrl = null;
+  let connectedOrg = null;
   let apiPendingMessage = null;
 
   try {
@@ -117,10 +128,13 @@ async function syncJohnDeereData(db, admin, userId) {
     orgs = orgRes.data?.values || [];
 
     for (const org of orgs) {
-      const connLink = (org.links || []).find((l) => l.rel === "connections");
+      const links = org.links || [];
+      const connLink = links.find((l) => l.rel === "connections");
+
       if (connLink && connLink.uri) {
-        connectionsUrl = connLink.uri;
-        break;
+        if (!connectionsUrl) connectionsUrl = connLink.uri;
+      } else {
+        if (!connectedOrg) connectedOrg = org;
       }
     }
   } catch (orgErr) {
@@ -128,34 +142,35 @@ async function syncJohnDeereData(db, admin, userId) {
     const rawDetail = orgErr.response?.data ? JSON.stringify(orgErr.response.data) : orgErr.message;
 
     if (status === 403 || status === 401) {
-      apiPendingMessage = `OAuth2 prisijungta sėkmingai, bet John Deere API dar tikrina leidimus (HTTP ${status}): ${rawDetail}`;
-      console.warn(apiPendingMessage);
+      apiPendingMessage = `OAuth2 prisijungta, bet reikia patvirtinti organizacijos prieigą (HTTP ${status}): ${rawDetail}`;
+      connectionsUrl = DEFAULT_CONNECTIONS_URL;
     } else {
       throw new Error(`John Deere Organizations API klaida (${status}): ${rawDetail}`);
     }
   }
 
-  const primaryOrg = orgs[0] || (apiPendingMessage ? { id: "pending_org", name: "JurgisAgro (Laukiama API patvirtinimo)" } : null);
+  const primaryOrg = connectedOrg || orgs[0] || null;
+  const needsOrgConnection = !connectedOrg && (!!connectionsUrl || orgs.length === 0);
+  const finalConnectionsUrl = connectionsUrl || (needsOrgConnection ? DEFAULT_CONNECTIONS_URL : null);
+
   let machines = [];
   let deereFields = [];
 
-  if (apiPendingMessage) {
-    machines = [
-      {
-        id: "jd_8r_370_pending",
-        name: "John Deere 8R 370",
-        vin: "Laukiama API patvirtinimo (Pending)",
-        make: "John Deere",
-        model: "8R 370",
-        category: "Tractor",
-        engineHours: null,
-        isConnected: false,
-      }
-    ];
-  } else if (primaryOrg) {
+  if (primaryOrg && !needsOrgConnection) {
+    // 1. Nuskaitome techniką
     try {
-      const eqRes = await axios.get(`${DEERE_API_BASE}/equipment`, { headers, timeout: 12000 });
-      const rawEq = eqRes.data?.values || [];
+      let rawEq = [];
+      try {
+        const orgMachRes = await axios.get(`${DEERE_API_BASE}/organizations/${primaryOrg.id}/machines`, {
+          headers,
+          timeout: 10000,
+        });
+        rawEq = orgMachRes.data?.values || [];
+      } catch (e1) {
+        const eqRes = await axios.get(`${DEERE_API_BASE}/equipment`, { headers, timeout: 10000 });
+        rawEq = eqRes.data?.values || [];
+      }
+
       machines = rawEq.map((m) => ({
         id: m.id,
         name: m.name || m.model?.name || "John Deere Technika",
@@ -164,23 +179,78 @@ async function syncJohnDeereData(db, admin, userId) {
         model: m.model?.name || "8R",
         category: m.category?.name || m.equipmentType?.name || "Tractor",
         isConnected: true,
+        engineHours: null,
+        distanceKm: null,
+        location: null,
+        alerts: [],
       }));
     } catch (eqErr) {
       console.warn("Equipment API įspėjimas:", eqErr.response?.status, eqErr.message);
     }
 
+    // 2. Nuskaitome pilną JDLink telemetriją kiekvienai mašinai (Moto-valandos, GPS LocationHistory, Atstumas, Klaidos)
     for (let i = 0; i < machines.length; i++) {
       const mId = machines[i].id;
+
+      // A) Moto-valandos
       try {
         const ehRes = await axios.get(`${DEERE_API_BASE}/machines/${mId}/engineHours`, { headers, timeout: 5000 });
-        if (ehRes.data?.reading?.value !== undefined) {
-          machines[i].engineHours = Number(ehRes.data.reading.value).toFixed(1);
+        const val = ehRes.data?.reading?.value ?? ehRes.data?.values?.[0]?.reading?.value;
+        if (val !== undefined) {
+          machines[i].engineHours = Number(val).toFixed(1);
         }
+      } catch (e) {}
+
+      // B) GPS Vieta ir maršruto istorija (locationHistory)
+      try {
+        const locRes = await axios.get(`${DEERE_API_BASE}/machines/${mId}/locationHistory`, { headers, timeout: 5000 });
+        const pts = locRes.data?.values || [];
+        if (pts.length > 0) {
+          const lastPt = pts[pts.length - 1];
+          const lat = Number(lastPt.point?.lat ?? lastPt.lat);
+          const lon = Number(lastPt.point?.lon ?? lastPt.lon);
+          if (lat && lon) {
+            machines[i].location = {
+              lat: lat,
+              lng: lon,
+              heading: Number(lastPt.heading || 0),
+              timestamp: lastPt.eventTimestamp || new Date().toISOString(),
+              trail: pts
+                .slice(-25)
+                .map((p) => [Number(p.point?.lat ?? p.lat), Number(p.point?.lon ?? p.lon)])
+                .filter((c) => c[0] && c[1]),
+            };
+          }
+        }
+      } catch (e) {}
+
+      // C) Nuvažiuotas atstumas (distanceTraveled)
+      try {
+        const distRes = await axios.get(`${DEERE_API_BASE}/machines/${mId}/distanceTraveled`, { headers, timeout: 5000 });
+        const dVal = distRes.data?.reading?.value ?? distRes.data?.values?.[0]?.reading?.value;
+        if (dVal !== undefined) {
+          machines[i].distanceKm = Number(dVal).toFixed(1);
+        }
+      } catch (e) {}
+
+      // D) DTC Klaidos / Įspėjimai (alerts)
+      try {
+        const alRes = await axios.get(`${DEERE_API_BASE}/machines/${mId}/alerts`, { headers, timeout: 5000 });
+        const rawAlerts = alRes.data?.values || [];
+        machines[i].alerts = rawAlerts.slice(0, 5).map((a) => ({
+          severity: a.severity || "INFO",
+          message: a.definition?.description || a.message || "Diagnostikos pranešimas",
+          time: a.time || "",
+        }));
       } catch (e) {}
     }
 
+    // 3. Nuskaitome organizacijos laukus
     try {
-      const fRes = await axios.get(`${DEERE_API_BASE}/organizations/${primaryOrg.id}/fields`, { headers, timeout: 10000 });
+      const fRes = await axios.get(`${DEERE_API_BASE}/organizations/${primaryOrg.id}/fields`, {
+        headers,
+        timeout: 10000,
+      });
       deereFields = (fRes.data?.values || []).map((f) => ({
         id: f.id,
         name: f.name,
@@ -200,9 +270,10 @@ async function syncJohnDeereData(db, admin, userId) {
       name: primaryOrg ? `John Deere (${primaryOrg.name})` : "John Deere Operations Center",
       telemetry: {
         isConnected: true,
+        needsOrgConnection: needsOrgConnection,
         organizationId: primaryOrg?.id || null,
         organizationName: primaryOrg?.name || null,
-        connectionsUrl: connectionsUrl,
+        connectionsUrl: finalConnectionsUrl,
         machines: machines,
         fieldsCount: deereFields.length,
         updatedAt: admin.firestore.FieldValue.serverTimestamp(),
@@ -214,10 +285,12 @@ async function syncJohnDeereData(db, admin, userId) {
 
   return {
     isConnected: true,
+    needsOrgConnection: needsOrgConnection,
     apiPendingMessage: apiPendingMessage,
-    organization: primaryOrg,
+    organization: primaryOrg ? { id: primaryOrg.id, name: primaryOrg.name } : null,
     organizations: orgs.map((o) => ({ id: o.id, name: o.name })),
-    connectionsUrl: connectionsUrl,
+    connectionsUrl: finalConnectionsUrl,
+    manageConnectionsUrl: DEFAULT_CONNECTIONS_URL,
     machines: machines,
     fields: deereFields,
   };
