@@ -2,7 +2,7 @@
 
 export function getMainFieldsHtml(todayStr) {
     return `
-        <div class="space-y-4 max-w-6xl mx-auto w-full">
+        <div class="space-y-4 w-full">
             
             <!-- HEADERIS -->
             <div class="border-b border-tractorBorder pb-3">
@@ -10,7 +10,7 @@ export function getMainFieldsHtml(todayStr) {
                     <span>🗺️</span> Mano Laukai ir Sentinel-2 NDVI Palydovas
                 </h2>
                 <p class="text-[11px] sm:text-xs text-slate-300 mt-0.5">
-                    Tikrasis Europos Kosmoso Agentūros (ESA) Sentinel-2 NDVI spektras ir laukų valdymas.
+                    Tikrasis Europos Kosmoso Agentūros (ESA) Sentinel-2 NDVI spektras, laukų valdymas ir gyva technikos GPS stebėsena.
                 </p>
             </div>
 
@@ -39,10 +39,11 @@ export function getMainFieldsHtml(todayStr) {
                 </div>
             </div>
 
-            <!-- 1. ŽEMĖLAPIS -->
-            <div class="bg-tractorSurface border border-tractorBorder rounded-2xl p-3 sm:p-4 shadow-xl space-y-2.5 w-full">
+            <!-- 1. ŽEMĖLAPIS (VISAS KONTEINERIS IŠSIPLEČIA Į PILNĄ EKRANĄ KARTU SU VALDYMO JUOSTOMIS!) -->
+            <div id="fields-map-card-container" class="bg-tractorSurface border border-tractorBorder rounded-2xl p-3 sm:p-4 shadow-xl space-y-2.5 w-full flex flex-col">
                 
-                <div class="bg-tractorBg border border-tractorBorder p-2.5 rounded-xl flex flex-wrap items-center justify-between gap-2 text-xs">
+                <!-- VIRŠUTINĖ PALYDOVO DATA IR NMA IMPORTAS -->
+                <div class="bg-tractorBg border border-tractorBorder p-2.5 rounded-xl flex flex-wrap items-center justify-between gap-2 text-xs shrink-0">
                     <div class="flex items-center gap-2">
                         <span class="text-sm">📅</span>
                         <strong class="text-white text-[11px] sm:text-xs">Kadras:</strong>
@@ -58,7 +59,7 @@ export function getMainFieldsHtml(todayStr) {
                             <option value="40">40%</option>
                         </select>
                         
-                        <button id="btn-refresh-satellite" class="px-2.5 py-1 bg-tractorPrimary hover:bg-tractorPrimaryHover text-white rounded-lg font-bold text-xs transition cursor-pointer">
+                        <button id="btn-refresh-satellite" class="px-2.5 py-1 bg-tractorPrimary hover:bg-tractorPrimaryHover text-white rounded-lg font-bold text-xs transition cursor-pointer" title="Atnaujinti palydovo kadrą">
                             🔄
                         </button>
 
@@ -69,10 +70,54 @@ export function getMainFieldsHtml(todayStr) {
                     </div>
                 </div>
 
-                <div id="fields-map" class="h-[520px] w-full rounded-xl z-0 relative overflow-hidden border border-tractorBorder/80 bg-zinc-900"></div>
+                <!-- 🌟 SLUOKSNIŲ MATOMUMO (ĮJUNGIMO / IŠJUNGIMO) JUOSTELĖ (MATOMA IR PILNAME EKRANE!) -->
+                <div class="bg-tractorBg border border-tractorBorder px-3 py-2 rounded-xl flex flex-wrap items-center justify-between gap-2 text-xs shrink-0">
+                    <div class="flex flex-wrap items-center gap-1.5">
+                        <span class="text-[11px] font-extrabold uppercase tracking-wider text-slate-400 mr-1 flex items-center gap-1">
+                            <span>👁️</span> <span>Rodyti:</span>
+                        </span>
 
-                <div class="flex justify-between items-center text-xs text-slate-300 px-1 pt-0.5">
-                    <span>🛰️ Gyvas Copernicus Sentinel-2 vaizdas</span>
+                        <button type="button" data-layer-toggle="fields" class="map-vis-toggle-btn px-2.5 py-1 rounded-lg font-bold text-[11px] border transition cursor-pointer flex items-center gap-1">
+                            <span>🌾</span> <span>Laukai</span>
+                        </button>
+
+                        <button type="button" data-layer-toggle="labels" class="map-vis-toggle-btn px-2.5 py-1 rounded-lg font-bold text-[11px] border transition cursor-pointer flex items-center gap-1">
+                            <span>🏷️</span> <span>Užrašai</span>
+                        </button>
+
+                        <button type="button" data-layer-toggle="tractors" class="map-vis-toggle-btn px-2.5 py-1 rounded-lg font-bold text-[11px] border transition cursor-pointer flex items-center gap-1">
+                            <span>🚜</span> <span>Traktoriai</span>
+                        </button>
+
+                        <button type="button" data-layer-toggle="base" class="map-vis-toggle-btn px-2.5 py-1 rounded-lg font-bold text-[11px] border transition cursor-pointer flex items-center gap-1">
+                            <span>🏠</span> <span>Bazė</span>
+                        </button>
+
+                        <button type="button" data-layer-toggle="silos" class="map-vis-toggle-btn px-2.5 py-1 rounded-lg font-bold text-[11px] border transition cursor-pointer flex items-center gap-1">
+                            <span>🛢️</span> <span>Bokštai</span>
+                        </button>
+
+                        <button type="button" data-layer-toggle="solar" class="map-vis-toggle-btn px-2.5 py-1 rounded-lg font-bold text-[11px] border transition cursor-pointer flex items-center gap-1">
+                            <span>☀️</span> <span>Saulės el.</span>
+                        </button>
+                    </div>
+
+                    <div class="flex items-center gap-1.5">
+                        <button type="button" id="btn-focus-map-tractor" class="px-2.5 py-1 bg-green-500/15 hover:bg-green-500/30 text-green-400 border border-green-500/40 rounded-lg font-extrabold text-[11px] transition cursor-pointer flex items-center gap-1" title="Pritraukti žemėlapį prie dirbančio traktoriaus">
+                            <span>🎯</span> <span>Kur traktorius?</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- PATS ŽEMĖLAPIS -->
+                <div id="fields-map" class="h-[520px] w-full rounded-xl z-0 relative overflow-hidden border border-tractorBorder/80 bg-zinc-900" style="min-height: 520px;"></div>
+
+                <div class="flex flex-wrap justify-between items-center gap-2 text-xs text-slate-300 px-1 pt-0.5 shrink-0">
+                    <span class="flex items-center gap-2">
+                        <span>🛰️ Gyvas Copernicus Sentinel-2 vaizdas</span>
+                        <span class="text-slate-500">•</span>
+                        <span id="fields-map-tractor-status" class="text-green-400 font-mono font-bold">🚜 John Deere 8R 370: Dirba lauke</span>
+                    </span>
                     <span>Viso ūkio plotas: <strong id="total-area-counter" class="text-green-400 font-bold text-sm">0.00 ha</strong></span>
                 </div>
             </div>

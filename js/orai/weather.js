@@ -45,7 +45,7 @@ export async function initWeatherTab(currentUser, userData) {
     }
 
     container.innerHTML = `
-        <div class="space-y-3.5 max-w-6xl mx-auto w-full">
+        <div class="space-y-3.5 w-full">
             
             <!-- VIRŠUTINĖ VALDYMO JUOSTA -->
             <div id="weather-top-unified-card" class="bg-tractorSurface border border-tractorBorder rounded-2xl p-4 sm:p-5 shadow-sm space-y-3">

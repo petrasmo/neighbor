@@ -83,7 +83,7 @@ function renderRadarLayout(container) {
     const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
 
     container.innerHTML = `
-        <div class="space-y-6 max-w-6xl mx-auto w-full">
+        <div class="space-y-6 w-full">
             
             <div class="bg-tractorSurface border-2 border-indigo-500/60 rounded-2xl p-6 shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-5">
                 <div class="space-y-1.5 flex-1">
