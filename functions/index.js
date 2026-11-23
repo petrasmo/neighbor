@@ -14,6 +14,7 @@ const { executeDieselSync } = require("./dieselSync");
 const { executeFertilizerSync } = require("./fertilizerSync");
 const { executeElectricitySync, seedFullYearElectricityToFile } = require("./electricitySync");
 
+
 // Importuojame Daikin šilumos siurblio modulį
 const {
   getDaikinLoginUrl,
@@ -28,6 +29,11 @@ const {
   sendShellyCommand,
   executeHourlySiloAutopilot,
 } = require("./shellySync");
+const {
+  syncUserGrowattTelemetry,
+  getGrowattChartsData,
+  executeHourlyGrowattSync,
+} = require("./growattSync");
 
 const {
   getJohnDeereLoginUrl,
@@ -122,6 +128,7 @@ exports.scheduledHourlyDaikinAutopilot = onSchedule(
   async (event) => {
     await executeHourlyDaikinAutopilot(db, admin);
     await executeHourlySiloAutopilot(db, admin);
+    await executeHourlyGrowattSync(db, admin);
   }
 );
 
@@ -947,6 +954,8 @@ exports.connectShellySilo = onRequest(
   }
 );
 
+
+
 exports.refreshShellyStatus = onRequest(
   { cors: true, invoker: "public" },
   async (req, res) => {
@@ -1081,6 +1090,38 @@ exports.disconnectJohnDeere = onRequest(
       if (!userId) return res.status(400).json({ error: "Trūksta userId" });
       await disconnectJohnDeere(db, admin, userId);
       res.json({ success: true });
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  }
+);
+
+// ========================================================
+// ☀️ 23. GROWATT SAULĖS ELEKTRINIŲ TELEMETRIJA (VISOS ELEKTRINĖS)
+// ========================================================
+exports.refreshGrowattStatus = onRequest(
+  { cors: true, invoker: "public" },
+  async (req, res) => {
+    try {
+      const userId = req.query.userId || req.body?.userId;
+      if (!userId) return res.status(400).json({ error: "Trūksta userId" });
+      const plants = await syncUserGrowattTelemetry(db, admin, userId);
+      res.json({ success: true, count: plants.length, plants });
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  }
+);
+
+exports.getGrowattPlantCharts = onRequest(
+  { cors: true, invoker: "public" },
+  async (req, res) => {
+    try {
+      const userId = req.query.userId;
+      const plantId = req.query.plantId;
+      if (!userId || !plantId) return res.status(400).json({ error: "Trūksta userId arba plantId" });
+      const charts = await getGrowattChartsData(db, userId, plantId);
+      res.json({ success: true, ...charts });
     } catch (err) {
       res.status(500).json({ error: err.message });
     }

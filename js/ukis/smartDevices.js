@@ -5,6 +5,7 @@ import { openAuthModal } from '../core/auth.js';
 import { renderDaikinControlTabHtml, bindDaikinControlEvents, renderDaikinScheduleGrid } from './daikinControlTab.js';
 import { renderDaikinEnergyTabHtml, bindDaikinEnergyEvents } from './daikinEnergyTab.js';
 import { renderSiloControlTabHtml, bindSiloControlEvents, renderSiloScheduleGrid } from './siloControlTab.js';
+import { renderSolarControlTabHtml, bindSolarControlEvents, renderSolarScheduleGrid } from './solarControlTab.js';
 
 let cachedElecHours = [];
 let unsubscribeElec = null;
@@ -663,7 +664,9 @@ function listenToNordPoolForDaikin() {
         if (doc.exists) {
             cachedElecHours = doc.data().hours || [];
             if (selectedDevice) {
-                if (selectedDevice.type === 'silo_fan') {
+                if (selectedDevice.type === 'solar') {
+                    renderSolarScheduleGrid(selectedDevice, cachedElecHours);
+                } else if (selectedDevice.type === 'silo_fan') {
                     renderSiloScheduleGrid(selectedDevice, cachedElecHours);
                 } else if (activeModalSubTab === 'control') {
                     renderDaikinScheduleGrid(selectedDevice, cachedElecHours);
