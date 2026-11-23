@@ -123,9 +123,9 @@ export function switchTab(tabIndex, preserveCalcSlug = false) {
 
     const seoMap = {
         0: {
-            title: "JurgisAgro – Ūkininkų Portalas, Grūdų Kainos ir MATIF Birža",
-            desc: "Lietuvos ūkininkų portalas ir programa: gyvos grūdų supirkimo kainos, MATIF birža, gazolio kuras, agro-orai purškimui ir Pasėlių Lyga.",
-            url: "https://jurgisagro.com/"
+         title: "JurgisAgro – Lietuvos Ūkininkų Platforma, Portalas, Grūdų Kainos ir Agro-Orai",
+         desc: "Nemokama Lietuvos ūkininkų platforma ir išmanusis portalas: gyvos grūdų supirkimo kainos, MATIF birža, gazolio kuras, agro-orai purškimui ir Pasėlių Lyga.",
+         url: "https://jurgisagro.com/"
         },
         1: {
             title: "Agro-Orai Purškimui, Įšalo Gylis ir Žiemkenčių Radaras | JurgisAgro",

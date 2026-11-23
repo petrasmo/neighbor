@@ -53,6 +53,11 @@ export function renderTractorBrandsHubSection(deereState, userFields) {
                             <a href="${fullConnUrl}" target="_blank" class="h-10 px-3.5 bg-tractorBg hover:bg-tractorCard border border-tractorBorder rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition" style="color: var(--text-main);">
                                 <span>🔗</span> <span>Organizacijos leidimai</span>
                             </a>
+                            ${deereState?.isConnected ? `
+                                <button type="button" id="btn-hub-disconnect-deere" class="h-10 px-3.5 bg-red-500/15 hover:bg-red-500 text-red-400 hover:text-white border border-red-500/40 rounded-xl text-xs font-extrabold transition cursor-pointer flex items-center justify-center gap-1.5" title="Atjungti John Deere paskyrą">
+                                    <span>🔌</span> <span>Atjungti</span>
+                                </button>
+                            ` : ''}
                         </div>
 
                         ${isDeereConnected ? `
@@ -84,7 +89,7 @@ export function renderTractorBrandsHubSection(deereState, userFields) {
                         </p>
 
                         <div class="p-3 bg-tractorBg rounded-xl border border-tractorBorder text-[11px] text-slate-400">
-                            💡 <strong>Jau veikia dabar:</strong> Skirtuke „2. Darbo Užduotys“ pasirinkę <strong>CLAAS Axion</strong>, vienu paspaudimu gausite paruoštą VRA <code>.ZIP</code> failą CEMIS 1200 terminalui!
+                            💡 <strong>Jau veikia dabar:</strong> Skirtuke „2. Darbo Užduotys“ pasirinkę <strong>USB režimą</strong>, vienu paspaudimu gausite paruoštą VRA <code>.ZIP</code> failą CEMIS 1200 terminalui!
                         </div>
                     </div>
 
@@ -114,10 +119,6 @@ export function renderTractorBrandsHubSection(deereState, userFields) {
                         <p class="text-xs text-slate-300 leading-relaxed">
                             Vieninga AGCO korporacijos telemetrijos ir TaskDoc™ Server sąsaja visiems <strong>Fendt Vario</strong>, <strong>Valtra (G, N, T, Q, S serijų)</strong> ir <strong>Massey Ferguson (5S–9S)</strong> traktoriams.
                         </p>
-
-                        <div class="p-3 bg-tractorBg rounded-xl border border-tractorBorder text-[11px] text-slate-400">
-                            💡 <strong>Jau veikia dabar:</strong> Skirtuke „1. Gyva Telemetrija“ ir „2. Darbo Užduotys“ jau galite pasirinkti <strong>Fendt 942 Vario</strong> arba <strong>Valtra T235 Versu</strong>!
-                        </div>
                     </div>
 
                     <div class="pt-2 border-t border-tractorBorder/60">
@@ -146,10 +147,6 @@ export function renderTractorBrandsHubSection(deereState, userFields) {
                         <p class="text-xs text-slate-300 leading-relaxed">
                             Case IH AFS Pro 1200 ir New Holland IntelliView™ 12 monitorių sinchronizacija: VRA tręšimo žemėlapių ir laukų ribų perdavimas.
                         </p>
-
-                        <div class="p-3 bg-tractorBg rounded-xl border border-tractorBorder text-[11px] text-slate-400">
-                            💡 <strong>Jau veikia dabar:</strong> Standartinis JurgisAgro Shapefile <code>.ZIP</code> formatas 100% tinka Case IH AFS ir New Holland PLM terminalams per USB.
-                        </div>
                     </div>
 
                     <div class="pt-2 border-t border-tractorBorder/60">
@@ -161,7 +158,7 @@ export function renderTractorBrandsHubSection(deereState, userFields) {
 
             </div>
 
-            <!-- 5. UNIVERSALUS JURGISAGRO GPS / USB REŽIMAS (VISIEMS TRAKTORIAMS) -->
+            <!-- 5. UNIVERSALUS JURGISAGRO GPS / USB REŽIMAS -->
             <div class="bg-tractorSurface border-2 border-green-500/60 rounded-2xl p-5 shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div class="flex items-start sm:items-center gap-3.5">
                     <div class="w-12 h-12 rounded-2xl bg-green-500/20 border border-green-500 flex items-center justify-center text-2xl shrink-0">📱</div>
@@ -173,7 +170,7 @@ export function renderTractorBrandsHubSection(deereState, userFields) {
                             </span>
                         </div>
                         <p class="text-xs text-slate-300 mt-1">
-                            Tinka <strong>visiems traktoriams ir barstytuvams</strong> (Amazone, Bogballe, Rauch, Kverneland, Trimble, Mueller-Elektronik, MTZ): atsisiųskite standartinį Shapefile <code>.ZIP</code> į USB raktą arba atsidarykite JurgisAgro planšetėje/telefone tiesiai traktoriaus kabinoje!
+                            Tinka <strong>visiems traktoriams ir barstytuvams</strong>: atsisiųskite standartinį Shapefile <code>.ZIP</code> į USB raktą arba naudokite kabinoje!
                         </p>
                     </div>
                 </div>
@@ -184,64 +181,107 @@ export function renderTractorBrandsHubSection(deereState, userFields) {
 }
 
 export function bindBrandsHubEvents(currentUser, deereState, userFields, onRefreshCallback) {
-    document.getElementById('btn-hub-connect-deere')?.addEventListener('click', async () => {
-        if (!currentUser) return;
-        const btn = document.getElementById('btn-hub-connect-deere');
-        if (btn) btn.textContent = "⏳ Nukreipiama į John Deere...";
-
-        try {
-            const origin = window.location.origin;
-            const res = await fetch(`https://us-central1-neighborpm-b9968.cloudfunctions.net/getJohnDeereAuthUrl?userId=${currentUser.uid}&origin=${encodeURIComponent(origin)}`);
-            const data = await res.json();
-            if (data && data.url) {
-                window.location.href = data.url;
+    const connectBtn = document.getElementById('btn-hub-connect-deere');
+    if (connectBtn) {
+        connectBtn.onclick = async () => {
+            if (!currentUser) {
+                showBottomToast("Pirmiausia prisijunkite prie JurgisAgro!", "warning");
+                return;
             }
-        } catch (err) {
-            showBottomToast("Klaida: " + err.message, "error");
-        }
-    });
+            connectBtn.textContent = "⏳ Nukreipiama į John Deere...";
 
-    document.getElementById('btn-hub-push-fields-deere')?.addEventListener('click', async () => {
-        if (!deereState?.organization?.id || deereState.needsOrgConnection) {
-            showBottomToast("Pirmiausia patvirtinkite John Deere organizacijos prieigą!", "warning");
-            return;
-        }
-        if (userFields.length === 0) {
-            showBottomToast("JurgisAgro sistemoje neturite įbraižytų laukų!", "warning");
-            return;
-        }
-
-        showBottomToast(`Siunčiama ${userFields.length} laukų į John Deere Operations Center... 📡`, "info");
-        try {
-            const res = await fetch("https://us-central1-neighborpm-b9968.cloudfunctions.net/syncFieldsToJohnDeere", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    userId: currentUser.uid,
-                    orgId: deereState.organization.id,
-                    fields: userFields
-                })
-            });
-            const data = await res.json();
-            if (data.success) {
-                showBottomToast(`✅ Sukurta laukų John Deere: ${data.createdCount} (Dublikatų praleista: ${data.skippedCount})`);
-                if (typeof onRefreshCallback === 'function') onRefreshCallback();
-            } else {
-                showBottomToast("Klaida: " + data.error, "error");
+            try {
+                const origin = window.location.origin;
+                const res = await fetch(`https://us-central1-neighborpm-b9968.cloudfunctions.net/getJohnDeereAuthUrl?userId=${currentUser.uid}&origin=${encodeURIComponent(origin)}`);
+                const data = await res.json();
+                if (data && data.url) {
+                    window.location.href = data.url;
+                } else {
+                    connectBtn.innerHTML = `<span>🦌</span> <span>Prijungti John Deere</span>`;
+                    showBottomToast("Nepavyko gauti John Deere nuorodos.", "error");
+                }
+            } catch (err) {
+                connectBtn.innerHTML = `<span>🦌</span> <span>Prijungti John Deere</span>`;
+                showBottomToast("Klaida: " + err.message, "error");
             }
-        } catch (err) {
-            showBottomToast("Ryšio klaida: " + err.message, "error");
-        }
-    });
+        };
+    }
+
+    const disconnectBtn = document.getElementById('btn-hub-disconnect-deere');
+    if (disconnectBtn) {
+        disconnectBtn.onclick = () => {
+            if (!currentUser) return;
+            showDialog(
+                "Atjungti John Deere paskyrą?",
+                "Ar tikrai norite atjungti savo John Deere Operations Center paskyrą ir ištrinti prieigos raktus? Bet kada galėsite prisijungti iš naujo.",
+                "🔌",
+                async () => {
+                    try {
+                        const res = await fetch("https://us-central1-neighborpm-b9968.cloudfunctions.net/disconnectJohnDeere", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ userId: currentUser.uid })
+                        });
+                        const data = await res.json();
+                        if (data.success) {
+                            showBottomToast("🔌 John Deere paskyra sėkmingai atjungta!");
+                            if (typeof onRefreshCallback === 'function') onRefreshCallback();
+                        } else {
+                            showBottomToast("Klaida atjungiant: " + (data.error || ""), "error");
+                        }
+                    } catch (err) {
+                        showBottomToast("Ryšio klaida: " + err.message, "error");
+                    }
+                },
+                true
+            );
+        };
+    }
+
+    const pushFieldsBtn = document.getElementById('btn-hub-push-fields-deere');
+    if (pushFieldsBtn) {
+        pushFieldsBtn.onclick = async () => {
+            if (!deereState?.organization?.id || deereState.needsOrgConnection) {
+                showBottomToast("Pirmiausia patvirtinkite John Deere organizacijos prieigą!", "warning");
+                return;
+            }
+            if (userFields.length === 0) {
+                showBottomToast("JurgisAgro sistemoje neturite įbraižytų laukų!", "warning");
+                return;
+            }
+
+            showBottomToast(`Siunčiama ${userFields.length} laukų į John Deere Operations Center... 📡`, "info");
+            try {
+                const res = await fetch("https://us-central1-neighborpm-b9968.cloudfunctions.net/syncFieldsToJohnDeere", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        userId: currentUser.uid,
+                        orgId: deereState.organization.id,
+                        fields: userFields
+                    })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    showBottomToast(`✅ Sukurta laukų John Deere: ${data.createdCount} (Dublikatų praleista: ${data.skippedCount})`);
+                    if (typeof onRefreshCallback === 'function') onRefreshCallback();
+                } else {
+                    showBottomToast("Klaida: " + data.error, "error");
+                }
+            } catch (err) {
+                showBottomToast("Ryšio klaida: " + err.message, "error");
+            }
+        };
+    }
 
     document.querySelectorAll('.btn-coming-brand-info').forEach(btn => {
-        btn.addEventListener('click', () => {
+        btn.onclick = () => {
             const brand = btn.getAttribute('data-coming-brand');
             showDialog(
                 `${brand} Cloud API`,
-                `Tiesioginis <strong>${brand}</strong> debesies OAuth2 sujungimas jau suprojektuotas JurgisAgro architektūroje ir bus aktyvuotas gavus gamintojo API raktus.<br><br>💡 <strong>Jau dabar:</strong> Skirtuke <strong>„2. Darbo Užduotys (Dispečerinė)“</strong> galite pasirinkti šios markės traktorių, priskirti jam darbus, generuoti VRA Shapefile <code>.ZIP</code> failus terminalui ir automatiškai pildyti NMA žurnalus!`,
+                `Tiesioginis <strong>${brand}</strong> debesies OAuth2 sujungimas jau suprojektuotas JurgisAgro architektūroje ir bus aktyvuotas gavus gamintojo API raktus.<br><br>💡 <strong>Jau dabar:</strong> Skirtuke <strong>„2. Darbo Užduotys (Dispečerinė)“</strong> galite generuoti VRA Shapefile <code>.ZIP</code> failus terminalui ir automatiškai pildyti NMA žurnalus!`,
                 "🚜"
             );
-        });
+        };
     });
 }

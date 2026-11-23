@@ -35,6 +35,7 @@ const {
   syncJohnDeereData,
   pushFieldsToJohnDeere,
   uploadVraZipToJohnDeere,
+  disconnectJohnDeere,
 } = require("./johnDeereSync");
 
 // Importuojame Išmaniųjų Pranešimų pagalbininką
@@ -1067,6 +1068,21 @@ exports.sendVraFileToJohnDeere = onRequest(
       res.json({ success: true, task });
     } catch (err) {
       res.status(500).json({ error: err.response?.data ? JSON.stringify(err.response.data) : err.message });
+    }
+  }
+);
+
+exports.disconnectJohnDeere = onRequest(
+  { cors: true, invoker: "public" },
+  async (req, res) => {
+    try {
+      const body = typeof req.body === "string" ? JSON.parse(req.body) : req.body;
+      const userId = body?.userId || req.query.userId;
+      if (!userId) return res.status(400).json({ error: "Trūksta userId" });
+      await disconnectJohnDeere(db, admin, userId);
+      res.json({ success: true });
+    } catch (err) {
+      res.status(500).json({ error: err.message });
     }
   }
 );

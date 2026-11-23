@@ -18,7 +18,7 @@ function getBasicAuthHeader() {
 
 function getJohnDeereLoginUrl(userId, originUrl = "https://jurgisagro.com") {
   const statePayload = Buffer.from(JSON.stringify({ uid: userId, origin: originUrl })).toString("base64");
-  const scopes = "ag1 ag2 ag3 eq1 eq2 files org1 org2 offline_access";
+  const scopes = "ag1 ag2 ag3 eq1 files org1 offline_access";
   return `${DEERE_AUTH_URL}?response_type=code&client_id=${encodeURIComponent(
     DEERE_CLIENT_ID
   )}&redirect_uri=${encodeURIComponent(DEERE_REDIRECT_URI)}&scope=${encodeURIComponent(
@@ -120,7 +120,7 @@ async function syncJohnDeereData(db, admin, userId) {
 
   let orgs = [];
   let connectionsUrl = null;
-  let connectedOrg = null;
+  const connectedOrgs = [];
   let apiPendingMessage = null;
   const debugEquipmentLog = [];
 
@@ -135,7 +135,8 @@ async function syncJohnDeereData(db, admin, userId) {
       if (connLink && connLink.uri) {
         if (!connectionsUrl) connectionsUrl = connLink.uri;
       } else {
-        if (!connectedOrg) connectedOrg = org;
+        // Surenkame VISAS patvirtintas organizacijas (tiek savą, tiek partnerių ūkius!)
+        connectedOrgs.push(org);
       }
     }
   } catch (orgErr) {
@@ -150,53 +151,55 @@ async function syncJohnDeereData(db, admin, userId) {
     }
   }
 
-  const primaryOrg = connectedOrg || orgs[0] || null;
-  const needsOrgConnection = !connectedOrg && (!!connectionsUrl || orgs.length === 0);
+  const primaryOrg = connectedOrgs[0] || orgs[0] || null;
+  const needsOrgConnection = connectedOrgs.length === 0 && (!!connectionsUrl || orgs.length === 0);
   const finalConnectionsUrl = connectionsUrl || (needsOrgConnection ? DEFAULT_CONNECTIONS_URL : null);
 
   let machines = [];
   let deereFields = [];
 
-  if (primaryOrg && !needsOrgConnection) {
+  if (connectedOrgs.length > 0) {
     const combinedRawMap = new Map();
 
-    // Pagrindiniai John Deere Equipment (ISG) ir Machines endpoint'ai (įskaitant organizacijos links!)
-    const orgLinks = (primaryOrg.links || [])
-      .filter((l) => ["machines", "equipment", "ownedMachines", "manage_equipment"].includes(l.rel) && l.uri)
-      .map((l) => l.uri);
+    // 1. Apdorojame VISAS prijungtas organizacijas (tavo + partnerių ūkius!)
+    for (const org of connectedOrgs) {
+      const orgLinks = (org.links || [])
+        .filter((l) => ["machines", "equipment", "ownedMachines", "manage_equipment"].includes(l.rel) && l.uri)
+        .map((l) => l.uri);
 
-    const candidateUrls = [
-      `https://equipmentapi.deere.com/isg/equipment?organizationIds=${primaryOrg.id}`,
-      `https://sandboxapi.deere.com/isg/equipment?organizationIds=${primaryOrg.id}`,
-      `https://api.deere.com/isg/equipment?organizationIds=${primaryOrg.id}`,
-      `https://partnerapi.deere.com/isg/equipment?organizationIds=${primaryOrg.id}`,
-      `${DEERE_API_BASE}/organizations/${primaryOrg.id}/machines`,
-      `https://api.deere.com/platform/organizations/${primaryOrg.id}/machines`,
-      `${DEERE_API_BASE}/equipment?organizationIds=${primaryOrg.id}`,
-      ...orgLinks,
-    ];
+      const candidateUrls = [
+        `${DEERE_API_BASE}/organizations/${org.id}/machines`,
+        `https://equipmentapi.deere.com/isg/equipment?organizationIds=${org.id}`,
+        `https://sandboxapi.deere.com/isg/equipment?organizationIds=${org.id}`,
+        `https://api.deere.com/isg/equipment?organizationIds=${org.id}`,
+        ...orgLinks,
+      ];
 
-    for (const url of candidateUrls) {
-      try {
-        const eqRes = await axios.get(url, { headers, timeout: 7000 });
-        const list = eqRes.data?.values || [];
-        debugEquipmentLog.push({ url, status: eqRes.status, count: list.length });
+      const results = await Promise.allSettled(
+        candidateUrls.map((url) => axios.get(url, { headers, timeout: 6000 }))
+      );
 
-        list.forEach((m) => {
-          if (m && (m.id || m.guid || m.name)) {
-            const key = String(m.id || m.guid || m.name);
-            if (!combinedRawMap.has(key)) {
-              combinedRawMap.set(key, m);
+      results.forEach((resItem, idx) => {
+        const url = candidateUrls[idx];
+        if (resItem.status === "fulfilled") {
+          const list = resItem.value.data?.values || [];
+          debugEquipmentLog.push({ org: org.name, url, status: resItem.value.status, count: list.length });
+          list.forEach((m) => {
+            if (m && (m.id || m.guid || m.name)) {
+              const key = String(m.id || m.guid || m.name);
+              if (!combinedRawMap.has(key)) {
+                combinedRawMap.set(key, { ...m, _orgId: org.id, _orgName: org.name });
+              }
             }
-          }
-        });
-      } catch (err) {
-        debugEquipmentLog.push({
-          url,
-          status: err.response?.status || "ERR",
-          msg: err.response?.data?.message || err.message,
-        });
-      }
+          });
+        } else {
+          debugEquipmentLog.push({
+            org: org.name,
+            url,
+            status: resItem.reason?.response?.status || "ERR",
+          });
+        }
+      });
     }
 
     const rawEq = Array.from(combinedRawMap.values());
@@ -222,6 +225,8 @@ async function syncJohnDeereData(db, admin, userId) {
 
       return {
         id: String(m.id || m.guid || m.name),
+        orgId: m._orgId,
+        orgName: m._orgName,
         name: m.name || m.displayName || `${makeName} ${modelName}`.trim() || "John Deere Technika",
         vin: m.vin || m.serialNumber || `JD-${String(m.id || "").slice(-6) || "SIM"}`,
         make: makeName,
@@ -235,20 +240,63 @@ async function syncJohnDeereData(db, admin, userId) {
       };
     });
 
-    // 2. Nuskaitome organizacijos laukus
-    try {
-      const fRes = await axios.get(`${DEERE_API_BASE}/organizations/${primaryOrg.id}/fields`, {
-        headers,
-        timeout: 10000,
-      });
-      deereFields = (fRes.data?.values || []).map((f) => ({
-        id: f.id,
-        name: f.name,
-        archived: !!f.archived,
-      }));
-    } catch (fErr) {
-      console.warn("Fields API įspėjimas:", fErr.response?.status, fErr.message);
+    // 1C. Kiekvienai mašinai lygiagrečiai nuskaitome tikras moto-valandas ir tikras GPS koordinates (JDLink)
+    await Promise.allSettled(
+      machines.map(async (mach) => {
+        try {
+          const ehRes = await axios.get(`${DEERE_API_BASE}/machines/${mach.id}/engineHours`, { headers, timeout: 4000 });
+          const val = ehRes.data?.reading?.value ?? ehRes.data?.values?.[0]?.reading?.value;
+          if (val !== undefined) mach.engineHours = Number(val).toFixed(1);
+        } catch (e) {}
+
+        try {
+          const locRes = await axios.get(`${DEERE_API_BASE}/machines/${mach.id}/locationHistory`, { headers, timeout: 4000 });
+          const pts = locRes.data?.values || [];
+          if (pts.length > 0) {
+            const lastPt = pts[pts.length - 1];
+            const lat = Number(lastPt.point?.lat ?? lastPt.lat);
+            const lon = Number(lastPt.point?.lon ?? lastPt.lon);
+            if (lat && lon) {
+              mach.location = {
+                lat: lat,
+                lng: lon,
+                heading: Number(lastPt.heading || 0),
+                timestamp: lastPt.eventTimestamp || new Date().toISOString(),
+                trail: pts
+                  .slice(-30)
+                  .map((p) => [Number(p.point?.lat ?? p.lat), Number(p.point?.lon ?? p.lon)])
+                  .filter((c) => c[0] && c[1]),
+              };
+            }
+          }
+        } catch (e) {}
+      })
+    );
+
+    // 2. Nuskaitome laukus iš VISŲ prijungtų organizacijų
+    const fieldsMap = new Map();
+    for (const org of connectedOrgs) {
+      try {
+        const fRes = await axios.get(`${DEERE_API_BASE}/organizations/${org.id}/fields`, {
+          headers,
+          timeout: 8000,
+        });
+        (fRes.data?.values || []).forEach((f) => {
+          if (f && f.id && !fieldsMap.has(f.id)) {
+            fieldsMap.set(f.id, {
+              id: f.id,
+              orgId: org.id,
+              orgName: org.name,
+              name: f.name,
+              archived: !!f.archived,
+            });
+          }
+        });
+      } catch (fErr) {
+        console.warn(`Fields API įspėjimas (${org.name}):`, fErr.response?.status, fErr.message);
+      }
     }
+    deereFields = Array.from(fieldsMap.values());
   }
 
   await db.collection("user_smart_devices").doc(`johndeere_${userId}`).set(
@@ -412,10 +460,21 @@ async function uploadVraZipToJohnDeere(db, admin, userId, orgId, { fileName, zip
   return taskRecord;
 }
 
+/**
+ * Švariai atjungia vartotojo John Deere paskyrą (būtina John Deere Production peržiūrai)
+ */
+async function disconnectJohnDeere(db, admin, userId) {
+  if (!userId) throw new Error("Trūksta userId.");
+  await db.collection("johndeere_secrets").doc(userId).delete().catch(() => {});
+  await db.collection("user_smart_devices").doc(`johndeere_${userId}`).delete().catch(() => {});
+  return { disconnected: true };
+}
+
 module.exports = {
   getJohnDeereLoginUrl,
   exchangeDeereCode,
   syncJohnDeereData,
   pushFieldsToJohnDeere,
   uploadVraZipToJohnDeere,
+  disconnectJohnDeere,
 };

@@ -85,11 +85,22 @@ function getActiveFleetList(realMachines = []) {
         });
     }
 
-    return [TEST_DEERE_UNIT];
+    return [];
 }
 
 export function renderTractorFleetCardsSection(realMachines = [], userFields = []) {
     const fleet = getActiveFleetList(realMachines);
+    if (fleet.length === 0) {
+        return `
+            <div class="bg-tractorSurface border-2 border-tractorBorder rounded-2xl p-8 text-center space-y-3 shadow-xl w-full">
+                <span class="text-4xl block">🦌</span>
+                <h3 class="font-oswald text-xl font-bold uppercase" style="color: var(--text-main);">Technikos Parkas Tuščias (Neprijungta)</h3>
+                <p class="text-xs text-slate-400 max-w-md mx-auto">
+                    Prijunkite savo John Deere Operations Center paskyrą skirtuke <strong>„3. Cloud Integracijos“</strong>, kad čia atsirastų jūsų traktoriai ir kombainai.
+                </p>
+            </div>
+        `;
+    }
     const primaryFieldName = userFields[0]?.name || "Laukas 010541-7197";
 
     const cardsHtml = fleet.map((unit, idx) => {
@@ -223,8 +234,8 @@ export function renderTractorFleetCardsSection(realMachines = [], userFields = [
                 <div class="cockpit-split-grid">
                     
                     <!-- 1 VAIZDELIS: DIDELIS PALYDOVINIS ŽEMĖLAPIS -->
-                    <div class="bg-tractorBg border-2 border-tractorBorder rounded-2xl overflow-hidden shadow-xl flex flex-col justify-between">
-                        <div class="bg-tractorSurface border-b border-tractorBorder px-4 py-2.5 flex flex-wrap items-center justify-between gap-2 text-xs font-mono">
+                    <div class="bg-tractorBg border-2 border-tractorBorder rounded-2xl overflow-hidden shadow-xl flex flex-col">
+                        <div class="bg-tractorSurface border-b border-tractorBorder px-4 py-2.5 flex flex-wrap items-center justify-between gap-2 text-xs font-mono shrink-0">
                             <div class="flex items-center gap-3">
                                 <span class="text-green-400 font-bold" id="hud-gps-coords">📍 55.28850, 23.97450</span>
                                 <span class="text-slate-400">|</span>
@@ -236,7 +247,7 @@ export function renderTractorFleetCardsSection(realMachines = [], userFields = [
                             </div>
                         </div>
 
-                        <div id="deere-live-map" style="width: 100%; height: 480px; min-height: 480px; position: relative; z-index: 10; background: #0f1712;"></div>
+                        <div id="deere-live-map" style="width: 100%; flex: 1 1 auto; min-height: 520px; position: relative; z-index: 10; background: #0f1712;"></div>
                     </div>
 
                     <!-- 2 VAIZDELIS: KOMPAKTIŠKAS KABINOS MONITORIUS (390px PLOČIO) -->
@@ -469,8 +480,30 @@ function initSheetMap(fieldIdx) {
         if (tractorMap) tractorMap.invalidateSize();
     }, 150);
 
-    setupFieldWaypoints(fieldIdx, true);
-    startLiveSimulation();
+    if (activeUnit.realLocation && activeUnit.realLocation.lat && activeUnit.realLocation.lng) {
+        const loc = activeUnit.realLocation;
+        activeUnit.lat = loc.lat;
+        activeUnit.lng = loc.lng;
+        activeUnit.heading = loc.heading || 0;
+        activeUnit.status = "JDLink™ Tikras GPS";
+
+        if (fieldSel) fieldSel.classList.add('hidden');
+
+        const realTrail = (loc.trail && loc.trail.length > 0) ? loc.trail : [[loc.lat, loc.lng]];
+        if (tractorTrailPolyline) tractorTrailPolyline.setLatLngs(realTrail);
+        if (tractorMarker) {
+            tractorMarker.setLatLng([loc.lat, loc.lng]);
+            tractorMarker.setIcon(createTractorMapIcon(activeUnit.name, activeUnit.speedKmh));
+        }
+        if (tractorMap) {
+            tractorMap.setView([loc.lat, loc.lng], 16, { animate: true });
+        }
+        updateCockpitHud();
+    } else {
+        if (fieldSel) fieldSel.classList.remove('hidden');
+        setupFieldWaypoints(fieldIdx, true);
+        startLiveSimulation();
+    }
 }
 
 function drawUserFieldsOnTractorMap() {

@@ -260,8 +260,11 @@ async function loadCloudMachinesForMainMap() {
     if (!user) return;
     try {
         const doc = await db.collection("user_smart_devices").doc(`johndeere_${user.uid}`).get();
-        if (doc.exists && Array.isArray(doc.data()?.telemetry?.machines) && doc.data().telemetry.machines.length > 0) {
+        if (doc.exists && doc.data()?.telemetry?.isConnected && Array.isArray(doc.data()?.telemetry?.machines)) {
             cachedDeereCloudMachines = doc.data().telemetry.machines;
+            initAndStartMapTractor();
+        } else {
+            cachedDeereCloudMachines = [];
             initAndStartMapTractor();
         }
     } catch (e) {}
@@ -564,9 +567,8 @@ function initAndStartMapTractor() {
     const validFields = cachedFieldsList.filter(f => f.polygonCoordinates && f.polygonCoordinates.length >= 3);
 
     // Jei iš John Deere Cloud gavome tikras mašinas (pvz., John Deere 8R 370 ir Kombainiukas) – rodome jas visas!
-    const rawMachines = cachedDeereCloudMachines.length > 0
-        ? cachedDeereCloudMachines
-        : [{ id: "jd_8r_370", name: "John Deere 8R 370", vin: "1RW8370PPRD094512", category: "Tractor" }];
+    const rawMachines = cachedDeereCloudMachines;
+        if (rawMachines.length === 0) return;
 
     rawMachines.forEach((m, idx) => {
         const isComb = (m.category || '').toLowerCase().includes('combine') || (m.name || '').toLowerCase().includes('kombain') || (m.model || '').toUpperCase().includes('S7');
@@ -629,16 +631,23 @@ function initAndStartMapTractor() {
         const startLat = pA[0] + (pB[0] - pA[0]) * startProg;
         const startLng = pA[1] + (pB[1] - pA[1]) * startProg;
         const trailCoords = [pA, [startLat, startLng]];
+        const hasRealGps = !!(m.location && m.location.lat && m.location.lng);
+        const finalStartLat = hasRealGps ? m.location.lat : startLat;
+        const finalStartLng = hasRealGps ? m.location.lng : startLng;
+        const finalTrail = hasRealGps
+            ? ((m.location.trail && m.location.trail.length > 0) ? m.location.trail : [[m.location.lat, m.location.lng]])
+            : trailCoords;
 
         const unitObj = {
             id: m.id || `unit_${idx}`,
             brand: "johndeere",
+            isRealGps: hasRealGps,
             isCombine: isComb,
             icon: isComb ? "🌾" : "🚜",
             name: m.name || "John Deere 8R 370",
             vin: m.vin || "JDLink",
-            status: isComb ? "Kulia derlių (AutoTrac™)" : "AutoTrac™ RTK",
-            speedKmh: isComb ? 6.4 : 9.4,
+            status: hasRealGps ? "JDLink™ Tikras GPS" : (isComb ? "Kulia derlių (AutoTrac™)" : "AutoTrac™ RTK"),
+            speedKmh: hasRealGps ? 0.0 : (isComb ? 6.4 : 9.4),
             rpm: isComb ? 2100 : 1840,
             fuelPct: isComb ? 80 : 78,
             fuelTankCapL: isComb ? 1250 : 725,
@@ -650,19 +659,19 @@ function initAndStartMapTractor() {
             engineHours: m.engineHours ? parseFloat(m.engineHours) : 412.6,
             vraRate: isComb ? 0 : 3000,
             workedHa: isComb ? 5.29 : 4.85,
-            fieldName: fieldName,
-            lat: startLat,
-            lng: startLng,
-            heading: 90,
+            fieldName: hasRealGps ? "Tikra GPS vieta (JDLink)" : fieldName,
+            lat: finalStartLat,
+            lng: finalStartLng,
+            heading: hasRealGps ? (m.location.heading || 0) : 90,
             waypoints: waypoints,
             wpIdx: 0,
             progress: startProg,
-            trailCoords: trailCoords,
+            trailCoords: finalTrail,
             marker: null,
             trailLine: null
         };
 
-        unitObj.trailLine = L.polyline(trailCoords, {
+        unitObj.trailLine = L.polyline(finalTrail, {
             color: isComb ? '#FACC15' : '#4ADE80',
             weight: 5,
             opacity: 0.85,
@@ -670,7 +679,7 @@ function initAndStartMapTractor() {
             lineCap: 'round'
         }).addTo(tractorsLayer);
 
-        unitObj.marker = L.marker([startLat, startLng], {
+        unitObj.marker = L.marker([finalStartLat, finalStartLng], {
             icon: getMapUnitIcon(unitObj),
             zIndexOffset: 1500 + idx
         }).addTo(tractorsLayer);
@@ -687,6 +696,7 @@ function initAndStartMapTractor() {
         if (!fieldsMap || mapUnitsList.length === 0) return;
 
         mapUnitsList.forEach(u => {
+            if (u.isRealGps) return; // Tikrų JDLink koordinačių simuliatorius nejudina!
             if (u.waypoints.length < 2) return;
 
             const nextIdx = (u.wpIdx + 1) % u.waypoints.length;

@@ -599,9 +599,9 @@ function setupCalculatorsHub() {
         hideAll();
         document.getElementById('seo-knowledge-block')?.classList.remove('hidden');
         hubView?.classList.remove('hidden');
-        document.title = "JurgisAgro – Ūkininkų Portalas, Grūdų Kainos ir MATIF Birža";
+        document.title = "JurgisAgro – Lietuvos Ūkininkų Platforma, Portalas, Grūdų Kainos ir Agro-Orai";
         const descMeta = document.querySelector('meta[name="description"]');
-        if (descMeta) descMeta.setAttribute('content', "Lietuvos ūkininkų portalas ir programa: gyvos grūdų supirkimo kainos, MATIF birža, gazolio kuras, agro-orai purškimui ir Pasėlių Lyga.");
+        if (descMeta) descMeta.setAttribute('content', "Nemokama Lietuvos ūkininkų platforma ir išmanusis portalas: gyvos grūdų supirkimo kainos, MATIF birža, gazolio kuras, agro-orai purškimui ir Pasėlių Lyga.");
         const canonLink = document.querySelector('link[rel="canonical"]');
         if (canonLink) canonLink.setAttribute('href', "https://jurgisagro.com/");
 
