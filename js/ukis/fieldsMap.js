@@ -500,15 +500,15 @@ function setupVisibilityToggleButtons() {
             const key = btn.getAttribute('data-layer-toggle');
             const isOn = !!layerVisibility[key];
             if (isOn) {
-                btn.style.background = 'rgba(46, 125, 50, 0.25)';
-                btn.style.color = '#4ADE80';
-                btn.style.borderColor = '#2E7D32';
+                btn.style.background = '#2E7D32';
+                btn.style.color = '#FFFFFF';
+                btn.style.borderColor = '#1B5E20';
                 btn.style.opacity = '1';
             } else {
-                btn.style.background = 'transparent';
-                btn.style.color = '#64748B';
-                btn.style.borderColor = '#334155';
-                btn.style.opacity = '0.65';
+                btn.style.background = 'var(--bg-surface)';
+                btn.style.color = 'var(--text-muted)';
+                btn.style.borderColor = 'var(--border-color)';
+                btn.style.opacity = '0.75';
             }
         });
     };

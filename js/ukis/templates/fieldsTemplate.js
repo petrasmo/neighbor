@@ -103,7 +103,7 @@ export function getMainFieldsHtml(todayStr) {
                     </div>
 
                     <div class="flex items-center gap-1.5">
-                        <button type="button" id="btn-focus-map-tractor" class="px-2.5 py-1 bg-green-500/15 hover:bg-green-500/30 text-green-400 border border-green-500/40 rounded-lg font-extrabold text-[11px] transition cursor-pointer flex items-center gap-1" title="Pritraukti žemėlapį prie dirbančio traktoriaus">
+                        <button type="button" id="btn-focus-map-tractor" style="background-color: #2E7D32; color: #FFFFFF; border-color: #1B5E20;" class="px-3 py-1 hover:opacity-90 border rounded-lg font-extrabold text-[11px] shadow-sm transition cursor-pointer flex items-center gap-1" title="Pritraukti žemėlapį prie dirbančio traktoriaus">
                             <span>🎯</span> <span>Kur traktorius?</span>
                         </button>
                     </div>
