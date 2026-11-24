@@ -6,6 +6,7 @@ import { renderDaikinControlTabHtml, bindDaikinControlEvents, renderDaikinSchedu
 import { renderDaikinEnergyTabHtml, bindDaikinEnergyEvents } from './daikinEnergyTab.js';
 import { renderSiloControlTabHtml, bindSiloControlEvents, renderSiloScheduleGrid } from './siloControlTab.js';
 import { renderSolarControlTabHtml, bindSolarControlEvents, renderSolarScheduleGrid } from './solarControlTab.js';
+import { renderRelayControlTabHtml, bindRelayControlEvents } from './relayControlTab.js';
 
 let cachedElecHours = [];
 let unsubscribeElec = null;
@@ -78,6 +79,8 @@ export function initSmartDevicesTab(currentUser, userData) {
                         <label class="text-[11px] font-bold text-tractorPrimaryLight uppercase block">1. Pasirinkite įrenginio tipą *</label>
                         <select id="sel-add-device-type" class="w-full h-11 bg-tractorBg border border-tractorBorder rounded-xl px-3 text-xs sm:text-sm font-bold outline-none cursor-pointer" style="color: var(--text-main);">
                             <option value="silo_fan">🛢️ Grūdų bokšto ventiliatorius (Shelly 1PM Mini Gen3 / Cloud)</option>
+                            <option value="smart_relay">⚡ Shelly šeimos išmanioji relė (Shelly Cloud)</option>
+                            <option value="solar">☀️ Saulės elektrinė (Growatt OpenAPI Cloud)</option>
                             <option value="heatpump">🔥 Šilumos siurblys (Daikin Altherma Cloud)</option>
                         </select>
                     </div>
@@ -117,6 +120,29 @@ export function initSmartDevicesTab(currentUser, userData) {
 
                         <button type="button" id="btn-confirm-connect-shelly" class="w-full h-12 bg-tractorPrimary hover:bg-tractorPrimaryHover text-white font-extrabold rounded-xl text-xs sm:text-sm uppercase tracking-wider shadow-lg transition cursor-pointer flex items-center justify-center gap-2">
                             <span>🛢️</span> <span>Prijungti Grūdų Bokštą (Shelly) ➔</span>
+                        </button>
+                    </div>
+
+                    <!-- C FORMA: GROWATT SAULĖS ELEKTRINEI -->
+                    <div id="box-add-growatt-fields" class="space-y-3 pt-1 hidden">
+                        <div class="space-y-1">
+                            <label class="text-[11px] font-bold text-amber-500 uppercase block">Growatt OpenAPI Token *</label>
+                            <input id="inp-growatt-token" type="password" placeholder="Įklijuokite savo Growatt OpenAPI raktą..."
+                                class="w-full h-11 bg-tractorBg border border-tractorBorder rounded-xl px-3.5 text-xs font-mono outline-none" style="color: var(--text-main);">
+                        </div>
+
+                        <div class="space-y-1">
+                            <label class="text-[11px] font-bold text-slate-400 uppercase block">Growatt Server URI *</label>
+                            <input id="inp-growatt-server" type="text" value="https://openapi.growatt.com"
+                                class="w-full h-11 bg-tractorBg border border-tractorBorder rounded-xl px-3.5 text-xs font-mono outline-none" style="color: var(--text-main);">
+                        </div>
+
+                        <div class="p-3 bg-tractorBg rounded-xl border border-tractorBorder text-[11px] text-slate-400 leading-relaxed">
+                            ☀️ Sistema automatiškai nuskaitys <strong>visas</strong> jūsų Growatt paskyroje esančias saulės elektrines ir inverterius!
+                        </div>
+
+                        <button type="button" id="btn-confirm-connect-growatt" class="w-full h-12 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black rounded-xl text-xs sm:text-sm uppercase tracking-wider shadow-lg transition cursor-pointer flex items-center justify-center gap-2">
+                            <span>☀️</span> <span>Prijungti Growatt Elektrines ➔</span>
                         </button>
                     </div>
 
@@ -181,7 +207,6 @@ function listenToSmartDevices(currentUser) {
 }
 
 function renderDevicesListHtml() {
-    // 🌟 Atfiltruojame: šiame lange rodomi TIK stacionarūs įrenginiai (Bokštai, Saulė, Katilai), jokių traktorių!
     const iotDevices = userDevicesList.filter(dev => dev.type !== 'tractor_cloud');
 
     if (iotDevices.length === 0) {
@@ -190,7 +215,7 @@ function renderDevicesListHtml() {
                 <span class="text-4xl block">🔌</span>
                 <h4 class="font-bold text-base" style="color: var(--text-main);">Dar neturite prijungtų išmaniųjų įrenginių</h4>
                 <p class="text-xs text-slate-400 max-w-md mx-auto">
-                    Spauskite <strong>„➕ Pridėti išmanųjį įrenginį“</strong> viršuje ir prijunkite savo <strong>Grūdų bokšto ventiliatorių (Shelly)</strong>, <strong>Saulės elektrinę (Growatt)</strong> arba <strong>Daikin šilumos siurblį</strong>.
+                    Spauskite <strong>„➕ Pridėti išmanųjį įrenginį“</strong> viršuje ir prijunkite savo <strong>Shelly išmaniąją relę</strong>, <strong>Grūdų bokštą</strong>, <strong>Saulės elektrinę (Growatt)</strong> arba <strong>Daikin šilumos siurblį</strong>.
                 </p>
             </div>
         `;
@@ -243,7 +268,50 @@ function renderDevicesListHtml() {
             `;
         }
 
-        // 2. 🛢️ GRŪDŲ BOKŠTO KORTELĖ (SHELLY)
+        // 2. ⚡ SHELLY IŠMANIOSIOS RELĖS KORTELĖ
+        if (dev.type === 'smart_relay') {
+            const isOn = tel.fanOnOff === 'on';
+            const powerW = Number(tel.powerW ?? 0);
+            const totalKwh = Number(tel.totalKwh ?? 0);
+
+            return `
+                <div class="card-open-device-sheet bg-tractorBg border-2 border-tractorBorder hover:border-tractorPrimary rounded-2xl p-4 sm:p-5 flex flex-col lg:flex-row lg:items-center justify-between gap-4 transition cursor-pointer shadow-md" data-dev-id="${dev.id}">
+                    <div class="space-y-2 flex-1">
+                        <div class="flex flex-wrap items-center gap-2.5">
+                            <span class="text-2xl">⚡</span>
+                            <h4 class="font-oswald text-lg sm:text-xl font-bold uppercase tracking-wide" style="color: var(--text-main);">
+                                ${dev.name || 'Išmanioji relė (Shelly)'}
+                            </h4>
+                            <span class="text-xs bg-tractorSurface px-2.5 py-0.5 rounded-lg font-mono font-bold text-slate-400 border border-tractorBorder">
+                                ${tel.modelInfo || 'Shelly Cloud'}
+                            </span>
+                            <span class="px-2.5 py-0.5 rounded-full text-xs font-bold ${tel.isOnline ? 'bg-green-500/15 text-green-600 dark:text-green-400 border border-green-500/30' : 'bg-slate-700 text-slate-300'}">
+                                ${tel.isOnline ? '🟢 Online' : '⚪ Offline'}
+                            </span>
+                        </div>
+
+                        <div class="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs sm:text-sm pt-0.5">
+                            <span>🔌 Būsena: <strong class="${isOn ? 'text-green-600 dark:text-green-400' : 'text-slate-400'}">${isOn ? 'ĮJUNGTA (ON)' : 'IŠJUNGTA (OFF)'} (${powerW} W)</strong></span>
+                            <span>•</span>
+                            <span>⚡ Skaitiklis: <strong class="text-amber-500 font-mono">${totalKwh.toFixed(2)} kWh</strong></span>
+                            <span>•</span>
+                            <span>🤖 Taisyklės: <strong class="${cfg.autopilotEnabled ? 'text-green-500' : 'text-slate-400'}">${cfg.autopilotEnabled ? 'Autopilotas AKTYVUS' : 'Rankinis valdymas'}</strong></span>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center gap-2 shrink-0 pt-2 lg:pt-0 border-t lg:border-t-0 border-tractorBorder/60">
+                        <button type="button" class="btn-open-panel-action h-10 px-4 bg-tractorPrimary hover:bg-tractorPrimaryHover text-white font-extrabold rounded-xl text-xs uppercase tracking-wider flex items-center gap-1.5 shadow transition cursor-pointer">
+                            <span>⚡</span> <span>Taisyklės ir Pultas ➔</span>
+                        </button>
+                        <button type="button" class="btn-delete-device-action h-10 px-3 bg-red-950/20 hover:bg-red-950/40 border border-red-800/40 text-red-500 rounded-xl text-xs font-bold transition cursor-pointer flex items-center justify-center" data-dev-id="${dev.id}" title="Pašalinti įrenginį">
+                            <span>🗑️</span>
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
+        // 3. 🛢️ GRŪDŲ BOKŠTO KORTELĖ (SHELLY)
         if (dev.type === 'silo_fan') {
             const isFanOn = tel.fanOnOff === 'on';
             const powerW = Number(tel.powerW ?? 0);
@@ -288,7 +356,7 @@ function renderDevicesListHtml() {
             `;
         }
 
-        // 3. 🔥 DAIKIN ŠILUMOS SIURBLYS
+        // 4. 🔥 DAIKIN ŠILUMOS SIURBLYS
         const isClimOn = tel.climateOnOff === 'on';
         const isDhwOn = tel.dhwOnOff === 'on';
         const waterTemp = tel.leavingWaterTemp !== null && tel.leavingWaterTemp !== undefined ? `${Number(tel.leavingWaterTemp).toFixed(1)} °C` : '-- °C';
@@ -376,14 +444,17 @@ function renderDeviceControlPanel(currentUser) {
     const tel = dev.telemetry || {};
     const isSilo = dev.type === 'silo_fan';
     const isSolar = dev.type === 'solar';
+    const isRelay = dev.type === 'smart_relay';
 
     let updatedTimeStr = "";
     if (tel.updatedAt && tel.updatedAt.toDate) {
         updatedTimeStr = tel.updatedAt.toDate().toLocaleTimeString('lt-LT', { hour: '2-digit', minute: '2-digit' });
     }
 
-    const headerIcon = isSolar ? '☀️' : (isSilo ? '🛢️' : '🔥');
-    const cloudLabel = isSolar ? 'Growatt Cloud Ryšys Aktyvus' : (isSilo ? 'Shelly Cloud Ryšys Aktyvus' : 'Daikin Cloud Ryšys Aktyvus');
+    const headerIcon = isSolar ? '☀️' : (isRelay ? '⚡' : (isSilo ? '🛢️' : '🔥'));
+    const cloudLabel = isSolar
+        ? 'Growatt Cloud Ryšys Aktyvus'
+        : ((isSilo || isRelay) ? 'Shelly Cloud Ryšys Aktyvus' : 'Daikin Cloud Ryšys Aktyvus');
 
     panel.innerHTML = `
         <div class="shrink-0 bg-tractorSurface border-b border-tractorBorder px-4 sm:px-6 py-3.5 flex flex-wrap items-center justify-between gap-3 z-20">
@@ -391,7 +462,7 @@ function renderDeviceControlPanel(currentUser) {
                 <span class="text-2xl">${headerIcon}</span>
                 <div>
                     <h3 class="font-oswald text-lg sm:text-xl font-bold uppercase tracking-wider leading-tight" style="color: var(--text-main);">
-                        ${dev.name} (${tel.modelInfo || (isSolar ? 'Growatt 15kW' : (isSilo ? 'Shelly Gen3/Gen4' : 'EHBH08EF9W'))})
+                        ${dev.name} (${tel.modelInfo || (isSolar ? 'Growatt 15kW' : ((isSilo || isRelay) ? 'Shelly Gen3/Gen4' : 'EHBH08EF9W'))})
                     </h3>
                     <span class="text-xs text-green-600 dark:text-green-400 font-bold">
                         🟢 ${cloudLabel} ${updatedTimeStr ? `<span class="text-slate-400 font-normal ml-1">(Atnaujinta ${updatedTimeStr})</span>` : ''}
@@ -400,7 +471,7 @@ function renderDeviceControlPanel(currentUser) {
             </div>
 
             <div class="flex items-center gap-2">
-                ${(!isSilo && !isSolar) ? `
+                ${(!isSilo && !isSolar && !isRelay) ? `
                 <div class="flex items-center gap-1 bg-tractorBg p-1 rounded-xl border border-tractorBorder">
                     <button type="button" id="btn-subtab-control" class="px-3.5 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${activeModalSubTab === 'control' ? 'bg-tractorPrimary text-white shadow' : 'text-slate-400 hover:text-white'}">
                         🎛️ Katilo Valdymas
@@ -421,11 +492,13 @@ function renderDeviceControlPanel(currentUser) {
         <div id="subtab-content-container" class="flex-1 overflow-y-auto px-4 sm:px-6 py-4 pb-10 space-y-3.5">
             ${isSolar
                 ? renderSolarControlTabHtml(dev, tel)
-                : (isSilo
-                    ? renderSiloControlTabHtml(dev, tel)
-                    : (activeModalSubTab === 'control'
-                        ? renderDaikinControlTabHtml(dev, tel, currentUser)
-                        : renderDaikinEnergyTabHtml(dev, cachedElecHours)))
+                : (isRelay
+                    ? renderRelayControlTabHtml(dev, tel)
+                    : (isSilo
+                        ? renderSiloControlTabHtml(dev, tel)
+                        : (activeModalSubTab === 'control'
+                            ? renderDaikinControlTabHtml(dev, tel, currentUser)
+                            : renderDaikinEnergyTabHtml(dev, cachedElecHours))))
             }
         </div>
     `;
@@ -440,7 +513,7 @@ function renderDeviceControlPanel(currentUser) {
         try {
             const url = isSolar
                 ? `https://us-central1-neighborpm-b9968.cloudfunctions.net/refreshGrowattStatus?userId=${currentUser.uid}&deviceDocId=${dev.id}`
-                : (isSilo
+                : ((isSilo || isRelay)
                     ? `https://us-central1-neighborpm-b9968.cloudfunctions.net/refreshShellyStatus?userId=${currentUser.uid}&deviceDocId=${dev.id}`
                     : `https://us-central1-neighborpm-b9968.cloudfunctions.net/refreshDaikinStatus?userId=${currentUser.uid}`);
             const res = await fetch(url);
@@ -464,6 +537,19 @@ function renderDeviceControlPanel(currentUser) {
                 renderSolarScheduleGrid(dev, cachedElecHours);
             },
             cachedElecHours
+        );
+    } else if (isRelay) {
+        bindRelayControlEvents(
+            currentUser,
+            dev,
+            async (cmdPayload, successMsg) => {
+                await executeSiloCommand(currentUser, cmdPayload, successMsg);
+            },
+            async (shouldSaveToDb, updatedConfig = null) => {
+                if (shouldSaveToDb && updatedConfig) {
+                    await db.collection("user_smart_devices").doc(dev.id).update({ config: updatedConfig });
+                }
+            }
         );
     } else if (isSilo) {
         bindSiloControlEvents(
@@ -569,9 +655,11 @@ function setupSmartDevicesEvents(currentUser) {
     const closeAddBtn = document.getElementById('btn-close-add-device-modal');
     const typeSelect = document.getElementById('sel-add-device-type');
     const boxShelly = document.getElementById('box-add-shelly-fields');
+    const boxGrowatt = document.getElementById('box-add-growatt-fields');
     const boxDaikin = document.getElementById('box-add-daikin-fields');
     const confirmConnectDaikinBtn = document.getElementById('btn-confirm-connect-daikin');
     const confirmConnectShellyBtn = document.getElementById('btn-confirm-connect-shelly');
+    const confirmConnectGrowattBtn = document.getElementById('btn-confirm-connect-growatt');
 
     if (openAddBtn && addModal) openAddBtn.onclick = () => addModal.classList.remove('hidden');
     if (closeAddBtn && addModal) closeAddBtn.onclick = () => addModal.classList.add('hidden');
@@ -579,11 +667,24 @@ function setupSmartDevicesEvents(currentUser) {
 
     if (typeSelect) {
         typeSelect.onchange = (e) => {
-            if (e.target.value === 'silo_fan') {
+            const val = e.target.value;
+            boxShelly?.classList.add('hidden');
+            boxGrowatt?.classList.add('hidden');
+            boxDaikin?.classList.add('hidden');
+
+            if (val === 'silo_fan' || val === 'smart_relay') {
                 boxShelly?.classList.remove('hidden');
-                boxDaikin?.classList.add('hidden');
+                const nameInp = document.getElementById('inp-shelly-name');
+                if (val === 'smart_relay') {
+                    if (nameInp) nameInp.value = "Išmanioji relė #1 (Shelly 1PM)";
+                    if (confirmConnectShellyBtn) confirmConnectShellyBtn.innerHTML = "<span>⚡</span> <span>Prijungti Išmaniąją Relę (Shelly) ➔</span>";
+                } else {
+                    if (nameInp) nameInp.value = "Grūdų bokštas #1 (Shelly Gen3)";
+                    if (confirmConnectShellyBtn) confirmConnectShellyBtn.innerHTML = "<span>🛢️</span> <span>Prijungti Grūdų Bokštą (Shelly) ➔</span>";
+                }
+            } else if (val === 'solar') {
+                boxGrowatt?.classList.remove('hidden');
             } else {
-                boxShelly?.classList.add('hidden');
                 boxDaikin?.classList.remove('hidden');
             }
         };
@@ -595,7 +696,8 @@ function setupSmartDevicesEvents(currentUser) {
                 openAuthModal('login');
                 return;
             }
-            const name = document.getElementById('inp-shelly-name')?.value.trim() || "Grūdų bokštas #1";
+            const isRelay = typeSelect?.value === 'smart_relay';
+            const name = document.getElementById('inp-shelly-name')?.value.trim() || (isRelay ? "Išmanioji relė #1" : "Grūdų bokštas #1");
             const shellyDeviceId = document.getElementById('inp-shelly-device-id')?.value.trim();
             const serverUri = document.getElementById('inp-shelly-server')?.value.trim();
             const authKey = document.getElementById('inp-shelly-auth-key')?.value.trim();
@@ -611,6 +713,7 @@ function setupSmartDevicesEvents(currentUser) {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({
+                        deviceType: isRelay ? "smart_relay" : "silo_fan",
                         userId: currentUser.uid,
                         name,
                         shellyDeviceId,
@@ -623,14 +726,51 @@ function setupSmartDevicesEvents(currentUser) {
                 const data = await res.json();
                 if (data && data.success) {
                     addModal?.classList.add('hidden');
-                    showBottomToast("🛢️ Grūdų bokštas (Shelly) sėkmingai prijungtas!");
+                    showBottomToast(isRelay ? "⚡ Išmanioji relė (Shelly) sėkmingai prijungta!" : "🛢️ Grūdų bokštas (Shelly) sėkmingai prijungtas!");
                 } else {
                     showBottomToast("Klaida: " + (data.error || "Nepavyko prijungti"), "error");
                 }
             } catch (err) {
                 showBottomToast("Ryšio klaida: " + err.message, "error");
             } finally {
-                confirmConnectShellyBtn.innerHTML = "<span>🛢️</span> <span>Prijungti Grūdų Bokštą (Shelly) ➔</span>";
+                confirmConnectShellyBtn.innerHTML = isRelay
+                    ? "<span>⚡</span> <span>Prijungti Išmaniąją Relę (Shelly) ➔</span>"
+                    : "<span>🛢️</span> <span>Prijungti Grūdų Bokštą (Shelly) ➔</span>";
+            }
+        };
+    }
+
+    if (confirmConnectGrowattBtn) {
+        confirmConnectGrowattBtn.onclick = async () => {
+            if (!currentUser) {
+                openAuthModal('login');
+                return;
+            }
+            const apiToken = document.getElementById('inp-growatt-token')?.value.trim();
+            const serverUri = document.getElementById('inp-growatt-server')?.value.trim() || "https://openapi.growatt.com";
+            if (!apiToken) {
+                showBottomToast("Įveskite Growatt OpenAPI raktą (Token)!", "warning");
+                return;
+            }
+
+            confirmConnectGrowattBtn.innerHTML = "<span>⏳</span> <span>Jungiama prie Growatt Cloud...</span>";
+            try {
+                const res = await fetch("https://us-central1-neighborpm-b9968.cloudfunctions.net/connectGrowattSolar", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ userId: currentUser.uid, apiToken, serverUri })
+                });
+                const data = await res.json();
+                if (data && data.success) {
+                    addModal?.classList.add('hidden');
+                    showBottomToast(`☀️ Sėkmingai prijungta Growatt elektrinių: ${data.count}!`);
+                } else {
+                    showBottomToast("Klaida: " + (data.error || "Nepavyko prijungti"), "error");
+                }
+            } catch (err) {
+                showBottomToast("Ryšio klaida: " + err.message, "error");
+            } finally {
+                confirmConnectGrowattBtn.innerHTML = "<span>☀️</span> <span>Prijungti Growatt Elektrines ➔</span>";
             }
         };
     }

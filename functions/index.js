@@ -29,6 +29,7 @@ const {
   sendShellyCommand,
   executeHourlySiloAutopilot,
 } = require("./shellySync");
+const { sendShellyRelayCommand, executeSmartRelaysAutopilot } = require("./relayRulesEngine");
 const {
   syncUserGrowattTelemetry,
   getGrowattChartsData,
@@ -129,6 +130,12 @@ exports.scheduledHourlyDaikinAutopilot = onSchedule(
     await executeHourlyDaikinAutopilot(db, admin);
     await executeHourlySiloAutopilot(db, admin);
     await executeHourlyGrowattSync(db, admin);
+  }
+);
+exports.scheduledSmartRelaysAutopilot = onSchedule(
+  { schedule: "*/15 * * * *", timeZone: "Europe/Vilnius" },
+  async () => {
+    await executeSmartRelaysAutopilot(db, admin);
   }
 );
 
@@ -936,7 +943,7 @@ exports.connectShellySilo = onRequest(
         {
           id: deviceDocId,
           userId: userId,
-          type: "silo_fan",
+          type: body.deviceType === "smart_relay" ? "smart_relay" : "silo_fan",
           brand: "shelly",
           name: name || "Grūdų bokštas #1",
           config: defaultConfig,
@@ -974,7 +981,9 @@ exports.controlShellySilo = onRequest(
   async (req, res) => {
     try {
       const body = typeof req.body === "string" ? JSON.parse(req.body) : req.body;
-      const tel = await sendShellyCommand(db, admin, body.userId, body);
+      const tel = body.timerSec
+        ? await sendShellyRelayCommand(db, admin, body.userId, body)
+        : await sendShellyCommand(db, admin, body.userId, body);
       res.json({ success: true, telemetry: tel });
     } catch (err) {
       res.status(500).json({ error: err.message });
@@ -1122,6 +1131,36 @@ exports.getGrowattPlantCharts = onRequest(
       if (!userId || !plantId) return res.status(400).json({ error: "Trūksta userId arba plantId" });
       const charts = await getGrowattChartsData(db, userId, plantId);
       res.json({ success: true, ...charts });
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  }
+);
+
+exports.connectGrowattSolar = onRequest(
+  { cors: true, invoker: "public" },
+  async (req, res) => {
+    try {
+      const body = typeof req.body === "string" ? JSON.parse(req.body) : req.body;
+      const { userId, apiToken, serverUri } = body || {};
+      if (!userId || !apiToken) {
+        return res.status(400).json({ error: "Trūksta userId arba Growatt API rakto (Token)." });
+      }
+
+      const cleanToken = String(apiToken).trim();
+      const secretDocId = `growatt_${userId.slice(0, 6)}_${cleanToken.slice(0, 10)}`;
+
+      await db.collection("growatt_secrets").doc(secretDocId).set({
+        userId: userId,
+        apiToken: cleanToken,
+        serverUri: String(serverUri || "https://openapi.growatt.com").trim(),
+        username: "",
+        password: "",
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      });
+
+      const plants = await syncUserGrowattTelemetry(db, admin, userId);
+      res.json({ success: true, count: plants.length, plants });
     } catch (err) {
       res.status(500).json({ error: err.message });
     }

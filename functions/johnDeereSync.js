@@ -26,6 +26,23 @@ function getJohnDeereLoginUrl(userId, originUrl = "https://jurgisagro.com") {
   )}&state=${encodeURIComponent(statePayload)}`;
 }
 
+async function fetchAllDeerePages(initialUrl, headers) {
+  const allValues = [];
+  let nextUrl = initialUrl;
+  let guard = 0;
+
+  while (nextUrl && guard < 15) {
+    guard++;
+    const res = await axios.get(nextUrl, { headers, timeout: 10000 });
+    const vals = res.data?.values || [];
+    allValues.push(...vals);
+    const nextLink = (res.data?.links || []).find((l) => l.rel === "nextPage");
+    nextUrl = nextLink ? nextLink.uri : null;
+  }
+
+  return allValues;
+}
+
 async function exchangeDeereCode(code) {
   const params = new URLSearchParams({
     grant_type: "authorization_code",
@@ -135,7 +152,6 @@ async function syncJohnDeereData(db, admin, userId) {
       if (connLink && connLink.uri) {
         if (!connectionsUrl) connectionsUrl = connLink.uri;
       } else {
-        // Surenkame VISAS patvirtintas organizacijas (tiek savą, tiek partnerių ūkius!)
         connectedOrgs.push(org);
       }
     }
@@ -273,16 +289,13 @@ async function syncJohnDeereData(db, admin, userId) {
       })
     );
 
-    // 2. Nuskaitome laukus iš VISŲ prijungtų organizacijų
+    // 2. Nuskaitome VISŲ puslapių aktyvius laukus iš VISŲ prijungtų organizacijų
     const fieldsMap = new Map();
     for (const org of connectedOrgs) {
       try {
-        const fRes = await axios.get(`${DEERE_API_BASE}/organizations/${org.id}/fields`, {
-          headers,
-          timeout: 8000,
-        });
-        (fRes.data?.values || []).forEach((f) => {
-          if (f && f.id && !fieldsMap.has(f.id)) {
+        const fValues = await fetchAllDeerePages(`${DEERE_API_BASE}/organizations/${org.id}/fields`, headers);
+        fValues.forEach((f) => {
+          if (f && f.id && !fieldsMap.has(f.id) && !f.archived) {
             fieldsMap.set(f.id, {
               id: f.id,
               orgId: org.id,
@@ -336,7 +349,77 @@ async function syncJohnDeereData(db, admin, userId) {
 }
 
 /**
- * Sukuria JurgisAgro lauką + jo GPS ribas (Boundary) John Deere Operations Center sistemoje!
+ * Išvalo NMA poligono taškus nuo dublikatų ir per arti esančių taškų (< ~0.5m) prieš siunčiant į John Deere
+ */
+function buildCleanDeereRingPoints(coords) {
+  if (!Array.isArray(coords) || coords.length < 3) return [];
+
+  const cleaned = [];
+  for (const p of coords) {
+    const lat = Number(parseFloat(Array.isArray(p) ? p[0] : p.lat).toFixed(6));
+    const lon = Number(parseFloat(Array.isArray(p) ? p[1] : p.lng).toFixed(6));
+    if (!Number.isFinite(lat) || !Number.isFinite(lon)) continue;
+
+    if (cleaned.length > 0) {
+      const prev = cleaned[cleaned.length - 1];
+      if (Math.abs(lat - prev.lat) < 0.000005 && Math.abs(lon - prev.lon) < 0.000005) {
+        continue;
+      }
+    }
+    cleaned.push({ "@type": "Point", lat, lon });
+  }
+
+  if (cleaned.length < 3) return [];
+
+  const first = cleaned[0];
+  const last = cleaned[cleaned.length - 1];
+  if (Math.abs(first.lat - last.lat) >= 0.000001 || Math.abs(first.lon - last.lon) >= 0.000001) {
+    cleaned.push({ "@type": "Point", lat: first.lat, lon: first.lon });
+  }
+
+  return cleaned;
+}
+
+/**
+ * Patikrina, ar laukas John Deere sistemoje turi aktyvią ir nesuarchyvuotą GPS ribą; jei ne -> įkelia unikaliu pavadinimu!
+ */
+async function ensureBoundaryOnDeereField(fieldUrl, fieldName, coords, headers) {
+  const ringPoints = buildCleanDeereRingPoints(coords);
+  if (ringPoints.length < 4) return { boundaryCreated: false };
+
+  try {
+    const bRes = await axios.get(`${fieldUrl}/boundaries`, { headers, timeout: 8000 });
+    const existingBounds = bRes.data?.values || [];
+    if (existingBounds.some((b) => b.active === true && !b.archived)) {
+      return { boundaryCreated: false, alreadyHasBoundary: true };
+    }
+  } catch (e) {}
+
+  const uniqueSuffix = Date.now().toString().slice(-5);
+
+  await axios.post(
+    `${fieldUrl}/boundaries`,
+    {
+      "@type": "Boundary",
+      name: `${fieldName} riba ${uniqueSuffix}`,
+      sourceType: "External",
+      active: true,
+      irrigated: false,
+      multipolygons: [
+        {
+          "@type": "Polygon",
+          rings: [{ "@type": "Ring", points: ringPoints, type: "exterior" }],
+        },
+      ],
+    },
+    { headers, timeout: 10000 }
+  );
+
+  return { boundaryCreated: true };
+}
+
+/**
+ * Sukuria JurgisAgro lauką + švarias GPS ribas (ir atkuria iš archyvo per visus puslapius + sutvarko pilkus 0,00 ha laukus!)
  */
 async function pushFieldsToJohnDeere(db, admin, userId, orgId, fieldsList) {
   const token = await getValidDeereToken(db, admin, userId);
@@ -346,21 +429,62 @@ async function pushFieldsToJohnDeere(db, admin, userId, orgId, fieldsList) {
     "Content-Type": "application/vnd.deere.axiom.v3+json",
   };
 
-  let existingNames = new Set();
+  const existingByName = new Map();
   try {
-    const exRes = await axios.get(`${DEERE_API_BASE}/organizations/${orgId}/fields`, { headers, timeout: 10000 });
-    (exRes.data?.values || []).forEach((f) => existingNames.add((f.name || "").toLowerCase()));
+    const allFields = await fetchAllDeerePages(`${DEERE_API_BASE}/organizations/${orgId}/fields?recordFilter=all`, headers);
+    allFields.forEach((f) => {
+      if (f && f.name) existingByName.set(f.name.trim().toLowerCase(), f);
+    });
+  } catch (e) {}
+
+  try {
+    const archivedFields = await fetchAllDeerePages(`${DEERE_API_BASE}/organizations/${orgId}/fields?recordFilter=archived`, headers);
+    archivedFields.forEach((f) => {
+      if (f && f.name) existingByName.set(f.name.trim().toLowerCase(), { ...f, archived: true });
+    });
   } catch (e) {}
 
   let createdCount = 0;
+  let restoredCount = 0;
   let skippedCount = 0;
+  const errors = [];
 
   for (const f of fieldsList) {
-    if (!f.name || existingNames.has(f.name.toLowerCase())) {
-      skippedCount++;
+    if (!f.name) continue;
+    const existing = existingByName.get(f.name.trim().toLowerCase());
+    const coords = f.polygonCoordinates || [];
+
+    // 1. Jei laukas jau AKTYVUS -> patikriname, ar jam nereikia pridėti trūkstamos GPS ribos
+    if (existing && !existing.archived) {
+      try {
+        const fieldUrl = `${DEERE_API_BASE}/organizations/${orgId}/fields/${existing.id}`;
+        const bStatus = await ensureBoundaryOnDeereField(fieldUrl, f.name, coords, headers);
+        if (bStatus.boundaryCreated) createdCount++;
+        else skippedCount++;
+      } catch (bErr) {
+        const errDetail = bErr.response?.data ? JSON.stringify(bErr.response.data) : bErr.message;
+        errors.push(`${f.name} (riba): HTTP ${bErr.response?.status || "?"} ${errDetail}`);
+      }
       continue;
     }
 
+    // 2. Jei laukas buvo SUARCHYVUOTAS -> ATSTATOME jį iš archyvo ir įkeliame aktyvią ribą!
+    if (existing && existing.archived) {
+      try {
+        const fieldUrl = `${DEERE_API_BASE}/organizations/${orgId}/fields/${existing.id}`;
+        await axios.put(fieldUrl, { name: f.name, archived: false }, { headers, timeout: 10000 });
+        await ensureBoundaryOnDeereField(fieldUrl, f.name, coords, headers);
+        restoredCount++;
+        continue;
+      } catch (restErr) {
+        errors.push(
+          `${f.name} (atkūrimas): ${restErr.response?.status || ""} ${JSON.stringify(restErr.response?.data || restErr.message)}`
+        );
+        continue;
+      }
+    }
+
+    // 3. Kuriame visiškai naują lauką + švarią NMA GPS ribą
     try {
       const createFieldRes = await axios.post(
         `${DEERE_API_BASE}/organizations/${orgId}/fields`,
@@ -369,41 +493,19 @@ async function pushFieldsToJohnDeere(db, admin, userId, orgId, fieldsList) {
       );
 
       const newFieldLocation = createFieldRes.headers?.location;
-      const coords = f.polygonCoordinates || [];
-
       if (newFieldLocation && coords.length >= 3) {
-        const ringPoints = coords.map((p) => ({
-          "@type": "Point",
-          lat: Number(Array.isArray(p) ? p[0] : p.lat),
-          lon: Number(Array.isArray(p) ? p[1] : p.lng),
-        }));
-        ringPoints.push(ringPoints[0]);
-
-        await axios.post(
-          `${newFieldLocation}/boundaries`,
-          {
-            name: `${f.name} riba`,
-            sourceType: "External",
-            active: true,
-            irrigated: false,
-            multipolygons: [
-              {
-                "@type": "Polygon",
-                rings: [{ "@type": "Ring", points: ringPoints, type: "exterior" }],
-              },
-            ],
-          },
-          { headers, timeout: 10000 }
-        );
+        await ensureBoundaryOnDeereField(newFieldLocation, f.name, coords, headers);
       }
 
       createdCount++;
     } catch (err) {
-      console.warn(`Nepavyko sukurti lauko ${f.name} John Deere:`, err.response?.data || err.message);
+      const errDetail = err.response?.data ? JSON.stringify(err.response.data) : err.message;
+      console.warn(`Nepavyko sukurti lauko ${f.name} John Deere:`, errDetail);
+      errors.push(`${f.name}: HTTP ${err.response?.status || "?"} ${errDetail}`);
     }
   }
 
-  return { createdCount, skippedCount };
+  return { createdCount: createdCount + restoredCount, restoredCount, skippedCount, errors };
 }
 
 /**

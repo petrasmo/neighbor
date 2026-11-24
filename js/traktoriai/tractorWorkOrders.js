@@ -106,7 +106,7 @@ export function renderTractorWorkOrdersSection() {
                     </p>
                 </div>
 
-                <form id="form-create-tractor-order" class="space-y-3.5 text-xs">
+                <form id="form-create-tractor-order" novalidate class="space-y-3.5 text-xs">
                     
                     <!-- 1. TECHNIKA -->
                     <div class="space-y-1">
