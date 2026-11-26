@@ -45,6 +45,12 @@ const {
   disconnectJohnDeere,
 } = require("./johnDeereSync");
 
+const {
+  registerJurgisGpsTracker,
+  deleteJurgisGpsTracker,
+  handleJurgisGpsWebhook,
+} = require("./jurgisGpsSync");
+
 // Importuojame Išmaniųjų Pranešimų pagalbininką
 const { 
   checkAndSendMatifAlerts, 
@@ -1166,3 +1172,35 @@ exports.connectGrowattSolar = onRequest(
     }
   }
 );
+
+// ========================================================
+// 🚜 24. JURGISAGRO UNIVERSALUS GPS TREKERIS (BELARUS / MTZ / TELTONIKA)
+// ========================================================
+exports.registerJurgisGpsTracker = onRequest({ cors: true, invoker: "public" }, async (req, res) => {
+  try {
+    const body = typeof req.body === "string" ? JSON.parse(req.body) : req.body;
+    const tracker = await registerJurgisGpsTracker(db, admin, body);
+    res.json({ success: true, tracker });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+exports.deleteJurgisGpsTracker = onRequest({ cors: true, invoker: "public" }, async (req, res) => {
+  try {
+    const body = typeof req.body === "string" ? JSON.parse(req.body) : req.body;
+    await deleteJurgisGpsTracker(db, body.userId, body.docId);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+exports.jurgisGpsWebhook = onRequest({ cors: true, invoker: "public" }, async (req, res) => {
+  try {
+    const out = await handleJurgisGpsWebhook(db, admin, req);
+    res.json(out);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});

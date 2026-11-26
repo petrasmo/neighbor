@@ -1,5 +1,6 @@
 // functions/johnDeereSync.js
 const axios = require("axios");
+const { getUserJurgisGpsMachines } = require("./jurgisGpsSync");
 
 const DEERE_CLIENT_ID = "0oay3prpfukTojw365d7";
 const DEERE_CLIENT_SECRET = "CFEISPhHXbgV0iU7Wsx3JkWoRhgJt8ObfzzrvhOfrjkGOzeRf13BqgJMt_8cXDt8";
@@ -113,16 +114,18 @@ async function getValidDeereToken(db, admin, userId) {
 }
 
 /**
- * Nuskaito organizacijas, techniką (tiek /isg/equipment iš equipment.deere.com, tiek JDLink /machines), GPS ir laukus
+ * Nuskaito organizacijas, techniką (tiek John Deere, tiek JurgisAgro GPS / Teltonika traktorius), GPS ir laukus
  */
 async function syncJohnDeereData(db, admin, userId) {
+  const jurgisMachines = await getUserJurgisGpsMachines(db, userId).catch(() => []);
   const secretDoc = await db.collection("johndeere_secrets").doc(userId).get();
+
   if (!secretDoc.exists) {
     return {
       isConnected: false,
       needsOrgConnection: false,
       organizations: [],
-      machines: [],
+      machines: jurgisMachines,
       fields: [],
       connectionsUrl: null,
       manageConnectionsUrl: DEFAULT_CONNECTIONS_URL,
@@ -177,7 +180,6 @@ async function syncJohnDeereData(db, admin, userId) {
   if (connectedOrgs.length > 0) {
     const combinedRawMap = new Map();
 
-    // 1. Apdorojame VISAS prijungtas organizacijas (tavo + partnerių ūkius!)
     for (const org of connectedOrgs) {
       const orgLinks = (org.links || [])
         .filter((l) => ["machines", "equipment", "ownedMachines", "manage_equipment"].includes(l.rel) && l.uri)
@@ -256,7 +258,6 @@ async function syncJohnDeereData(db, admin, userId) {
       };
     });
 
-    // 1C. Kiekvienai mašinai lygiagrečiai nuskaitome tikras moto-valandas ir tikras GPS koordinates (JDLink)
     await Promise.allSettled(
       machines.map(async (mach) => {
         try {
@@ -289,7 +290,6 @@ async function syncJohnDeereData(db, admin, userId) {
       })
     );
 
-    // 2. Nuskaitome VISŲ puslapių aktyvius laukus iš VISŲ prijungtų organizacijų
     const fieldsMap = new Map();
     for (const org of connectedOrgs) {
       try {
@@ -311,6 +311,9 @@ async function syncJohnDeereData(db, admin, userId) {
     }
     deereFields = Array.from(fieldsMap.values());
   }
+
+  // Sujungiame John Deere mašinas su JurgisAgro GPS (Belarus / Teltonika) traktoriais!
+  machines = [...machines, ...jurgisMachines];
 
   await db.collection("user_smart_devices").doc(`johndeere_${userId}`).set(
     {
@@ -348,9 +351,6 @@ async function syncJohnDeereData(db, admin, userId) {
   };
 }
 
-/**
- * Išvalo NMA poligono taškus nuo dublikatų ir per arti esančių taškų (< ~0.5m) prieš siunčiant į John Deere
- */
 function buildCleanDeereRingPoints(coords) {
   if (!Array.isArray(coords) || coords.length < 3) return [];
 
@@ -380,9 +380,6 @@ function buildCleanDeereRingPoints(coords) {
   return cleaned;
 }
 
-/**
- * Patikrina, ar laukas John Deere sistemoje turi aktyvią ir nesuarchyvuotą GPS ribą; jei ne -> įkelia unikaliu pavadinimu!
- */
 async function ensureBoundaryOnDeereField(fieldUrl, fieldName, coords, headers) {
   const ringPoints = buildCleanDeereRingPoints(coords);
   if (ringPoints.length < 4) return { boundaryCreated: false };
@@ -418,9 +415,6 @@ async function ensureBoundaryOnDeereField(fieldUrl, fieldName, coords, headers) 
   return { boundaryCreated: true };
 }
 
-/**
- * Sukuria JurgisAgro lauką + švarias GPS ribas (ir atkuria iš archyvo per visus puslapius + sutvarko pilkus 0,00 ha laukus!)
- */
 async function pushFieldsToJohnDeere(db, admin, userId, orgId, fieldsList) {
   const token = await getValidDeereToken(db, admin, userId);
   const headers = {
@@ -454,7 +448,6 @@ async function pushFieldsToJohnDeere(db, admin, userId, orgId, fieldsList) {
     const existing = existingByName.get(f.name.trim().toLowerCase());
     const coords = f.polygonCoordinates || [];
 
-    // 1. Jei laukas jau AKTYVUS -> patikriname, ar jam nereikia pridėti trūkstamos GPS ribos
     if (existing && !existing.archived) {
       try {
         const fieldUrl = `${DEERE_API_BASE}/organizations/${orgId}/fields/${existing.id}`;
@@ -468,7 +461,6 @@ async function pushFieldsToJohnDeere(db, admin, userId, orgId, fieldsList) {
       continue;
     }
 
-    // 2. Jei laukas buvo SUARCHYVUOTAS -> ATSTATOME jį iš archyvo ir įkeliame aktyvią ribą!
     if (existing && existing.archived) {
       try {
         const fieldUrl = `${DEERE_API_BASE}/organizations/${orgId}/fields/${existing.id}`;
@@ -484,7 +476,6 @@ async function pushFieldsToJohnDeere(db, admin, userId, orgId, fieldsList) {
       }
     }
 
-    // 3. Kuriame visiškai naują lauką + švarią NMA GPS ribą
     try {
       const createFieldRes = await axios.post(
         `${DEERE_API_BASE}/organizations/${orgId}/fields`,
@@ -508,9 +499,6 @@ async function pushFieldsToJohnDeere(db, admin, userId, orgId, fieldsList) {
   return { createdCount: createdCount + restoredCount, restoredCount, skippedCount, errors };
 }
 
-/**
- * Įkelia VRA Shapefile .ZIP failą tiesiai į John Deere Files API (belaidžiam perdavimui į traktorių!)
- */
 async function uploadVraZipToJohnDeere(db, admin, userId, orgId, { fileName, zipBase64, fieldName, taskType, baseRate }) {
   const token = await getValidDeereToken(db, admin, userId);
 
@@ -562,9 +550,6 @@ async function uploadVraZipToJohnDeere(db, admin, userId, orgId, { fileName, zip
   return taskRecord;
 }
 
-/**
- * Švariai atjungia vartotojo John Deere paskyrą (būtina John Deere Production peržiūrai)
- */
 async function disconnectJohnDeere(db, admin, userId) {
   if (!userId) throw new Error("Trūksta userId.");
   await db.collection("johndeere_secrets").doc(userId).delete().catch(() => {});
