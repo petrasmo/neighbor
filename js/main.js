@@ -179,6 +179,82 @@ document.addEventListener('DOMContentLoaded', () => {
 
     setupCalculatorsHub();
 
+    window.copyJurgisEmail = async () => {
+        const email = "info@jurgisagro.com";
+        try {
+            await navigator.clipboard.writeText(email);
+            showBottomToast("El. paštas info@jurgisagro.com nukopijuotas! 📋");
+        } catch (err) {
+            const tmp = document.createElement("input");
+            tmp.value = email;
+            document.body.appendChild(tmp);
+            tmp.select();
+            document.execCommand("copy");
+            tmp.remove();
+            showBottomToast("El. paštas info@jurgisagro.com nukopijuotas! 📋");
+        }
+    };
+
+    window.openJurgisContactModal = () => {
+        showDialog(
+            "Kontaktai ir Bendradarbiavimas",
+            `
+            <div class="space-y-4 text-left">
+                <p class="text-xs leading-relaxed text-slate-500 dark:text-slate-300 text-center">
+                    Turite klausimų dėl portalo veikimo, pasiūlymų ūkininkams ar bendradarbiavimo idėjų? Susisiekite su mumis!
+                </p>
+
+                <div class="p-4 bg-tractorBg border border-tractorBorder rounded-2xl space-y-3">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl bg-tractorPrimary/15 border border-tractorPrimary/30 flex items-center justify-center text-lg shrink-0">
+                            👩‍🌾
+                        </div>
+                        <div>
+                            <span class="text-[10px] uppercase tracking-wider font-bold text-slate-400 block">Kontaktinis asmuo</span>
+                            <strong class="text-sm font-extrabold block" style="color: var(--text-main);">Deimantė Misiūnienė</strong>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center gap-3 pt-2 border-t border-tractorBorder/60">
+                        <div class="w-10 h-10 rounded-xl bg-tractorPrimary/15 border border-tractorPrimary/30 flex items-center justify-center text-lg shrink-0">
+                            ✉️
+                        </div>
+                        <div class="min-w-0 flex-1">
+                            <span class="text-[10px] uppercase tracking-wider font-bold text-slate-400 block">El. paštas</span>
+                            <a href="mailto:info@jurgisagro.com" class="text-sm font-bold text-green-600 dark:text-green-400 hover:underline break-all">info@jurgisagro.com</a>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-2">
+                        <a href="mailto:info@jurgisagro.com?subject=JurgisAgro%20u%C5%BEklausa" class="h-10 px-3 bg-tractorPrimary hover:bg-tractorPrimaryHover text-white font-bold text-xs rounded-xl flex items-center justify-center gap-1.5 transition no-underline">
+                            <span>✉️</span> <span>Parašyti laišką</span>
+                        </a>
+                        <button type="button" onclick="window.copyJurgisEmail && window.copyJurgisEmail()" class="h-10 px-3 bg-tractorSurface hover:bg-tractorCard border border-tractorBorder font-bold text-xs rounded-xl flex items-center justify-center gap-1.5 transition cursor-pointer" style="color: var(--text-main);">
+                            <span>📋</span> <span>Kopijuoti el. paštą</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="pt-1 text-center space-y-2">
+                    <span class="text-[10px] uppercase tracking-wider font-bold text-slate-400 block">Sekite JurgisAgro naujienas</span>
+                    <div class="flex items-center justify-center gap-2 flex-wrap">
+                        <a href="https://www.facebook.com/people/JurgisAgro/61594036239247/" target="_blank" rel="noopener noreferrer" class="px-3 py-1.5 bg-tractorBg hover:border-tractorPrimary border border-tractorBorder rounded-xl text-xs font-bold transition no-underline" style="color: var(--text-main);">
+                            📘 Facebook
+                        </a>
+                        <a href="https://www.youtube.com/@jurgisagro" target="_blank" rel="noopener noreferrer" class="px-3 py-1.5 bg-tractorBg hover:border-tractorPrimary border border-tractorBorder rounded-xl text-xs font-bold transition no-underline" style="color: var(--text-main);">
+                            ▶️ YouTube
+                        </a>
+                        <a href="https://www.tiktok.com/@jurgisagro" target="_blank" rel="noopener noreferrer" class="px-3 py-1.5 bg-tractorBg hover:border-tractorPrimary border border-tractorBorder rounded-xl text-xs font-bold transition no-underline" style="color: var(--text-main);">
+                            🎵 TikTok
+                        </a>
+                    </div>
+                </div>
+            </div>
+            `,
+            "✉️"
+        );
+    };
+
     const openHelp = () => {
         showDialog(
             "Kaip išnaudoti visą JurgisAgro naudą? 🚜",
@@ -194,6 +270,19 @@ document.addEventListener('DOMContentLoaded', () => {
                     <p class="text-xs leading-relaxed text-slate-700 dark:text-slate-200">
                         Prisijungę prie paskyros ir pažymėję ūkio bazę bei laukus, <b>visos sistemos skaičiuoklės pradeda veikti automatiškai pagal jūsų tikslią vietą ir plotus.</b>
                     </p>
+                </div>
+
+                <div class="p-3.5 bg-tractorBg border border-tractorBorder rounded-xl space-y-2">
+                    <div class="flex items-center justify-between gap-2 flex-wrap">
+                        <div>
+                            <span class="text-[10px] uppercase tracking-wider font-bold text-slate-400 block">Reikia pagalbos ar turite pasiūlymų?</span>
+                            <strong class="text-xs font-bold block mt-0.5" style="color: var(--text-main);">Deimantė Misiūnienė</strong>
+                            <a href="mailto:info@jurgisagro.com" class="text-xs font-bold text-green-600 dark:text-green-400 hover:underline">info@jurgisagro.com</a>
+                        </div>
+                        <button type="button" onclick="window.copyJurgisEmail && window.copyJurgisEmail()" class="px-3 py-1.5 bg-tractorSurface hover:bg-tractorCard border border-tractorBorder rounded-lg text-[11px] font-bold transition cursor-pointer" style="color: var(--text-main);">
+                            📋 Kopijuoti
+                        </button>
+                    </div>
                 </div>
             </div>
             `,

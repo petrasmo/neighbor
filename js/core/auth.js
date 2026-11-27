@@ -44,8 +44,8 @@ export function openLegalModal(type = 'privacy') {
                 <p><strong>4. Paskyros saugumas</strong><br>
                 Vartotojas atsako už savo prisijungimo duomenų saugumą ir įsipareigoja nenaudoti platformos neteisėtiems veiksmams ar klaidinančios informacijos (pvz., SOS pagalbos skelbimuose) platinimui.</p>
 
-                <p><strong>5. Kontaktai</strong><br>
-                Visais klausimais dėl platformos veikimo galite kreiptis el. paštu: <strong>petrasmo@gmail.com</strong>.</p>
+                <p><strong>5. Jūsų teisės (Teisė būti pamirštam)</strong><br>
+Jūs turite teisę bet kuriuo metu peržiūrėti, redaguoti arba visiškai ištrinti savo paskyrą, ūkio laukus ar atjungti išmaniuosius įrenginius tiesiogiai sistemos nustatymuose arba parašę el. paštu <a href="mailto:info@jurgisagro.com" class="text-green-600 dark:text-green-400 underline font-bold">info@jurgisagro.com</a>.</p>
             </div>
             `,
             "📜"

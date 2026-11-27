@@ -177,6 +177,13 @@ export function initSmartDevicesTab(currentUser, userData) {
     listenToNordPoolForDaikin();
 }
 
+function isSmartIotDevice(dev) {
+    if (!dev) return false;
+    if (dev.type === 'tractor_cloud' || dev.type === 'jurgis_tractor') return false;
+    if (dev.brand === 'jurgis_gps' || dev.isJurgisGps) return false;
+    return true;
+}
+
 function listenToSmartDevices(currentUser) {
     if (!currentUser) return;
     if (unsubscribeDevices) unsubscribeDevices();
@@ -185,7 +192,12 @@ function listenToSmartDevices(currentUser) {
         .where("userId", "==", currentUser.uid)
         .onSnapshot(snap => {
             userDevicesList = [];
-            snap.forEach(doc => userDevicesList.push(doc.data()));
+            snap.forEach(doc => {
+                const data = doc.data();
+                if (isSmartIotDevice(data)) {
+                    userDevicesList.push(data);
+                }
+            });
 
             const countEl = document.getElementById('smart-devices-count');
             if (countEl) countEl.textContent = userDevicesList.length;

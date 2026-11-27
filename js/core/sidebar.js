@@ -152,13 +152,16 @@ export function renderGlobalSidebar(activePage = 'index', activeTab = 0) {
                     </nav>
                 </div>
 
-                <div class="border-t border-tractorBorder/70 pt-4 space-y-3">
+                <div class="border-t border-tractorBorder/70 pt-4 space-y-2.5">
                     <div id="auth-sidebar-box" class="bg-tractorBg border border-tractorBorder/60 p-3 rounded-xl text-center space-y-2">
                         <p class="text-[11px] text-slate-400">Esate neprisijungęs</p>
                         <button class="login-trigger-btn w-full py-2 bg-tractorPrimary hover:bg-tractorPrimaryHover text-white text-xs font-bold rounded-lg shadow transition cursor-pointer">
                             Prisijungti su Google
                         </button>
                     </div>
+                    <button type="button" onclick="window.openJurgisContactModal && window.openJurgisContactModal()" class="w-full py-2 px-3 bg-tractorBg/60 hover:bg-tractorCard border border-tractorBorder/60 rounded-xl text-[11px] font-bold text-slate-400 hover:text-green-500 transition cursor-pointer flex items-center justify-center gap-1.5">
+                        <span class="notranslate" translate="no">✉️</span> <span>Kontaktai</span>
+                    </button>
                 </div>
             </aside>
         `;
