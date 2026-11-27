@@ -1,15 +1,18 @@
-// js/ukis/solarControlTab.js
-import { showBottomToast } from '../core/ui.js';
+// js/ukis/elektrines/solarControlTab.js
+import { showBottomToast } from '../../core/ui.js';
+import { getSolarBrandMeta } from './solarBrandsConfig.js';
 
 let cachedSolarWeather = null;
 let cachedChartData = null;
 let activeSolarChartTab = 'year'; // 'today' | 'month' | 'year'
 let hoveredSolarItem = null;
+let resizeBound = false;
 
 export function renderSolarControlTabHtml(dev, liveTelemetry) {
     const cfg = dev.config || {};
-    const inverterKw = Number(cfg.inverterKw ?? 15.0);
-    const panelsKwp = Number(cfg.panelsKwp ?? 7.0);
+    const brandMeta = getSolarBrandMeta(dev.brand);
+    const inverterKw = Number(cfg.inverterKw ?? 12.0);
+    const panelsKwp = Number(cfg.panelsKwp ?? 7.44);
     const curPowerW = Number(liveTelemetry.currentPowerW ?? 0);
     const curPowerKw = (curPowerW / 1000).toFixed(2);
     const todayKwh = Number(liveTelemetry.todayKwh ?? 0).toFixed(2);
@@ -19,7 +22,7 @@ export function renderSolarControlTabHtml(dev, liveTelemetry) {
     const isGenerating = curPowerW > 20;
 
     return `
-        <!-- 1. GYVA GROWATT TELEMETRIJA (4 SHINEPHONE METRIKŲ KORTELĖS) -->
+        <!-- 1. GYVA SAULĖS ELEKTRINĖS TELEMETRIJA (4 KPI KORTELĖS) -->
         <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
             
             <div class="bg-tractorBg border-2 ${isGenerating ? 'border-amber-500 ring-1 ring-amber-500/30' : 'border-tractorBorder'} rounded-2xl p-3.5 sm:p-4 space-y-1.5 shadow-sm flex flex-col justify-between">
@@ -70,7 +73,7 @@ export function renderSolarControlTabHtml(dev, liveTelemetry) {
 
         </div>
 
-        <!-- 🌟 1B. MATIF STILIAUS CANVAS GRAFIKAI (ŠIANDIEN / PASK. 7 D. / ŠIE METAI) -->
+        <!-- 🌟 1B. CANVAS GRAFIKAI (ŠIANDIEN / PASK. 7 D. / ŠIE METAI) -->
         <div class="bg-tractorBg/90 border border-tractorBorder rounded-2xl p-3.5 sm:p-5 space-y-3 shadow-sm">
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-tractorBorder/60 pb-2.5">
                 <div class="flex items-center flex-wrap gap-2">
@@ -98,7 +101,7 @@ export function renderSolarControlTabHtml(dev, liveTelemetry) {
             </div>
         </div>
 
-        <!-- 2. SAULĖS ELEKTRINĖS PARAMETRAI IR AGREGATŲ SINCHRONIZACIJA -->
+        <!-- 2. SAULĖS ELEKTRINĖS PARAMETRAI -->
         <div class="bg-tractorBg border border-tractorBorder p-4 rounded-2xl space-y-3">
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-tractorBorder/60 pb-2.5">
                 <div>
@@ -117,12 +120,12 @@ export function renderSolarControlTabHtml(dev, liveTelemetry) {
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
                 <div class="bg-tractorSurface p-3 rounded-xl border border-tractorBorder space-y-1">
                     <label class="text-[10px] font-bold text-amber-500 uppercase block">☀️ Saulės modulių galia (kWp)</label>
-                    <input id="inp-solar-panels-kwp" type="number" step="0.5" value="${panelsKwp}"
+                    <input id="inp-solar-panels-kwp" type="number" step="0.01" value="${panelsKwp}"
                         class="w-full h-9 bg-tractorBg border border-tractorBorder rounded-lg px-3 font-mono font-bold text-sm outline-none" style="color: var(--text-main);">
                 </div>
 
                 <div class="bg-tractorSurface p-3 rounded-xl border border-tractorBorder space-y-1">
-                    <label class="text-[10px] font-bold text-slate-400 uppercase block">🔌 Growatt Inverterio galia (kW)</label>
+                    <label class="text-[10px] font-bold text-slate-400 uppercase block">🔌 ${brandMeta.name} Inverterio galia (kW)</label>
                     <input id="inp-solar-inverter-kw" type="number" step="0.5" value="${inverterKw}"
                         class="w-full h-9 bg-tractorBg border border-tractorBorder rounded-lg px-3 font-mono font-bold text-sm outline-none" style="color: var(--text-main);">
                 </div>
@@ -132,7 +135,7 @@ export function renderSolarControlTabHtml(dev, liveTelemetry) {
                         <label class="text-[10px] font-bold text-green-500 uppercase">⚡ Pertekliaus riba agregatams</label>
                         <strong id="lbl-solar-threshold" class="font-mono font-bold text-green-500">&ge; ${cfg.surplusThresholdKw ?? 1.5} kW</strong>
                     </div>
-                    <input id="inp-solar-threshold" type="range" min="0.5" max="7.0" step="0.5" value="${cfg.surplusThresholdKw ?? 1.5}" class="w-full accent-tractorPrimary cursor-pointer mt-2">
+                    <input id="inp-solar-threshold" type="range" min="0.5" max="12.0" step="0.5" value="${cfg.surplusThresholdKw ?? 1.5}" class="w-full accent-tractorPrimary cursor-pointer mt-2">
                 </div>
             </div>
         </div>
@@ -151,6 +154,9 @@ export function renderSolarControlTabHtml(dev, liveTelemetry) {
 }
 
 export async function bindSolarControlEvents(currentUser, dev, onConfigSaved, cachedElecHours) {
+    cachedChartData = null;
+    hoveredSolarItem = null;
+
     const inpPanels = document.getElementById('inp-solar-panels-kwp');
     const inpInv = document.getElementById('inp-solar-inverter-kw');
     const inpThresh = document.getElementById('inp-solar-threshold');
@@ -165,15 +171,15 @@ export async function bindSolarControlEvents(currentUser, dev, onConfigSaved, ca
 
     [inpPanels, inpInv].forEach(el => {
         el?.addEventListener('input', () => {
-            dev.config.panelsKwp = parseFloat(inpPanels?.value) || 7.0;
-            dev.config.inverterKw = parseFloat(inpInv?.value) || 15.0;
+            dev.config.panelsKwp = parseFloat(inpPanels?.value) || 7.44;
+            dev.config.inverterKw = parseFloat(inpInv?.value) || 12.0;
             renderSolarScheduleGrid(dev, cachedElecHours);
         });
     });
 
     document.getElementById('btn-save-solar-config')?.addEventListener('click', async () => {
-        dev.config.panelsKwp = parseFloat(inpPanels?.value) || 7.0;
-        dev.config.inverterKw = parseFloat(inpInv?.value) || 15.0;
+        dev.config.panelsKwp = parseFloat(inpPanels?.value) || 7.44;
+        dev.config.inverterKw = parseFloat(inpInv?.value) || 12.0;
         dev.config.surplusThresholdKw = parseFloat(inpThresh?.value) || 1.5;
         await onConfigSaved(true, dev.config);
         showBottomToast("Saulės elektrinės parametrai išsaugoti! ☀️💾");
@@ -202,12 +208,13 @@ export async function bindSolarControlEvents(currentUser, dev, onConfigSaved, ca
     });
 
     initSolarCanvasInteractions();
+    drawSolarCanvasChart();
 
-    // Parsiunčiame grafikus iš Growatt OpenAPI
-    const plantId = dev.telemetry?.plantId;
-    if (currentUser && plantId) {
+    if (currentUser && dev.id) {
         try {
-            const cRes = await fetch(`https://us-central1-neighborpm-b9968.cloudfunctions.net/getGrowattPlantCharts?userId=${currentUser.uid}&plantId=${encodeURIComponent(plantId)}`);
+            const cRes = await fetch(
+                `https://us-central1-neighborpm-b9968.cloudfunctions.net/getSolarCharts?userId=${encodeURIComponent(currentUser.uid)}&deviceDocId=${encodeURIComponent(dev.id)}`
+            );
             const cData = await cRes.json();
             if (cData && cData.success) {
                 cachedChartData = cData;
@@ -226,7 +233,7 @@ export async function bindSolarControlEvents(currentUser, dev, onConfigSaved, ca
                 drawSolarCanvasChart();
             }
         } catch (err) {
-            console.warn("Growatt grafiko klaida:", err.message);
+            console.warn("Saulės grafiko klaida:", err.message);
         }
     }
 
@@ -242,7 +249,7 @@ export async function bindSolarControlEvents(currentUser, dev, onConfigSaved, ca
 }
 
 function getActiveChartDataset() {
-    if (!cachedChartData) return { items: [], unit: 'kWh', color: '#16A34A', gradStart: 'rgba(22, 163, 74, 0.32)', title: '📈 Saulės Gamyba' };
+    if (!cachedChartData) return { items: [], unit: 'kWh', color: '#16A34A', gradStart: 'rgba(22, 163, 74, 0.32)', title: '📈 Kraunami elektrinės grafikai...' };
 
     if (activeSolarChartTab === 'today') {
         const pts = (cachedChartData.todayPowers || []).map(p => ({
@@ -322,7 +329,10 @@ function initSolarCanvasInteractions() {
         drawSolarCanvasChart();
     };
 
-    window.addEventListener('resize', drawSolarCanvasChart);
+    if (!resizeBound) {
+        window.addEventListener('resize', drawSolarCanvasChart);
+        resizeBound = true;
+    }
 }
 
 function drawSolarCanvasChart() {
@@ -354,7 +364,7 @@ function drawSolarCanvasChart() {
         ctx.font = '12px Inter, sans-serif';
         ctx.fillStyle = textColor;
         ctx.textAlign = 'center';
-        ctx.fillText('Šiam periodui duomenų dar nėra.', width / 2, height / 2);
+        ctx.fillText(cachedChartData ? 'Šiam periodui duomenų dar nėra.' : 'Kraunami duomenys...', width / 2, height / 2);
         return;
     }
 
@@ -396,7 +406,6 @@ function drawSolarCanvasChart() {
         return { x, y, ...d };
     });
 
-    // Gradiento užpildas (tiksliai kaip MATIF biržoje!)
     if (points.length >= 2) {
         const grad = ctx.createLinearGradient(0, padTop, 0, height - padBottom);
         grad.addColorStop(0, ds.gradStart);
@@ -413,7 +422,6 @@ function drawSolarCanvasChart() {
         ctx.fillStyle = grad;
         ctx.fill();
 
-        // Pagrindinė linija
         ctx.strokeStyle = ds.color;
         ctx.lineWidth = 2.8;
         ctx.lineJoin = 'round';
@@ -425,7 +433,6 @@ function drawSolarCanvasChart() {
         ctx.stroke();
     }
 
-    // Taškai ant kiekvieno mėnesio / dienos (jei taškų <= 35)
     if (points.length <= 35) {
         points.forEach(pt => {
             ctx.fillStyle = ds.color;
@@ -435,7 +442,6 @@ function drawSolarCanvasChart() {
         });
     }
 
-    // X ašies datos / mėnesiai
     ctx.fillStyle = textColor;
     ctx.textAlign = 'center';
     const labelStep = points.length <= 12 ? 1 : Math.max(1, Math.floor(points.length / 7));
@@ -445,7 +451,6 @@ function drawSolarCanvasChart() {
         }
     });
 
-    // Interaktyvus kryželis užvedus pelę (kaip MATIF biržoje!)
     if (hoveredSolarItem) {
         const hoveredPt = points.find(p => p.fullDate === hoveredSolarItem.fullDate) || points[points.length - 1];
         if (hoveredPt) {
@@ -475,8 +480,8 @@ export function renderSolarScheduleGrid(dev, cachedElecHours) {
     if (!tablesBox || !dev || cachedElecHours.length === 0) return;
 
     const cfg = dev.config || {};
-    const panelsKwp = Number(cfg.panelsKwp ?? 7.0);
-    const inverterKw = Number(cfg.inverterKw ?? 15.0);
+    const panelsKwp = Number(cfg.panelsKwp ?? 7.44);
+    const inverterKw = Number(cfg.inverterKw ?? 12.0);
     const thresholdKw = Number(cfg.surplusThresholdKw ?? 1.5);
 
     const now = new Date();

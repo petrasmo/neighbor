@@ -31,10 +31,14 @@ const {
 } = require("./shellySync");
 const { sendShellyRelayCommand, executeSmartRelaysAutopilot } = require("./relayRulesEngine");
 const {
+  connectSolarInverter,
+  refreshSolarStatusByDevice,
+  getSolarChartsByDevice,
+  controlSolarBatteryByDevice,
+  executeHourlyAllSolarSync,
   syncUserGrowattTelemetry,
   getGrowattChartsData,
-  executeHourlyGrowattSync,
-} = require("./growattSync");
+} = require("./elektrines/solarHub");
 
 const {
   getJohnDeereLoginUrl,
@@ -135,7 +139,7 @@ exports.scheduledHourlyDaikinAutopilot = onSchedule(
   async (event) => {
     await executeHourlyDaikinAutopilot(db, admin);
     await executeHourlySiloAutopilot(db, admin);
-    await executeHourlyGrowattSync(db, admin);
+    await executeHourlyAllSolarSync(db, admin);
   }
 );
 exports.scheduledSmartRelaysAutopilot = onSchedule(
@@ -1199,6 +1203,46 @@ exports.deleteJurgisGpsTracker = onRequest({ cors: true, invoker: "public" }, as
 exports.jurgisGpsWebhook = onRequest({ cors: true, invoker: "public" }, async (req, res) => {
   try {
     const out = await handleJurgisGpsWebhook(db, admin, req);
+    res.json(out);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+exports.connectSolarInverter = onRequest({ cors: true, invoker: "public" }, async (req, res) => {
+  try {
+    const body = typeof req.body === "string" ? JSON.parse(req.body) : req.body;
+    const out = await connectSolarInverter(db, admin, body);
+    res.json({ success: true, ...out });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+exports.refreshSolarStatus = onRequest({ cors: true, invoker: "public" }, async (req, res) => {
+  try {
+    const userId = req.query.userId || req.body?.userId;
+    const deviceDocId = req.query.deviceDocId || req.body?.deviceDocId;
+    const out = await refreshSolarStatusByDevice(db, admin, userId, deviceDocId);
+    res.json({ success: true, ...out });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+exports.getSolarCharts = onRequest({ cors: true, invoker: "public" }, async (req, res) => {
+  try {
+    const { userId, deviceDocId } = req.query;
+    const charts = await getSolarChartsByDevice(db, userId, deviceDocId);
+    res.json({ success: true, ...charts });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+exports.controlSolarBattery = onRequest({ cors: true, invoker: "public" }, async (req, res) => {
+  try {
+    const body = typeof req.body === "string" ? JSON.parse(req.body) : req.body;
+    const out = await controlSolarBatteryByDevice(db, admin, body.userId, body.deviceDocId, body.action);
     res.json(out);
   } catch (err) {
     res.status(500).json({ error: err.message });

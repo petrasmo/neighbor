@@ -43,6 +43,7 @@ async function syncUserGrowattTelemetry(db, admin, userId) {
   const legacySolarDocs = [];
   existingSnap.forEach((d) => {
     const data = d.data();
+    if (data.brand && data.brand !== "growatt") return; // 👈 Saugiklis: neliečia FoxESS ir kitų gamintojų!
     const pId = data?.telemetry?.plantId ? String(data.telemetry.plantId) : null;
     if (pId) existingByPlantId[pId] = { docId: d.id, ...data };
     else legacySolarDocs.push({ docId: d.id, ...data });
